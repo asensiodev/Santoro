@@ -1,4 +1,4 @@
-package com.noirsonora.santoro.ui.theme
+package com.noirsonora.santoro.presentation.ui.theme
 
 import android.app.Activity
 import android.os.Build

@@ -1,4 +1,4 @@
-package com.noirsonora.santoro
+package com.noirsonora.santoro.presentation
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -10,7 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.noirsonora.santoro.ui.theme.SantoroTheme
+import com.noirsonora.santoro.presentation.ui.theme.SantoroTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
