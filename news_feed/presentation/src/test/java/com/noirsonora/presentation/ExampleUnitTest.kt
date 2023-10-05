@@ -1,4 +1,4 @@
-package com.noirsonora.news_feed_presentation
+package com.noirsonora.presentation
 
 import org.junit.Test
 

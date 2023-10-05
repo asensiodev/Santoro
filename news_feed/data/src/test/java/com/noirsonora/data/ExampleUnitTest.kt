@@ -1,4 +1,4 @@
-package com.noirsonora.news_feed_domain
+package com.noirsonora.data
 
 import org.junit.Test
 
