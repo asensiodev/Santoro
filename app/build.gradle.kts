@@ -52,7 +52,6 @@ android {
 dependencies {
 
     implementation(AndroidX.coreKtx)
-    implementation("androidx.core:core-ktx:1.9.0")
     //implementation(AndroidX.lifecycleRuntime)
 
 
@@ -75,6 +74,6 @@ dependencies {
     androidTestImplementation(platform(Compose.composeBom))
     androidTestImplementation(Testing.composeUiTest)
     androidTestImplementation(Testing.espresso)
-    debugImplementation("androidx.compose.ui:ui-tooling")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
+    debugImplementation(Compose.composeUiTooling)
+    debugImplementation(Testing.composeTestManifest)
 }

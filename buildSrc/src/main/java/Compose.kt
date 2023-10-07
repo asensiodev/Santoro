@@ -12,4 +12,5 @@ object Compose {
     const val activityCompose = "androidx.activity:activity-compose"
     const val viewModelCompose = "androidx.lifecycle:lifecycle-viewmodel-compose"
     //const val runtime = "androidx.compose.runtime:runtime"
+    const val composeUiTooling = "androidx.compose.ui:ui-tooling"
 }

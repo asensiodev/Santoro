@@ -10,6 +10,8 @@ object Testing {
 
     const val composeUiTest = "androidx.compose.ui:ui-test-junit4"
 
+    const val composeTestManifest = "androidx.compose.ui:ui-test-manifest"
+
     //private const val coroutinesTestVersion = "1.5.1"
     //const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesTestVersion"
 
