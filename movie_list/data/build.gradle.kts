@@ -6,10 +6,10 @@ plugins {
 apply (from = "$rootDir/base-module.gradle")
 
 android {
-    namespace = "com.noirsonora.movie_lis.data"
+    namespace = "com.noirsonora.movie_list.data"
 }
 
-// Specific :news_feed:data module dependencies
+// Specific :movie_list:data module dependencies
 dependencies {
     implementation(project(Modules.core))
     implementation(project(Modules.movieListDomain))

@@ -9,7 +9,7 @@ android {
     namespace = "com.noirsonora.movie_list.presentation"
 }
 
-// Specific :news_feed:presentation module dependencies
+// Specific :movie_list:presentation module dependencies
 dependencies {
     implementation(project(Modules.core))
     implementation(project(Modules.movieListDomain))

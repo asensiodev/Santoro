@@ -52,6 +52,7 @@ android {
 }
 
 dependencies {
+    implementation(project(Modules.core))
 
     implementation(AndroidX.coreKtx)
     //implementation(AndroidX.lifecycleRuntime)
