@@ -6,11 +6,13 @@ plugins {
 apply (from = "$rootDir/compose-module.gradle")
 
 android {
-    namespace = "com.noirsonora.news_feed.presenation"
+    namespace = "com.noirsonora.movie_list.presentation"
 }
 
 // Specific :news_feed:presentation module dependencies
 dependencies {
     implementation(project(Modules.core))
-    implementation(project(Modules.newsFeedDomain))
+    implementation(project(Modules.movieListDomain))
+
+    implementation(Coil.coilCompose)
 }

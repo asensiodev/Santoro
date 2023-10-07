@@ -3,8 +3,8 @@ object Modules {
 
     const val core = ":core"
 
-    const val newsFeedData = ":news_feed:data"
-    const val newsFeedDomain = ":news_feed:domain"
-    const val newsFeedPresentation = ":news_feed:presentation"
+    const val movieListData = ":movie_ist:data"
+    const val movieListDomain = ":movie_list:domain"
+    const val movieListPresentation = ":movie_list:presentation"
 
 }

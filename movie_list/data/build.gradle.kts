@@ -6,13 +6,13 @@ plugins {
 apply (from = "$rootDir/base-module.gradle")
 
 android {
-    namespace = "com.noirsonora.news_feed.data"
+    namespace = "com.noirsonora.movie_lis.data"
 }
 
 // Specific :news_feed:data module dependencies
 dependencies {
     implementation(project(Modules.core))
-    implementation(project(Modules.newsFeedDomain))
+    implementation(project(Modules.movieListDomain))
 
     // Here we need to use "kapt", there is no kapt function
 

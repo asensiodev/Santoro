@@ -16,7 +16,7 @@ dependencyResolutionManagement {
 rootProject.name = "Santoro"
 include(":app")
 include(":core")
-include(":news_feed")
-include(":news_feed:data")
-include(":news_feed:domain")
-include(":news_feed:presentation")
+include(":movie_list")
+include(":movie_list:data")
+include(":movie_list:domain")
+include(":movie_list:presentation")
