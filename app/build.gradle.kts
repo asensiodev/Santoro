@@ -7,14 +7,14 @@ plugins {
 
 android {
     namespace = "com.noirsonora.santoro"
-    compileSdk = 33
+    compileSdk = ProjectConfig.compileSdk
 
     defaultConfig {
-        applicationId = "com.noirsonora.santoro"
-        minSdk = 24
-        targetSdk = 33
-        versionCode = 1
-        versionName = "1.0"
+        applicationId = ProjectConfig.appId
+        minSdk = ProjectConfig.minSdk
+        targetSdk = ProjectConfig.targetSdk
+        versionCode = ProjectConfig.versionCode
+        versionName = ProjectConfig.versionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -32,8 +32,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_18
+        targetCompatibility = JavaVersion.VERSION_18
     }
     kotlinOptions {
         jvmTarget = "18"
@@ -42,7 +42,7 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.4.3"
+        kotlinCompilerExtensionVersion = Compose.composeCompilerVersion
     }
     packaging {
         resources {
