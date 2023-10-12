@@ -14,7 +14,6 @@ dependencies {
     implementation("com.android.tools.build:gradle:8.1.1")
 }
 
-
 val compileKotlin: org.jetbrains.kotlin.gradle.tasks.KotlinCompile by tasks
 compileKotlin.kotlinOptions {
     jvmTarget = "18"
