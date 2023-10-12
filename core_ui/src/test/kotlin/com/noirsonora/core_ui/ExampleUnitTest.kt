@@ -1,4 +1,4 @@
-package com.noirsonora.domain
+package com.noirsonora.core_ui
 
 import org.junit.Test
 

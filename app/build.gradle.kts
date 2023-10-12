@@ -54,7 +54,7 @@ android {
 }
 
 dependencies {
-    implementation(project(versions.Modules.core))
+    implementation(project(Modules.core))
     //implementation(project(Modules.movieListData))
     //implementation(project(Modules.movieListPresentation))
     androidX()

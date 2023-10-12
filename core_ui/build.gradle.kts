@@ -1,4 +1,3 @@
-import versions.androidX
 import versions.compose
 import versions.daggerHilt
 import versions.test
@@ -11,12 +10,11 @@ plugins {
 apply<gradle_plugins.ComposeGradlePlugin>()
 
 android {
-    namespace = "com.noirsonora.santoro_movie_list_presentation"
+    namespace = "com.noirsonora.santoro_core_ui"
 }
 
 dependencies {
     implementation(project(Modules.core))
-    androidX()
     compose()
     daggerHilt()
     test()

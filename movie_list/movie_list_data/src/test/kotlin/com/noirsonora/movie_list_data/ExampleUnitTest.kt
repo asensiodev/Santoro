@@ -1,4 +1,4 @@
-package com.noirsonora.data
+package com.noirsonora.movie_list_data
 
 import org.junit.Test
 

@@ -1,4 +1,4 @@
-package com.noirsonora.domain
+package com.noirsonora.movie_list_domain
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

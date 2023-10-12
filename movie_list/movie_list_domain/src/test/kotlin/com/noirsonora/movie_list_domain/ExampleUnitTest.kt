@@ -1,4 +1,4 @@
-package com.noirsonora.presentation
+package com.noirsonora.movie_list_domain
 
 import org.junit.Test
 
