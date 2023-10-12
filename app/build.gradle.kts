@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    //id("dagger.hilt.android.plugin")
+    id("dagger.hilt.android.plugin")
     id("kotlin-kapt")
 }
 
@@ -53,26 +53,10 @@ android {
 
 dependencies {
     implementation(project(Modules.core))
-
+    //implementation(project(Modules.movieListData))
+    //implementation(project(Modules.movieListPresentation))
     androidX()
     compose()
+    daggerHilt()
     test()
-
-//    implementation(Compose.viewModelCompose)
-//    implementation(platform(Compose.composeBom))
-//    implementation(Compose.activityCompose)
-//    implementation(Compose.ui)
-//    implementation(Compose.uiGrapichs)
-//    implementation(Compose.uiToolingPreview)
-//    implementation(Compose.material3)
-
-
-//    testImplementation(Testing.junit4)
-//    testImplementation(Testing.junitAndroidExt)
-//
-//    androidTestImplementation(platform(Compose.composeBom))
-//    androidTestImplementation(Testing.composeUiTest)
-//    androidTestImplementation(Testing.espresso)
-//    debugImplementation(Compose.composeUiTooling)
-//    debugImplementation(Testing.composeTestManifest)
 }
