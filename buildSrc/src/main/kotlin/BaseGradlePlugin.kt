@@ -1,6 +1,3 @@
-package main_gradle_plugin
-
-import ProjectConfig
 import com.android.build.gradle.LibraryExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
@@ -10,6 +7,7 @@ class BaseGradlePlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
         applyPlugins(project)
+        setProjectConfiguration(project)
     }
 
     private fun applyPlugins(project: Project) {
@@ -39,7 +37,7 @@ class BaseGradlePlugin : Plugin<Project> {
     companion object {
         const val ANDROID_LIBRARY = "android-library"
         const val KOTLIN_ANDROID = "kotlin-android"
-        const val HILT_ANDROID_PLUGIN = "dagger-hilt-android.plugin"
+        const val HILT_ANDROID_PLUGIN = "dagger.hilt.android.plugin"
         const val KOTLIN_KAPT = "kotlin-kapt"
         const val ANDROID_EXTENSION_CONFIG = "android"
         const val ANDROID_TEST_RUNNER = "androidx.test.runner.AndroidJUnitRunner"

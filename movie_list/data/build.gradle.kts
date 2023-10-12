@@ -1,23 +1,12 @@
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
-    id("dagger.hilt.android.plugin")
-    id("kotlin-kapt")
+    `android-library`
+    `kotlin-android`
 }
 
+apply<BaseGradlePlugin>()
+
 android {
-    namespace = "com.noirsonora.santoro"
-    compileSdk = ProjectConfig.compileSdk
-
-    defaultConfig {
-        minSdk = ProjectConfig.minSdk
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables {
-            useSupportLibrary = true
-        }
-    }
-
+    namespace = "com.noirsonora.santoro_movie_list_data"
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -26,13 +15,6 @@ android {
                 "proguard-rules.pro"
             )
         }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_18
-        targetCompatibility = JavaVersion.VERSION_18
-    }
-    kotlinOptions {
-        jvmTarget = "18"
     }
     buildFeatures {
         compose = true
@@ -48,7 +30,7 @@ android {
 }
 
 dependencies {
-    implementation(project(Modules.core))
+    //implementation(project(Modules.core))
     daggerHilt()
     retrofit()
     room()
