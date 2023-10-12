@@ -1,18 +1,56 @@
 plugins {
-    `android-library`
-    `kotlin-android`
+    id("com.android.library")
+    id("org.jetbrains.kotlin.android")
+    id("dagger.hilt.android.plugin")
+    id("kotlin-kapt")
 }
-
-apply (from = "$rootDir/compose-module.gradle")
 
 android {
-    namespace = "com.noirsonora.movie_list.presentation"
+    namespace = "com.noirsonora.santoro"
+    compileSdk = ProjectConfig.compileSdk
+
+    defaultConfig {
+        minSdk = ProjectConfig.minSdk
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary = true
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_18
+        targetCompatibility = JavaVersion.VERSION_18
+    }
+    kotlinOptions {
+        jvmTarget = "18"
+    }
+    buildFeatures {
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = Compose.composeCompilerVersion
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
 }
 
-// Specific :movie_list:presentation module dependencies
 dependencies {
     implementation(project(Modules.core))
-    implementation(project(Modules.movieListDomain))
-
-    implementation(Coil.coilCompose)
+    androidX()
+    compose()
+    daggerHilt()
+    test()
 }

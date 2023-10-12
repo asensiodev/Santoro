@@ -1,3 +1,6 @@
+import dependency_handler.implementation
+import org.gradle.api.artifacts.dsl.DependencyHandler
+
 object AndroidX {
     private const val coreKtxVersion = "1.9.0"
     const val coreKtx = "androidx.core:core-ktx:$coreKtxVersion"
@@ -7,4 +10,10 @@ object AndroidX {
 
     private const val lifecycleRuntimeVersion = "2.6.2"
     const val lifecycleRuntime = "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleRuntimeVersion"
+}
+
+fun DependencyHandler.androidX() {
+    implementation(AndroidX.coreKtx)
+    implementation(AndroidX.appCompat)
+    implementation(AndroidX.lifecycleRuntime)
 }

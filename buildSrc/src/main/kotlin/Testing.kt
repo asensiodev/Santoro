@@ -1,3 +1,7 @@
+import dependency_handler.debugImplementation
+import dependency_handler.implementation
+import org.gradle.api.artifacts.dsl.DependencyHandler
+
 object Testing {
     private const val junitVersion = "4.13.2"
     const val junit4 = "junit:junit:$junitVersion"
@@ -33,4 +37,14 @@ object Testing {
 
     //private const val testRunnerVersion = "1.4.0"
     //const val testRunner = "androidx.test:runner:$testRunnerVersion"
+}
+
+fun DependencyHandler.test() {
+    implementation(Testing.junit4)
+    implementation(Testing.junitAndroidExt)
+    implementation(platform(Compose.composeBom))
+    implementation(Testing.composeUiTest)
+    implementation(Testing.espresso)
+    debugImplementation(Compose.composeUiTooling)
+    debugImplementation(Testing.composeTestManifest)
 }

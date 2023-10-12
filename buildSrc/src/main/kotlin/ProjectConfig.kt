@@ -5,4 +5,7 @@ object ProjectConfig {
     const val targetSdk = 33
     const val versionCode = 1
     const val versionName = "1.0"
+
+    private const val coreLibraryDesugaringVersion = "2.0.3"
+    const val coreLibraryDesugaring = "com.android.tools:desugar_jdk_libs:$coreLibraryDesugaringVersion"
 }
