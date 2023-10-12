@@ -1,3 +1,5 @@
+package versions
+
 import dependency_handler.implementation
 import org.gradle.api.artifacts.dsl.DependencyHandler
 

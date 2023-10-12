@@ -1,32 +1,17 @@
+import versions.androidX
+import versions.compose
+import versions.daggerHilt
+import versions.test
+
 plugins {
     `android-library`
     `kotlin-android`
 }
 
-apply<BaseGradlePlugin>()
+apply<gradle_plugins.ComposeGradlePlugin>()
 
 android {
     namespace = "com.noirsonora.santoro_movie_list_presentation"
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
-    buildFeatures {
-        compose = true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion = Compose.composeCompilerVersion
-    }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
 }
 
 dependencies {

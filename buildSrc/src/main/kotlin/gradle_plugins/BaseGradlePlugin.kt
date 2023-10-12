@@ -1,9 +1,12 @@
+package gradle_plugins
+
 import com.android.build.gradle.LibraryExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import versions.ProjectConfig
 
-class BaseGradlePlugin : Plugin<Project> {
+open class BaseGradlePlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
         applyPlugins(project)
@@ -26,7 +29,20 @@ class BaseGradlePlugin : Plugin<Project> {
                 minSdk = ProjectConfig.minSdk
                 testInstrumentationRunner = ANDROID_TEST_RUNNER
             }
-
+            buildTypes {
+                release {
+                    isMinifyEnabled = false
+                    proguardFiles(
+                        getDefaultProguardFile("proguard-android-optimize.txt"),
+                        "proguard-rules.pro"
+                    )
+                }
+            }
+            packaging {
+                resources {
+                    excludes += "/META-INF/{AL2.0,LGPL2.1}"
+                }
+            }
             compileOptions {
                 sourceCompatibility = JavaVersion.VERSION_18
                 targetCompatibility = JavaVersion.VERSION_18

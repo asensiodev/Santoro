@@ -1,3 +1,5 @@
+package versions
+
 object ProjectConfig {
     const val appId = "com.noirsonora.santoro"
     const val compileSdk = 33

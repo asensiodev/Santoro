@@ -1,3 +1,5 @@
+package versions
+
 import dependency_handler.debugImplementation
 import dependency_handler.implementation
 import org.gradle.api.artifacts.dsl.DependencyHandler
@@ -12,10 +14,10 @@ object Compose {
     const val uiGrapichs = "androidx.compose.ui:ui-graphics"
     const val uiToolingPreview = "androidx.compose.ui:ui-tooling-preview"
     const val material3 = "androidx.compose.material3:material3"
-    const val compiler = "androidx.compose.compiler:compiler:${composeCompilerVersion}"
+    const val compiler = "androidx.compose.compiler:compiler:$composeCompilerVersion"
     //const val navigation = "androidx.navigation:navigation-compose"
     //const val hiltNavigationCompose = "androidx.hilt:hilt-navigation-compose"
-    const val activityCompose = "androidx.activity:activity-compose:${activityComposeVersion}"
+    const val activityCompose = "androidx.activity:activity-compose:$activityComposeVersion"
     const val viewModelCompose = "androidx.lifecycle:lifecycle-viewmodel-compose"
     const val runtime = "androidx.compose.runtime:runtime"
     const val composeUiTooling = "androidx.compose.ui:ui-tooling"

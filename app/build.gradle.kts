@@ -1,3 +1,8 @@
+import versions.androidX
+import versions.compose
+import versions.daggerHilt
+import versions.test
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -7,14 +12,14 @@ plugins {
 
 android {
     namespace = "com.noirsonora.santoro"
-    compileSdk = ProjectConfig.compileSdk
+    compileSdk = versions.ProjectConfig.compileSdk
 
     defaultConfig {
-        applicationId = ProjectConfig.appId
-        minSdk = ProjectConfig.minSdk
-        targetSdk = ProjectConfig.targetSdk
-        versionCode = ProjectConfig.versionCode
-        versionName = ProjectConfig.versionName
+        applicationId = versions.ProjectConfig.appId
+        minSdk = versions.ProjectConfig.minSdk
+        targetSdk = versions.ProjectConfig.targetSdk
+        versionCode = versions.ProjectConfig.versionCode
+        versionName = versions.ProjectConfig.versionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -39,7 +44,7 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = Compose.composeCompilerVersion
+        kotlinCompilerExtensionVersion = versions.Compose.composeCompilerVersion
     }
     packaging {
         resources {
@@ -49,7 +54,7 @@ android {
 }
 
 dependencies {
-    implementation(project(Modules.core))
+    implementation(project(versions.Modules.core))
     //implementation(project(Modules.movieListData))
     //implementation(project(Modules.movieListPresentation))
     androidX()
