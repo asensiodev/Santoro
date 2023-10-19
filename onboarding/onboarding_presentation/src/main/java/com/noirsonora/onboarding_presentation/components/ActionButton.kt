@@ -1,4 +1,4 @@
-package com.noirsonora.movie_list_presentation.components
+package com.noirsonora.onboarding_presentation.components
 
 
 import androidx.compose.foundation.layout.padding
@@ -18,7 +18,7 @@ fun ActionButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    isEnabled: Boolean = false,
+    isEnabled: Boolean = true,
     textStyle: TextStyle = MaterialTheme.typography.bodyLarge
 ) {
     Button(
