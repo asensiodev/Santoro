@@ -15,10 +15,17 @@
             <option value="$PROJECT_DIR$/buildSrc" />
             <option value="$PROJECT_DIR$/core" />
             <option value="$PROJECT_DIR$/core_ui" />
+            <option value="$PROJECT_DIR$/login" />
+            <option value="$PROJECT_DIR$/login/login_data" />
+            <option value="$PROJECT_DIR$/login/login_domain" />
+            <option value="$PROJECT_DIR$/login/login_presentation" />
             <option value="$PROJECT_DIR$/movie_list" />
             <option value="$PROJECT_DIR$/movie_list/movie_list_data" />
             <option value="$PROJECT_DIR$/movie_list/movie_list_domain" />
             <option value="$PROJECT_DIR$/movie_list/movie_list_presentation" />
+            <option value="$PROJECT_DIR$/onboarding" />
+            <option value="$PROJECT_DIR$/onboarding/onboarding_domain" />
+            <option value="$PROJECT_DIR$/onboarding/onboarding_presentation" />
           </set>
         </option>
       </GradleProjectSettings>
