@@ -1,4 +1,4 @@
-package com.noirsonora.santoro.presentation.navigation
+package com.noirsonora.santoro.navigation
 
 import androidx.navigation.NavController
 import com.noirsonora.core.util.UiEvent

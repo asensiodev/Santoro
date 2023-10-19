@@ -1,4 +1,4 @@
-package com.noirsonora.santoro.presentation.ui.theme
+package com.noirsonora.santoro.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
