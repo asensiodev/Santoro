@@ -1,4 +1,4 @@
-package com.noirsonora.onboarding_domain
+package com.noirsonora.login_presentation
 
 import org.junit.Test
 

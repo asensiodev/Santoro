@@ -56,7 +56,6 @@ android {
 dependencies {
     implementation(project(Modules.core))
     implementation(project(Modules.coreUi))
-    implementation(project(Modules.onboardingPresentation))
     androidX()
     compose()
     daggerHilt()
