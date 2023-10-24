@@ -1,4 +1,4 @@
-package com.noirsonora.data
+package com.noirsonora.login_data
 
 import org.junit.Test
 

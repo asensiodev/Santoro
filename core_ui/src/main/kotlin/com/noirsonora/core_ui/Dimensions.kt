@@ -12,5 +12,11 @@ data class Dimensions(
     val spaceLarge: Dp = 32.dp,
     val spaceExtraLarge: Dp = 32.dp
 )
-
 val LocalSpacing = compositionLocalOf { Dimensions() }
+
+data class SplashScreen(
+    val splashScreenIconWidth: Dp = 130.dp,
+    val splashScreenIconHeight: Dp = 130.dp,
+)
+val LocalSplashScreenDimensions = compositionLocalOf { SplashScreen() }
+

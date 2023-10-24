@@ -12,10 +12,14 @@ object AndroidX {
 
     private const val lifecycleRuntimeVersion = "2.6.2"
     const val lifecycleRuntime = "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleRuntimeVersion"
+
+    private const val splashScreenVersion = "1.0.0-beta02"
+    const val splashScreen = "androidx.core:core-splashscreen:$splashScreenVersion"
 }
 
 fun DependencyHandler.androidX() {
     implementation(AndroidX.coreKtx)
     implementation(AndroidX.appCompat)
     implementation(AndroidX.lifecycleRuntime)
+    implementation(AndroidX.splashScreen)
 }
