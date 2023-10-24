@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
                     startDestination = Route.SPLASH_SCREEN
                 ) {
                     composable(Route.SPLASH_SCREEN) {
-                        //WelcomeScreen(onNavigate = navController::navigate)
+                        //LoginScreen(onNavigate = navController::navigate)
                     }
                     composable(Route.LOGIN) {
 
