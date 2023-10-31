@@ -10,7 +10,6 @@ import androidx.navigation.compose.rememberNavController
 import com.noirsonora.core.navigation.Route
 import com.noirsonora.login_presentation.LoginScreen
 import com.noirsonora.santoro.navigation.navigate
-import com.noirsonora.santoro.splash_screen.SplashScreen
 import com.noirsonora.santoro.ui.theme.SantoroTheme
 
 class MainActivity : ComponentActivity() {
@@ -22,11 +21,8 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 NavHost(
                     navController = navController,
-                    startDestination = Route.SPLASH_SCREEN
+                    startDestination = Route.LOGIN
                 ) {
-                    composable(Route.SPLASH_SCREEN) {
-                        SplashScreen(navController = navController)
-                    }
                     composable(Route.LOGIN) {
                         LoginScreen(onNavigate = navController::navigate)
                     }

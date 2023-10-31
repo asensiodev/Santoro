@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+    <style name="Theme.CustomSplashScreenTheme" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/splash_screen_light_background</item>
         <item name="windowSplashScreenAnimationDuration">3000</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/santoro_app_logo</item>
+        <item name="windowSplashScreenAnimatedIcon">@raw/santoro_app_icon</item>
         <item name="postSplashScreenTheme">@style/Theme.Santoro</item>
     </style>
 </resources>
