@@ -1,16 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="GradleMigrationSettings" migrationVersion="1" />
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
         <option name="testRunner" value="GRADLE" />
         <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="gradleJvm" value="jbr-17" />
+        <option name="gradleJvm" value="18" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/buildSrc" />
+            <option value="$PROJECT_DIR$/core" />
+            <option value="$PROJECT_DIR$/core_ui" />
+            <option value="$PROJECT_DIR$/login" />
+            <option value="$PROJECT_DIR$/login/login_data" />
+            <option value="$PROJECT_DIR$/login/login_domain" />
+            <option value="$PROJECT_DIR$/login/login_presentation" />
+            <option value="$PROJECT_DIR$/movie_list" />
+            <option value="$PROJECT_DIR$/movie_list/movie_list_data" />
+            <option value="$PROJECT_DIR$/movie_list/movie_list_domain" />
+            <option value="$PROJECT_DIR$/movie_list/movie_list_presentation" />
           </set>
         </option>
       </GradleProjectSettings>

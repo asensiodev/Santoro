@@ -15,4 +15,13 @@ dependencyResolutionManagement {
 
 rootProject.name = "Santoro"
 include(":app")
- 
+include(":core")
+include(":core_ui")
+include(":login")
+include(":login:login_data")
+include(":login:login_domain")
+include(":login:login_presentation")
+include(":movie_list")
+include(":movie_list:movie_list_data")
+include(":movie_list:movie_list_domain")
+include(":movie_list:movie_list_presentation")

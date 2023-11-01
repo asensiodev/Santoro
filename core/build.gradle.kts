@@ -1,0 +1,20 @@
+import versions.androidX
+import versions.daggerHilt
+import versions.test
+
+plugins {
+    `android-library`
+    `kotlin-android`
+}
+
+apply<gradle_plugins.BaseGradlePlugin>()
+
+android {
+    namespace = "com.noirsonora.santoro_core"
+}
+
+dependencies {
+    androidX()
+    daggerHilt()
+    test()
+}

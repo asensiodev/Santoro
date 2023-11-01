@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Santoro</string>
+
+    <!-- Splash Screen -->
+    <string name="splash_screen_text">Santoro</string>
+
+</resources>
