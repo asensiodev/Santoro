@@ -21,9 +21,9 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 NavHost(
                     navController = navController,
-                    startDestination = Route.LOGIN
+                    startDestination = Route.WELCOME
                 ) {
-                    composable(Route.LOGIN) {
+                    composable(Route.WELCOME) {
                         LoginScreen(onNavigate = navController::navigate)
                     }
                     composable(Route.MOVIE_LIST) {
