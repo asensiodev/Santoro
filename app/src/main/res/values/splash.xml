@@ -2,8 +2,8 @@
 <resources>
     <style name="Theme.CustomSplashScreenTheme" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/splash_screen_light_background</item>
-        <item name="windowSplashScreenAnimationDuration">3000</item>
-        <item name="windowSplashScreenAnimatedIcon">@raw/santoro_app_icon</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/santoro_animated_icon</item>
         <item name="postSplashScreenTheme">@style/Theme.Santoro</item>
     </style>
 </resources>
+<!-- TODO: Create dark resource for splash -->
