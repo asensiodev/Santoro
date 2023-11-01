@@ -1,4 +1,4 @@
-package com.noirsonora.santoro.ui.theme
+package com.noirsonora.core_ui.ui.theme
 
 import android.app.Activity
 import android.os.Build
@@ -16,7 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.noirsonora.core_ui.Dimensions
-import com.noirsonora.core_ui.LocalSpacing
+import com.noirsonora.core_ui.LocalDimensions
 
 private val LightColorScheme = lightColorScheme(
     primary = md_theme_light_primary,
@@ -87,7 +87,7 @@ private val DarkColorScheme = darkColorScheme(
 fun SantoroTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -108,7 +108,7 @@ fun SantoroTheme(
         }
     }
 
-    CompositionLocalProvider(LocalSpacing provides Dimensions()) {
+    CompositionLocalProvider(LocalDimensions provides Dimensions()) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = Typography,
