@@ -33,13 +33,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import com.noirsonora.core.navigation.Route
+import com.noirsonora.core.util.UiEvent
 import com.noirsonora.core_ui.LocalDimensions
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun WelcomeScreen(
-
+    onNavigate: (UiEvent.Navigate) -> Unit
 ) {
     val pages = listOf(
         OnboardingPage.FirstPage,
@@ -60,7 +61,8 @@ fun WelcomeScreen(
             PagerScreen(
                 onBoardingPage = pages[position],
                 pagerState = pagerState,
-                pages = pages
+                pages = pages,
+                onNavigate = {onNavigate(UiEvent.Navigate(Route.LOGIN))}
             )
         }
     }
@@ -72,7 +74,8 @@ fun WelcomeScreen(
 fun PagerScreen(
     onBoardingPage: OnboardingPage,
     pagerState: PagerState,
-    pages: List<OnboardingPage>
+    pages: List<OnboardingPage>,
+    onNavigate: (UiEvent.Navigate) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -109,7 +112,7 @@ fun PagerScreen(
         )
         PageIndicator(pages, pagerState)
         FinishButton(modifier = Modifier, pagerState = pagerState) {
-
+            onNavigate(UiEvent.Navigate(Route.LOGIN))
         }
     }
 }
@@ -180,9 +183,9 @@ fun FinishButton(
     }
 }
 
-@Composable
+/*@Composable
 @Preview
 fun WelcomeScreenPreview() {
     WelcomeScreen()
-}
+}*/
 

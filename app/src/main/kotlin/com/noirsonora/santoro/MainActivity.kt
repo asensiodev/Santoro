@@ -25,7 +25,7 @@ class MainActivity : ComponentActivity() {
                     startDestination = Route.WELCOME
                 ) {
                     composable(Route.WELCOME) {
-                        WelcomeScreen()
+                        WelcomeScreen(onNavigate = navController::navigate)
                     }
                     composable(Route.LOGIN) {
                         LoginScreen(onNavigate = navController::navigate)
