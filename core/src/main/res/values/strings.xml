@@ -1,7 +1,19 @@
 <resources>
     <string name="app_name">Santoro</string>
 
-    <!-- Splash Screen -->
-    <string name="splash_screen_text">Santoro</string>
+    <!-- ONBOARDING -->
+    <string name="onboarding_image_content_description">Onboarding image</string>
+    <!-- First screen -->
+    <string name="onboarding_first_screen_title">Browse</string>
+    <string name="onboarding_first_screen_description">Browse the movie database</string>
+
+    <!-- Second screen -->
+    <string name="onboarding_second_screen_title">Plan</string>
+    <string name="onboarding_second_screen_description">Save movies to watch</string>
+
+    <!-- Third screen -->
+    <string name="onboarding_third_screen_title">Organize</string>
+    <string name="onboarding_third_screen_description">Mark movies as watched</string>
+    <string name="onboarding_third_screen_button">Let\'s go!</string>
 
 </resources>

@@ -15,6 +15,9 @@ object AndroidX {
 
     private const val splashScreenVersion = "1.0.1"
     const val splashScreen = "androidx.core:core-splashscreen:$splashScreenVersion"
+
+    private const val dataStoreVersion = "1.0.0"
+    const val dataStore = "androidx.datastore:datastore-preferences:$dataStoreVersion"
 }
 
 fun DependencyHandler.androidX() {
@@ -22,4 +25,5 @@ fun DependencyHandler.androidX() {
     implementation(AndroidX.appCompat)
     implementation(AndroidX.lifecycleRuntime)
     implementation(AndroidX.splashScreen)
+    implementation(AndroidX.dataStore)
 }

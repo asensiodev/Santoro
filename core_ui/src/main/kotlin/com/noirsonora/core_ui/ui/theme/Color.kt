@@ -1,4 +1,4 @@
-package com.noirsonora.santoro.ui.theme
+package com.noirsonora.core_ui.ui.theme
 import androidx.compose.ui.graphics.Color
 
 val md_theme_light_primary = Color(0xFF215FA7)

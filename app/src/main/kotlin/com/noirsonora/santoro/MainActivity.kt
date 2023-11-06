@@ -9,8 +9,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.noirsonora.core.navigation.Route
 import com.noirsonora.login_presentation.LoginScreen
+import com.noirsonora.onboarding_presentation.welcome.WelcomeScreen
 import com.noirsonora.santoro.navigation.navigate
-import com.noirsonora.santoro.ui.theme.SantoroTheme
+import com.noirsonora.core_ui.ui.theme.SantoroTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,13 +22,13 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 NavHost(
                     navController = navController,
-                    startDestination = Route.LOGIN
+                    startDestination = Route.WELCOME
                 ) {
+                    composable(Route.WELCOME) {
+                        WelcomeScreen(onNavigate = navController::navigate)
+                    }
                     composable(Route.LOGIN) {
                         LoginScreen(onNavigate = navController::navigate)
-                    }
-                    composable(Route.MOVIE_LIST) {
-
                     }
                 }
             }
