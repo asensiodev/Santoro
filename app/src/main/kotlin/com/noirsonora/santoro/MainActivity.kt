@@ -12,6 +12,7 @@ import com.noirsonora.core_ui.ui.theme.SantoroTheme
 import com.noirsonora.login_presentation.LoginScreen
 import com.noirsonora.onboarding_presentation.welcome.WelcomeScreen
 import com.noirsonora.santoro.navigation.navigate
+import com.noirsonora.santoro.navigation.navigateAndPopBackstack
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,7 +26,7 @@ class MainActivity : ComponentActivity() {
                     startDestination = Route.WELCOME
                 ) {
                     composable(Route.WELCOME) {
-                        WelcomeScreen(onNavigate = navController::navigate)
+                        WelcomeScreen(onNavigate = navController::navigateAndPopBackstack)
                     }
                     composable(Route.LOGIN) {
                         LoginScreen(onNavigate = navController::navigate)
