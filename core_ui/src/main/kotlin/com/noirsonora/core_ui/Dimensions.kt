@@ -13,7 +13,7 @@ data class Dimensions(
     val spaceLarge: Dp = 32.dp,
     val spaceExtraLarge: Dp = 40.dp,
 
-    // Siize
+    // Size
     val sizeExtraSmall: Dp = 4.dp,
     val sizeSmall: Dp = 8.dp,
     val sizeMedium: Dp = 16.dp,
