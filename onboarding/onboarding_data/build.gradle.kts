@@ -1,3 +1,4 @@
+import versions.androidX
 import versions.daggerHilt
 import versions.test
 
@@ -14,6 +15,8 @@ android {
 
 dependencies {
     //implementation(project(Modules.core))
+    implementation(project(Modules.onboardingDomain))
+    androidX()
     daggerHilt()
     test()
 }
