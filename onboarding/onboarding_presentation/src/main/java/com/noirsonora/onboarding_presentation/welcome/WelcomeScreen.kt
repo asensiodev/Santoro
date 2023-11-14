@@ -33,6 +33,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import com.noirsonora.core.navigation.Route
 import com.noirsonora.core.util.UiEvent
 import com.noirsonora.core_ui.LocalDimensions
@@ -59,23 +60,39 @@ fun WelcomeScreen(
             verticalAlignment = Alignment.Top
         ) { position ->
             PagerScreen(
-                onBoardingPage = pages[position],
-                pagerState = pagerState,
-                pages = pages,
-                onNavigate = {onNavigate(UiEvent.Navigate(Route.LOGIN))}
+                onBoardingPage = pages[position]
             )
         }
+        Row(
+            modifier = Modifier
+                .wrapContentHeight()
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(LocalDimensions.current.spaceExtraLarge),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.Bottom
+        ) {
+            repeat(pages.count()) { iteration ->
+                val color =
+                    if (pagerState.currentPage == iteration) Color.DarkGray else Color.LightGray
+                Box(
+                    modifier = Modifier
+                        .padding(LocalDimensions.current.default)
+                        .clip(CircleShape)
+                        .background(color)
+                        .size(LocalDimensions.current.sizeMedium)
+                )
+            }
+        }
+        FinishButton(modifier = Modifier, pagerState = pagerState) {
+            onNavigate(UiEvent.Navigate(Route.LOGIN))
+        }
     }
-
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PagerScreen(
-    onBoardingPage: OnboardingPage,
-    pagerState: PagerState,
-    pages: List<OnboardingPage>,
-    onNavigate: (UiEvent.Navigate) -> Unit
+    onBoardingPage: OnboardingPage
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -110,40 +127,6 @@ fun PagerScreen(
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
         )
-        PageIndicator(pages, pagerState)
-        FinishButton(modifier = Modifier, pagerState = pagerState) {
-            onNavigate(UiEvent.Navigate(Route.LOGIN))
-        }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun PageIndicator(
-    pages: List<OnboardingPage>,
-    pagerState: PagerState
-) {
-    Row(
-        modifier = Modifier
-            .wrapContentHeight()
-            .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(LocalDimensions.current.spaceExtraLarge),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.Bottom
-    ) {
-        repeat(pages.count()) { iteration ->
-            val color =
-                if (pagerState.currentPage == iteration) Color.DarkGray else Color.LightGray
-            Box(
-                modifier = Modifier
-                    .padding(LocalDimensions.current.default)
-                    .clip(CircleShape)
-                    .background(color)
-                    .size(LocalDimensions.current.sizeMedium)
-            )
-        }
-
     }
 }
 
@@ -154,18 +137,21 @@ fun FinishButton(
     pagerState: PagerState,
     onClick: () -> Unit
 ) {
+    val lastPageIndex = 2
     Row(
         modifier = modifier
-            .padding(horizontal = LocalDimensions.current.spaceExtraLarge),
+            .padding(horizontal = LocalDimensions.current.spaceExtraLarge)
+            .fillMaxWidth(),
         verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.Center
+        horizontalArrangement = Arrangement.End
     ) {
         AnimatedVisibility(
             modifier = Modifier
-                .wrapContentWidth(),
-            visible = pagerState.currentPage == 2,
+                .fillMaxWidth(),
+            visible = pagerState.currentPage == lastPageIndex
         ) {
             Button(
+                modifier = Modifier.wrapContentWidth(),
                 onClick = onClick,
                 colors = ButtonDefaults.buttonColors(
                     contentColor = MaterialTheme.colorScheme.primary
@@ -183,9 +169,26 @@ fun FinishButton(
     }
 }
 
-/*@Composable
+@Composable
 @Preview
-fun WelcomeScreenPreview() {
-    WelcomeScreen()
-}*/
+fun FirstOnBoardingScreenPreview() {
+    Column(modifier = Modifier.fillMaxSize()) {
+        PagerScreen(onBoardingPage = OnboardingPage.FirstPage)
+    }
+}
 
+@Composable
+@Preview
+fun SecondOnBoardingScreenPreview() {
+    Column(modifier = Modifier.fillMaxSize()) {
+        PagerScreen(onBoardingPage = OnboardingPage.SecondPage)
+    }
+}
+
+@Composable
+@Preview
+fun ThirdOnBoardingScreenPreview() {
+    Column(modifier = Modifier.fillMaxSize()) {
+        PagerScreen(onBoardingPage = OnboardingPage.ThirdPage)
+    }
+}
