@@ -17,9 +17,9 @@ class OnboardingDataStoreRepositoryImpl(context: Context) : OnboardingRepository
 
     private val dataStore = context.dataStore
 
-    override suspend fun saveOnboardingState(onboardingCompleted: Boolean) {
+    override suspend fun saveOnboardingState(completed: Boolean) {
         dataStore.edit { preferences ->
-            preferences[ONBOARDING_COMPLETED] = onboardingCompleted
+            preferences[ONBOARDING_COMPLETED] = completed
         }
     }
 
