@@ -10,10 +10,12 @@ import androidx.navigation.compose.rememberNavController
 import com.noirsonora.core.navigation.Route
 import com.noirsonora.core_ui.ui.theme.SantoroTheme
 import com.noirsonora.login_presentation.LoginScreen
-import com.noirsonora.onboarding_presentation.welcome.WelcomeScreen
+import com.noirsonora.onboarding_presentation.welcome.OnboardingScreen
 import com.noirsonora.santoro.navigation.navigate
 import com.noirsonora.santoro.navigation.navigateAndPopBackstack
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -26,7 +28,7 @@ class MainActivity : ComponentActivity() {
                     startDestination = Route.WELCOME
                 ) {
                     composable(Route.WELCOME) {
-                        WelcomeScreen(onNavigate = navController::navigateAndPopBackstack)
+                        OnboardingScreen(onNavigate = navController::navigateAndPopBackstack)
                     }
                     composable(Route.LOGIN) {
                         LoginScreen(onNavigate = navController::navigate)

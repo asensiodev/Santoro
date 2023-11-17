@@ -34,14 +34,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.noirsonora.core.navigation.Route
 import com.noirsonora.core.util.UiEvent
 import com.noirsonora.core_ui.LocalDimensions
+import com.noirsonora.onboarding_presentation.welcome.viewmodel.OnboardingViewModel
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun WelcomeScreen(
-    onNavigate: (UiEvent.Navigate) -> Unit
+fun OnboardingScreen(
+    onNavigate: (UiEvent.Navigate) -> Unit,
+    onboardingViewModel: OnboardingViewModel = hiltViewModel()
 ) {
     val pages = listOf(
         OnboardingPage.FirstPage,
@@ -84,7 +87,11 @@ fun WelcomeScreen(
                 )
             }
         }
-        FinishButton(modifier = Modifier, pagerState = pagerState) {
+        FinishButton(
+            modifier = Modifier,
+            pagerState = pagerState
+        ) {
+            onboardingViewModel.saveOnboardingState(completed = true)
             onNavigate(UiEvent.Navigate(Route.LOGIN))
         }
     }

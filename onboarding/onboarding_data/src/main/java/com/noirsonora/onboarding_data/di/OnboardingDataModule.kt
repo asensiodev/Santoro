@@ -14,8 +14,8 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object OnboardingDataModule {
 
-    @Provides
     @Singleton
+    @Provides
     fun provideOnboardingRepository(
         @ApplicationContext context: Context
     ): OnboardingRepository = OnboardingDataStoreRepositoryImpl(context = context)
