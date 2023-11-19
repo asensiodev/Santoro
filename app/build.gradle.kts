@@ -58,6 +58,7 @@ dependencies {
     implementation(project(Modules.coreUi))
     implementation(project(Modules.onboardingPresentation))
     implementation(project(Modules.onboardingData))
+    implementation(project(Modules.onboardingDomain))
     implementation(project(Modules.loginPresentation))
     androidX()
     compose()
