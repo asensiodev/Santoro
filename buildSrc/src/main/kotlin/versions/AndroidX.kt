@@ -13,6 +13,10 @@ object AndroidX {
     private const val lifecycleRuntimeVersion = "2.6.2"
     const val lifecycleRuntime = "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleRuntimeVersion"
 
+    private const val lifecycleComposeVersion = "2.6.2"
+    const val lifecycleCompose = "androidx.lifecycle:lifecycle-runtime-compose:$lifecycleComposeVersion"
+
+
     private const val splashScreenVersion = "1.0.1"
     const val splashScreen = "androidx.core:core-splashscreen:$splashScreenVersion"
 
@@ -24,6 +28,7 @@ fun DependencyHandler.androidX() {
     implementation(AndroidX.coreKtx)
     implementation(AndroidX.appCompat)
     implementation(AndroidX.lifecycleRuntime)
+    implementation(AndroidX.lifecycleCompose)
     implementation(AndroidX.splashScreen)
     implementation(AndroidX.dataStore)
 }
