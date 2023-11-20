@@ -1,7 +1,7 @@
 package com.noirsonora.core.navigation
 
 object Route {
-    const val WELCOME = "welcome"
+    const val ONBOARDING = "onboarding"
     const val LOGIN = "login"
     const val MOVIE_LIST = "movie_list"
     const val MOVIE_DETAIL = "movie_detail"
