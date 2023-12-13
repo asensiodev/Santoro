@@ -19,7 +19,7 @@ class SplashViewModel @Inject constructor(
     private val _isLoading: MutableState<Boolean> = mutableStateOf(true)
     val isLoading: State<Boolean> = _isLoading
 
-    private val _startDestination: MutableState<String> = mutableStateOf(Route.WELCOME)
+    private val _startDestination: MutableState<String> = mutableStateOf(Route.ONBOARDING)
     val startDestination: State<String> = _startDestination
 
     init {
@@ -28,7 +28,7 @@ class SplashViewModel @Inject constructor(
                 if (completed) {
                     _startDestination.value = Route.LOGIN
                 } else {
-                    _startDestination.value = Route.WELCOME
+                    _startDestination.value = Route.ONBOARDING
                 }
                 _isLoading.value = false
             }

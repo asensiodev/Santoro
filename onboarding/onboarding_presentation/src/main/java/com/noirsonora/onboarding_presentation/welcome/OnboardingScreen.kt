@@ -113,7 +113,6 @@ fun PagerScreen(
             painter = painterResource(
                 id = onBoardingPage.image
             ),
-            // TODO(): Review stringResource
             contentDescription = "Onboarding image"
         )
         Text(
