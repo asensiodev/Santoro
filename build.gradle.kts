@@ -8,7 +8,6 @@ buildscript {
         classpath(Build.hiltAndroidGradlePlugin)
         classpath(Build.kotlinGradlePlugin)
         classpath(Build.androidBuildTools)
-        classpath(Build.klintPlugin)
     }
 }
 
