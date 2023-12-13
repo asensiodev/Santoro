@@ -1,6 +1,8 @@
 object Modules {
     const val app = ":app"
 
+    const val landing = ":landing"
+
     const val onboardingData = ":onboarding:onboarding_data"
     const val onboardingDomain = ":onboarding:onboarding_domain"
     const val onboardingPresentation = ":onboarding:onboarding_presentation"

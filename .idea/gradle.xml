@@ -15,6 +15,7 @@
             <option value="$PROJECT_DIR$/buildSrc" />
             <option value="$PROJECT_DIR$/core" />
             <option value="$PROJECT_DIR$/core_ui" />
+            <option value="$PROJECT_DIR$/landing" />
             <option value="$PROJECT_DIR$/login" />
             <option value="$PROJECT_DIR$/login/login_data" />
             <option value="$PROJECT_DIR$/login/login_domain" />

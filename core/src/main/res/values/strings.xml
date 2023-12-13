@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">Santoro</string>
 
+    <!-- LANDING SCREEN -->
+    <string name="landing_button">Access</string>
+
     <!-- ONBOARDING -->
     <string name="onboarding_image_content_description">Onboarding image</string>
     <!-- First screen -->
