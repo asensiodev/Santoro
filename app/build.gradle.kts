@@ -55,11 +55,8 @@ android {
 
 dependencies {
     implementation(project(Modules.core))
-    implementation(project(Modules.core))
     implementation(project(Modules.coreUi))
-    implementation(project(Modules.landing))
     implementation(project(Modules.onboardingPresentation))
-    implementation(project(Modules.onboardingData))
     implementation(project(Modules.onboardingDomain))
     implementation(project(Modules.loginPresentation))
     androidX()
