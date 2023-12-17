@@ -22,6 +22,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,6 +37,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import com.noirsonora.core.util.UiEvent
 import com.noirsonora.core_ui.LocalDimensions
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,9 +50,11 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisibility by remember { mutableStateOf(false) }
 
-    onScreenReady()
+    LaunchedEffect(key1 = true) {
+        delay(1.seconds)
+        onScreenReady()
+    }
 
-    onScreenReady()
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -128,5 +133,5 @@ fun LoginScreen(
 @Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {
-    LoginScreen (onScreenReady = {},onNavigate = {})
+    LoginScreen(onScreenReady = {}, onNavigate = {})
 }
