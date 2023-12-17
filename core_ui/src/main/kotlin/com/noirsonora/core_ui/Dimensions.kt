@@ -9,7 +9,7 @@ data class Dimensions(
     val default: Dp = 2.dp,
     val spaceExtraSmall: Dp = 4.dp,
     val spaceSmall: Dp = 8.dp,
-    val spaceMedium: Dp = 20.dp,
+    val spaceMedium: Dp = 16.dp,
     val spaceLarge: Dp = 32.dp,
     val spaceExtraLarge: Dp = 40.dp,
 
@@ -18,7 +18,8 @@ data class Dimensions(
     val sizeSmall: Dp = 8.dp,
     val sizeMedium: Dp = 16.dp,
     val sizeLarge: Dp = 32.dp,
-    val sizeExtraLarge: Dp = 40.dp
+    val sizeExtraLarge: Dp = 48.dp,
+    val sizeOneHundred: Dp = 100.dp
 
 )
 val LocalDimensions = compositionLocalOf { Dimensions() }

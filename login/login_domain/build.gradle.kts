@@ -14,7 +14,7 @@ android {
 }
 
 dependencies {
-    //implementation(project(Modules.core))
+    implementation(project(Modules.core))
     androidX()
     daggerHilt()
     test()
