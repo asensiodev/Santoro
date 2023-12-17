@@ -17,7 +17,7 @@ object AndroidX {
     const val lifecycleCompose = "androidx.lifecycle:lifecycle-runtime-compose:$lifecycleComposeVersion"
 
 
-    private const val splashScreenVersion = "1.0.1"
+    private const val splashScreenVersion = "1.0.0-beta02"
     const val splashScreen = "androidx.core:core-splashscreen:$splashScreenVersion"
 
     private const val dataStoreVersion = "1.0.0"

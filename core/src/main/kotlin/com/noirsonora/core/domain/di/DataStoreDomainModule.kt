@@ -12,7 +12,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-class DataStoreDomainModule {
+object DataStoreDomainModule {
 
     @Provides
     @Singleton

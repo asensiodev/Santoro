@@ -19,10 +19,13 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
+    private var keepShowingSplashScreen = true
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        installSplashScreen()
+        installSplashScreen().setKeepOnScreenCondition {
+            keepShowingSplashScreen
+        }
         setContent {
             SantoroTheme {
                 val navController = rememberNavController()
@@ -32,7 +35,12 @@ class MainActivity : ComponentActivity() {
                         startDestination = Route.LOGIN
                     ) {
                         composable(Route.LOGIN) {
-                            LoginScreen(onNavigate = navController::navigate)
+                            LoginScreen(
+                                onScreenReady = {
+                                    keepShowingSplashScreen = false
+                                },
+                                onNavigate = navController::navigate
+                            )
                         }
                         composable(Route.ONBOARDING) {
                             OnboardingScreen(onNavigate = navController::navigateAndPopBackstack)

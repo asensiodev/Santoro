@@ -6,6 +6,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineDispatcher
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -13,9 +14,10 @@ object OnboardingDomainModule {
 
     @Provides
     fun provideOnboardingUseCase(
-        dataStoreRepository: DataStoreRepository
+        dataStoreRepository: DataStoreRepository,
+        ioDispatcher: CoroutineDispatcher
     ): SaveOnboardingState {
-        return SaveOnboardingState(dataStoreRepository)
+        return SaveOnboardingState(dataStoreRepository, ioDispatcher)
     }
 
 }

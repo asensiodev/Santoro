@@ -1,4 +1,4 @@
-package com.noirsonora.onboarding_domain.use_case
+package com.noirsonora.login_domain.use_case
 
 import com.noirsonora.core.domain.DataStoreRepository
 import kotlinx.coroutines.flow.Flow
