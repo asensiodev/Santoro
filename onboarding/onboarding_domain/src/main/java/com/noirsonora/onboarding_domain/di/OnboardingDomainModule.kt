@@ -1,5 +1,6 @@
 package com.noirsonora.onboarding_domain.di
 
+import com.noirsonora.core.dagger_coroutines.IoDispatcher
 import com.noirsonora.core.domain.UserDataRepository
 import com.noirsonora.onboarding_domain.use_case.SaveOnboardingState
 import dagger.Module
@@ -15,7 +16,7 @@ object OnboardingDomainModule {
     @Provides
     fun provideOnboardingUseCase(
         userDataRepository: UserDataRepository,
-        ioDispatcher: CoroutineDispatcher
+        @IoDispatcher ioDispatcher: CoroutineDispatcher
     ): SaveOnboardingState {
         return SaveOnboardingState(userDataRepository, ioDispatcher)
     }
