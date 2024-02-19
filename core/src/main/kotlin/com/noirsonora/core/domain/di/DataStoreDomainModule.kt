@@ -2,7 +2,7 @@ package com.noirsonora.core.domain.di
 
 import android.content.Context
 import com.noirsonora.core.data.DataStoreRepositoryImpl
-import com.noirsonora.core.domain.DataStoreRepository
+import com.noirsonora.core.domain.UserDataRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -18,7 +18,7 @@ object DataStoreDomainModule {
     @Singleton
     fun provideDataStoreRepository(
         @ApplicationContext context: Context
-    ): DataStoreRepository {
+    ): UserDataRepository {
         return DataStoreRepositoryImpl(context = context)
     }
 

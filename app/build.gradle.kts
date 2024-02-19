@@ -59,6 +59,7 @@ dependencies {
     implementation(project(Modules.onboardingPresentation))
     implementation(project(Modules.onboardingDomain))
     implementation(project(Modules.loginPresentation))
+    implementation(project(Modules.loginDomain))
     androidX()
     compose()
     daggerHilt()
