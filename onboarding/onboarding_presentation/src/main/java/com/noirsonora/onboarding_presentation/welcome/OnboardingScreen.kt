@@ -91,7 +91,7 @@ fun OnboardingScreen(
             modifier = Modifier,
             pagerState = pagerState
         ) {
-            onboardingViewModel.saveOnboardingState(completed = true)
+            onboardingViewModel.saveOnboardingCompleted(completed = true)
             onNavigate(UiEvent.Navigate(Route.LOGIN))
         }
     }
