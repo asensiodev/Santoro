@@ -40,7 +40,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.noirsonora.core.util.UiEvent
 import com.noirsonora.core_ui.LocalDimensions
-import com.noirsonora.login_presentation.viewmodel.LoginEvent
 import com.noirsonora.login_presentation.viewmodel.LoginViewModel
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds

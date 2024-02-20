@@ -176,7 +176,7 @@ fun FinishButton(
 }
 
 @Composable
-@Preview
+@Preview(showBackground = true)
 fun FirstOnBoardingScreenPreview() {
     Column(modifier = Modifier.fillMaxSize()) {
         PagerScreen(onBoardingPage = OnboardingPage.FirstPage)
@@ -184,7 +184,7 @@ fun FirstOnBoardingScreenPreview() {
 }
 
 @Composable
-@Preview
+@Preview(showBackground = true)
 fun SecondOnBoardingScreenPreview() {
     Column(modifier = Modifier.fillMaxSize()) {
         PagerScreen(onBoardingPage = OnboardingPage.SecondPage)
@@ -192,7 +192,7 @@ fun SecondOnBoardingScreenPreview() {
 }
 
 @Composable
-@Preview
+@Preview(showBackground = true)
 fun ThirdOnBoardingScreenPreview() {
     Column(modifier = Modifier.fillMaxSize()) {
         PagerScreen(onBoardingPage = OnboardingPage.ThirdPage)
