@@ -23,6 +23,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,21 +41,29 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.noirsonora.core.util.UiEvent
 import com.noirsonora.core_ui.LocalDimensions
+import com.noirsonora.login_presentation.viewmodel.LoginUiState
 import com.noirsonora.login_presentation.viewmodel.LoginViewModel
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    onScreenReady: () -> Unit,
     loginViewModel: LoginViewModel = hiltViewModel(),
+) {
+    val uiState = loginViewModel.uiState.collectAsStateWithLifecycle()
+    Login(onScreenReady = {}, onNavigate = {})
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun Login(
+    onScreenReady: () -> Unit,
     onNavigate: (UiEvent.Navigate) -> Unit
 ) {
     var username by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var passwordVisibility by remember { mutableStateOf(false) }
-    val uiState = loginViewModel.uiState.collectAsStateWithLifecycle()
+
 
     LaunchedEffect(key1 = true) {
         delay(1.seconds)
@@ -132,12 +141,11 @@ fun LoginScreen(
         }
 
     }
-
-
 }
+
 
 @Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {
-    LoginScreen(onScreenReady = {}, onNavigate = {})
+    Login(onScreenReady = {}, onNavigate = {})
 }
