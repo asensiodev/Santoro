@@ -42,6 +42,7 @@ android {
 }
 
 dependencies {
+    implementation(projects.core.stringResources)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -63,3 +64,8 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }
+
+tasks.named("preBuild")
+    .configure {
+        dependsOn(":copyGitHooks")
+    }
