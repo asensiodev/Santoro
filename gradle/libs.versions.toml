@@ -30,3 +30,6 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 
+# Quality Plugins
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version = "12.1.2" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.23.7" }

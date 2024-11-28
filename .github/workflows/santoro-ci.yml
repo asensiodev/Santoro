@@ -34,6 +34,9 @@ jobs:
       - name: Lint
         run: ./gradlew lint --no-daemon
 
+      - name: Static analysis (Ktlint & Detekt)
+        run: ./gradlew ktlintCheck detekt --parallel
+
       - name: Build with Gradle
         run: ./gradlew build
 

@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+# Exit immediately if a command exits with a non-zero status
+set -euo pipefail
+
+# Display error and exit
+error_exit() {
+    echo "Error: $1" >&2
+    echo "Please fix the issues before committing." >&2
+    exit 1
+}
+
+# Get list of staged Kotlin files
+echo "Checking for Kotlin files in staged changes..."
+CHANGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.kt$|\.kts$' || true)
+
+if [ -z "$CHANGED_FILES" ]; then
+    echo "No Kotlin files changed. Skipping detekt and ktlint checks."
+    exit 0
+fi
+
+echo "Kotlin changed files:"
+echo "$CHANGED_FILES"
+echo ""
+
+### Detekt ###
+echo "Running detekt check..."
+DETETK_OUTPUT=$(mktemp)
+./gradlew detekt > "$DETETK_OUTPUT" 2>&1 || {
+    cat "$DETETK_OUTPUT"
+    rm -f "$DETETK_OUTPUT"
+    echo "***********************************************"
+    echo "                Detekt failed                  "
+    echo " Please fix the above issues before committing "
+    echo "***********************************************"
+    error_exit "Detekt analysis failed."
+}
+echo "All Kotlin files passed Detekt!"
+rm -f "$DETETK_OUTPUT"
+echo ""
+
+### KtLint ###
+echo "Running ktlintCheck on changed files..."
+./gradlew ktlintCheck -Pfiles="$CHANGED_FILES" > /dev/null 2>&1 || {
+
+    echo "ktlintCheck found issues. Attempting to auto-format..."
+    ./gradlew ktlintFormat -Pfiles="$CHANGED_FILES"
+
+    echo "Updating Git staging area with formatted files..."
+    git add $CHANGED_FILES
+
+    echo "Re-running ktlintCheck..."
+    ./gradlew ktlintCheck -Pfiles="$CHANGED_FILES" > /dev/null 2>&1 || {
+        echo "************************************************"
+        echo "   ktlintFormat could not resolve all issues.   "
+        echo "   Please fix them manually before committing.  "
+        echo "************************************************"
+        error_exit "ktlintCheck failed after auto-formatting."
+    }
+    echo "All ktlint issues resolved by ktlintFormat!"
+}
+
+echo "All checks passed."
+exit 0
