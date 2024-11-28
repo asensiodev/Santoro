@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Santoro"
 include(":app")
+include(":core:testing")
