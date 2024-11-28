@@ -1,0 +1,21 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+ij_kotlin_allow_trailing_comma = true
+ij_kotlin_allow_trailing_comma_on_call_site = true
+ij_kotlin_keep_blank_lines_in_declarations = 1
+ij_kotlin_keep_blank_lines_in_code = 1
+indent_style = space
+indent_size = 4
+ktlint_function_naming_ignore_when_annotated_with = Composable
+ktlint_standard_blank-line-before-declaration = disabled
+max_line_length = 100
+
+[**/test/**/*Test.kt]
+max_line_length = 120
