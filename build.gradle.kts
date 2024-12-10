@@ -37,7 +37,8 @@ detekt {
     val filesProp = project.findProperty("detektFiles") as String?
     if (!filesProp.isNullOrBlank()) {
         val fileList =
-            filesProp.split(",")
+            filesProp
+                .split(",")
                 .filter { it.isNotBlank() }
                 .map { file(it) }
         source.setFrom(fileList)
@@ -50,7 +51,8 @@ tasks.register("copyGitHooks") {
     doLast {
         val sourceDir = file("hooks")
         val targetDir = file(".git/hooks")
-        sourceDir.listFiles()
+        sourceDir
+            .listFiles()
             ?.forEach { sourceFile ->
                 val targetFile = File(targetDir, sourceFile.name)
                 if (!targetFile.exists() ||
@@ -66,7 +68,8 @@ tasks.register("copyGitHooks") {
             }
     }
     doLast {
-        file(".git/hooks/").walk()
+        file(".git/hooks/")
+            .walk()
             .forEach { file ->
                 if (file.isFile) {
                     try {
