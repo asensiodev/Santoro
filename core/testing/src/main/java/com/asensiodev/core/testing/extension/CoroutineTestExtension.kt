@@ -10,7 +10,9 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class CoroutineTestExtension : BeforeEachCallback, AfterEachCallback {
+class CoroutineTestExtension :
+    BeforeEachCallback,
+    AfterEachCallback {
     private val testDispatcher = UnconfinedTestDispatcher()
 
     override fun beforeEach(context: ExtensionContext) {
