@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.asensiodev.core.designsystem.PreviewContent
 import com.asensiodev.core.designsystem.theme.SantoroTheme
+import com.asensiodev.core.designsystem.theme.SantoroTypography
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -41,6 +42,7 @@ fun Greeting(
     Text(
         text = "Hello $name!",
         modifier = modifier,
+        fontStyle = SantoroTypography.headlineLarge.fontStyle,
     )
 }
 
