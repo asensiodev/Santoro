@@ -52,6 +52,7 @@ android {
 }
 
 dependencies {
+    implementation(projects.core.designSystem)
     implementation(projects.core.stringResources)
 
     implementation(platform(libs.firebase.bom))

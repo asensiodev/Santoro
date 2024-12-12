@@ -11,7 +11,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.asensiodev.santoro.ui.theme.SantoroTheme
+import com.asensiodev.core.designsystem.PreviewContent
+import com.asensiodev.core.designsystem.theme.SantoroTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -46,7 +47,7 @@ fun Greeting(
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    SantoroTheme {
+    PreviewContent {
         Greeting("Android")
     }
 }

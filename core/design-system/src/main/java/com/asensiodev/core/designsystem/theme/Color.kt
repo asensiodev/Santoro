@@ -1,4 +1,4 @@
-package com.asensiodev.santoro.ui.theme
+package com.asensiodev.core.designsystem.theme
 
 import androidx.compose.ui.graphics.Color
 

@@ -19,7 +19,6 @@ ksp = "2.1.0-1.0.29"
 hilt = "2.52"
 lifecycleRuntimeKtx = "2.8.7"
 
-
 # Testing Versions
 androidJunit = "1.2.1"
 compose-test = "1.7.5"
@@ -32,6 +31,8 @@ kover = "0.8.3"
 mockk = "1.13.13"
 paparazzi = "1.3.5"
 turbine = "1.2.0"
+appcompat = "1.7.0"
+material = "1.12.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -82,6 +83,8 @@ firebase-bom = { module = "com.google.firebase:firebase-bom", version = "33.7.0"
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
 firebase-remote-config = { module = "com.google.firebase:firebase-config" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 [bundles]
 compose = [
@@ -108,11 +111,11 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+paparazzi = { id = "app.cash.paparazzi", version.ref = "paparazzi" }
 
 # Quality Plugins
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version = "12.1.2" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.23.7" }
-
 
 # Custom Plugins
 convention-android-application = { id = "com.asensiodev.santoro.buildlogic.convention.android-application" }

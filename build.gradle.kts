@@ -14,6 +14,7 @@ plugins {
     alias(libs.plugins.kover)
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.ktlint)
+    alias(libs.plugins.paparazzi) apply false
 }
 
 subprojects {
