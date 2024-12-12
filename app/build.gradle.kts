@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.convention.android.hilt)
     alias(libs.plugins.crashlytics)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.kover)
 }
 
 android {
