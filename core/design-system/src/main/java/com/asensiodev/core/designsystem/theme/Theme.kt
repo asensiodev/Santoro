@@ -105,9 +105,7 @@ val unspecified_scheme =
 @Composable
 fun SantoroTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    content:
-        @Composable()
-        () -> Unit,
+    content: @Composable () -> Unit,
 ) {
     val colorScheme =
         when {
