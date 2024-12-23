@@ -17,6 +17,7 @@ jetbrainsKotlinJvm = "2.1.0"
 kotlin = "2.1.0"
 ksp = "2.1.0-1.0.29"
 hilt = "2.52"
+hilt-navigation-compose = "1.2.0"
 lifecycleRuntimeKtx = "2.8.7"
 uiTextGoogleFonts = "1.7.6"
 
@@ -53,7 +54,18 @@ dagger-hilt = { group = "com.google.dagger", name = "hilt-android", version.ref 
 dagger-hilt-core = { group = "com.google.dagger", name = "hilt-core", version.ref = "dagger-hilt" }
 dagger-hilt-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "dagger-hilt" }
 hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hilt" }
-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hilt" }
+hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hilt-navigation-compose" }
+
+# Retrofit
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version = "2.11.0"}
+
+# Firebase
+firebase-bom = { module = "com.google.firebase:firebase-bom", version = "33.7.0" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
+firebase-remote-config = { module = "com.google.firebase:firebase-config" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -79,14 +91,6 @@ turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
-
-# Firebase
-firebase-bom = { module = "com.google.firebase:firebase-bom", version = "33.7.0" }
-firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
-firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
-firebase-remote-config = { module = "com.google.firebase:firebase-config" }
-androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 [bundles]
 compose = [
