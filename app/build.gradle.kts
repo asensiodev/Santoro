@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.convention.android.hilt)
     alias(libs.plugins.crashlytics)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kover)
 }
 
@@ -24,24 +25,7 @@ android {
     }
 
     buildTypes {
-        debug {
-            applicationIdSuffix = ".debug"
-            isDebuggable = true
-            isMinifyEnabled = false
-            isShrinkResources = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-            )
-        }
         release {
-            isDebuggable = false
-            isMinifyEnabled = false // TODO: Change to true
-            isShrinkResources = false // TODO: Change to true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-            )
             signingConfig = signingConfigs.getByName("release")
         }
     }
@@ -52,8 +36,20 @@ android {
 }
 
 dependencies {
+    implementation(projects.santoro.feature.searchMovies.api)
+    implementation(projects.santoro.feature.searchMovies.impl)
+    implementation(projects.santoro.feature.watchedMovies.api)
+    implementation(projects.santoro.feature.watchedMovies.impl)
+    implementation(projects.santoro.feature.watchlist.api)
+    implementation(projects.santoro.feature.watchlist.impl)
+    implementation(projects.santoro.feature.movieDetail.api)
+    implementation(projects.santoro.feature.movieDetail.impl)
+
     implementation(projects.core.designSystem)
     implementation(projects.core.stringResources)
+
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)

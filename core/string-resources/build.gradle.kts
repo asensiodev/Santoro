@@ -3,5 +3,5 @@ plugins {
 }
 
 android {
-    namespace = "com.asensiodev.santoro.core.string_resources"
+    namespace = "com.asensiodev.santoro.core.stringresources"
 }
