@@ -9,4 +9,11 @@ android {
 
 dependencies {
     implementation(projects.feature.searchMovies.api)
+    implementation(projects.core.network)
+    implementation(projects.library.remoteConfig.api)
+
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.gson.converter)
+    implementation(libs.gson)
+    implementation(libs.coil.compose)
 }

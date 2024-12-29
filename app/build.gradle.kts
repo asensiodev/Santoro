@@ -44,9 +44,12 @@ dependencies {
     implementation(projects.santoro.feature.watchlist.impl)
     implementation(projects.santoro.feature.movieDetail.api)
     implementation(projects.santoro.feature.movieDetail.impl)
+    implementation(projects.santoro.library.remoteConfig.api)
+    implementation(projects.santoro.library.remoteConfig.impl)
 
     implementation(projects.core.designSystem)
     implementation(projects.core.stringResources)
+    implementation(projects.core.network)
 
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)

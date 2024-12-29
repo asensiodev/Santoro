@@ -15,6 +15,7 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
             dependencies {
                 add("implementation", project(":core:design-system"))
                 add("implementation", project(":core:string-resources"))
+                add("implementation", project(":core:domain"))
 
                 "ksp"(libs.findLibrary("hilt-compiler").get())
                 "implementation"(libs.findLibrary("hilt-navigation-compose").get())

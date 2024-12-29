@@ -5,11 +5,11 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.asensiodev.feature.searchmovies.impl.SearchMoviesScreen
 
 @Composable
 fun SantoroNavHost(
     navController: NavHostController,
+    navigationScreens: NavigationScreens,
     modifier: Modifier = Modifier,
 ) {
     NavHost(
@@ -18,7 +18,7 @@ fun SantoroNavHost(
         modifier = modifier,
     ) {
         composable<NavRoutes.SearchMovies> {
-            SearchMoviesScreen(
+            navigationScreens.searchMoviesScreen.Screen(
                 onMovieClick = { movieId ->
                     // navController.navigate(NavRoutes.MovieDetail(movieId))
                 },
