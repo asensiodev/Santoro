@@ -1,6 +1,6 @@
-package com.asensiodev.core.domain
+package com.asensiodev.feature.moviedetail.impl.presentation.model
 
-data class Movie(
+data class MovieUi(
     val id: Int,
     val title: String,
     val overview: String,
@@ -9,6 +9,6 @@ data class Movie(
     val popularity: Double,
     val voteAverage: Double,
     val voteCount: Int,
-    val genres: List<Genre>,
-    val productionCountries: List<ProductionCountry>,
+    val genres: List<String>,
+    val productionCountries: List<String>,
 )

@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
@@ -25,15 +26,24 @@ internal class SearchMoviesViewModel
         private val _uiState = MutableStateFlow(SearchMoviesUiState())
         val uiState: StateFlow<SearchMoviesUiState> = _uiState.asStateFlow()
 
+        private val _typedQuery = MutableStateFlow("")
+        val typedQuery = _typedQuery.asStateFlow()
+
+        init {
+            typedQuery
+                .debounce(DELAY)
+                .onEach { query ->
+                    // if (query.isBlank()) {
+                    //    _uiState.update { it.copy(movies = emptyList(), hasResults = false) }
+                    // } else {
+                    fetchMovies(query)
+                    // }
+                }.launchIn(viewModelScope)
+        }
+
         fun updateQuery(query: String) {
+            _typedQuery.value = query
             _uiState.update { it.copy(query = query) }
-
-            if (query.isBlank()) {
-                _uiState.update { it.copy(movies = emptyList(), hasResults = false) }
-                return
-            }
-
-            fetchMovies(query)
         }
 
         private fun fetchMovies(query: String) {
@@ -75,3 +85,5 @@ internal class SearchMoviesViewModel
             }
         }
     }
+
+private const val DELAY: Long = 500

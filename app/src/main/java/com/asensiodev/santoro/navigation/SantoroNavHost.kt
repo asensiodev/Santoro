@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 
 @Composable
 fun SantoroNavHost(
@@ -20,7 +21,7 @@ fun SantoroNavHost(
         composable<NavRoutes.SearchMovies> {
             navigationScreens.searchMoviesScreen.Screen(
                 onMovieClick = { movieId ->
-                    // navController.navigate(NavRoutes.MovieDetail(movieId))
+                    navController.navigate(NavRoutes.MovieDetail(movieId))
                 },
             )
         }
@@ -38,12 +39,11 @@ fun SantoroNavHost(
 //                },
 //            )
 //        }
-//        composable<NavRoutes.MovieDetail> { backStackEntry ->
-//            // TODO(): review this part
-//            val detail = backStackEntry.toRoute<NavRoutes.MovieDetail>()
-//            MovieDetailScreen(
-//                detail.movieId
-//            )
-//        }
+        composable<NavRoutes.MovieDetail> { backStackEntry ->
+            val detail = backStackEntry.toRoute<NavRoutes.MovieDetail>()
+            navigationScreens.movieDetailScreen.Screen(
+                detail.movieId,
+            )
+        }
     }
 }

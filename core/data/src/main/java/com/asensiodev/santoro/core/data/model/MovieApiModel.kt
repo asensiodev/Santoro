@@ -1,8 +1,8 @@
-package com.asensiodev.feature.searchmovies.impl.data.model
+package com.asensiodev.santoro.core.data.model
 
 import com.google.gson.annotations.SerializedName
 
-internal data class SearchMoviesApiModel(
+data class MovieApiModel(
     @SerializedName("id")
     val id: Int,
     @SerializedName("title")
@@ -19,4 +19,8 @@ internal data class SearchMoviesApiModel(
     val voteAverage: Double?,
     @SerializedName("vote_count")
     val voteCount: Int?,
+    @SerializedName("genres")
+    val genres: List<GenreApiModel>?,
+    @SerializedName("production_countries")
+    val productionCountries: List<ProductionCountryApiModel>?,
 )
