@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asensiodev.core.domain.Result
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesUseCase
+import com.asensiodev.feature.searchmovies.impl.presentation.mapper.toUiList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,14 +27,18 @@ internal class SearchMoviesViewModel
 
         fun updateQuery(query: String) {
             _uiState.update { it.copy(query = query) }
-            if (query.isNotBlank()) {
-                fetchMovies(query)
-            } else {
-                _uiState.update { it.copy(movies = emptyList()) }
+
+            if (query.isBlank()) {
+                _uiState.update { it.copy(movies = emptyList(), hasResults = false) }
+                return
             }
+
+            fetchMovies(query)
         }
 
         private fun fetchMovies(query: String) {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+
             viewModelScope.launch {
                 searchMoviesUseCase(query)
                     .onEach { result ->
@@ -41,7 +46,12 @@ internal class SearchMoviesViewModel
                             is Result.Loading -> _uiState.update { it.copy(isLoading = true) }
                             is Result.Success ->
                                 _uiState.update {
-                                    it.copy(isLoading = false, movies = result.data)
+                                    it.copy(
+                                        isLoading = false,
+                                        movies = result.data.toUiList(),
+                                        hasResults = result.data.isNotEmpty(),
+                                        errorMessage = null,
+                                    )
                                 }
 
                             is Result.Error ->
@@ -49,12 +59,17 @@ internal class SearchMoviesViewModel
                                     it.copy(
                                         isLoading = false,
                                         errorMessage = result.exception.message,
+                                        hasResults = false,
                                     )
                                 }
                         }
                     }.catch { e ->
                         _uiState.update {
-                            it.copy(isLoading = false, errorMessage = e.message)
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = e.message,
+                                hasResults = false,
+                            )
                         }
                     }.launchIn(this)
             }

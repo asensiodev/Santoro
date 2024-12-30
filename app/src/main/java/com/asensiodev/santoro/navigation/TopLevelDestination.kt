@@ -12,7 +12,7 @@ enum class TopLevelDestination(
     val route: KClass<*>,
 ) {
     SEARCH_MOVIES(
-        icon = AppIcons.SearchMoviesIcon,
+        icon = AppIcons.SearchIcon,
         label = SR.string.search_movies,
         route = NavRoutes.SearchMovies::class,
     ),

@@ -1,34 +1,47 @@
 package com.asensiodev.feature.searchmovies.impl.presentation
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil3.compose.rememberAsyncImagePainter
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import com.asensiodev.core.designsystem.PreviewContent
+import com.asensiodev.core.designsystem.component.errorContent.ErrorContent
+import com.asensiodev.core.designsystem.component.loadingIndicator.LoadingIndicator
+import com.asensiodev.core.designsystem.theme.AppIcons
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
-import com.asensiodev.core.domain.Movie
+import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 import javax.inject.Inject
+import com.asensiodev.santoro.core.designsystem.R as DR
+import com.asensiodev.santoro.core.stringresources.R as SR
 
 class SearchMoviesScreen
     @Inject
@@ -47,11 +60,10 @@ internal fun SearchMoviesRoot(
     modifier: Modifier = Modifier,
     viewModel: SearchMoviesViewModel = hiltViewModel(),
 ) {
-    val uiState = viewModel.uiState.collectAsState().value
+    val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
 
     SearchMoviesScreen(
-        query = uiState.query,
-        movies = uiState.movies,
+        uiState = uiState,
         onQueryChanged = viewModel::updateQuery,
         onMovieClick = onMovieClick,
         modifier = modifier,
@@ -60,8 +72,7 @@ internal fun SearchMoviesRoot(
 
 @Composable
 internal fun SearchMoviesScreen(
-    query: String,
-    movies: List<Movie>,
+    uiState: SearchMoviesUiState,
     onQueryChanged: (String) -> Unit,
     onMovieClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -73,37 +84,84 @@ internal fun SearchMoviesScreen(
                 .padding(Spacings.spacing16),
         verticalArrangement = Arrangement.spacedBy(Spacings.spacing12),
     ) {
-        // Search Bar
         TextField(
-            value = query,
+            value = uiState.query,
             onValueChange = onQueryChanged,
-            placeholder = { Text("Search movies") },
+            placeholder = { Text(stringResource(SR.string.search_movies_textfield_placeholder)) },
             modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(Size.size48),
+                Modifier.fillMaxWidth(),
+            trailingIcon = {
+                Icon(
+                    imageVector = AppIcons.SearchIcon,
+                    contentDescription = null,
+                )
+            },
         )
-
-        Spacer(modifier = Modifier.height(Spacings.spacing16))
-
-        // Movie List
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(Spacings.spacing8),
-            contentPadding = PaddingValues(Spacings.spacing16),
-        ) {
-            items(movies) { movie ->
-                MovieCard(
-                    movie = movie,
-                    onClick = { onMovieClick(movie.id) },
+        Spacer(modifier = Modifier.height(Spacings.spacing8))
+        when {
+            uiState.isLoading -> LoadingIndicator()
+            uiState.errorMessage != null -> {
+                ErrorContent(
+                    message = stringResource(SR.string.search_movies_no_results_text),
+                    onRetry = { onQueryChanged(uiState.query) },
                 )
             }
+
+            uiState.hasResults -> {
+                MovieList(
+                    movies = uiState.movies,
+                    onMovieClick = onMovieClick,
+                )
+            }
+
+            else -> NoResultsContent(modifier)
         }
     }
 }
 
 @Composable
+fun MovieList(
+    movies: List<MovieUi>,
+    onMovieClick: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = Size.size88),
+        horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
+        verticalArrangement = Arrangement.spacedBy(Spacings.spacing8),
+        modifier = modifier,
+    ) {
+        items(movies) { movie ->
+            MovieCard(
+                movie = movie,
+                onClick = { onMovieClick(movie.id) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun NoResultsContent(modifier: Modifier) {
+    Column(
+        modifier =
+            modifier
+                .fillMaxSize()
+                .padding(Spacings.spacing16),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top,
+    ) {
+        Text(
+            text = stringResource(SR.string.search_movies_no_results_text),
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
 fun MovieCard(
-    movie: Movie,
+    movie: MovieUi,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -112,90 +170,97 @@ fun MovieCard(
         modifier =
             modifier
                 .fillMaxWidth()
-                .height(Size.size88),
+                .height(Size.size128),
     ) {
-        Row(
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
             modifier =
                 Modifier
-                    .padding(Spacings.spacing8)
                     .fillMaxSize(),
         ) {
-            Image(
-                painter = rememberAsyncImagePainter(movie.posterPath),
-                contentDescription = movie.title,
-                modifier =
-                    Modifier
-                        .size(Size.size64)
-                        .padding(end = Spacings.spacing8),
-            )
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxHeight()
-                        .weight(1f),
-                verticalArrangement = Arrangement.Center,
-            ) {
+            if (movie.posterPath == null) {
+                Icon(
+                    painter = painterResource(DR.drawable.ic_movie_card_placeholder),
+                    contentDescription = null,
+                    modifier =
+                        Modifier
+                            .size(Size.size160)
+                            .weight(1f)
+                            .padding(Spacings.spacing8),
+                )
                 Text(
                     text = movie.title,
                     style = MaterialTheme.typography.bodyLarge,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(Spacings.spacing8),
                 )
-                Text(
-                    text = movie.overview,
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
+            } else {
+                AsyncImage(
+                    model =
+                        ImageRequest
+                            .Builder(LocalContext.current)
+                            .data(movie.posterPath)
+                            .crossfade(true)
+                            .build(),
+                    contentDescription = movie.title,
+                    // placeholder = painterResource(DR.drawable.ic_movie_card_placeholder),
+                    error = painterResource(DR.drawable.ic_movie_card_placeholder),
+                    contentScale = ContentScale.Crop,
+                    modifier =
+                        Modifier
+                            .size(Size.size160)
+                            .clip(MaterialTheme.shapes.medium),
                 )
             }
         }
     }
 }
 
-@Preview(showBackground = true)
+@PreviewLightDark
 @Composable
-fun SearchMoviesScreenPreview() {
+private fun SearchMoviesScreenPreview() {
     val sampleMovies =
         List(SAMPLE_QUERY_SIZE) { index ->
-            Movie(
+            MovieUi(
                 id = index,
                 title = "Sample Movie $index",
-                overview = "This is a brief description of Sample Movie $index",
                 posterPath = null,
-                releaseDate = "releaseDate",
-                popularity = 4.0,
-                voteAverage = 4.0,
-                voteCount = 4,
             )
         }
 
-    SearchMoviesScreen(
-        query = "",
-        movies = sampleMovies,
-        onQueryChanged = {},
-        onMovieClick = {},
-    )
+    PreviewContent {
+        SearchMoviesScreen(
+            uiState =
+                SearchMoviesUiState(
+                    query = "Search movies",
+                    movies = sampleMovies,
+                    isLoading = false,
+                    errorMessage = null,
+                    hasResults = true,
+                ),
+            onQueryChanged = {},
+            onMovieClick = {},
+        )
+    }
 }
 
-@Preview(showBackground = true)
+@PreviewLightDark
 @Composable
-fun MovieCardPreview() {
+private fun MovieCardPreview() {
     val sampleMovie =
-        Movie(
+        MovieUi(
             id = 1,
             title = "Sample Movie",
-            overview = "This is a brief description of Sample Movie",
             posterPath = null,
-            releaseDate = "releaseDate",
-            popularity = 4.0,
-            voteAverage = 4.0,
-            voteCount = 4,
         )
 
-    MovieCard(
-        movie = sampleMovie,
-        onClick = {},
-    )
+    PreviewContent {
+        MovieCard(
+            movie = sampleMovie,
+            onClick = {},
+        )
+    }
 }
 
 private const val SAMPLE_QUERY_SIZE = 5

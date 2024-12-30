@@ -6,7 +6,7 @@ import androidx.compose.material.icons.rounded.Done
 import androidx.compose.material.icons.rounded.Search
 
 object AppIcons {
-    val SearchMoviesIcon = Icons.Rounded.Search
+    val SearchIcon = Icons.Rounded.Search
     val WatchedMoviesIcon = Icons.Rounded.Done
     val WatchlistIcon = Icons.AutoMirrored.Rounded.List
 }

@@ -17,11 +17,11 @@ object Size {
     val size88 = 88.dp
     val size96 = 96.dp
     val size104 = 104.dp
-    val spacing112 = 112.dp
-    val spacing120 = 120.dp
-    val spacing128 = 128.dp
-    val spacing136 = 136.dp
-    val spacing144 = 144.dp
-    val spacing152 = 152.dp
-    val spacing160 = 160.dp
+    val size112 = 112.dp
+    val size120 = 120.dp
+    val size128 = 128.dp
+    val size136 = 136.dp
+    val size144 = 144.dp
+    val size152 = 152.dp
+    val size160 = 160.dp
 }

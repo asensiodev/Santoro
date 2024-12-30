@@ -1,6 +1,18 @@
 <resources>
     <string name="app_name">Santoro</string>
+
+    <!-- Bottom Nav Bar -->
     <string name="search_movies">Search</string>
     <string name="watched_movies">Watched</string>
     <string name="watchlist">Watchlist</string>
+
+    <!-- Search Movies Screen -->
+    <string name="search_movies_textfield_placeholder">Search movies</string>
+    <string name="search_movies_no_results_text">Ups! No movies found</string>
+    <string name="search_movies_error_button_retry">Retry</string>
+
+    <!-- Watched Movies Screen -->
+
+    <!-- Watchlist Screen -->
+
 </resources>

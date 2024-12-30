@@ -1,10 +1,11 @@
 package com.asensiodev.feature.searchmovies.impl.presentation
 
-import com.asensiodev.core.domain.Movie
+import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 
-data class SearchMoviesUiState(
+internal data class SearchMoviesUiState(
     val query: String = "",
-    val movies: List<Movie> = emptyList(),
+    val movies: List<MovieUi> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
+    val hasResults: Boolean = false,
 )

@@ -10,7 +10,7 @@ enum class BottomNavItem(
     @StringRes val label: Int,
 ) {
     SEARCH_MOVIES(
-        icon = AppIcons.SearchMoviesIcon,
+        icon = AppIcons.SearchIcon,
         label = R.string.search_movies,
     ),
     WATCHED_MOVIES(

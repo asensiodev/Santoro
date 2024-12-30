@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.asensiodev.core.designsystem"
+    namespace = "com.asensiodev.santoro.core.designsystem"
 }
 
 dependencies {
