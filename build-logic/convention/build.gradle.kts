@@ -22,6 +22,7 @@ dependencies {
     compileOnly(libs.android.gradlePlugin)
     compileOnly(libs.kotlin.gradlePlugin)
     compileOnly(libs.ksp.gradlePlugin)
+    compileOnly(libs.room.gradlePlugin)
 }
 
 gradlePlugin {
@@ -69,6 +70,10 @@ gradlePlugin {
         register("paparazzi") {
             id = "com.asensiodev.santoro.buildlogic.convention.paparazzi"
             implementationClass = "PaparazziConventionPlugin"
+        }
+        register("android-room") {
+            id = "com.asensiodev.santoro.buildlogic.convention.android-room"
+            implementationClass = "AndroidRoomConventionPlugin"
         }
     }
 }

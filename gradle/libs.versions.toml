@@ -23,6 +23,7 @@ lifecycleRuntimeKtx = "2.8.7"
 navigationCompose = "2.8.5"
 okhttp = "4.10.0"
 retrofit = "2.11.0"
+room = "2.6.1"
 uiTextGoogleFonts = "1.7.6"
 
 # Testing Versions
@@ -76,6 +77,11 @@ retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = 
 retrofit-gson-converter = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "retrofit" }
 
+# Room
+room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+
 # Logging interceptor
 okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
 
@@ -111,6 +117,7 @@ turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
+room-gradlePlugin = { group = "androidx.room", name = "room-gradle-plugin", version.ref = "room" }
 
 [bundles]
 compose = [
@@ -144,6 +151,7 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 paparazzi = { id = "app.cash.paparazzi", version.ref = "paparazzi" }
+room = { id = "androidx.room", version.ref = "room" }
 
 # Quality Plugins
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version = "12.1.2" }
@@ -161,3 +169,4 @@ convention-jvm-hilt = { id = "com.asensiodev.santoro.buildlogic.convention.jvm-h
 convention-android-test = { id = "com.asensiodev.santoro.buildlogic.convention.android-test" }
 convention-jvm-test = { id = "com.asensiodev.santoro.buildlogic.convention.jvm-test" }
 convention-paparazzi = { id = "com.asensiodev.santoro.buildlogic.convention.paparazzi" }
+convention-android-room = { id = "com.asensiodev.santoro.buildlogic.convention.android-room" }
