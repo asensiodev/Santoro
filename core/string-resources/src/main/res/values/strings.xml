@@ -6,18 +6,30 @@
     <string name="watched_movies">Watched</string>
     <string name="watchlist">Watchlist</string>
 
+    <!-- Top App Bar -->
+    <string name="navigate_back">Back</string>
+
     <!-- Search Movies Screen -->
+    <string name="search_movies_top_bar_title">Search movies</string>
     <string name="search_movies_textfield_placeholder">Search movies</string>
     <string name="search_movies_no_results_text">Ups! No movies found</string>
     <string name="search_movies_error_button_retry">Retry</string>
 
     <!-- Watched Movies Screen -->
+    <string name="watched_movies_top_bar_title">Watched movies</string>
 
     <!-- Watchlist Screen -->
+    <string name="watchlist_top_bar_title">My watchlist</string>
 
     <!-- Movie Detail Screen -->
+    <string name="movie_detail_top_bar_title">Movie Detail</string>
     <string name="default_no_description">No description available.</string>
+    <string name="untitled_movie">Untitled.</string>
     <string name="release_date">Release Date: %1$s</string>
     <string name="genres">Genres: %1$s</string>
-    <string name="rating">Rating: %.1f (%d votes)</string>
+    <string name="rating">Rating: %.1f</string>
+    <string name="watchlist_icon_button">Watchlist</string>
+    <string name="watched_icon_button">Watched</string>
+
+
 </resources>

@@ -42,7 +42,7 @@ fun SantoroNavHost(
         composable<NavRoutes.MovieDetail> { backStackEntry ->
             val detail = backStackEntry.toRoute<NavRoutes.MovieDetail>()
             navigationScreens.movieDetailScreen.Screen(
-                detail.movieId,
+                movieId = detail.movieId,
             )
         }
     }

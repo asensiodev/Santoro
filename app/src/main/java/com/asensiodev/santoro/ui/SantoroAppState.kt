@@ -57,13 +57,4 @@ class SantoroAppState(
             }
         navController.navigate(destination.route, navOptions)
     }
-
-//    /**
-//     * UI logic for navigating to a movie detail destination.
-//     *
-//     * @param movieId: The id of the movie the app needs to navigate to.
-//     */
-//    fun navigateToMovieDetail(movieId: Int) {
-//        navController.navigate("movie_detail/$movieId")
-//    }
 }

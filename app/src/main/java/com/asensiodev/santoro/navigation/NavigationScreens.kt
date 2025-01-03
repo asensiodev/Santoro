@@ -8,5 +8,7 @@ data class NavigationScreens
     @Inject
     constructor(
         val searchMoviesScreen: SearchMoviesScreen,
+        val watchedMoviesScreen: SearchMoviesScreen,
+        val watchlistScreen: SearchMoviesScreen,
         val movieDetailScreen: MovieDetailScreen,
     )

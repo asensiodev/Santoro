@@ -4,10 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
-import com.asensiodev.core.designsystem.component.bottombar.BottomNavigationBar
+import com.asensiodev.core.designsystem.component.bottombar.BottomNavItem
+import com.asensiodev.core.designsystem.component.scaffold.SantoroScaffold
+import com.asensiodev.core.designsystem.component.topbar.SantoroTopAppBar
 import com.asensiodev.core.designsystem.theme.SantoroTheme
 import com.asensiodev.santoro.navigation.NavigationScreens
 import com.asensiodev.santoro.navigation.SantoroNavHost
@@ -16,6 +16,7 @@ import com.asensiodev.santoro.navigation.toBottomNavItem
 import com.asensiodev.santoro.navigation.toTopLevelDestination
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import com.asensiodev.santoro.core.stringresources.R as SR
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -29,25 +30,56 @@ class MainActivity : ComponentActivity() {
             SantoroTheme {
                 val appState = rememberSantoroAppState()
                 val bottomNavItems = TopLevelDestination.entries.map { it.toBottomNavItem() }
-                Scaffold(
-                    bottomBar = {
-                        val selectedDSItem = appState.currentTopLevelDestination?.toBottomNavItem()
+                val selectedBottomNavItem = appState.currentTopLevelDestination?.toBottomNavItem()
+//                val currentBackStackEntry =
+//                    appState.navController.currentBackStackEntryAsState()
+//                val currentDestination = currentBackStackEntry.value?.destination
 
-                        BottomNavigationBar(
-                            items = bottomNavItems,
-                            selectedItem = selectedDSItem,
-                            onItemSelected = { Item ->
-                                appState.navigateToTopLevelDestination(
-                                    Item.toTopLevelDestination(),
-                                )
-                            },
+                val title =
+                    when (selectedBottomNavItem) {
+                        BottomNavItem.SEARCH_MOVIES ->
+                            getString(
+                                SR.string.search_movies_top_bar_title,
+                            )
+
+                        BottomNavItem.WATCHED_MOVIES ->
+                            getString(
+                                SR.string.watched_movies_top_bar_title,
+                            )
+
+                        BottomNavItem.WATCHLIST ->
+                            getString(
+                                SR.string.watchlist_top_bar_title,
+                            )
+
+                        else -> getString(SR.string.movie_detail_top_bar_title)
+                    }
+
+                val showBackButton = appState.currentTopLevelDestination == null
+                SantoroScaffold(
+                    topBar = {
+                        SantoroTopAppBar(
+                            title = title,
+                            onBackClick =
+                                if (showBackButton) {
+                                    { appState.navController.popBackStack() }
+                                } else {
+                                    null
+                                },
                         )
                     },
-                ) { innerPadding ->
+                    bottomNavItems = bottomNavItems,
+                    selectedBottomNavItem = selectedBottomNavItem,
+                    onBottomNavItemSelected = { bottomNavItem ->
+                        appState.navigateToTopLevelDestination(
+                            bottomNavItem.toTopLevelDestination(),
+                        )
+                    },
+                ) {
                     SantoroNavHost(
                         navController = appState.navController,
                         navigationScreens = navigationScreens,
-                        modifier = Modifier.padding(innerPadding),
+                        modifier = Modifier,
                     )
                 }
             }

@@ -52,4 +52,12 @@ internal class MovieDetailViewModel
                     .launchIn(this)
             }
         }
+
+        fun toggleWatchlist() {
+            _uiState.update { it.copy(isInWatchlist = !it.isInWatchlist) }
+        }
+
+        fun toggleWatched() {
+            _uiState.update { it.copy(isWatched = !it.isWatched) }
+        }
     }

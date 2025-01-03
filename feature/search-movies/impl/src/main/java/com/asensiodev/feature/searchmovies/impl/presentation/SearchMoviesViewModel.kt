@@ -33,11 +33,11 @@ internal class SearchMoviesViewModel
             typedQuery
                 .debounce(DELAY)
                 .onEach { query ->
-                    // if (query.isBlank()) {
-                    //    _uiState.update { it.copy(movies = emptyList(), hasResults = false) }
-                    // } else {
-                    fetchMovies(query)
-                    // }
+                    if (query.isBlank()) {
+                        _uiState.update { it.copy(movies = emptyList(), hasResults = false) }
+                    } else {
+                        fetchMovies(query)
+                    }
                 }.launchIn(viewModelScope)
         }
 
@@ -81,7 +81,7 @@ internal class SearchMoviesViewModel
                                 hasResults = false,
                             )
                         }
-                    }.launchIn(this)
+                    }.launchIn(viewModelScope)
             }
         }
     }

@@ -7,7 +7,6 @@ fun TopLevelDestination.toBottomNavItem(): BottomNavItem =
         TopLevelDestination.SEARCH_MOVIES -> BottomNavItem.SEARCH_MOVIES
         TopLevelDestination.WATCHED_MOVIES -> BottomNavItem.WATCHED_MOVIES
         TopLevelDestination.WATCHLIST -> BottomNavItem.WATCHLIST
-        else -> BottomNavItem.SEARCH_MOVIES
     }
 
 fun BottomNavItem.toTopLevelDestination(): TopLevelDestination =
