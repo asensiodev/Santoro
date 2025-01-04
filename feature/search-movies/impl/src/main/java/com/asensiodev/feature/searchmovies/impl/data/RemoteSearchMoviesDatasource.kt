@@ -1,6 +1,6 @@
 package com.asensiodev.feature.searchmovies.impl.data
 
-import com.asensiodev.core.domain.Movie
+import com.asensiodev.core.domain.MovieDetail
 import com.asensiodev.core.domain.Result
 import com.asensiodev.feature.searchmovies.impl.data.mapper.toDomain
 import com.asensiodev.feature.searchmovies.impl.data.model.SearchMoviesResponseApiModel
@@ -9,12 +9,12 @@ import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject
 
-internal class DefaultSearchMoviesDatasource
+internal class RemoteSearchMoviesDatasource
     @Inject
     constructor(
         private val apiService: SearchMoviesApiService,
     ) : SearchMoviesDatasource {
-        override suspend fun searchMovies(query: String): Result<List<Movie>> =
+        override suspend fun searchMovies(query: String): Result<List<MovieDetail>> =
             try {
                 val response: SearchMoviesResponseApiModel =
                     apiService

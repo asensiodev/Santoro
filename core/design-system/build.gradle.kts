@@ -9,5 +9,6 @@ android {
 
 dependencies {
     implementation(projects.core.stringResources)
+
     implementation(libs.androidx.ui.text.google.fonts)
 }

@@ -11,4 +11,6 @@ data class MovieUi(
     val voteCount: Int,
     val genres: List<String>,
     val productionCountries: List<String>,
+    val isWatched: Boolean,
+    val isInWatchlist: Boolean,
 )

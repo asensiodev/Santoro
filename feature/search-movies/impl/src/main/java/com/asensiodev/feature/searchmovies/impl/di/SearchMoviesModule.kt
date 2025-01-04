@@ -1,7 +1,7 @@
 package com.asensiodev.feature.searchmovies.impl.di
 
-import com.asensiodev.feature.searchmovies.impl.data.DefaultSearchMoviesDatasource
-import com.asensiodev.feature.searchmovies.impl.data.DefaultSearchMoviesRepository
+import com.asensiodev.feature.searchmovies.impl.data.RemoteSearchMoviesDatasource
+import com.asensiodev.feature.searchmovies.impl.data.RemoteSearchMoviesRepository
 import com.asensiodev.feature.searchmovies.impl.data.service.SearchMoviesApiService
 import com.asensiodev.feature.searchmovies.impl.domain.repository.SearchMoviesRepository
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesUseCase
@@ -22,15 +22,15 @@ internal object SearchMoviesModule {
 
     @Provides
     @Singleton
-    fun provideMovieDefaultDatasource(
+    fun provideRemoteSearchMoviesDatasource(
         apiService: SearchMoviesApiService,
-    ): DefaultSearchMoviesDatasource = DefaultSearchMoviesDatasource(apiService)
+    ): RemoteSearchMoviesDatasource = RemoteSearchMoviesDatasource(apiService)
 
     @Provides
     @Singleton
     fun provideMovieRepository(
-        defaultDatasource: DefaultSearchMoviesDatasource,
-    ): SearchMoviesRepository = DefaultSearchMoviesRepository(defaultDatasource)
+        defaultDatasource: RemoteSearchMoviesDatasource,
+    ): SearchMoviesRepository = RemoteSearchMoviesRepository(defaultDatasource)
 
     @Provides
     @Singleton

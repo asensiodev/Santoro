@@ -13,6 +13,7 @@ import com.asensiodev.santoro.navigation.NavigationScreens
 import com.asensiodev.santoro.navigation.SantoroNavHost
 import com.asensiodev.santoro.navigation.TopLevelDestination
 import com.asensiodev.santoro.navigation.toBottomNavItem
+import com.asensiodev.santoro.navigation.toNavRoute
 import com.asensiodev.santoro.navigation.toTopLevelDestination
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -71,8 +72,9 @@ class MainActivity : ComponentActivity() {
                     bottomNavItems = bottomNavItems,
                     selectedBottomNavItem = selectedBottomNavItem,
                     onBottomNavItemSelected = { bottomNavItem ->
+                        appState.navController.popBackStack()
                         appState.navigateToTopLevelDestination(
-                            bottomNavItem.toTopLevelDestination(),
+                            bottomNavItem.toTopLevelDestination().toNavRoute(),
                         )
                     },
                 ) {

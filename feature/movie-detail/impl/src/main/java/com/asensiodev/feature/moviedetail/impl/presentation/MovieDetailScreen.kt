@@ -142,7 +142,12 @@ internal fun MovieDetailContent(
                 voteAverage = uiState.movie?.voteAverage,
             )
             Spacer(modifier = Modifier.weight(1f))
-            UserListOptions(uiState, onToggleWatched, onToggleWatchlist)
+            UserListOptions(
+                isWatched = uiState.movie?.isWatched ?: false,
+                isInWatchlist = uiState.movie?.isInWatchlist ?: false,
+                onToggleWatched = onToggleWatched,
+                onToggleWatchlist = onToggleWatchlist,
+            )
         }
         Text(
             text = uiState.movie?.overview ?: stringResource(SR.string.default_no_description),
@@ -155,12 +160,13 @@ internal fun MovieDetailContent(
 
 @Composable
 private fun RowScope.UserListOptions(
-    uiState: MovieDetailUiState,
+    isWatched: Boolean,
+    isInWatchlist: Boolean,
     onToggleWatched: () -> Unit,
     onToggleWatchlist: () -> Unit,
 ) {
     AnimatedIconWithText(
-        isSelected = uiState.isWatched,
+        isSelected = isWatched,
         onClick = onToggleWatched,
         selectedIcon = AppIcons.WatchedMoviesIcon,
         unselectedIcon = AppIcons.AddIcon,
@@ -168,7 +174,7 @@ private fun RowScope.UserListOptions(
         modifier = Modifier.Companion.weight(1f),
     )
     AnimatedIconWithText(
-        isSelected = uiState.isInWatchlist,
+        isSelected = isInWatchlist,
         onClick = onToggleWatchlist,
         selectedIcon = AppIcons.WatchlistIcon,
         unselectedIcon = AppIcons.AddIcon,
@@ -229,6 +235,8 @@ private fun MovieDetailScreenPreview() {
                             voteCount = 1000,
                             genres = listOf("Action", "Adventure"),
                             productionCountries = listOf("USA", "Canada"),
+                            isWatched = false,
+                            isInWatchlist = false,
                         ),
                     errorMessage = null,
                     hasResults = false,

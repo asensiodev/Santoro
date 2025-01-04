@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asensiodev.core.domain.Result
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseCase
+import com.asensiodev.feature.moviedetail.impl.domain.usecase.UpdateMovieStateUseCase
+import com.asensiodev.feature.moviedetail.impl.presentation.mapper.toDomain
 import com.asensiodev.feature.moviedetail.impl.presentation.mapper.toUi
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +23,7 @@ internal class MovieDetailViewModel
     @Inject
     constructor(
         private val getMovieDetailUseCase: GetMovieDetailUseCase,
+        private val updateMovieStateUseCase: UpdateMovieStateUseCase,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(MovieDetailUiState())
         val uiState: StateFlow<MovieDetailUiState> = _uiState.asStateFlow()
@@ -35,7 +38,7 @@ internal class MovieDetailViewModel
                                 _uiState.update {
                                     it.copy(
                                         isLoading = false,
-                                        movie = result.data.toUi(),
+                                        movie = result.data?.toUi(),
                                         errorMessage = null,
                                     )
                                 }
@@ -49,15 +52,33 @@ internal class MovieDetailViewModel
                                 }
                         }
                     }.catch { e -> _uiState.update { it.copy(errorMessage = e.message) } }
-                    .launchIn(this)
+                    .launchIn(viewModelScope)
             }
         }
 
         fun toggleWatchlist() {
-            _uiState.update { it.copy(isInWatchlist = !it.isInWatchlist) }
+            val movie = uiState.value.movie
+            if (movie != null) {
+                val updatedMovie = movie.copy(isInWatchlist = !movie.isInWatchlist)
+                viewModelScope.launch {
+                    val success = updateMovieStateUseCase(updatedMovie.toDomain())
+                    if (success) {
+                        _uiState.update { it.copy(movie = updatedMovie) }
+                    }
+                }
+            }
         }
 
         fun toggleWatched() {
-            _uiState.update { it.copy(isWatched = !it.isWatched) }
+            val movie = uiState.value.movie
+            if (movie != null) {
+                val updatedMovie = movie.copy(isWatched = !movie.isWatched)
+                viewModelScope.launch {
+                    val success = updateMovieStateUseCase(updatedMovie.toDomain())
+                    if (success) {
+                        _uiState.update { it.copy(movie = updatedMovie) }
+                    }
+                }
+            }
         }
     }

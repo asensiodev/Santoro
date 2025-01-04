@@ -1,14 +1,14 @@
 package com.asensiodev.santoro.core.data.mapper
 
 import com.asensiodev.core.domain.Genre
-import com.asensiodev.core.domain.Movie
+import com.asensiodev.core.domain.MovieDetail
 import com.asensiodev.core.domain.ProductionCountry
 import com.asensiodev.santoro.core.data.model.GenreApiModel
 import com.asensiodev.santoro.core.data.model.MovieApiModel
 import com.asensiodev.santoro.core.data.model.ProductionCountryApiModel
 
 fun MovieApiModel.toDomain() =
-    Movie(
+    MovieDetail(
         id = id,
         title = title,
         overview = overview,
@@ -19,11 +19,12 @@ fun MovieApiModel.toDomain() =
         voteCount = voteCount ?: 0,
         genres = genres?.map { it.toDomain() } ?: emptyList(),
         productionCountries = productionCountries?.map { it.toDomain() } ?: emptyList(),
+        isWatched = false,
+        isInWatchlist = false,
     )
 
 fun GenreApiModel.toDomain() =
     Genre(
-        id = id,
         name = name,
     )
 

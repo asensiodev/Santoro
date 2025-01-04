@@ -1,13 +1,13 @@
 package com.asensiodev.santoro.core.database.data.mapper
 
 import com.asensiodev.core.domain.Genre
-import com.asensiodev.core.domain.Movie
+import com.asensiodev.core.domain.MovieDetail
 import com.asensiodev.core.domain.ProductionCountry
 import com.asensiodev.santoro.core.database.data.model.MovieEntity
 import com.google.gson.Gson
 
-fun MovieEntity.toDomain(): Movie =
-    Movie(
+fun MovieEntity.toDomain(): MovieDetail =
+    MovieDetail(
         id = id,
         title = title,
         overview = overview,
@@ -18,6 +18,8 @@ fun MovieEntity.toDomain(): Movie =
         voteCount = voteCount,
         genres = genres.toGenres(),
         productionCountries = productionCountries.toProductionCountries(),
+        isWatched = isWatched,
+        isInWatchlist = isInWatchlist,
     )
 
 fun String.toGenres(): List<Genre> {
@@ -30,7 +32,7 @@ fun String.toProductionCountries(): List<ProductionCountry> {
     return gson.fromJson(this, Array<ProductionCountry>::class.java).toList()
 }
 
-fun Movie.toEntity(): MovieEntity {
+fun MovieDetail.toEntity(): MovieEntity {
     val gson = Gson()
     return MovieEntity(
         id = id,
@@ -43,5 +45,7 @@ fun Movie.toEntity(): MovieEntity {
         voteCount = voteCount,
         genres = gson.toJson(genres),
         productionCountries = gson.toJson(productionCountries),
+        isWatched = isWatched,
+        isInWatchlist = isInWatchlist,
     )
 }

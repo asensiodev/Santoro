@@ -14,5 +14,11 @@ fun BottomNavItem.toTopLevelDestination(): TopLevelDestination =
         BottomNavItem.SEARCH_MOVIES -> TopLevelDestination.SEARCH_MOVIES
         BottomNavItem.WATCHED_MOVIES -> TopLevelDestination.WATCHED_MOVIES
         BottomNavItem.WATCHLIST -> TopLevelDestination.WATCHLIST
-        else -> TopLevelDestination.SEARCH_MOVIES
+    }
+
+fun TopLevelDestination.toNavRoute(): NavRoutes =
+    when (this) {
+        TopLevelDestination.SEARCH_MOVIES -> NavRoutes.SearchMovies
+        TopLevelDestination.WATCHED_MOVIES -> NavRoutes.WatchedMovies
+        TopLevelDestination.WATCHLIST -> NavRoutes.Watchlist
     }

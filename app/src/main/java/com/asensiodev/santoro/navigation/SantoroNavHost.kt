@@ -1,6 +1,7 @@
 package com.asensiodev.santoro.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -25,20 +26,20 @@ fun SantoroNavHost(
                 },
             )
         }
-//        composable<NavRoutes.WatchedMovies> {
-//            WatchedMoviesScreen(
-//                onMovieClick = { movieId ->
-//                    navController.navigate(NavRoutes.MovieDetail(movieId))
-//                },
-//            )
-//        }
-//        composable<NavRoutes.Watchlist> {
-//            WatchlistScreen(
-//                onMovieClick = { movieId ->
-//                    navController.navigate(NavRoutes.MovieDetail(movieId))
-//                },
-//            )
-//        }
+        composable<NavRoutes.WatchedMovies> {
+            navigationScreens.watchedMoviesScreen.Screen(
+                onMovieClick = { movieId ->
+                    navController.navigate(NavRoutes.MovieDetail(movieId))
+                },
+            )
+        }
+        composable<NavRoutes.Watchlist> {
+            navigationScreens.watchlistScreen.Screen(
+                onMovieClick = { movieId ->
+                    navController.navigate(NavRoutes.MovieDetail(movieId))
+                },
+            )
+        }
         composable<NavRoutes.MovieDetail> { backStackEntry ->
             val detail = backStackEntry.toRoute<NavRoutes.MovieDetail>()
             navigationScreens.movieDetailScreen.Screen(

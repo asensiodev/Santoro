@@ -10,6 +10,7 @@ android {
 dependencies {
     implementation(projects.feature.movieDetail.api)
     implementation(projects.core.data)
+    implementation(projects.core.database)
 
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson.converter)

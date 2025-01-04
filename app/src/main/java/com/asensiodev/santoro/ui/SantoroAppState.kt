@@ -10,6 +10,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
+import com.asensiodev.santoro.navigation.NavRoutes
 import com.asensiodev.santoro.navigation.TopLevelDestination
 
 @Composable
@@ -41,12 +42,7 @@ class SantoroAppState(
             }
         }
 
-    /**
-     * UI logic for navigating to a top level destination in the app.
-     *
-     * @param topLevelDestination: The destination the app needs to navigate to.
-     */
-    fun navigateToTopLevelDestination(destination: TopLevelDestination) {
+    fun navigateToTopLevelDestination(destination: NavRoutes) {
         val navOptions =
             navOptions {
                 popUpTo(navController.graph.findStartDestination().id) {
@@ -55,6 +51,7 @@ class SantoroAppState(
                 launchSingleTop = true
                 restoreState = true
             }
-        navController.navigate(destination.route, navOptions)
+
+        navController.navigate(destination, navOptions)
     }
 }

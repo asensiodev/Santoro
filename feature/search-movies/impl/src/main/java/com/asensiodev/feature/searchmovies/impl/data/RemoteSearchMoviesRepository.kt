@@ -1,6 +1,6 @@
 package com.asensiodev.feature.searchmovies.impl.data
 
-import com.asensiodev.core.domain.Movie
+import com.asensiodev.core.domain.MovieDetail
 import com.asensiodev.core.domain.Result
 import com.asensiodev.feature.searchmovies.impl.domain.repository.SearchMoviesRepository
 import kotlinx.coroutines.flow.Flow
@@ -9,12 +9,12 @@ import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject
 
-internal class DefaultSearchMoviesRepository
+internal class RemoteSearchMoviesRepository
     @Inject
     constructor(
         private val remoteDatasource: SearchMoviesDatasource,
     ) : SearchMoviesRepository {
-        override fun searchMovies(query: String): Flow<Result<List<Movie>>> =
+        override fun searchMovies(query: String): Flow<Result<List<MovieDetail>>> =
             flow {
                 emit(Result.Loading)
                 try {

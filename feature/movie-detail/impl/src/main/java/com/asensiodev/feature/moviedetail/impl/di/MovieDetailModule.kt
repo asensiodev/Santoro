@@ -1,10 +1,13 @@
 package com.asensiodev.feature.moviedetail.impl.di
 
-import com.asensiodev.feature.moviedetail.impl.data.DefaultMovieDetailDataSource
-import com.asensiodev.feature.moviedetail.impl.data.DefaultMovieDetailRepository
+import com.asensiodev.feature.moviedetail.impl.data.datasource.LocalMovieDetailDataSource
+import com.asensiodev.feature.moviedetail.impl.data.datasource.RetrofitMovieDetailDataSource
+import com.asensiodev.feature.moviedetail.impl.data.datasource.RoomMovieDetailDataSource
+import com.asensiodev.feature.moviedetail.impl.data.repository.DefaultMovieDetailRepository
 import com.asensiodev.feature.moviedetail.impl.data.service.MovieDetailApiService
 import com.asensiodev.feature.moviedetail.impl.domain.repository.MovieDetailRepository
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseCase
+import com.asensiodev.feature.moviedetail.impl.domain.usecase.UpdateMovieStateUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -12,29 +15,40 @@ import dagger.hilt.components.SingletonComponent
 import retrofit2.Retrofit
 import javax.inject.Singleton
 
-// TODO(): use viewModelComponent?
 @Module
 @InstallIn(SingletonComponent::class)
 internal object MovieDetailModule {
     @Provides
-    fun provideSearchMoviesApiService(retrofit: Retrofit): MovieDetailApiService =
+    fun provideMovieDetailApiService(retrofit: Retrofit): MovieDetailApiService =
         retrofit.create(MovieDetailApiService::class.java)
 
     @Provides
     @Singleton
-    fun provideMovieDefaultDatasource(
+    fun provideRemoteMovieDetailDataSource(
         apiService: MovieDetailApiService,
-    ): DefaultMovieDetailDataSource = DefaultMovieDetailDataSource(apiService)
+    ): RetrofitMovieDetailDataSource = RetrofitMovieDetailDataSource(apiService)
 
     @Provides
     @Singleton
-    fun provideMovieRepository(
-        defaultDatasource: DefaultMovieDetailDataSource,
-    ): MovieDetailRepository = DefaultMovieDetailRepository(defaultDatasource)
+    fun provideLocalMovieDetailDataSource(
+        roomDataSource: RoomMovieDetailDataSource,
+    ): LocalMovieDetailDataSource = roomDataSource
 
     @Provides
     @Singleton
-    internal fun provideSearchMoviesUseCase(
+    fun provideMovieDetailRepository(
+        remoteDataSource: RetrofitMovieDetailDataSource,
+        localDataSource: RoomMovieDetailDataSource,
+    ): MovieDetailRepository = DefaultMovieDetailRepository(localDataSource, remoteDataSource)
+
+    @Provides
+    @Singleton
+    fun provideGetMovieDetailUseCase(repository: MovieDetailRepository): GetMovieDetailUseCase =
+        GetMovieDetailUseCase(repository)
+
+    @Provides
+    @Singleton
+    fun provideUpdateMovieStateUseCase(
         repository: MovieDetailRepository,
-    ): GetMovieDetailUseCase = GetMovieDetailUseCase(repository)
+    ): UpdateMovieStateUseCase = UpdateMovieStateUseCase(repository)
 }

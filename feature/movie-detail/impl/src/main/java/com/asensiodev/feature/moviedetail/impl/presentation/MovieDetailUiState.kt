@@ -7,6 +7,4 @@ internal data class MovieDetailUiState(
     val movie: MovieUi? = null,
     val errorMessage: String? = null,
     val hasResults: Boolean = false,
-    val isInWatchlist: Boolean = false,
-    val isWatched: Boolean = false,
 )

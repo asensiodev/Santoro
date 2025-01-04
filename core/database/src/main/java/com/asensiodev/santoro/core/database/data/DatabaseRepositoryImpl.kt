@@ -1,9 +1,17 @@
 package com.asensiodev.santoro.core.database.data
 
-import com.asensiodev.core.domain.Movie
+import android.util.Log
+import com.asensiodev.core.domain.MovieDetail
+import com.asensiodev.core.domain.Result
+import com.asensiodev.santoro.core.database.data.dao.MovieDao
 import com.asensiodev.santoro.core.database.data.mapper.toDomain
 import com.asensiodev.santoro.core.database.data.mapper.toEntity
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class DatabaseRepositoryImpl
@@ -11,25 +19,45 @@ class DatabaseRepositoryImpl
     constructor(
         private val movieDao: MovieDao,
     ) : DatabaseRepository {
-        override suspend fun getWatchlistMovies(): List<Movie> =
-            movieDao.getWatchlistMovies().map { it.toDomain() }
-
-        override suspend fun getWatchedMovies(): List<Movie> =
-            movieDao.getWatchedMovies().map { it.toDomain() }
-
-        override suspend fun getMovieById(movieId: Int): Movie? =
-            movieDao.getMovieById(movieId)?.toDomain()
-
-        override suspend fun saveMovie(
-            movie: Movie,
-            isWatched: Boolean,
-            isInWatchlist: Boolean,
-        ) {
-            val movieEntity =
-                movie.toEntity().copy(
-                    isWatched = isWatched,
-                    isInWatchlist = isInWatchlist,
+        override fun getWatchedMovies(): Flow<Result<List<MovieDetail>>> =
+            flow {
+                emit(Result.Loading)
+                emitAll(
+                    movieDao
+                        .getWatchedMovies()
+                        .map { movies -> Result.Success(movies.map { it.toDomain() }) }
+                        .catch { e -> emit(Result.Error(e)) },
                 )
-            movieDao.insertOrUpdateMovie(movieEntity)
-        }
+            }
+
+        override fun getWatchlistMovies(): Flow<Result<List<MovieDetail>>> =
+            flow {
+                emit(Result.Loading)
+                emitAll(
+                    movieDao
+                        .getWatchlistMovies()
+                        .map { movies -> Result.Success(movies.map { it.toDomain() }) }
+                        .catch { e -> emit(Result.Error(e)) },
+                )
+            }
+
+        override fun getMovieById(movieId: Int): Flow<Result<MovieDetail?>> =
+            flow {
+                emit(Result.Loading)
+                try {
+                    val movie = movieDao.getMovieById(movieId)?.toDomain()
+                    emit(Result.Success(movie))
+                } catch (e: Exception) {
+                    emit(Result.Error(e))
+                }
+            }
+
+        override suspend fun updateMovieState(movie: MovieDetail): Boolean =
+            try {
+                movieDao.insertOrUpdateMovie(movie.toEntity())
+                true
+            } catch (e: Exception) {
+                Log.d("TAG", e.message ?: "Unknown error")
+                false
+            }
     }

@@ -221,7 +221,7 @@ fun MovieCard(
 @Composable
 private fun SearchMoviesScreenPreview() {
     val sampleMovies =
-        List(SAMPLE_QUERY_SIZE) { index ->
+        List(MOVIE_SAMPLE_LIST_SIZE) { index ->
             MovieUi(
                 id = index,
                 title = "Sample Movie $index",
@@ -263,4 +263,4 @@ private fun MovieCardPreview() {
     }
 }
 
-private const val SAMPLE_QUERY_SIZE = 5
+private const val MOVIE_SAMPLE_LIST_SIZE = 5
