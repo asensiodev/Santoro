@@ -43,6 +43,7 @@ class SantoroAppState(
         }
 
     fun navigateToTopLevelDestination(destination: NavRoutes) {
+        clearMovieDetailFromBackStack()
         val navOptions =
             navOptions {
                 popUpTo(navController.graph.findStartDestination().id) {
@@ -53,5 +54,9 @@ class SantoroAppState(
             }
 
         navController.navigate(destination, navOptions)
+    }
+
+    private fun clearMovieDetailFromBackStack() {
+        navController.popBackStack<NavRoutes.MovieDetail>(inclusive = true)
     }
 }
