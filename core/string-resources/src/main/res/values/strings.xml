@@ -16,7 +16,6 @@
     <string name="search_movies_no_popular_movies_results_text">Start your search to begin finding movies</string>
     <string name="search_movies_popular_movies_title">Popular movies</string>
     <string name="search_movies_error_button_retry">Retry</string>
-    <string name="search_movies_query_text_field_clear_button_description">Clear search</string>
 
     <!-- Watched Movies Screen -->
     <string name="watched_movies_top_bar_title">Watched movies</string>
@@ -30,11 +29,12 @@
     <string name="movie_detail_top_bar_title">Movie Detail</string>
     <string name="default_no_description">No description available.</string>
     <string name="untitled_movie">Untitled.</string>
-    <string name="release_date">Release Date: %1$s</string>
-    <string name="genres">Genres: %1$s</string>
     <string name="rating">Rating: %.1f</string>
     <string name="watchlist_icon_button">Watchlist</string>
     <string name="watched_icon_button">Watched</string>
 
+    <!-- Generic -->
+    <string name="unknown_value">Unknown</string>
+    <string name="query_text_field_clear_button_description">Clear search</string>
 
 </resources>

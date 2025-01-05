@@ -2,6 +2,7 @@ package com.asensiodev.feature.watchlist.impl.di
 
 import com.asensiodev.feature.watchlist.impl.domain.usecase.AddMovieToWatchlistUseCase
 import com.asensiodev.feature.watchlist.impl.domain.usecase.GetWatchlistMoviesUseCase
+import com.asensiodev.feature.watchlist.impl.domain.usecase.SearchWatchlistMoviesUseCase
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import dagger.Module
 import dagger.Provides
@@ -24,4 +25,10 @@ internal object WatchlistMoviesModule {
     internal fun provideAddMovieToWatchlistMovieUseCase(
         repository: DatabaseRepository,
     ): AddMovieToWatchlistUseCase = AddMovieToWatchlistUseCase(repository)
+
+    @Provides
+    @Singleton
+    internal fun provideSearchWatchlistMoviesUseCase(
+        repository: DatabaseRepository,
+    ): SearchWatchlistMoviesUseCase = SearchWatchlistMoviesUseCase(repository)
 }

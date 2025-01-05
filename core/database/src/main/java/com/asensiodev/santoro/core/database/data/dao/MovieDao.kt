@@ -19,6 +19,20 @@ interface MovieDao {
     @Query("SELECT * FROM movies WHERE id = :movieId")
     suspend fun getMovieById(movieId: Int): MovieEntity?
 
+    @Query(
+        """SELECT * FROM movies
+           WHERE isWatched = 1
+           AND LOWER(title) LIKE '%' || LOWER(:query) || '%'""",
+    )
+    fun searchWatchedMoviesByTitle(query: String): Flow<List<MovieEntity>>
+
+    @Query(
+        """SELECT * FROM movies
+           WHERE isInWatchlist = 1
+           AND LOWER(title) LIKE '%' || LOWER(:query) || '%'""",
+    )
+    fun searchWatchlistMoviesByTitle(query: String): Flow<List<MovieEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdateMovie(movie: MovieEntity)
 

@@ -55,6 +55,30 @@ class DatabaseRepositoryImpl
                 }
             }.flowOn(Dispatchers.IO)
 
+        override fun searchWatchedMoviesByTitle(query: String): Flow<Result<List<Movie>>> =
+            flow {
+                emit(Result.Loading)
+                emitAll(
+                    movieDao
+                        .searchWatchedMoviesByTitle(query)
+                        .map { entities ->
+                            Result.Success(entities.map { it.toDomain() })
+                        }.catch { e -> emit(Result.Error(e)) },
+                )
+            }.flowOn(Dispatchers.IO)
+
+        override fun searchWatchlistMoviesByTitle(query: String): Flow<Result<List<Movie>>> =
+            flow {
+                emit(Result.Loading)
+                emitAll(
+                    movieDao
+                        .searchWatchlistMoviesByTitle(query)
+                        .map { entities ->
+                            Result.Success(entities.map { it.toDomain() })
+                        }.catch { e -> emit(Result.Error(e)) },
+                )
+            }.flowOn(Dispatchers.IO)
+
         // TODO(): manejar bien excepciones aqui y en todo el proyecto
         override suspend fun updateMovieState(movie: Movie): Boolean =
             try {
