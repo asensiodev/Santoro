@@ -72,7 +72,6 @@ class MainActivity : ComponentActivity() {
                     bottomNavItems = bottomNavItems,
                     selectedBottomNavItem = selectedBottomNavItem,
                     onBottomNavItemSelected = { bottomNavItem ->
-                        appState.navController.popBackStack()
                         appState.navigateToTopLevelDestination(
                             bottomNavItem.toTopLevelDestination().toNavRoute(),
                         )
