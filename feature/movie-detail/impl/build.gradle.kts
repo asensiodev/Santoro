@@ -16,4 +16,5 @@ dependencies {
     implementation(libs.retrofit.gson.converter)
     implementation(libs.gson)
     implementation(libs.bundles.coil)
+    implementation(libs.accompanist.flow.layout)
 }

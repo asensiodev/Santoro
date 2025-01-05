@@ -3,6 +3,8 @@ package com.asensiodev.feature.moviedetail.impl.presentation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -26,7 +28,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.datasource.LoremIpsum
 import androidx.compose.ui.unit.em
@@ -41,6 +42,7 @@ import com.asensiodev.core.designsystem.theme.AppIcons
 import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.core.designsystem.theme.displayFontFamily
 import com.asensiodev.feature.moviedetail.impl.presentation.component.AnimatedIconWithText
+import com.asensiodev.feature.moviedetail.impl.presentation.component.GenreChip
 import com.asensiodev.feature.moviedetail.impl.presentation.model.MovieUi
 import javax.inject.Inject
 import com.asensiodev.santoro.core.designsystem.R as DR
@@ -136,6 +138,16 @@ internal fun MovieDetailContent(
             contentScale = ContentScale.Fit,
             error = painterResource(DR.drawable.ic_movie_card_placeholder),
         )
+        val genres = uiState.movie?.genres.orEmpty()
+        if (genres.isNotEmpty()) {
+            MovieGenresChipsSection(
+                genres = genres,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = Spacings.spacing4),
+            )
+        }
         Text(
             text = uiState.movie?.title ?: stringResource(SR.string.untitled_movie),
             style = MaterialTheme.typography.headlineSmall,
@@ -143,12 +155,11 @@ internal fun MovieDetailContent(
             modifier = Modifier.fillMaxWidth(),
         )
         Row(
-            verticalAlignment = Alignment.Top,
+            verticalAlignment = Alignment.Bottom,
             horizontalArrangement = Arrangement.spacedBy(Spacings.spacing16),
         ) {
             AdditionalMovieInfo(
                 releaseDate = uiState.movie?.releaseDate,
-                genres = uiState.movie?.genres,
                 voteAverage = uiState.movie?.voteAverage,
                 modifier = Modifier.weight(EQUAL_WEIGHT),
             )
@@ -162,6 +173,23 @@ internal fun MovieDetailContent(
         }
         MovieOverview(uiState)
         Spacer(modifier = Modifier.height(Spacings.spacing16))
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun MovieGenresChipsSection(
+    genres: List<String>,
+    modifier: Modifier = Modifier,
+) {
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
+        verticalArrangement = Arrangement.spacedBy(Spacings.spacing8),
+    ) {
+        genres.forEach { genre ->
+            GenreChip(text = genre)
+        }
     }
 }
 
@@ -217,12 +245,11 @@ private fun ListSavingButtons(
 @Composable
 private fun AdditionalMovieInfo(
     releaseDate: String?,
-    genres: List<String>?,
     voteAverage: Double?,
     modifier: Modifier = Modifier,
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(Spacings.spacing8),
+        verticalArrangement = Arrangement.Bottom,
         modifier = modifier,
     ) {
         if (!releaseDate.isNullOrEmpty()) {
@@ -231,14 +258,7 @@ private fun AdditionalMovieInfo(
                 style = MaterialTheme.typography.bodyLarge,
             )
         }
-        if (!genres.isNullOrEmpty()) {
-            Text(
-                text = genres.joinToString(SEPARATOR),
-                style = MaterialTheme.typography.bodyMedium,
-                overflow = TextOverflow.Ellipsis,
-                maxLines = SINGLE_LINE,
-            )
-        }
+        Spacer(modifier = Modifier.height(Spacings.spacing8))
         if (voteAverage != null) {
             Text(
                 text = stringResource(SR.string.rating, voteAverage),
@@ -296,10 +316,8 @@ private fun MovieDetailScreenPreview() {
 }
 
 private const val POSTER_ASPECT_RATIO = 2f / 2.5f
-private const val SEPARATOR = ", "
 private const val MOVIE_ID = 12
 private const val WORDS = 40
 private const val EQUAL_WEIGHT = 0.5f
-private const val SINGLE_LINE = 1
 private const val YEAR_INDEX = 0
 private const val DATE_DELIMITER = "-"
