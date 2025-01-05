@@ -1,6 +1,6 @@
 package com.asensiodev.feature.searchmovies.impl.data
 
-import com.asensiodev.core.domain.MovieDetail
+import com.asensiodev.core.domain.Movie
 import com.asensiodev.core.domain.Result
 import com.asensiodev.feature.searchmovies.impl.domain.repository.SearchMoviesRepository
 import kotlinx.coroutines.flow.Flow
@@ -14,7 +14,7 @@ internal class RemoteSearchMoviesRepository
     constructor(
         private val remoteDatasource: SearchMoviesDatasource,
     ) : SearchMoviesRepository {
-        override fun searchMovies(query: String): Flow<Result<List<MovieDetail>>> =
+        override fun searchMovies(query: String): Flow<Result<List<Movie>>> =
             flow {
                 emit(Result.Loading)
                 try {

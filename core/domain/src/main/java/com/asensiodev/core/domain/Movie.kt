@@ -11,4 +11,6 @@ data class Movie(
     val voteCount: Int,
     val genres: List<Genre>,
     val productionCountries: List<ProductionCountry>,
+    val isWatched: Boolean,
+    val isInWatchlist: Boolean,
 )

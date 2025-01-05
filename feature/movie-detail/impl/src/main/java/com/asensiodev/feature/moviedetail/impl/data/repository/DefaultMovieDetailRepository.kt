@@ -1,6 +1,6 @@
 package com.asensiodev.feature.moviedetail.impl.data.repository
 
-import com.asensiodev.core.domain.MovieDetail
+import com.asensiodev.core.domain.Movie
 import com.asensiodev.core.domain.Result
 import com.asensiodev.feature.moviedetail.impl.data.datasource.LocalMovieDetailDataSource
 import com.asensiodev.feature.moviedetail.impl.data.datasource.RemoteMovieDetailDataSource
@@ -15,7 +15,7 @@ internal class DefaultMovieDetailRepository
         private val localDataSource: LocalMovieDetailDataSource,
         private val remoteDataSource: RemoteMovieDetailDataSource,
     ) : MovieDetailRepository {
-        override fun getMovieDetail(id: Int): Flow<Result<MovieDetail?>> {
+        override fun getMovieDetail(id: Int): Flow<Result<Movie?>> {
             val localFlow = localDataSource.getMovieDetail(id)
             val remoteFlow = remoteDataSource.getMovieDetail(id)
 
@@ -61,6 +61,6 @@ internal class DefaultMovieDetailRepository
             }
         }
 
-        override suspend fun updateMovieState(movie: MovieDetail): Boolean =
+        override suspend fun updateMovieState(movie: Movie): Boolean =
             localDataSource.updateMovieState(movie)
     }

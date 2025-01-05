@@ -1,7 +1,7 @@
 package com.asensiodev.santoro.core.database.data
 
 import android.util.Log
-import com.asensiodev.core.domain.MovieDetail
+import com.asensiodev.core.domain.Movie
 import com.asensiodev.core.domain.Result
 import com.asensiodev.santoro.core.database.data.dao.MovieDao
 import com.asensiodev.santoro.core.database.data.mapper.toDomain
@@ -19,7 +19,7 @@ class DatabaseRepositoryImpl
     constructor(
         private val movieDao: MovieDao,
     ) : DatabaseRepository {
-        override fun getWatchedMovies(): Flow<Result<List<MovieDetail>>> =
+        override fun getWatchedMovies(): Flow<Result<List<Movie>>> =
             flow {
                 emit(Result.Loading)
                 emitAll(
@@ -30,7 +30,7 @@ class DatabaseRepositoryImpl
                 )
             }
 
-        override fun getWatchlistMovies(): Flow<Result<List<MovieDetail>>> =
+        override fun getWatchlistMovies(): Flow<Result<List<Movie>>> =
             flow {
                 emit(Result.Loading)
                 emitAll(
@@ -41,7 +41,7 @@ class DatabaseRepositoryImpl
                 )
             }
 
-        override fun getMovieById(movieId: Int): Flow<Result<MovieDetail?>> =
+        override fun getMovieById(movieId: Int): Flow<Result<Movie?>> =
             flow {
                 emit(Result.Loading)
                 try {
@@ -52,7 +52,7 @@ class DatabaseRepositoryImpl
                 }
             }
 
-        override suspend fun updateMovieState(movie: MovieDetail): Boolean =
+        override suspend fun updateMovieState(movie: Movie): Boolean =
             try {
                 movieDao.insertOrUpdateMovie(movie.toEntity())
                 true

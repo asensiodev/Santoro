@@ -1,6 +1,6 @@
 package com.asensiodev.feature.moviedetail.impl.domain.usecase
 
-import com.asensiodev.core.domain.MovieDetail
+import com.asensiodev.core.domain.Movie
 import com.asensiodev.feature.moviedetail.impl.domain.repository.MovieDetailRepository
 import javax.inject.Inject
 
@@ -9,5 +9,5 @@ internal class UpdateMovieStateUseCase
     constructor(
         private val repository: MovieDetailRepository,
     ) {
-        suspend operator fun invoke(movie: MovieDetail) = repository.updateMovieState(movie)
+        suspend operator fun invoke(movie: Movie) = repository.updateMovieState(movie)
     }

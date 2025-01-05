@@ -1,6 +1,6 @@
 package com.asensiodev.feature.moviedetail.impl.data.datasource
 
-import com.asensiodev.core.domain.MovieDetail
+import com.asensiodev.core.domain.Movie
 import com.asensiodev.core.domain.Result
 import com.asensiodev.feature.moviedetail.impl.data.service.MovieDetailApiService
 import com.asensiodev.santoro.core.data.mapper.toDomain
@@ -15,7 +15,7 @@ internal class RetrofitMovieDetailDataSource
     constructor(
         private val apiService: MovieDetailApiService,
     ) : RemoteMovieDetailDataSource {
-        override fun getMovieDetail(id: Int): Flow<Result<MovieDetail?>> =
+        override fun getMovieDetail(id: Int): Flow<Result<Movie?>> =
             flow {
                 emit(Result.Loading)
                 try {

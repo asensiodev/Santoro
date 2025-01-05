@@ -1,11 +1,11 @@
 package com.asensiodev.feature.moviedetail.impl.presentation.mapper
 
 import com.asensiodev.core.domain.Genre
-import com.asensiodev.core.domain.MovieDetail
+import com.asensiodev.core.domain.Movie
 import com.asensiodev.core.domain.ProductionCountry
 import com.asensiodev.feature.moviedetail.impl.presentation.model.MovieUi
 
-internal fun MovieDetail.toUi(): MovieUi =
+internal fun Movie.toUi(): MovieUi =
     MovieUi(
         id = id,
         title = title,
@@ -21,8 +21,8 @@ internal fun MovieDetail.toUi(): MovieUi =
         isInWatchlist = isInWatchlist,
     )
 
-internal fun MovieUi.toDomain(): MovieDetail =
-    MovieDetail(
+internal fun MovieUi.toDomain(): Movie =
+    Movie(
         id = id,
         title = title,
         posterPath = posterPath,

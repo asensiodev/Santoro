@@ -1,6 +1,6 @@
 package com.asensiodev.feature.moviedetail.impl.data.datasource
 
-import com.asensiodev.core.domain.MovieDetail
+import com.asensiodev.core.domain.Movie
 import com.asensiodev.core.domain.Result
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import kotlinx.coroutines.flow.Flow
@@ -14,7 +14,7 @@ internal class RoomMovieDetailDataSource
     constructor(
         private val databaseRepository: DatabaseRepository,
     ) : LocalMovieDetailDataSource {
-        override fun getMovieDetail(id: Int): Flow<Result<MovieDetail?>> =
+        override fun getMovieDetail(id: Int): Flow<Result<Movie?>> =
             flow {
                 emit(Result.Loading)
                 emitAll(
@@ -28,6 +28,6 @@ internal class RoomMovieDetailDataSource
                 )
             }
 
-        override suspend fun updateMovieState(movie: MovieDetail): Boolean =
+        override suspend fun updateMovieState(movie: Movie): Boolean =
             databaseRepository.updateMovieState(movie)
     }
