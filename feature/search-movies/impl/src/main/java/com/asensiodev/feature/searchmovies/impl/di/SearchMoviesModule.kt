@@ -4,6 +4,7 @@ import com.asensiodev.feature.searchmovies.impl.data.RemoteSearchMoviesDatasourc
 import com.asensiodev.feature.searchmovies.impl.data.RemoteSearchMoviesRepository
 import com.asensiodev.feature.searchmovies.impl.data.service.SearchMoviesApiService
 import com.asensiodev.feature.searchmovies.impl.domain.repository.SearchMoviesRepository
+import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetPopularMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesUseCase
 import dagger.Module
 import dagger.Provides
@@ -37,4 +38,10 @@ internal object SearchMoviesModule {
     internal fun provideSearchMoviesUseCase(
         repository: SearchMoviesRepository,
     ): SearchMoviesUseCase = SearchMoviesUseCase(repository)
+
+    @Provides
+    @Singleton
+    internal fun provideGetPopularMoviesUseCase(
+        repository: SearchMoviesRepository,
+    ): GetPopularMoviesUseCase = GetPopularMoviesUseCase(repository)
 }

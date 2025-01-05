@@ -7,10 +7,12 @@ import com.asensiodev.santoro.core.database.data.dao.MovieDao
 import com.asensiodev.santoro.core.database.data.mapper.toDomain
 import com.asensiodev.santoro.core.database.data.mapper.toEntity
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
@@ -28,7 +30,7 @@ class DatabaseRepositoryImpl
                         .map { movies -> Result.Success(movies.map { it.toDomain() }) }
                         .catch { e -> emit(Result.Error(e)) },
                 )
-            }
+            }.flowOn(Dispatchers.IO)
 
         override fun getWatchlistMovies(): Flow<Result<List<Movie>>> =
             flow {
@@ -39,8 +41,9 @@ class DatabaseRepositoryImpl
                         .map { movies -> Result.Success(movies.map { it.toDomain() }) }
                         .catch { e -> emit(Result.Error(e)) },
                 )
-            }
+            }.flowOn(Dispatchers.IO)
 
+        // TODO(): revisar si debe ser suspend y emitir flow
         override fun getMovieById(movieId: Int): Flow<Result<Movie?>> =
             flow {
                 emit(Result.Loading)
@@ -50,8 +53,9 @@ class DatabaseRepositoryImpl
                 } catch (e: Exception) {
                     emit(Result.Error(e))
                 }
-            }
+            }.flowOn(Dispatchers.IO)
 
+        // TODO(): manejar bien excepciones aqui y en todo el proyecto
         override suspend fun updateMovieState(movie: Movie): Boolean =
             try {
                 movieDao.insertOrUpdateMovie(movie.toEntity())

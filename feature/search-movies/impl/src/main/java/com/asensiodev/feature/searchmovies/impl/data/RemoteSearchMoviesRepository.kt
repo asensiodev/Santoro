@@ -29,5 +29,22 @@ internal class RemoteSearchMoviesRepository
                 } catch (e: HttpException) {
                     emit(Result.Error(e))
                 }
+            } // .flowOn(Dispatchers.IO)
+
+        override fun getPopularMovies(): Flow<Result<List<Movie>>> =
+            flow {
+                emit(Result.Loading)
+                try {
+                    val response = remoteDatasource.getPopularMovies()
+                    if (response is Result.Success) {
+                        emit(Result.Success(response.data))
+                    } else if (response is Result.Error) {
+                        emit(Result.Error(response.exception))
+                    }
+                } catch (e: IOException) {
+                    emit(Result.Error(e))
+                } catch (e: HttpException) {
+                    emit(Result.Error(e))
+                }
             }
     }

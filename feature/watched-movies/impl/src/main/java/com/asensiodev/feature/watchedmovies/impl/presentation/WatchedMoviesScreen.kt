@@ -83,7 +83,7 @@ internal fun WatchedMoviesScreen(
             uiState.isLoading -> LoadingIndicator()
             uiState.errorMessage != null -> {
                 ErrorContent(
-                    message = stringResource(SR.string.search_movies_no_results_text),
+                    message = stringResource(SR.string.search_movies_no_search_results_text),
                     onRetry = { },
                 )
             }
@@ -132,7 +132,7 @@ private fun NoResultsContent(modifier: Modifier) {
         verticalArrangement = Arrangement.Top,
     ) {
         Text(
-            text = stringResource(SR.string.search_movies_no_results_text),
+            text = stringResource(SR.string.search_movies_no_search_results_text),
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,

@@ -11,15 +11,20 @@
 
     <!-- Search Movies Screen -->
     <string name="search_movies_top_bar_title">Search movies</string>
-    <string name="search_movies_textfield_placeholder">Search movies</string>
-    <string name="search_movies_no_results_text">Ups! No movies found</string>
+    <string name="search_movies_textfield_placeholder">Type to search movies</string>
+    <string name="search_movies_no_search_results_text">Ups! No movies found</string>
+    <string name="search_movies_no_popular_movies_results_text">Start your search to begin finding movies</string>
+    <string name="search_movies_popular_movies_title">Popular movies</string>
     <string name="search_movies_error_button_retry">Retry</string>
+    <string name="search_movies_query_text_field_clear_button_description">Clear search</string>
 
     <!-- Watched Movies Screen -->
     <string name="watched_movies_top_bar_title">Watched movies</string>
+    <string name="watched_movies_no_results_text">It seems like you haven\'t watched any movies yet…</string>
 
     <!-- Watchlist Screen -->
     <string name="watchlist_top_bar_title">My watchlist</string>
+    <string name="watchlist_no_results_text">It seems like you haven\'t added any movies to your watchlist yet…</string>
 
     <!-- Movie Detail Screen -->
     <string name="movie_detail_top_bar_title">Movie Detail</string>

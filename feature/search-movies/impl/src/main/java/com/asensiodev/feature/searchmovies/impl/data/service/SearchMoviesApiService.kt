@@ -9,4 +9,7 @@ internal interface SearchMoviesApiService {
     suspend fun searchMovies(
         @Query("query") query: String,
     ): SearchMoviesResponseApiModel
+
+    @GET("movie/popular")
+    suspend fun getPopularMovies(): SearchMoviesResponseApiModel
 }

@@ -2,7 +2,6 @@ package com.asensiodev.feature.searchmovies.impl.presentation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,6 +12,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -35,6 +35,7 @@ import coil3.request.crossfade
 import com.asensiodev.core.designsystem.PreviewContent
 import com.asensiodev.core.designsystem.component.errorContent.ErrorContent
 import com.asensiodev.core.designsystem.component.loadingIndicator.LoadingIndicator
+import com.asensiodev.core.designsystem.component.noresultscontent.NoResultsContent
 import com.asensiodev.core.designsystem.theme.AppIcons
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
@@ -84,39 +85,120 @@ internal fun SearchMoviesScreen(
                 .padding(Spacings.spacing16),
         verticalArrangement = Arrangement.spacedBy(Spacings.spacing12),
     ) {
-        TextField(
-            value = uiState.query,
-            onValueChange = onQueryChanged,
-            placeholder = { Text(stringResource(SR.string.search_movies_textfield_placeholder)) },
-            modifier =
-                Modifier.fillMaxWidth(),
-            trailingIcon = {
-                Icon(
-                    imageVector = AppIcons.SearchIcon,
-                    contentDescription = null,
-                )
-            },
-        )
-        Spacer(modifier = Modifier.height(Spacings.spacing8))
-        when {
-            uiState.isLoading -> LoadingIndicator()
-            uiState.errorMessage != null -> {
-                ErrorContent(
-                    message = stringResource(SR.string.search_movies_no_results_text),
-                    onRetry = { onQueryChanged(uiState.query) },
-                )
-            }
-
-            uiState.hasResults -> {
-                MovieList(
-                    movies = uiState.movies,
-                    onMovieClick = onMovieClick,
-                )
-            }
-
-            else -> NoResultsContent(modifier)
+        QueryTextField(uiState, onQueryChanged)
+        if (uiState.query.isBlank()) {
+            PopularMoviesContent(uiState, onMovieClick)
+        } else {
+            SearchMoviesContent(uiState, onQueryChanged, onMovieClick)
         }
     }
+}
+
+@Composable
+private fun PopularMoviesContent(
+    uiState: SearchMoviesUiState,
+    onMovieClick: (Int) -> Unit,
+) {
+    when {
+        uiState.isPopularMoviesLoading -> {
+            LoadingIndicator()
+        }
+
+        uiState.errorMessage != null && !uiState.hasPopularMoviesResults -> {
+            Text(
+                text =
+                    stringResource(
+                        SR.string.search_movies_no_popular_movies_results_text,
+                    ),
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
+        uiState.hasPopularMoviesResults -> {
+            Text(
+                text =
+                    stringResource(
+                        SR.string.search_movies_popular_movies_title,
+                    ),
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            MovieList(
+                movies = uiState.popularMovies,
+                onMovieClick = onMovieClick,
+            )
+        }
+
+        else -> {
+            Text(
+                text =
+                    stringResource(
+                        SR.string.search_movies_no_popular_movies_results_text,
+                    ),
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SearchMoviesContent(
+    uiState: SearchMoviesUiState,
+    onQueryChanged: (String) -> Unit,
+    onMovieClick: (Int) -> Unit,
+) {
+    when {
+        uiState.isSearchLoading -> LoadingIndicator()
+        uiState.errorMessage != null && !uiState.hasSearchResults -> {
+            ErrorContent(
+                message = stringResource(SR.string.search_movies_no_search_results_text),
+                onRetry = { onQueryChanged(uiState.query) },
+            )
+        }
+
+        uiState.hasSearchResults -> {
+            MovieList(
+                movies = uiState.searchMovieResults,
+                onMovieClick = onMovieClick,
+            )
+        }
+
+        else ->
+            NoResultsContent(
+                text = stringResource(SR.string.search_movies_no_search_results_text),
+            )
+    }
+}
+
+@Composable
+private fun QueryTextField(
+    uiState: SearchMoviesUiState,
+    onQueryChanged: (String) -> Unit,
+) {
+    TextField(
+        value = uiState.query,
+        onValueChange = onQueryChanged,
+        placeholder = { Text(stringResource(SR.string.search_movies_textfield_placeholder)) },
+        modifier = Modifier.fillMaxWidth(),
+        trailingIcon = {
+            if (uiState.query.isNotEmpty()) {
+                IconButton(onClick = { onQueryChanged(EMPTY_STRING) }) {
+                    Icon(
+                        imageVector = AppIcons.ClearIcon,
+                        contentDescription =
+                            stringResource(
+                                SR.string.search_movies_query_text_field_clear_button_description,
+                            ),
+                    )
+                }
+            }
+        },
+    )
 }
 
 @Composable
@@ -137,25 +219,6 @@ fun MovieList(
                 onClick = { onMovieClick(movie.id) },
             )
         }
-    }
-}
-
-@Composable
-private fun NoResultsContent(modifier: Modifier) {
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .padding(Spacings.spacing16),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top,
-    ) {
-        Text(
-            text = stringResource(SR.string.search_movies_no_results_text),
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center,
-        )
     }
 }
 
@@ -233,11 +296,11 @@ private fun SearchMoviesScreenPreview() {
         SearchMoviesScreen(
             uiState =
                 SearchMoviesUiState(
-                    query = "Search movies",
-                    movies = sampleMovies,
-                    isLoading = false,
+                    query = "",
+                    popularMovies = sampleMovies,
+                    isSearchLoading = false,
                     errorMessage = null,
-                    hasResults = true,
+                    hasPopularMoviesResults = true,
                 ),
             onQueryChanged = {},
             onMovieClick = {},
@@ -264,3 +327,4 @@ private fun MovieCardPreview() {
 }
 
 private const val MOVIE_SAMPLE_LIST_SIZE = 5
+private const val EMPTY_STRING = ""

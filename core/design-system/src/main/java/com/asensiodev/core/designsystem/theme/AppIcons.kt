@@ -3,6 +3,7 @@ package com.asensiodev.core.designsystem.theme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.List
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Done
 import androidx.compose.material.icons.rounded.Search
@@ -13,4 +14,5 @@ object AppIcons {
     val WatchlistIcon = Icons.AutoMirrored.Rounded.List
     val AddIcon = Icons.Rounded.Add
     val ArrowBackIcon = Icons.AutoMirrored.Rounded.ArrowBack
+    val ClearIcon = Icons.Filled.Clear
 }
