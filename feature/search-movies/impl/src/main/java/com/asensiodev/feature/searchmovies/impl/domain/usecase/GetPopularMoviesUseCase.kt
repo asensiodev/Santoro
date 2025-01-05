@@ -8,5 +8,5 @@ internal class GetPopularMoviesUseCase
     constructor(
         private val repository: SearchMoviesRepository,
     ) {
-        operator fun invoke() = repository.getPopularMovies()
+        operator fun invoke(page: Int) = repository.getPopularMovies(page)
     }

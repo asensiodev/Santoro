@@ -14,11 +14,14 @@ internal class RemoteSearchMoviesRepository
     constructor(
         private val remoteDatasource: SearchMoviesDatasource,
     ) : SearchMoviesRepository {
-        override fun searchMovies(query: String): Flow<Result<List<Movie>>> =
+        override fun searchMovies(
+            query: String,
+            page: Int,
+        ): Flow<Result<List<Movie>>> =
             flow {
                 emit(Result.Loading)
                 try {
-                    val response = remoteDatasource.searchMovies(query)
+                    val response = remoteDatasource.searchMovies(query, page)
                     if (response is Result.Success) {
                         emit(Result.Success(response.data))
                     } else if (response is Result.Error) {
@@ -31,11 +34,11 @@ internal class RemoteSearchMoviesRepository
                 }
             } // .flowOn(Dispatchers.IO)
 
-        override fun getPopularMovies(): Flow<Result<List<Movie>>> =
+        override fun getPopularMovies(page: Int): Flow<Result<List<Movie>>> =
             flow {
                 emit(Result.Loading)
                 try {
-                    val response = remoteDatasource.getPopularMovies()
+                    val response = remoteDatasource.getPopularMovies(page)
                     if (response is Result.Success) {
                         emit(Result.Success(response.data))
                     } else if (response is Result.Error) {

@@ -14,12 +14,16 @@ internal class RemoteSearchMoviesDatasource
     constructor(
         private val apiService: SearchMoviesApiService,
     ) : SearchMoviesDatasource {
-        override suspend fun searchMovies(query: String): Result<List<Movie>> =
+        override suspend fun searchMovies(
+            query: String,
+            page: Int,
+        ): Result<List<Movie>> =
             try {
                 val response: SearchMoviesResponseApiModel =
                     apiService
                         .searchMovies(
                             query,
+                            page,
                         )
                 val movies = response.toDomain()
                 Result.Success(movies)
@@ -29,10 +33,10 @@ internal class RemoteSearchMoviesDatasource
                 Result.Error(e)
             }
 
-        override suspend fun getPopularMovies(): Result<List<Movie>> =
+        override suspend fun getPopularMovies(page: Int): Result<List<Movie>> =
             try {
                 val response: SearchMoviesResponseApiModel =
-                    apiService.getPopularMovies()
+                    apiService.getPopularMovies(page)
                 val movies = response.toDomain()
                 Result.Success(movies)
             } catch (e: IOException) {

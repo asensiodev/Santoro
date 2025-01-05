@@ -166,7 +166,7 @@ fun MovieCard(
                     modifier =
                         Modifier
                             .size(Size.size160)
-                            .weight(1f)
+                            .weight(FULL_WEIGHT)
                             .padding(Spacings.spacing8),
                 )
                 Text(
@@ -243,3 +243,4 @@ private fun MovieCardPreview() {
 }
 
 private const val MOVIE_SAMPLE_LIST_SIZE = 5
+private const val FULL_WEIGHT = 1f

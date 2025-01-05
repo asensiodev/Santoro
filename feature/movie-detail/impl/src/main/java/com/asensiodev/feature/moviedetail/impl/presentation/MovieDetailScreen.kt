@@ -141,7 +141,7 @@ internal fun MovieDetailContent(
                 genres = uiState.movie?.genres,
                 voteAverage = uiState.movie?.voteAverage,
             )
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.weight(FULL_WEIGHT))
             UserListOptions(
                 isWatched = uiState.movie?.isWatched ?: false,
                 isInWatchlist = uiState.movie?.isInWatchlist ?: false,
@@ -171,7 +171,7 @@ private fun RowScope.UserListOptions(
         selectedIcon = AppIcons.WatchedMoviesIcon,
         unselectedIcon = AppIcons.AddIcon,
         label = stringResource(SR.string.watched_icon_button),
-        modifier = Modifier.Companion.weight(1f),
+        modifier = Modifier.Companion.weight(FULL_WEIGHT),
     )
     AnimatedIconWithText(
         isSelected = isInWatchlist,
@@ -179,7 +179,7 @@ private fun RowScope.UserListOptions(
         selectedIcon = AppIcons.WatchlistIcon,
         unselectedIcon = AppIcons.AddIcon,
         label = stringResource(SR.string.watchlist_icon_button),
-        modifier = Modifier.Companion.weight(1f),
+        modifier = Modifier.Companion.weight(FULL_WEIGHT),
     )
 }
 
@@ -252,3 +252,4 @@ private const val POSTER_ASPECT_RATIO = 2f / 3f
 private const val SEPARATOR = ", "
 private const val MOVIE_ID = 12
 private const val WORDS = 40
+private const val FULL_WEIGHT = 1f

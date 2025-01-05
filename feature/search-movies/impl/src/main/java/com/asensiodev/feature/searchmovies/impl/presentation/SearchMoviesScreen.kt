@@ -1,6 +1,7 @@
 package com.asensiodev.feature.searchmovies.impl.presentation
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -8,8 +9,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -17,6 +21,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,6 +46,7 @@ import com.asensiodev.core.designsystem.theme.AppIcons
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
+import kotlinx.coroutines.flow.distinctUntilChanged
 import javax.inject.Inject
 import com.asensiodev.santoro.core.designsystem.R as DR
 import com.asensiodev.santoro.core.stringresources.R as SR
@@ -68,6 +75,12 @@ internal fun SearchMoviesRoot(
         onQueryChanged = viewModel::updateQuery,
         onMovieClick = onMovieClick,
         modifier = modifier,
+        onLoadMorePopularMovies = {
+            viewModel.loadMorePopularMovies()
+        },
+        onLoadMoreSearchedMovies = {
+            viewModel.loadMoreSearchResults()
+        },
     )
 }
 
@@ -77,6 +90,8 @@ internal fun SearchMoviesScreen(
     onQueryChanged: (String) -> Unit,
     onMovieClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    onLoadMorePopularMovies: () -> Unit,
+    onLoadMoreSearchedMovies: () -> Unit,
 ) {
     Column(
         modifier =
@@ -87,9 +102,18 @@ internal fun SearchMoviesScreen(
     ) {
         QueryTextField(uiState, onQueryChanged)
         if (uiState.query.isBlank()) {
-            PopularMoviesContent(uiState, onMovieClick)
+            PopularMoviesContent(
+                uiState = uiState,
+                onMovieClick = onMovieClick,
+                onLoadMore = onLoadMorePopularMovies,
+            )
         } else {
-            SearchMoviesContent(uiState, onQueryChanged, onMovieClick)
+            SearchMoviesContent(
+                uiState = uiState,
+                onQueryChanged = onQueryChanged,
+                onMovieClick = onMovieClick,
+                onLoadMore = onLoadMoreSearchedMovies,
+            )
         }
     }
 }
@@ -98,21 +122,16 @@ internal fun SearchMoviesScreen(
 private fun PopularMoviesContent(
     uiState: SearchMoviesUiState,
     onMovieClick: (Int) -> Unit,
+    onLoadMore: () -> Unit,
 ) {
     when {
-        uiState.isPopularMoviesLoading -> {
+        uiState.isInitialLoading -> {
             LoadingIndicator()
         }
 
         uiState.errorMessage != null && !uiState.hasPopularMoviesResults -> {
-            Text(
-                text =
-                    stringResource(
-                        SR.string.search_movies_no_popular_movies_results_text,
-                    ),
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
+            NoResultsContent(
+                text = stringResource(SR.string.search_movies_no_popular_movies_results_text),
             )
         }
 
@@ -129,18 +148,15 @@ private fun PopularMoviesContent(
             MovieList(
                 movies = uiState.popularMovies,
                 onMovieClick = onMovieClick,
+                onLoadMore = onLoadMore,
+                isLoading = uiState.isPopularMoviesLoading,
+                isEndReached = uiState.isPopularEndReached,
             )
         }
 
         else -> {
-            Text(
-                text =
-                    stringResource(
-                        SR.string.search_movies_no_popular_movies_results_text,
-                    ),
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
+            NoResultsContent(
+                text = stringResource(SR.string.search_movies_no_popular_movies_results_text),
             )
         }
     }
@@ -151,9 +167,10 @@ private fun SearchMoviesContent(
     uiState: SearchMoviesUiState,
     onQueryChanged: (String) -> Unit,
     onMovieClick: (Int) -> Unit,
+    onLoadMore: () -> Unit,
 ) {
     when {
-        uiState.isSearchLoading -> LoadingIndicator()
+        uiState.isInitialLoading -> LoadingIndicator()
         uiState.errorMessage != null && !uiState.hasSearchResults -> {
             ErrorContent(
                 message = stringResource(SR.string.search_movies_no_search_results_text),
@@ -165,6 +182,9 @@ private fun SearchMoviesContent(
             MovieList(
                 movies = uiState.searchMovieResults,
                 onMovieClick = onMovieClick,
+                onLoadMore = onLoadMore,
+                isLoading = uiState.isSearchLoading,
+                isEndReached = uiState.isSearchEndReached,
             )
         }
 
@@ -202,25 +222,93 @@ private fun QueryTextField(
 }
 
 @Composable
-fun MovieList(
+private fun MovieList(
     movies: List<MovieUi>,
     onMovieClick: (Int) -> Unit,
+    onLoadMore: () -> Unit,
+    isEndReached: Boolean,
+    isLoading: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val lazyGridState = rememberLazyGridState()
+
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = Size.size88),
         horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
         verticalArrangement = Arrangement.spacedBy(Spacings.spacing8),
         modifier = modifier,
+        state = lazyGridState,
     ) {
-        items(movies) { movie ->
+        itemsIndexed(
+            movies,
+            key = { index, movie -> generateUniqueKey(index, movie) },
+        ) { _, movie ->
             MovieCard(
                 movie = movie,
                 onClick = { onMovieClick(movie.id) },
             )
         }
+        if (isLoading && !isEndReached) {
+            item(
+                key = LOADING_GRID_ITEM_KEY,
+                span = { GridItemSpan(maxLineSpan) },
+            ) {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(Spacings.spacing8),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    LoadingIndicator()
+                }
+            }
+        }
+    }
+
+    ObserveGridState(lazyGridState, isLoading, isEndReached, onLoadMore)
+}
+
+@Composable
+private fun ObserveGridState(
+    lazyGridState: LazyGridState,
+    isLoading: Boolean,
+    isEndReached: Boolean,
+    onLoadMore: () -> Unit,
+) {
+    LaunchedEffect(lazyGridState) {
+        snapshotFlow {
+            val lastVisibleItem =
+                lazyGridState.layoutInfo.visibleItemsInfo
+                    .lastOrNull()
+                    ?.index ?: 0
+            val totalItems = lazyGridState.layoutInfo.totalItemsCount
+            PaginationInfo(
+                lastVisibleIndex = lastVisibleItem,
+                totalItems = totalItems,
+                isCurrentlyLoading = isLoading,
+                hasReachedEnd = isEndReached,
+            )
+        }.distinctUntilChanged()
+            .collect { paginationInfo ->
+                val shouldLoadMore =
+                    paginationInfo.lastVisibleIndex >=
+                        paginationInfo.totalItems - LOAD_MORE_MOVIES_THRESHOLD &&
+                        !paginationInfo.isCurrentlyLoading &&
+                        !paginationInfo.hasReachedEnd &&
+                        paginationInfo.totalItems > 0
+
+                if (shouldLoadMore) {
+                    onLoadMore()
+                }
+            }
     }
 }
+
+private fun generateUniqueKey(
+    index: Int,
+    movie: MovieUi,
+) = "$index-${movie.id}"
 
 @Composable
 fun MovieCard(
@@ -248,7 +336,7 @@ fun MovieCard(
                     modifier =
                         Modifier
                             .size(Size.size160)
-                            .weight(1f)
+                            .weight(FULL_WEIGHT)
                             .padding(Spacings.spacing8),
                 )
                 Text(
@@ -304,6 +392,8 @@ private fun SearchMoviesScreenPreview() {
                 ),
             onQueryChanged = {},
             onMovieClick = {},
+            onLoadMorePopularMovies = {},
+            onLoadMoreSearchedMovies = {},
         )
     }
 }
@@ -328,3 +418,13 @@ private fun MovieCardPreview() {
 
 private const val MOVIE_SAMPLE_LIST_SIZE = 5
 private const val EMPTY_STRING = ""
+private const val LOAD_MORE_MOVIES_THRESHOLD = 4
+private const val FULL_WEIGHT = 1f
+private const val LOADING_GRID_ITEM_KEY = "loading_item_key"
+
+private data class PaginationInfo(
+    val lastVisibleIndex: Int,
+    val totalItems: Int,
+    val isCurrentlyLoading: Boolean,
+    val hasReachedEnd: Boolean,
+)

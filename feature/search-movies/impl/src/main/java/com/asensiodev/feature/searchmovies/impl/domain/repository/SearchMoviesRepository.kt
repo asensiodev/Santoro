@@ -5,6 +5,9 @@ import com.asensiodev.core.domain.Result
 import kotlinx.coroutines.flow.Flow
 
 internal interface SearchMoviesRepository {
-    fun searchMovies(query: String): Flow<Result<List<Movie>>>
-    fun getPopularMovies(): Flow<Result<List<Movie>>>
+    fun searchMovies(
+        query: String,
+        page: Int,
+    ): Flow<Result<List<Movie>>>
+    fun getPopularMovies(page: Int): Flow<Result<List<Movie>>>
 }

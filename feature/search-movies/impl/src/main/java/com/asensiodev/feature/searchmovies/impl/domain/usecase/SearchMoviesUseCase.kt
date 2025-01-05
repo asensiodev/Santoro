@@ -8,5 +8,8 @@ internal class SearchMoviesUseCase
     constructor(
         private val repository: SearchMoviesRepository,
     ) {
-        operator fun invoke(query: String) = repository.searchMovies(query)
+        operator fun invoke(
+            query: String,
+            page: Int,
+        ) = repository.searchMovies(query, page)
     }
