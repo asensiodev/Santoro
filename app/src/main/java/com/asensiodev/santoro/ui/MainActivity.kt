@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.ui.Modifier
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.asensiodev.core.designsystem.component.bottombar.BottomNavItem
 import com.asensiodev.core.designsystem.component.scaffold.SantoroScaffold
 import com.asensiodev.core.designsystem.component.topbar.SantoroTopAppBar
@@ -26,15 +27,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        installSplashScreen()
         enableEdgeToEdge()
         setContent {
             SantoroTheme {
                 val appState = rememberSantoroAppState()
                 val bottomNavItems = TopLevelDestination.entries.map { it.toBottomNavItem() }
                 val selectedBottomNavItem = appState.currentTopLevelDestination?.toBottomNavItem()
-//                val currentBackStackEntry =
-//                    appState.navController.currentBackStackEntryAsState()
-//                val currentDestination = currentBackStackEntry.value?.destination
 
                 val title =
                     when (selectedBottomNavItem) {

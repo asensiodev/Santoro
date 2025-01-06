@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.CustomSplashScreenTheme" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_screen_light_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/santoro_splash_animated_logo</item>
+        <item name="windowSplashScreenAnimationDuration">1200</item>
+        <item name="postSplashScreenTheme">@style/Theme.Santoro</item>
+    </style>
+</resources>
