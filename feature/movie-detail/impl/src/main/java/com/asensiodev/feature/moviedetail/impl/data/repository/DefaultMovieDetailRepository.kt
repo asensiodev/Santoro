@@ -61,6 +61,6 @@ internal class DefaultMovieDetailRepository
             }
         }
 
-        override suspend fun updateMovieState(movie: Movie): Boolean =
+        override suspend fun updateMovieState(movie: Movie): Result<Boolean> =
             localDataSource.updateMovieState(movie)
     }

@@ -2,9 +2,9 @@ package com.asensiodev.santoro.core.database.di
 
 import android.content.Context
 import androidx.room.Room
-import com.asensiodev.santoro.core.database.data.DatabaseRepositoryImpl
-import com.asensiodev.santoro.core.database.data.RoomDatabaseImpl
+import com.asensiodev.santoro.core.database.data.SantoroRoomDatabase
 import com.asensiodev.santoro.core.database.data.dao.MovieDao
+import com.asensiodev.santoro.core.database.data.repository.RoomDatabaseRepository
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import dagger.Module
 import dagger.Provides
@@ -20,21 +20,21 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(
         @ApplicationContext context: Context,
-    ): RoomDatabaseImpl =
+    ): SantoroRoomDatabase =
         Room
             .databaseBuilder(
                 context,
-                RoomDatabaseImpl::class.java,
+                SantoroRoomDatabase::class.java,
                 DATABASE_NAME,
             ).build()
 
     @Provides
-    fun provideMovieDao(database: RoomDatabaseImpl): MovieDao = database.movieDao()
+    fun provideMovieDao(database: SantoroRoomDatabase): MovieDao = database.movieDao()
 
     @Provides
     @Singleton
     fun provideDatabaseRepository(movieDao: MovieDao): DatabaseRepository =
-        DatabaseRepositoryImpl(movieDao)
+        RoomDatabaseRepository(movieDao)
 }
 
 private const val DATABASE_NAME = "movies_database"

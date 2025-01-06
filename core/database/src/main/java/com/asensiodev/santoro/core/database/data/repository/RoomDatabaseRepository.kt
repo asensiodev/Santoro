@@ -1,6 +1,6 @@
-package com.asensiodev.santoro.core.database.data
+package com.asensiodev.santoro.core.database.data.repository
 
-import android.util.Log
+import android.database.sqlite.SQLiteException
 import com.asensiodev.core.domain.Movie
 import com.asensiodev.core.domain.Result
 import com.asensiodev.santoro.core.database.data.dao.MovieDao
@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
-class DatabaseRepositoryImpl
+class RoomDatabaseRepository
     @Inject
     constructor(
         private val movieDao: MovieDao,
@@ -43,17 +43,15 @@ class DatabaseRepositoryImpl
                 )
             }.flowOn(Dispatchers.IO)
 
-        // TODO(): revisar si debe ser suspend y emitir flow
-        override fun getMovieById(movieId: Int): Flow<Result<Movie?>> =
-            flow {
-                emit(Result.Loading)
-                try {
-                    val movie = movieDao.getMovieById(movieId)?.toDomain()
-                    emit(Result.Success(movie))
-                } catch (e: Exception) {
-                    emit(Result.Error(e))
-                }
-            }.flowOn(Dispatchers.IO)
+        override suspend fun getMovieById(movieId: Int): Result<Movie?> =
+            try {
+                val movie = movieDao.getMovieById(movieId)?.toDomain()
+                Result.Success(movie)
+            } catch (e: SQLiteException) {
+                Result.Error(e)
+            } catch (e: Exception) {
+                Result.Error(e)
+            }
 
         override fun searchWatchedMoviesByTitle(query: String): Flow<Result<List<Movie>>> =
             flow {
@@ -79,13 +77,13 @@ class DatabaseRepositoryImpl
                 )
             }.flowOn(Dispatchers.IO)
 
-        // TODO(): manejar bien excepciones aqui y en todo el proyecto
-        override suspend fun updateMovieState(movie: Movie): Boolean =
+        override suspend fun updateMovieState(movie: Movie): Result<Boolean> =
             try {
                 movieDao.insertOrUpdateMovie(movie.toEntity())
-                true
+                Result.Success(true)
+            } catch (e: SQLiteException) {
+                Result.Error(e)
             } catch (e: Exception) {
-                Log.d("TAG", e.message ?: "Unknown error")
-                false
+                Result.Error(e)
             }
     }

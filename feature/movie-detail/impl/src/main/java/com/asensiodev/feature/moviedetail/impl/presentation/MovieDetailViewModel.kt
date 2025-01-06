@@ -58,8 +58,20 @@ internal class MovieDetailViewModel
                 val updatedMovie = movie.copy(isInWatchlist = !movie.isInWatchlist)
                 viewModelScope.launch {
                     val success = updateMovieStateUseCase(updatedMovie.toDomain())
-                    if (success) {
-                        _uiState.update { it.copy(movie = updatedMovie) }
+                    when (success) {
+                        is Result.Success -> {
+                            _uiState.update { it.copy(movie = updatedMovie) }
+                        }
+
+                        is Result.Error -> {
+                            _uiState.update {
+                                it.copy(errorMessage = success.exception.message)
+                            }
+                        }
+
+                        Result.Loading -> {
+                            _uiState.update { it.copy(isLoading = true) }
+                        }
                     }
                 }
             }
@@ -71,8 +83,21 @@ internal class MovieDetailViewModel
                 val updatedMovie = movie.copy(isWatched = !movie.isWatched)
                 viewModelScope.launch {
                     val success = updateMovieStateUseCase(updatedMovie.toDomain())
-                    if (success) {
-                        _uiState.update { it.copy(movie = updatedMovie) }
+                    when (success) {
+                        is Result.Success -> {
+                            _uiState.update { it.copy(movie = updatedMovie) }
+                        }
+
+                        is Result.Error -> {
+                            // TODO(): handle all errors properly and test them
+                            _uiState.update {
+                                it.copy(errorMessage = success.exception.message)
+                            }
+                        }
+
+                        Result.Loading -> {
+                            _uiState.update { it.copy(isLoading = true) }
+                        }
                     }
                 }
             }

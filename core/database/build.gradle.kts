@@ -12,4 +12,6 @@ dependencies {
     implementation(projects.core.domain)
 
     implementation(libs.gson)
+
+    testImplementation(libs.turbine)
 }

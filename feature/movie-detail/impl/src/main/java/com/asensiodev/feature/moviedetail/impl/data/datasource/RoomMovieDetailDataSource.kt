@@ -4,9 +4,7 @@ import com.asensiodev.core.domain.Movie
 import com.asensiodev.core.domain.Result
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 internal class RoomMovieDetailDataSource
@@ -17,17 +15,13 @@ internal class RoomMovieDetailDataSource
         override fun getMovieDetail(id: Int): Flow<Result<Movie?>> =
             flow {
                 emit(Result.Loading)
-                emitAll(
-                    databaseRepository.getMovieById(id).map { result ->
-                        when (result) {
-                            is Result.Success -> Result.Success(result.data)
-                            is Result.Error -> Result.Error(result.exception)
-                            else -> Result.Error(Exception("Unexpected state"))
-                        }
-                    },
-                )
+                when (val result = databaseRepository.getMovieById(id)) {
+                    is Result.Success -> emit(Result.Success(result.data))
+                    is Result.Error -> emit(Result.Error(result.exception))
+                    else -> emit(Result.Error(Exception("Unexpected state")))
+                }
             }
 
-        override suspend fun updateMovieState(movie: Movie): Boolean =
+        override suspend fun updateMovieState(movie: Movie): Result<Boolean> =
             databaseRepository.updateMovieState(movie)
     }

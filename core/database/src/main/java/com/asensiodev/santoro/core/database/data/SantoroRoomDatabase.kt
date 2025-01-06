@@ -6,6 +6,6 @@ import com.asensiodev.santoro.core.database.data.dao.MovieDao
 import com.asensiodev.santoro.core.database.data.model.MovieEntity
 
 @Database(entities = [MovieEntity::class], version = 1, exportSchema = false)
-abstract class RoomDatabaseImpl : RoomDatabase() {
+abstract class SantoroRoomDatabase : RoomDatabase() {
     abstract fun movieDao(): MovieDao
 }
