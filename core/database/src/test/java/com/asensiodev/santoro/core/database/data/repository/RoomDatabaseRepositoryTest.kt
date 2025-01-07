@@ -84,7 +84,7 @@ class RoomDatabaseRepositoryTest {
         }
 
     @Test
-    fun `GIVEN existing movieId WHEN getMovieById THEN returns movie`() =
+    fun `GIVEN existing movieId WHEN getMovieById THEN returns expected movie`() =
         runTest {
             val entity = MockUtils.createTestMovieEntity(id = 200, title = "Movie 200", isWatched = true)
             coEvery { movieDao.getMovieById(200) } returns entity

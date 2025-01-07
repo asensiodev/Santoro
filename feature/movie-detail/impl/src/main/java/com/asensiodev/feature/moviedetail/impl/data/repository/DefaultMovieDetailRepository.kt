@@ -6,8 +6,12 @@ import com.asensiodev.feature.moviedetail.impl.data.datasource.LocalMovieDetailD
 import com.asensiodev.feature.moviedetail.impl.data.datasource.RemoteMovieDetailDataSource
 import com.asensiodev.feature.moviedetail.impl.domain.repository.MovieDetailRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import javax.inject.Inject
+
+class MovieNotFoundException : Exception()
+class UnexpectedErrorException : Exception()
 
 internal class DefaultMovieDetailRepository
     @Inject
@@ -27,14 +31,15 @@ internal class DefaultMovieDetailRepository
                             Result.Success(
                                 remoteMovie.copy(
                                     isWatched =
-                                        (localResult as? Result.Success)?.data?.isWatched ?: false,
+                                        (localResult as? Result.Success)?.data?.isWatched
+                                            ?: false,
                                     isInWatchlist =
                                         (localResult as? Result.Success)?.data?.isInWatchlist
                                             ?: false,
                                 ),
                             )
                         } else {
-                            Result.Error(Exception("Remote movie not found"))
+                            Result.Error(MovieNotFoundException())
                         }
                     }
 
@@ -53,12 +58,8 @@ internal class DefaultMovieDetailRepository
                             Result.Error(remoteResult.exception)
                         }
                     }
-
-                    else -> {
-                        Result.Error(Exception("Unexpected state"))
-                    }
                 }
-            }
+            }.catch { emit(Result.Error(UnexpectedErrorException())) }
         }
 
         override suspend fun updateMovieState(movie: Movie): Result<Boolean> =
