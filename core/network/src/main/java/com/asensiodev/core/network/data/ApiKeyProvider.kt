@@ -1,4 +1,4 @@
-package com.asensiodev.core.network.data.interceptor
+package com.asensiodev.core.network.data
 
 interface ApiKeyProvider {
     fun getApiKey(): String?

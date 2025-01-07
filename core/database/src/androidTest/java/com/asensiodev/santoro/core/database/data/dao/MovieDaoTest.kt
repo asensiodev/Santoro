@@ -18,6 +18,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class MovieDaoTest {
     private lateinit var database: SantoroRoomDatabase
+
     private lateinit var movieDao: MovieDao
 
     @Before

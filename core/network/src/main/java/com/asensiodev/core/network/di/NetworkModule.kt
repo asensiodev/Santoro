@@ -1,9 +1,9 @@
 package com.asensiodev.core.network.di
 
 import com.asensiodev.core.buildconfig.BuildConfig
-import com.asensiodev.core.network.data.interceptor.ApiKeyProvider
+import com.asensiodev.core.network.data.ApiKeyProvider
+import com.asensiodev.core.network.data.RemoteConfigApiKeyProvider
 import com.asensiodev.core.network.data.interceptor.AuthorizationInterceptor
-import com.asensiodev.core.network.data.interceptor.RemoteConfigApiKeyProvider
 import com.asensiodev.library.remoteconfig.api.RemoteConfigProvider
 import dagger.Module
 import dagger.Provides

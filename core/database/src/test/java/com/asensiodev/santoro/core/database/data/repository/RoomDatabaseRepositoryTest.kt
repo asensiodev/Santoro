@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test
 
 class RoomDatabaseRepositoryTest {
     private val movieDao: MovieDao = mockk()
+
     private lateinit var repository: RoomDatabaseRepository
 
     @BeforeEach

@@ -1,5 +1,6 @@
 package com.asensiodev.core.network.data.interceptor
 
+import com.asensiodev.core.network.data.ApiKeyProvider
 import okhttp3.Interceptor
 import okhttp3.Response
 import javax.inject.Inject

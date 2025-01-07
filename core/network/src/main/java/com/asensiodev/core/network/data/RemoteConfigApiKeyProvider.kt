@@ -1,4 +1,4 @@
-package com.asensiodev.core.network.data.interceptor
+package com.asensiodev.core.network.data
 
 import com.asensiodev.library.remoteconfig.api.RemoteConfigName
 import com.asensiodev.library.remoteconfig.api.RemoteConfigProvider
