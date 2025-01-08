@@ -1,4 +1,4 @@
-package com.asensiodev.feature.searchmovies.impl.data
+package com.asensiodev.feature.searchmovies.impl.data.datasource
 
 import com.asensiodev.core.domain.Movie
 import com.asensiodev.core.domain.Result

@@ -1,7 +1,7 @@
 package com.asensiodev.feature.searchmovies.impl.di
 
-import com.asensiodev.feature.searchmovies.impl.data.RemoteSearchMoviesDatasource
-import com.asensiodev.feature.searchmovies.impl.data.RemoteSearchMoviesRepository
+import com.asensiodev.feature.searchmovies.impl.data.datasource.RemoteSearchMoviesDatasource
+import com.asensiodev.feature.searchmovies.impl.data.repository.RemoteSearchMoviesRepository
 import com.asensiodev.feature.searchmovies.impl.data.service.SearchMoviesApiService
 import com.asensiodev.feature.searchmovies.impl.domain.repository.SearchMoviesRepository
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetPopularMoviesUseCase

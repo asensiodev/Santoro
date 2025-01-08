@@ -1,4 +1,4 @@
-package com.asensiodev.feature.searchmovies.impl.data
+package com.asensiodev.feature.searchmovies.impl.data.datasource
 
 import com.asensiodev.core.domain.Movie
 import com.asensiodev.core.domain.Result
@@ -35,8 +35,7 @@ internal class RemoteSearchMoviesDatasource
 
         override suspend fun getPopularMovies(page: Int): Result<List<Movie>> =
             try {
-                val response: SearchMoviesResponseApiModel =
-                    apiService.getPopularMovies(page)
+                val response: SearchMoviesResponseApiModel = apiService.getPopularMovies(page)
                 val movies = response.toDomain()
                 Result.Success(movies)
             } catch (e: IOException) {

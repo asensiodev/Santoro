@@ -1,7 +1,8 @@
-package com.asensiodev.feature.searchmovies.impl.data
+package com.asensiodev.feature.searchmovies.impl.data.repository
 
 import com.asensiodev.core.domain.Movie
 import com.asensiodev.core.domain.Result
+import com.asensiodev.feature.searchmovies.impl.data.datasource.SearchMoviesDatasource
 import com.asensiodev.feature.searchmovies.impl.domain.repository.SearchMoviesRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -32,7 +33,7 @@ internal class RemoteSearchMoviesRepository
                 } catch (e: HttpException) {
                     emit(Result.Error(e))
                 }
-            } // .flowOn(Dispatchers.IO)
+            }
 
         override fun getPopularMovies(page: Int): Flow<Result<List<Movie>>> =
             flow {
