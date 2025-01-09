@@ -19,10 +19,12 @@
 
     <!-- Watched Movies Screen -->
     <string name="watched_movies_top_bar_title">Watched movies</string>
+    <string name="watched_movies_textfield_placeholder">Type to search watched movies</string>
     <string name="watched_movies_no_results_text">It seems like you haven\'t watched any movies yet…</string>
 
     <!-- Watchlist Screen -->
     <string name="watchlist_top_bar_title">My watchlist</string>
+    <string name="watchlist_movies_textfield_placeholder">Type to search in your watchlist</string>
     <string name="watchlist_no_results_text">It seems like you haven\'t added any movies to your watchlist yet…</string>
 
     <!-- Movie Detail Screen -->
@@ -36,5 +38,6 @@
     <!-- Generic -->
     <string name="unknown_value">Unknown</string>
     <string name="query_text_field_clear_button_description">Clear search</string>
+    <string name="error_message_retry">"Ups! An error occurred, please tap to retry"</string>
 
 </resources>

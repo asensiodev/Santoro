@@ -11,6 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import com.asensiodev.core.designsystem.PreviewContent
 import com.asensiodev.core.designsystem.theme.Spacings
 
 @Composable
@@ -22,7 +24,10 @@ fun NoResultsContent(
         modifier =
             modifier
                 .fillMaxSize()
-                .padding(Spacings.spacing16),
+                .padding(
+                    vertical = Spacings.spacing32,
+                    horizontal = Spacings.spacing16,
+                ),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
     ) {
@@ -31,6 +36,16 @@ fun NoResultsContent(
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun NoResultsContentPreview() {
+    PreviewContent {
+        NoResultsContent(
+            text = "Ups! No results found...",
         )
     }
 }

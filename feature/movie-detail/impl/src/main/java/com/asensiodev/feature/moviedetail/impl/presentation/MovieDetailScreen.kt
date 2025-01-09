@@ -73,13 +73,9 @@ internal fun MovieDetailRoot(
 
     MovieDetailScreen(
         uiState = uiState,
+        onToggleWatchlist = viewModel::toggleWatchlist,
+        onToggleWatched = viewModel::toggleWatched,
         onRetry = { viewModel.fetchMovieDetails(uiState.movie?.id ?: 0) },
-        onToggleWatchlist = {
-            viewModel.toggleWatchlist()
-        },
-        onToggleWatched = {
-            viewModel.toggleWatched()
-        },
         modifier = modifier,
     )
 }
@@ -96,7 +92,7 @@ internal fun MovieDetailScreen(
         uiState.isLoading -> LoadingIndicator()
         uiState.errorMessage != null ->
             ErrorContent(
-                message = uiState.errorMessage,
+                message = stringResource(SR.string.error_message_retry),
                 onRetry = { onRetry() },
             )
 

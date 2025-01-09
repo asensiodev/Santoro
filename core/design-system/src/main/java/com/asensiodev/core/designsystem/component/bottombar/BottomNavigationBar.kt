@@ -33,12 +33,11 @@ fun BottomNavigationBar(
     }
 }
 
-// TODO(): add data to preview
 @Preview
 @Composable
 fun BottomNavigationBarPreview() {
     BottomNavigationBar(
-        items = emptyList(),
+        items = BottomNavItem.entries,
         selectedItem = null,
         onItemSelected = {},
     )

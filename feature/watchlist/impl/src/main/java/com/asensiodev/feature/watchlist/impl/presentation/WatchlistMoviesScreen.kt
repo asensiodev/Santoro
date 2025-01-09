@@ -72,15 +72,15 @@ internal fun WatchlistMoviesScreen(
     ) {
         QueryTextField(
             query = uiState.query,
-            placeholder = stringResource(SR.string.search_movies_textfield_placeholder),
+            placeholder = stringResource(SR.string.watchlist_movies_textfield_placeholder),
             onQueryChanged = onQueryChanged,
         )
         when {
             uiState.isLoading -> LoadingIndicator()
             uiState.errorMessage != null -> {
                 ErrorContent(
-                    message = stringResource(SR.string.search_movies_no_search_results_text),
-                    onRetry = { },
+                    message = stringResource(SR.string.error_message_retry),
+                    onRetry = { onQueryChanged(uiState.query) },
                 )
             }
 

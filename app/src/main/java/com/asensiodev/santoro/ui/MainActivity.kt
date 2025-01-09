@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.asensiodev.core.designsystem.component.bottombar.BottomNavItem
 import com.asensiodev.core.designsystem.component.scaffold.SantoroScaffold
-import com.asensiodev.core.designsystem.component.topbar.SantoroTopAppBar
+import com.asensiodev.core.designsystem.component.topbar.TopAppBar
 import com.asensiodev.core.designsystem.theme.SantoroTheme
 import com.asensiodev.santoro.navigation.NavigationScreens
 import com.asensiodev.santoro.navigation.SantoroNavHost
@@ -58,7 +58,7 @@ class MainActivity : ComponentActivity() {
                 val showBackButton = appState.currentTopLevelDestination == null
                 SantoroScaffold(
                     topBar = {
-                        SantoroTopAppBar(
+                        TopAppBar(
                             title = title,
                             onBackClick =
                                 if (showBackButton) {

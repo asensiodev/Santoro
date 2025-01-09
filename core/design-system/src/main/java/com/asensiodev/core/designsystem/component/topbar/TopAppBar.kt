@@ -15,7 +15,7 @@ import com.asensiodev.santoro.core.stringresources.R as SR
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun SantoroTopAppBar(
+fun TopAppBar(
     title: String,
     onBackClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
@@ -39,10 +39,6 @@ fun SantoroTopAppBar(
                 }
             }
         },
-//        colors =
-//            TopAppBarDefaults.topAppBarColors(
-//                containerColor = Transparent,
-//            ),
         modifier = modifier,
     )
 }
@@ -50,7 +46,7 @@ fun SantoroTopAppBar(
 @PreviewLightDark
 @Composable
 fun SantoroTopAppBarPreview() {
-    SantoroTopAppBar(
+    TopAppBar(
         title = stringResource(SR.string.search_movies_top_bar_title),
         onBackClick = {},
     )

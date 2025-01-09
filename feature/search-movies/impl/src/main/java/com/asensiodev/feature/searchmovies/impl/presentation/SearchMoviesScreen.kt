@@ -20,6 +20,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -132,6 +133,7 @@ private fun PopularMoviesContent(
                         SR.string.search_movies_popular_movies_title,
                     ),
                 style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -163,7 +165,7 @@ private fun SearchMoviesContent(
         uiState.isInitialLoading -> LoadingIndicator()
         uiState.errorMessage != null && !uiState.hasSearchResults -> {
             ErrorContent(
-                message = stringResource(SR.string.search_movies_no_search_results_text),
+                message = stringResource(SR.string.error_message_retry),
                 onRetry = { onQueryChanged(uiState.query) },
             )
         }
