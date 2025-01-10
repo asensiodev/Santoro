@@ -25,7 +25,7 @@ internal fun MovieUi.toDomain(): Movie =
     Movie(
         id = id,
         title = title,
-        posterPath = posterPath,
+        posterPath = posterPath?.removePrefix(BASE_POSTER_URL),
         overview = overview,
         releaseDate = releaseDate,
         popularity = popularity,
