@@ -3,24 +3,20 @@ package com.asensiodev.feature.watchlist.impl.presentation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asensiodev.core.designsystem.PreviewContentFullSize
 import com.asensiodev.core.designsystem.component.errorContent.ErrorContent
 import com.asensiodev.core.designsystem.component.loadingIndicator.LoadingIndicator
+import com.asensiodev.core.designsystem.component.noresultscontent.NoResultsContent
 import com.asensiodev.core.designsystem.component.querytextfield.QueryTextField
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
@@ -91,7 +87,10 @@ internal fun WatchlistMoviesScreen(
                 )
             }
 
-            else -> NoResultsContent(modifier)
+            else ->
+                NoResultsContent(
+                    text = stringResource(SR.string.search_movies_no_search_results_text),
+                )
         }
     }
 }
@@ -114,25 +113,6 @@ fun MovieList(
                 onClick = { onMovieClick(movie.id) },
             )
         }
-    }
-}
-
-@Composable
-private fun NoResultsContent(modifier: Modifier) {
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .padding(Spacings.spacing16),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top,
-    ) {
-        Text(
-            text = stringResource(SR.string.search_movies_no_search_results_text),
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center,
-        )
     }
 }
 

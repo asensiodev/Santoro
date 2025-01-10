@@ -24,10 +24,7 @@ fun NoResultsContent(
         modifier =
             modifier
                 .fillMaxSize()
-                .padding(
-                    vertical = Spacings.spacing32,
-                    horizontal = Spacings.spacing16,
-                ),
+                .padding(Spacings.spacing16),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
     ) {
