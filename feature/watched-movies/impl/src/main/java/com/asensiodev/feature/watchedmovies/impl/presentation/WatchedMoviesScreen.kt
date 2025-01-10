@@ -20,7 +20,7 @@ import com.asensiodev.core.designsystem.component.noresultscontent.NoResultsCont
 import com.asensiodev.core.designsystem.component.querytextfield.QueryTextField
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
-import com.asensiodev.feature.watchedmovies.impl.presentation.component.component.MovieCard
+import com.asensiodev.feature.watchedmovies.impl.presentation.component.MovieCard
 import com.asensiodev.feature.watchedmovies.impl.presentation.model.MovieUi
 import javax.inject.Inject
 import com.asensiodev.santoro.core.stringresources.R as SR

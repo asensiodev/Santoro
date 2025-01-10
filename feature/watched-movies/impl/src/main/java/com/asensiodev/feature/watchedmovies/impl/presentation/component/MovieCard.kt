@@ -1,4 +1,4 @@
-package com.asensiodev.feature.watchedmovies.impl.presentation.component.component
+package com.asensiodev.feature.watchedmovies.impl.presentation.component
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize

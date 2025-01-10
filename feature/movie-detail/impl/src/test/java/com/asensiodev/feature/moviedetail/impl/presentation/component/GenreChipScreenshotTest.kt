@@ -1,4 +1,4 @@
-package com.asensiodev.core.designsystem.component.querytextfield
+package com.asensiodev.feature.moviedetail.impl.presentation.component
 
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
@@ -7,7 +7,7 @@ import com.asensiodev.core.designsystem.PreviewContent
 import org.junit.Rule
 import org.junit.Test
 
-class QueryTextFieldScreenshotTest {
+class GenreChipScreenshotTest {
     @get:Rule
     val paparazzi =
         Paparazzi(
@@ -21,11 +21,9 @@ class QueryTextFieldScreenshotTest {
     fun captureScreenshot() {
         paparazzi.snapshot {
             PreviewContent {
-                QueryTextField(
-                    query = "",
-                    placeholder = "Type to search movies",
-                    onQueryChanged = {},
-                )
+                PreviewContent {
+                    GenreChip(text = "Action")
+                }
             }
         }
     }

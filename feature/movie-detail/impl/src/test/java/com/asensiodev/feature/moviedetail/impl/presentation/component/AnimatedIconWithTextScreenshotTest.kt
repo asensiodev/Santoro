@@ -1,13 +1,14 @@
-package com.asensiodev.core.designsystem.component.querytextfield
+package com.asensiodev.feature.moviedetail.impl.presentation.component
 
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import com.android.ide.common.rendering.api.SessionParams
 import com.asensiodev.core.designsystem.PreviewContent
+import com.asensiodev.core.designsystem.theme.AppIcons
 import org.junit.Rule
 import org.junit.Test
 
-class QueryTextFieldScreenshotTest {
+class AnimatedIconWithTextScreenshotTest {
     @get:Rule
     val paparazzi =
         Paparazzi(
@@ -21,10 +22,12 @@ class QueryTextFieldScreenshotTest {
     fun captureScreenshot() {
         paparazzi.snapshot {
             PreviewContent {
-                QueryTextField(
-                    query = "",
-                    placeholder = "Type to search movies",
-                    onQueryChanged = {},
+                AnimatedIconWithText(
+                    isSelected = true,
+                    onClick = {},
+                    selectedIcon = AppIcons.WatchedMoviesIcon,
+                    unselectedIcon = AppIcons.AddIcon,
+                    label = "Label",
                 )
             }
         }
