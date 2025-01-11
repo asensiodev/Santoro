@@ -2,7 +2,6 @@ package com.asensiodev.feature.searchmovies.impl.presentation
 
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 
-// TODO(): review recomposition and use of list. Maybe use sealed interface here?
 internal data class SearchMoviesUiState(
     val query: String = "",
     val searchMovieResults: List<MovieUi> = emptyList(),

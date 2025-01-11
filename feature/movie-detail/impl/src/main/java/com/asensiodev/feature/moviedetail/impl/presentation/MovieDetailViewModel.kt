@@ -89,7 +89,6 @@ internal class MovieDetailViewModel
                         }
 
                         is Result.Error -> {
-                            // TODO(): handle all errors properly and test them
                             _uiState.update {
                                 it.copy(errorMessage = result.exception.message)
                             }

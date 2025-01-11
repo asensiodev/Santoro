@@ -13,7 +13,6 @@ import dagger.hilt.components.SingletonComponent
 import retrofit2.Retrofit
 import javax.inject.Singleton
 
-// TODO(): use viewModelComponent?
 @Module
 @InstallIn(SingletonComponent::class)
 internal object SearchMoviesModule {

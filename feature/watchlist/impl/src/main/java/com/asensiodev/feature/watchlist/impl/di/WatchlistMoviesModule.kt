@@ -10,7 +10,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-// TODO(): use viewModelComponent?
 @Module
 @InstallIn(SingletonComponent::class)
 internal object WatchlistMoviesModule {
