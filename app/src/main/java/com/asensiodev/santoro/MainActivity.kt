@@ -1,4 +1,4 @@
-package com.asensiodev.santoro.ui
+package com.asensiodev.santoro
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -16,6 +16,7 @@ import com.asensiodev.santoro.navigation.TopLevelDestination
 import com.asensiodev.santoro.navigation.toBottomNavItem
 import com.asensiodev.santoro.navigation.toNavRoute
 import com.asensiodev.santoro.navigation.toTopLevelDestination
+import com.asensiodev.santoro.presentation.rememberSantoroAppState
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import com.asensiodev.santoro.core.stringresources.R as SR

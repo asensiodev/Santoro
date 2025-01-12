@@ -1,4 +1,4 @@
-package com.asensiodev.santoro.ui
+package com.asensiodev.santoro.presentation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
