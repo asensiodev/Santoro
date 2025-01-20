@@ -11,6 +11,7 @@ internal class AuthorizationInterceptor
         private val apiKeyProvider: ApiKeyProvider,
     ) : Interceptor {
         override fun intercept(chain: Interceptor.Chain): Response {
+            // TODO: remove this call from interceptor
             val apiKey = apiKeyProvider.getApiKey()
             check(apiKey != null) { "API key is missing!" }
             val originalRequest = chain.request()
