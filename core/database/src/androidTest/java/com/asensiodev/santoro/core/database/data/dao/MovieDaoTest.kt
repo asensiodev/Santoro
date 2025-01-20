@@ -5,11 +5,13 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.asensiodev.santoro.core.database.MockUtils
 import com.asensiodev.santoro.core.database.data.SantoroRoomDatabase
-import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertNotNull
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import org.amshove.kluent.shouldBeEqualTo
+import org.amshove.kluent.shouldBeTrue
+import org.amshove.kluent.shouldContain
+import org.amshove.kluent.shouldNotBeNull
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -18,7 +20,6 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class MovieDaoTest {
     private lateinit var database: SantoroRoomDatabase
-
     private lateinit var movieDao: MovieDao
 
     @Before
@@ -30,7 +31,6 @@ class MovieDaoTest {
                     SantoroRoomDatabase::class.java,
                 ).allowMainThreadQueries()
                 .build()
-
         movieDao = database.movieDao()
     }
 
@@ -40,7 +40,7 @@ class MovieDaoTest {
     }
 
     @Test
-    fun insertOrUpdateMovie_thenGetMovieById() =
+    fun insertOrUpdateMovie_thenGetMovieById() {
         runBlocking {
             val movie =
                 MockUtils.createTestMovieEntity(
@@ -52,18 +52,17 @@ class MovieDaoTest {
                     productionCountries = """["USA","Australia"]""",
                 )
             movieDao.insertOrUpdateMovie(movie)
-
             val retrievedMovie = movieDao.getMovieById(1)
-
-            assertNotNull(retrievedMovie)
-            assertEquals("Matrix", retrievedMovie?.title)
-            assertEquals(true, retrievedMovie?.isInWatchlist)
-            assertEquals("""["Action","Sci-Fi"]""", retrievedMovie?.genres)
-            assertEquals("""["USA","Australia"]""", retrievedMovie?.productionCountries)
+            retrievedMovie.shouldNotBeNull()
+            retrievedMovie.title shouldBeEqualTo "Matrix"
+            retrievedMovie.isInWatchlist.shouldBeTrue()
+            retrievedMovie.genres shouldBeEqualTo """["Action","Sci-Fi"]"""
+            retrievedMovie.productionCountries shouldBeEqualTo """["USA","Australia"]"""
         }
+    }
 
     @Test
-    fun getWatchlistMovies_returnsOnlyMoviesInWatchlist() =
+    fun getWatchlistMovies_returnsOnlyMoviesInWatchlist() {
         runBlocking {
             val movies =
                 listOf(
@@ -93,17 +92,16 @@ class MovieDaoTest {
                     ),
                 )
             movies.forEach { movieDao.insertOrUpdateMovie(it) }
-
             val watchlistMovies = movieDao.getWatchlistMovies().first()
-
-            assertEquals(2, watchlistMovies.size)
+            watchlistMovies.size shouldBeEqualTo 2
             val titles = watchlistMovies.map { it.title }
-            assert(titles.contains("Film 1"))
-            assert(titles.contains("Film 3"))
+            titles shouldContain "Film 1"
+            titles shouldContain "Film 3"
         }
+    }
 
     @Test
-    fun getWatchedMovies_returnsOnlyWatched() =
+    fun getWatchedMovies_returnsOnlyWatched() {
         runBlocking {
             val movie1 =
                 MockUtils.createTestMovieEntity(
@@ -123,22 +121,20 @@ class MovieDaoTest {
                     title = "Watched 2",
                     isWatched = true,
                 )
-
             movieDao.insertOrUpdateMovie(movie1)
             movieDao.insertOrUpdateMovie(movie2)
             movieDao.insertOrUpdateMovie(movie3)
-
             val watchedMovies = movieDao.getWatchedMovies().first()
-
-            assertEquals(2, watchedMovies.size)
+            watchedMovies.size shouldBeEqualTo 2
             val titles = watchedMovies.map { it.title }
-            assert(titles.contains("Watched 1"))
-            assert(titles.contains("Watched 2"))
+            titles shouldContain "Watched 1"
+            titles shouldContain "Watched 2"
         }
+    }
 
     @ExperimentalCoroutinesApi
     @Test
-    fun searchWatchedMoviesByTitle_returnsFilteredResults() =
+    fun searchWatchedMoviesByTitle_returnsFilteredResults() {
         runBlocking {
             val movies =
                 listOf(
@@ -172,17 +168,16 @@ class MovieDaoTest {
                     ),
                 )
             movies.forEach { movieDao.insertOrUpdateMovie(it) }
-
             val foundMovies = movieDao.searchWatchedMoviesByTitle("matrix").first()
-
-            assertEquals(2, foundMovies.size)
-            assert(foundMovies.any { it.title == "Matrix Reloaded" })
-            assert(foundMovies.any { it.title == "Matrix Revolutions" })
+            foundMovies.size shouldBeEqualTo 2
+            foundMovies.any { it.title == "Matrix Reloaded" }.shouldBeTrue()
+            foundMovies.any { it.title == "Matrix Revolutions" }.shouldBeTrue()
         }
+    }
 
     @ExperimentalCoroutinesApi
     @Test
-    fun updateMovie_updatesFieldsCorrectly() =
+    fun updateMovie_updatesFieldsCorrectly() {
         runBlocking {
             val movie =
                 MockUtils.createTestMovieEntity(
@@ -193,7 +188,6 @@ class MovieDaoTest {
                     productionCountries = """["USA"]""",
                 )
             movieDao.insertOrUpdateMovie(movie)
-
             val updatedMovie =
                 movie.copy(
                     title = "New Title",
@@ -202,12 +196,12 @@ class MovieDaoTest {
                     productionCountries = """["USA","Canada"]""",
                 )
             movieDao.updateMovie(updatedMovie)
-
             val fromDb = movieDao.getMovieById(301)
-            assertNotNull(fromDb)
-            assertEquals("New Title", fromDb?.title)
-            assertEquals(true, fromDb?.isWatched)
-            assertEquals("""["Action","Thriller"]""", fromDb?.genres)
-            assertEquals("""["USA","Canada"]""", fromDb?.productionCountries)
+            fromDb.shouldNotBeNull()
+            fromDb.title shouldBeEqualTo "New Title"
+            fromDb.isWatched.shouldBeTrue()
+            fromDb.genres shouldBeEqualTo """["Action","Thriller"]"""
+            fromDb.productionCountries shouldBeEqualTo """["USA","Canada"]"""
         }
+    }
 }

@@ -112,6 +112,7 @@ junit-jupiter-vintage-engine = { group = "org.junit.vintage", name = "junit-vint
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 
 kluent = { group = "org.amshove.kluent", name = "kluent", version.ref = "kluent" }
+kluent-android = { group = "org.amshove.kluent", name = "kluent-android", version.ref = "kluent" }
 kotest = { group = "io.kotest", name = "kotest-assertions-core", version.ref = "kotest" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
