@@ -9,6 +9,11 @@ internal class RemoteConfigApiKeyProvider
     constructor(
         private val remoteConfigProvider: RemoteConfigProvider,
     ) : ApiKeyProvider {
-        override fun getApiKey(): String =
-            remoteConfigProvider.getStringParameter(RemoteConfigName.TMDB_SANTORO_API_KEY)
+        private val cachedApiKey: String by lazy {
+            remoteConfigProvider
+                .getStringParameter(RemoteConfigName.TMDB_SANTORO_API_KEY)
+                .also { check(it.isNotBlank()) { "API key is missing!" } }
+        }
+
+        override fun getApiKey(): String = cachedApiKey
     }
