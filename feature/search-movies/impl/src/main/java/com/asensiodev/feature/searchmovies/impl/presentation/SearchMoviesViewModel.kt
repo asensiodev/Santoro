@@ -30,8 +30,8 @@ internal class SearchMoviesViewModel
 
         private val searchQuery = MutableStateFlow("")
 
-        init {
-            fetchPopularMovies(isInitialLoad = true)
+        fun loadInitialData() {
+            getPopularMovies(isInitialLoad = true)
 
             searchQuery
                 .debounce(DELAY)
@@ -58,52 +58,6 @@ internal class SearchMoviesViewModel
                         fetchSearchMoviesResult(query, FIRST_PAGE, isInitialLoad = true)
                     }
                 }.launchIn(viewModelScope)
-        }
-
-        private fun fetchPopularMovies(isInitialLoad: Boolean = false) {
-            viewModelScope.launch {
-                getPopularMoviesUseCase(_uiState.value.currentPopularPage)
-                    .collect { result ->
-                        when (result) {
-                            is Result.Loading -> {
-                                _uiState.update {
-                                    it.copy(
-                                        isPopularMoviesLoading = true,
-                                        isInitialLoading = isInitialLoad,
-                                    )
-                                }
-                            }
-
-                            is Result.Success -> {
-                                val newMovies = result.data.toUiList()
-                                val updatedPopularMovies = _uiState.value.popularMovies + newMovies
-                                _uiState.update {
-                                    it.copy(
-                                        isPopularMoviesLoading = false,
-                                        isInitialLoading = false,
-                                        popularMovies = updatedPopularMovies,
-                                        currentPopularPage = it.currentPopularPage + NEXT_PAGE,
-                                        isPopularEndReached = newMovies.isEmpty(),
-                                        hasPopularMoviesResults = updatedPopularMovies.isNotEmpty(),
-                                        errorMessage = null,
-                                    )
-                                }
-                            }
-
-                            is Result.Error -> {
-                                _uiState.update {
-                                    it.copy(
-                                        isPopularMoviesLoading = false,
-                                        isInitialLoading = false,
-                                        errorMessage = result.exception.message,
-                                        hasPopularMoviesResults = false,
-                                        isPopularEndReached = true,
-                                    )
-                                }
-                            }
-                        }
-                    }
-            }
         }
 
         fun updateQuery(query: String) {
@@ -164,7 +118,7 @@ internal class SearchMoviesViewModel
 
         fun loadMorePopularMovies() {
             if (!_uiState.value.isPopularMoviesLoading && !_uiState.value.isPopularEndReached) {
-                fetchPopularMovies()
+                getPopularMovies()
             }
         }
 
@@ -176,6 +130,52 @@ internal class SearchMoviesViewModel
                 query.isNotBlank()
             ) {
                 fetchSearchMoviesResult(query, currentPage + NEXT_PAGE)
+            }
+        }
+
+        private fun getPopularMovies(isInitialLoad: Boolean = false) {
+            viewModelScope.launch {
+                getPopularMoviesUseCase(_uiState.value.currentPopularPage)
+                    .collect { result ->
+                        when (result) {
+                            is Result.Loading -> {
+                                _uiState.update {
+                                    it.copy(
+                                        isPopularMoviesLoading = true,
+                                        isInitialLoading = isInitialLoad,
+                                    )
+                                }
+                            }
+
+                            is Result.Success -> {
+                                val newMovies = result.data.toUiList()
+                                val updatedPopularMovies = _uiState.value.popularMovies + newMovies
+                                _uiState.update {
+                                    it.copy(
+                                        isPopularMoviesLoading = false,
+                                        isInitialLoading = false,
+                                        popularMovies = updatedPopularMovies,
+                                        currentPopularPage = it.currentPopularPage + NEXT_PAGE,
+                                        isPopularEndReached = newMovies.isEmpty(),
+                                        hasPopularMoviesResults = updatedPopularMovies.isNotEmpty(),
+                                        errorMessage = null,
+                                    )
+                                }
+                            }
+
+                            is Result.Error -> {
+                                _uiState.update {
+                                    it.copy(
+                                        isPopularMoviesLoading = false,
+                                        isInitialLoading = false,
+                                        errorMessage = result.exception.message,
+                                        hasPopularMoviesResults = false,
+                                        isPopularEndReached = true,
+                                    )
+                                }
+                            }
+                        }
+                    }
             }
         }
     }

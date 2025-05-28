@@ -35,6 +35,7 @@ import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.feature.searchmovies.impl.presentation.component.MovieCard
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
+import com.asensiodev.ui.LaunchEffectOnce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import javax.inject.Inject
 import com.asensiodev.santoro.core.stringresources.R as SR
@@ -57,6 +58,10 @@ internal fun SearchMoviesRoot(
     viewModel: SearchMoviesViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchEffectOnce {
+        viewModel.loadInitialData()
+    }
 
     SearchMoviesScreen(
         uiState = uiState,
