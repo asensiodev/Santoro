@@ -27,24 +27,9 @@ class MovieDetailViewModelTest {
 
     private val getMovieDetailUseCase: GetMovieDetailUseCase = mockk()
     private val updateMovieStateUseCase: UpdateMovieStateUseCase = mockk()
+    private val testMovie = createTestMovie()
 
     private lateinit var viewModel: MovieDetailViewModel
-
-    private val testMovie =
-        Movie(
-            id = 1,
-            title = "Inception",
-            overview = "A skilled thief is offered a chance to erase his criminal record.",
-            posterPath = "https://image.tmdb.org/t/p/w500/path/to/poster.jpg",
-            releaseDate = "2010-07-16",
-            popularity = 80.0,
-            voteAverage = 8.8,
-            voteCount = 20000,
-            genres = listOf(),
-            productionCountries = listOf(),
-            isWatched = false,
-            isInWatchlist = false,
-        )
 
     @BeforeEach
     fun setUp() {
@@ -214,4 +199,20 @@ class MovieDetailViewModelTest {
                 }
             }
     }
+
+    private fun createTestMovie() =
+        Movie(
+            id = 1,
+            title = "Inception",
+            overview = "A skilled thief is offered a chance to erase his criminal record.",
+            posterPath = "https://image.tmdb.org/t/p/w500/path/to/poster.jpg",
+            releaseDate = "2010-07-16",
+            popularity = 80.0,
+            voteAverage = 8.8,
+            voteCount = 20000,
+            genres = listOf(),
+            productionCountries = listOf(),
+            isWatched = false,
+            isInWatchlist = false,
+        )
 }
