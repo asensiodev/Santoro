@@ -1,7 +1,7 @@
 package com.asensiodev.feature.searchmovies.impl.data.datasource
 
-import com.asensiodev.core.domain.Movie
 import com.asensiodev.core.domain.Result
+import com.asensiodev.core.domain.model.Movie
 
 internal interface SearchMoviesDatasource {
     suspend fun searchMovies(

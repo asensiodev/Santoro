@@ -1,7 +1,7 @@
 package com.asensiodev.feature.searchmovies.impl.data.repository
 
-import com.asensiodev.core.domain.Movie
 import com.asensiodev.core.domain.Result
+import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.impl.data.datasource.SearchMoviesDatasource
 import com.asensiodev.feature.searchmovies.impl.domain.repository.SearchMoviesRepository
 import kotlinx.coroutines.flow.Flow

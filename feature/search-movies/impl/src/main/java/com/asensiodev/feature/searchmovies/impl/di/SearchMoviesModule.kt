@@ -1,5 +1,6 @@
 package com.asensiodev.feature.searchmovies.impl.di
 
+import com.asensiodev.core.domain.dispatcher.DispatcherProvider
 import com.asensiodev.feature.searchmovies.impl.data.datasource.RemoteSearchMoviesDatasource
 import com.asensiodev.feature.searchmovies.impl.data.repository.RemoteSearchMoviesRepository
 import com.asensiodev.feature.searchmovies.impl.data.service.SearchMoviesApiService
@@ -36,11 +37,13 @@ internal object SearchMoviesModule {
     @Singleton
     internal fun provideSearchMoviesUseCase(
         repository: SearchMoviesRepository,
-    ): SearchMoviesUseCase = SearchMoviesUseCase(repository)
+        dispatchers: DispatcherProvider,
+    ): SearchMoviesUseCase = SearchMoviesUseCase(repository, dispatchers)
 
     @Provides
     @Singleton
     internal fun provideGetPopularMoviesUseCase(
         repository: SearchMoviesRepository,
-    ): GetPopularMoviesUseCase = GetPopularMoviesUseCase(repository)
+        dispatchers: DispatcherProvider,
+    ): GetPopularMoviesUseCase = GetPopularMoviesUseCase(repository, dispatchers)
 }

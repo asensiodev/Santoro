@@ -1,7 +1,7 @@
 package com.asensiodev.feature.moviedetail.impl.data.datasource
 
-import com.asensiodev.core.domain.Movie
 import com.asensiodev.core.domain.Result
+import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.moviedetail.impl.data.service.MovieDetailApiService
 import com.asensiodev.santoro.core.data.mapper.toDomain
 import kotlinx.coroutines.flow.Flow

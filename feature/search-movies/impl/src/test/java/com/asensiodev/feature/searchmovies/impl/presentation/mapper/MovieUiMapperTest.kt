@@ -1,6 +1,6 @@
 package com.asensiodev.feature.searchmovies.impl.presentation.mapper
 
-import com.asensiodev.core.domain.Movie
+import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.Test

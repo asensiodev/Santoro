@@ -1,21 +1,20 @@
 package com.asensiodev.santoro.core.database.data.repository
 
 import android.database.sqlite.SQLiteException
-import com.asensiodev.core.domain.Movie
 import com.asensiodev.core.domain.Result
+import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.santoro.core.database.data.dao.MovieDao
 import com.asensiodev.santoro.core.database.data.mapper.toDomain
 import com.asensiodev.santoro.core.database.data.mapper.toEntity
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
+// TODO: move all loadings to UI layer
 class RoomDatabaseRepository
     @Inject
     constructor(
@@ -30,7 +29,7 @@ class RoomDatabaseRepository
                         .map { movies -> Result.Success(movies.map { it.toDomain() }) }
                         .catch { e -> emit(Result.Error(e)) },
                 )
-            }.flowOn(Dispatchers.IO)
+            }
 
         override fun getWatchlistMovies(): Flow<Result<List<Movie>>> =
             flow {
@@ -41,7 +40,7 @@ class RoomDatabaseRepository
                         .map { movies -> Result.Success(movies.map { it.toDomain() }) }
                         .catch { e -> emit(Result.Error(e)) },
                 )
-            }.flowOn(Dispatchers.IO)
+            }
 
         override suspend fun getMovieById(movieId: Int): Result<Movie?> =
             try {
@@ -63,7 +62,7 @@ class RoomDatabaseRepository
                             Result.Success(entities.map { it.toDomain() })
                         }.catch { e -> emit(Result.Error(e)) },
                 )
-            }.flowOn(Dispatchers.IO)
+            }
 
         override fun searchWatchlistMoviesByTitle(query: String): Flow<Result<List<Movie>>> =
             flow {
@@ -75,7 +74,7 @@ class RoomDatabaseRepository
                             Result.Success(entities.map { it.toDomain() })
                         }.catch { e -> emit(Result.Error(e)) },
                 )
-            }.flowOn(Dispatchers.IO)
+            }
 
         override suspend fun updateMovieState(movie: Movie): Result<Boolean> =
             try {

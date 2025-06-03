@@ -1,4 +1,4 @@
-import com.asensiodev.core.domain.Movie
+import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.impl.data.mapper.toDomain
 import com.asensiodev.feature.searchmovies.impl.data.model.SearchMoviesResponseApiModel
 import com.asensiodev.santoro.core.data.model.MovieApiModel

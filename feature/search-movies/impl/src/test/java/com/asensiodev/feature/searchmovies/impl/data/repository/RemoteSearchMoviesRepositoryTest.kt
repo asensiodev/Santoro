@@ -1,8 +1,8 @@
 package com.asensiodev.feature.searchmovies.impl.data.repository
 
 import app.cash.turbine.test
-import com.asensiodev.core.domain.Movie
 import com.asensiodev.core.domain.Result
+import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.impl.data.datasource.SearchMoviesDatasource
 import io.mockk.coEvery
 import io.mockk.mockk

@@ -1,7 +1,7 @@
 package com.asensiodev.feature.moviedetail.impl.data.repository
 
-import com.asensiodev.core.domain.Movie
 import com.asensiodev.core.domain.Result
+import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.moviedetail.impl.data.datasource.LocalMovieDetailDataSource
 import com.asensiodev.feature.moviedetail.impl.data.datasource.RemoteMovieDetailDataSource
 import com.asensiodev.feature.moviedetail.impl.domain.repository.MovieDetailRepository

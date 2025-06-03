@@ -1,8 +1,8 @@
 package com.asensiodev.feature.moviedetail.impl.presentation.mapper
 
-import com.asensiodev.core.domain.Genre
-import com.asensiodev.core.domain.Movie
-import com.asensiodev.core.domain.ProductionCountry
+import com.asensiodev.core.domain.model.Genre
+import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.core.domain.model.ProductionCountry
 import com.asensiodev.feature.moviedetail.impl.presentation.model.MovieUi
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.Test
@@ -69,7 +69,7 @@ class MovieUiMapperTest {
             Movie(
                 id = 123,
                 title = "Inception",
-                posterPath = "https://image.tmdb.org/t/p/w500/inception.jpg",
+                posterPath = "/inception.jpg",
                 overview = "A thief who steals corporate secrets through dream-sharing technology.",
                 releaseDate = "2010-07-16",
                 popularity = 8.3,

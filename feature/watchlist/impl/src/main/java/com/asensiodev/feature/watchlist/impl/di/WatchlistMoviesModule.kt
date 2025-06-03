@@ -1,5 +1,6 @@
 package com.asensiodev.feature.watchlist.impl.di
 
+import com.asensiodev.core.domain.dispatcher.DispatcherProvider
 import com.asensiodev.feature.watchlist.impl.domain.usecase.AddMovieToWatchlistUseCase
 import com.asensiodev.feature.watchlist.impl.domain.usecase.GetWatchlistMoviesUseCase
 import com.asensiodev.feature.watchlist.impl.domain.usecase.SearchWatchlistMoviesUseCase
@@ -17,17 +18,20 @@ internal object WatchlistMoviesModule {
     @Singleton
     internal fun provideWatchlistMoviesUseCase(
         repository: DatabaseRepository,
-    ): GetWatchlistMoviesUseCase = GetWatchlistMoviesUseCase(repository)
+        dispatchers: DispatcherProvider,
+    ): GetWatchlistMoviesUseCase = GetWatchlistMoviesUseCase(repository, dispatchers)
 
     @Provides
     @Singleton
     internal fun provideAddMovieToWatchlistMovieUseCase(
         repository: DatabaseRepository,
-    ): AddMovieToWatchlistUseCase = AddMovieToWatchlistUseCase(repository)
+        dispatchers: DispatcherProvider,
+    ): AddMovieToWatchlistUseCase = AddMovieToWatchlistUseCase(repository, dispatchers)
 
     @Provides
     @Singleton
     internal fun provideSearchWatchlistMoviesUseCase(
         repository: DatabaseRepository,
-    ): SearchWatchlistMoviesUseCase = SearchWatchlistMoviesUseCase(repository)
+        dispatchers: DispatcherProvider,
+    ): SearchWatchlistMoviesUseCase = SearchWatchlistMoviesUseCase(repository, dispatchers)
 }

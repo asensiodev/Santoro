@@ -1,6 +1,6 @@
 package com.asensiodev.feature.watchedmovies.impl.presentation.mapper
 
-import com.asensiodev.core.domain.Movie
+import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.watchedmovies.impl.presentation.model.MovieUi
 
 internal fun Movie.toUi(): MovieUi =

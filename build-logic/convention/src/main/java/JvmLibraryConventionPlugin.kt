@@ -1,6 +1,8 @@
+import com.asensiodev.buildlogic.convention.logic.configureKotlinJvm
+import com.asensiodev.buildlogic.convention.logic.libs
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import com.asensiodev.buildlogic.convention.logic.configureKotlinJvm
+import org.gradle.kotlin.dsl.dependencies
 
 class JvmLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -10,6 +12,9 @@ class JvmLibraryConventionPlugin : Plugin<Project> {
                 apply("com.asensiodev.santoro.buildlogic.convention.jvm-test")
             }
             configureKotlinJvm()
+            dependencies {
+                "implementation"(libs.findLibrary("kotlinx-coroutines-core").get())
+            }
         }
     }
 }

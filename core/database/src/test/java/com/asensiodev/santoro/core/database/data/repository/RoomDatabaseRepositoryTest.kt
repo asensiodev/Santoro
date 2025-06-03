@@ -1,8 +1,8 @@
 package com.asensiodev.santoro.core.database.data.repository
 
 import app.cash.turbine.test
-import com.asensiodev.core.domain.Movie
 import com.asensiodev.core.domain.Result
+import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.santoro.core.database.data.MockUtils
 import com.asensiodev.santoro.core.database.data.dao.MovieDao
 import com.asensiodev.santoro.core.database.data.mapper.toDomain

@@ -57,8 +57,7 @@ internal class MovieDetailViewModel
             if (movie != null) {
                 val updatedMovie = movie.copy(isInWatchlist = !movie.isInWatchlist)
                 viewModelScope.launch {
-                    val result = updateMovieStateUseCase(updatedMovie.toDomain())
-                    when (result) {
+                    when (val result = updateMovieStateUseCase(updatedMovie.toDomain())) {
                         is Result.Success -> {
                             _uiState.update { it.copy(movie = updatedMovie) }
                         }
@@ -82,8 +81,7 @@ internal class MovieDetailViewModel
             if (movie != null) {
                 val updatedMovie = movie.copy(isWatched = !movie.isWatched)
                 viewModelScope.launch {
-                    val result = updateMovieStateUseCase(updatedMovie.toDomain())
-                    when (result) {
+                    when (val result = updateMovieStateUseCase(updatedMovie.toDomain())) {
                         is Result.Success -> {
                             _uiState.update { it.copy(movie = updatedMovie) }
                         }

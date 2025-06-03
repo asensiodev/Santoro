@@ -3,6 +3,8 @@ plugins {
 }
 
 dependencies {
+    implementation(projects.core.domain)
+
     implementation(libs.junit.jupiter.api)
     implementation(libs.kotest)
     implementation(libs.mockk)

@@ -1,8 +1,8 @@
 package com.asensiodev.core.data.mapper
 
-import com.asensiodev.core.domain.Genre
-import com.asensiodev.core.domain.Movie
-import com.asensiodev.core.domain.ProductionCountry
+import com.asensiodev.core.domain.model.Genre
+import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.core.domain.model.ProductionCountry
 import com.asensiodev.santoro.core.data.mapper.toDomain
 import com.asensiodev.santoro.core.data.model.GenreApiModel
 import com.asensiodev.santoro.core.data.model.MovieApiModel

@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.convention.jvm.library)
+    alias(libs.plugins.convention.jvm.hilt)
 }
 
 dependencies {

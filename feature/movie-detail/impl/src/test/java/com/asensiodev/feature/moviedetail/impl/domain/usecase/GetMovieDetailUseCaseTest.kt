@@ -1,7 +1,8 @@
 package com.asensiodev.feature.moviedetail.impl.domain.usecase
 
-import com.asensiodev.core.domain.Movie
 import com.asensiodev.core.domain.Result
+import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.core.testing.dispatcher.TestDispatcherProvider
 import com.asensiodev.core.testing.verifyOnce
 import com.asensiodev.feature.moviedetail.impl.domain.repository.MovieDetailRepository
 import io.mockk.every
@@ -14,12 +15,13 @@ import org.junit.jupiter.api.Test
 
 class GetMovieDetailUseCaseTest {
     private val repository: MovieDetailRepository = mockk()
+    private val dispatchers = TestDispatcherProvider()
 
     private lateinit var useCase: GetMovieDetailUseCase
 
     @BeforeEach
     fun setUp() {
-        useCase = GetMovieDetailUseCase(repository)
+        useCase = GetMovieDetailUseCase(repository, dispatchers)
     }
 
     @Test

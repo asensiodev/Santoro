@@ -1,8 +1,9 @@
 package com.asensiodev.feature.watchedmovies.impl.domain.usecase
 
-import com.asensiodev.core.domain.Movie
 import com.asensiodev.core.domain.Result
+import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.testing.coVerifyOnce
+import com.asensiodev.core.testing.dispatcher.TestDispatcherProvider
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -12,12 +13,13 @@ import org.junit.jupiter.api.Test
 
 class AddWatchedMovieUseCaseTest {
     private val repository: DatabaseRepository = mockk()
+    private val dispatchers = TestDispatcherProvider()
 
     private lateinit var useCase: AddWatchedMovieUseCase
 
     @BeforeEach
     fun setUp() {
-        useCase = AddWatchedMovieUseCase(repository)
+        useCase = AddWatchedMovieUseCase(repository, dispatchers)
     }
 
     @Test

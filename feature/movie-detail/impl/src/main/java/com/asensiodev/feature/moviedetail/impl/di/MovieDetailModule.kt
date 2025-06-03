@@ -1,5 +1,6 @@
 package com.asensiodev.feature.moviedetail.impl.di
 
+import com.asensiodev.core.domain.dispatcher.DispatcherProvider
 import com.asensiodev.feature.moviedetail.impl.data.datasource.LocalMovieDetailDataSource
 import com.asensiodev.feature.moviedetail.impl.data.datasource.RetrofitMovieDetailDataSource
 import com.asensiodev.feature.moviedetail.impl.data.datasource.RoomMovieDetailDataSource
@@ -43,12 +44,15 @@ internal object MovieDetailModule {
 
     @Provides
     @Singleton
-    fun provideGetMovieDetailUseCase(repository: MovieDetailRepository): GetMovieDetailUseCase =
-        GetMovieDetailUseCase(repository)
+    fun provideGetMovieDetailUseCase(
+        repository: MovieDetailRepository,
+        dispatchers: DispatcherProvider,
+    ): GetMovieDetailUseCase = GetMovieDetailUseCase(repository, dispatchers)
 
     @Provides
     @Singleton
     fun provideUpdateMovieStateUseCase(
         repository: MovieDetailRepository,
-    ): UpdateMovieStateUseCase = UpdateMovieStateUseCase(repository)
+        dispatchers: DispatcherProvider,
+    ): UpdateMovieStateUseCase = UpdateMovieStateUseCase(repository, dispatchers)
 }

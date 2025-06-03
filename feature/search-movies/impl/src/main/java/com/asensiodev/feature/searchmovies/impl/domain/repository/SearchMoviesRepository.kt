@@ -1,7 +1,7 @@
 package com.asensiodev.feature.searchmovies.impl.domain.repository
 
-import com.asensiodev.core.domain.Movie
 import com.asensiodev.core.domain.Result
+import com.asensiodev.core.domain.model.Movie
 import kotlinx.coroutines.flow.Flow
 
 internal interface SearchMoviesRepository {
