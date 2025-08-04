@@ -7,6 +7,7 @@ import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchedMovies
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.SearchWatchedMoviesUseCase
 import com.asensiodev.feature.watchedmovies.impl.presentation.mapper.toUiList
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@OptIn(FlowPreview::class)
 @HiltViewModel
 internal class WatchedMoviesViewModel
     @Inject
@@ -46,18 +48,11 @@ internal class WatchedMoviesViewModel
         }
 
         private fun fetchWatchedMovies() {
+            showLoading()
             viewModelScope.launch {
                 getWatchedMoviesUseCase()
                     .collect { result ->
                         when (result) {
-                            is Result.Loading -> {
-                                _uiState.update {
-                                    it.copy(
-                                        isLoading = true,
-                                    )
-                                }
-                            }
-
                             is Result.Success -> {
                                 _uiState.update {
                                     it.copy(
@@ -89,13 +84,10 @@ internal class WatchedMoviesViewModel
         }
 
         private fun searchWatchedMovies(query: String) {
+            _uiState.update { it.copy(isLoading = true) }
             viewModelScope.launch {
                 searchWatchedMoviesUseCase(query).collect { result ->
                     when (result) {
-                        is Result.Loading -> {
-                            _uiState.update { it.copy(isLoading = true) }
-                        }
-
                         is Result.Success -> {
                             val moviesUi = result.data.toUiList()
                             _uiState.update {
@@ -120,6 +112,10 @@ internal class WatchedMoviesViewModel
                     }
                 }
             }
+        }
+
+        private fun showLoading() {
+            _uiState.update { it.copy(isLoading = true) }
         }
     }
 

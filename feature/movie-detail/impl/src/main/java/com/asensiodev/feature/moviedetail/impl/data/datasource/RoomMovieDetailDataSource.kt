@@ -14,11 +14,9 @@ internal class RoomMovieDetailDataSource
     ) : LocalMovieDetailDataSource {
         override fun getMovieDetail(id: Int): Flow<Result<Movie?>> =
             flow {
-                emit(Result.Loading)
                 when (val result = databaseRepository.getMovieById(id)) {
                     is Result.Success -> emit(Result.Success(result.data))
                     is Result.Error -> emit(Result.Error(result.exception))
-                    else -> emit(Result.Error(Exception("Unexpected state")))
                 }
             }
 

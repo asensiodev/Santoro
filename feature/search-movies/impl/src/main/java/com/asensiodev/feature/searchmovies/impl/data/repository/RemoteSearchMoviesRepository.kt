@@ -20,7 +20,6 @@ internal class RemoteSearchMoviesRepository
             page: Int,
         ): Flow<Result<List<Movie>>> =
             flow {
-                emit(Result.Loading)
                 try {
                     val response = remoteDatasource.searchMovies(query, page)
                     if (response is Result.Success) {
@@ -37,7 +36,6 @@ internal class RemoteSearchMoviesRepository
 
         override fun getPopularMovies(page: Int): Flow<Result<List<Movie>>> =
             flow {
-                emit(Result.Loading)
                 try {
                     val response = remoteDatasource.getPopularMovies(page)
                     if (response is Result.Success) {

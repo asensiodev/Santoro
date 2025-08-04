@@ -26,11 +26,11 @@ internal class MovieDetailViewModel
         val uiState: StateFlow<MovieDetailUiState> = _uiState.asStateFlow()
 
         fun fetchMovieDetails(movieId: Int) {
+            showLoading()
             viewModelScope.launch {
                 getMovieDetailUseCase(movieId)
                     .collect { result ->
                         when (result) {
-                            is Result.Loading -> _uiState.update { it.copy(isLoading = true) }
                             is Result.Success ->
                                 _uiState.update {
                                     it.copy(
@@ -56,20 +56,17 @@ internal class MovieDetailViewModel
             val movie = uiState.value.movie
             if (movie != null) {
                 val updatedMovie = movie.copy(isInWatchlist = !movie.isInWatchlist)
+                showLoading()
                 viewModelScope.launch {
                     when (val result = updateMovieStateUseCase(updatedMovie.toDomain())) {
                         is Result.Success -> {
-                            _uiState.update { it.copy(movie = updatedMovie) }
+                            _uiState.update { it.copy(movie = updatedMovie, isLoading = false) }
                         }
 
                         is Result.Error -> {
                             _uiState.update {
                                 it.copy(errorMessage = result.exception.message)
                             }
-                        }
-
-                        Result.Loading -> {
-                            _uiState.update { it.copy(isLoading = true) }
                         }
                     }
                 }
@@ -80,10 +77,11 @@ internal class MovieDetailViewModel
             val movie = uiState.value.movie
             if (movie != null) {
                 val updatedMovie = movie.copy(isWatched = !movie.isWatched)
+                showLoading()
                 viewModelScope.launch {
                     when (val result = updateMovieStateUseCase(updatedMovie.toDomain())) {
                         is Result.Success -> {
-                            _uiState.update { it.copy(movie = updatedMovie) }
+                            _uiState.update { it.copy(movie = updatedMovie, isLoading = false) }
                         }
 
                         is Result.Error -> {
@@ -91,12 +89,12 @@ internal class MovieDetailViewModel
                                 it.copy(errorMessage = result.exception.message)
                             }
                         }
-
-                        Result.Loading -> {
-                            _uiState.update { it.copy(isLoading = true) }
-                        }
                     }
                 }
             }
+        }
+
+        private fun showLoading() {
+            _uiState.update { it.copy(isLoading = true) }
         }
     }

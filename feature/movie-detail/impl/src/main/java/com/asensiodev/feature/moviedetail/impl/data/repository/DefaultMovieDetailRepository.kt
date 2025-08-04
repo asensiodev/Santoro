@@ -43,14 +43,6 @@ internal class DefaultMovieDetailRepository
                         }
                     }
 
-                    is Result.Loading -> {
-                        if (localResult is Result.Success && localResult.data != null) {
-                            Result.Success(localResult.data)
-                        } else {
-                            Result.Loading
-                        }
-                    }
-
                     is Result.Error -> {
                         if (localResult is Result.Success && localResult.data != null) {
                             Result.Success(localResult.data)

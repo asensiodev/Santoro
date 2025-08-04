@@ -17,7 +17,6 @@ internal class RetrofitMovieDetailDataSource
     ) : RemoteMovieDetailDataSource {
         override fun getMovieDetail(id: Int): Flow<Result<Movie?>> =
             flow {
-                emit(Result.Loading)
                 try {
                     val movie = apiService.movieDetail(id).toDomain()
                     emit(Result.Success(movie))

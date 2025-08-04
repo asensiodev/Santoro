@@ -46,14 +46,11 @@ internal class WatchlistMoviesViewModel
         }
 
         private fun fetchWatchlistMovies() {
+            showLoading()
             viewModelScope.launch {
                 getWatchlistMoviesUseCase()
                     .collect { result ->
                         when (result) {
-                            is Result.Loading -> {
-                                _uiState.update { it.copy(isLoading = true) }
-                            }
-
                             is Result.Success -> {
                                 _uiState.update {
                                     it.copy(
@@ -85,12 +82,10 @@ internal class WatchlistMoviesViewModel
         }
 
         private fun searchWatchlistMovies(query: String) {
+            showLoading()
             viewModelScope.launch {
                 searchWatchlistMoviesUseCase(query).collect { result ->
                     when (result) {
-                        is Result.Loading ->
-                            _uiState.update { it.copy(isLoading = true) }
-
                         is Result.Success -> {
                             val moviesUi = result.data.toUiList()
                             _uiState.update {
@@ -115,6 +110,10 @@ internal class WatchlistMoviesViewModel
                     }
                 }
             }
+        }
+
+        private fun showLoading() {
+            _uiState.update { it.copy(isLoading = true) }
         }
     }
 

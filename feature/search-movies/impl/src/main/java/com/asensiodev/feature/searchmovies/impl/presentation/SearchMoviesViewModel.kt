@@ -70,19 +70,17 @@ internal class SearchMoviesViewModel
             page: Int,
             isInitialLoad: Boolean = false,
         ) {
+            _uiState.update {
+                it.copy(
+                    isSearchLoading = true,
+                    isInitialLoading = isInitialLoad,
+                )
+            }
+
             viewModelScope.launch {
                 searchMoviesUseCase(query, page)
                     .collect { result ->
                         when (result) {
-                            is Result.Loading -> {
-                                _uiState.update {
-                                    it.copy(
-                                        isSearchLoading = true,
-                                        isInitialLoading = isInitialLoad,
-                                    )
-                                }
-                            }
-
                             is Result.Success -> {
                                 val newMovies = result.data.toUiList()
                                 val updatedSearchResults =
@@ -134,19 +132,17 @@ internal class SearchMoviesViewModel
         }
 
         private fun getPopularMovies(isInitialLoad: Boolean = false) {
+            _uiState.update {
+                it.copy(
+                    isPopularMoviesLoading = true,
+                    isInitialLoading = isInitialLoad,
+                )
+            }
+
             viewModelScope.launch {
                 getPopularMoviesUseCase(_uiState.value.currentPopularPage)
                     .collect { result ->
                         when (result) {
-                            is Result.Loading -> {
-                                _uiState.update {
-                                    it.copy(
-                                        isPopularMoviesLoading = true,
-                                        isInitialLoading = isInitialLoad,
-                                    )
-                                }
-                            }
-
                             is Result.Success -> {
                                 val newMovies = result.data.toUiList()
                                 val updatedPopularMovies = _uiState.value.popularMovies + newMovies

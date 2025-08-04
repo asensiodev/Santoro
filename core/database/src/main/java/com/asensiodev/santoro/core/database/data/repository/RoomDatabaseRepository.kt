@@ -22,7 +22,6 @@ class RoomDatabaseRepository
     ) : DatabaseRepository {
         override fun getWatchedMovies(): Flow<Result<List<Movie>>> =
             flow {
-                emit(Result.Loading)
                 emitAll(
                     movieDao
                         .getWatchedMovies()
@@ -33,7 +32,6 @@ class RoomDatabaseRepository
 
         override fun getWatchlistMovies(): Flow<Result<List<Movie>>> =
             flow {
-                emit(Result.Loading)
                 emitAll(
                     movieDao
                         .getWatchlistMovies()
@@ -54,7 +52,6 @@ class RoomDatabaseRepository
 
         override fun searchWatchedMoviesByTitle(query: String): Flow<Result<List<Movie>>> =
             flow {
-                emit(Result.Loading)
                 emitAll(
                     movieDao
                         .searchWatchedMoviesByTitle(query)
@@ -66,7 +63,6 @@ class RoomDatabaseRepository
 
         override fun searchWatchlistMoviesByTitle(query: String): Flow<Result<List<Movie>>> =
             flow {
-                emit(Result.Loading)
                 emitAll(
                     movieDao
                         .searchWatchlistMoviesByTitle(query)

@@ -8,6 +8,4 @@ sealed class Result<out T> {
     data class Error(
         val exception: Throwable,
     ) : Result<Nothing>()
-
-    data object Loading : Result<Nothing>()
 }
