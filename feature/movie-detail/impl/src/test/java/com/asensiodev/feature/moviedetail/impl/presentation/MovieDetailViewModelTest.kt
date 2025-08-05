@@ -50,6 +50,7 @@ class MovieDetailViewModelTest {
                 viewModel.uiState.test {
                     awaitItem() shouldBeEqualTo MovieDetailUiState()
                     viewModel.fetchMovieDetails(testMovie.id)
+                    awaitItem() shouldBeEqualTo MovieDetailUiState(isLoading = true)
                     awaitItem() shouldBeEqualTo
                         MovieDetailUiState(
                             isLoading = false,
@@ -72,6 +73,7 @@ class MovieDetailViewModelTest {
                 viewModel.uiState.test {
                     awaitItem() shouldBeEqualTo MovieDetailUiState()
                     viewModel.fetchMovieDetails(testMovie.id)
+                    awaitItem() shouldBeEqualTo MovieDetailUiState(isLoading = true)
                     awaitItem() shouldBeEqualTo
                         MovieDetailUiState(
                             isLoading = false,
@@ -85,7 +87,7 @@ class MovieDetailViewModelTest {
         @Test
         fun `GIVEN loading state WHEN fetchMovieDetails THEN update state to loading`() =
             runTest {
-                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.Loading)
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.Success(testMovie))
 
                 viewModel.uiState.test {
                     awaitItem() shouldBeEqualTo MovieDetailUiState()
@@ -183,18 +185,24 @@ class MovieDetailViewModelTest {
             }
 
         @Test
-        fun `GIVEN movie WHEN toggleWatched with loading state THEN show loading`() =
+        fun `GIVEN movie id WHEN fetchMovieDetails THEN returns expected movie`() =
             runTest {
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.Success(testMovie))
-                coEvery { updateMovieStateUseCase(any()) } returns Result.Loading
-
-                viewModel.fetchMovieDetails(testMovie.id)
-                advanceUntilIdle()
-
-                viewModel.toggleWatched()
 
                 viewModel.uiState.test {
-                    awaitItem().isLoading shouldBeEqualTo true
+                    awaitItem() shouldBeEqualTo MovieDetailUiState()
+
+                    viewModel.fetchMovieDetails(testMovie.id)
+
+                    awaitItem() shouldBeEqualTo MovieDetailUiState(isLoading = true)
+
+                    awaitItem() shouldBeEqualTo
+                        MovieDetailUiState(
+                            isLoading = false,
+                            movie = testMovie.toUi(),
+                            errorMessage = null,
+                        )
+
                     cancelAndConsumeRemainingEvents()
                 }
             }

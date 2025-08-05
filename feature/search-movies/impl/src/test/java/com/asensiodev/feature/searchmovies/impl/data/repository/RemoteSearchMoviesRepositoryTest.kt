@@ -51,7 +51,6 @@ class RemoteSearchMoviesRepositoryTest {
             coEvery { datasource.searchMovies(query, page) } returns Result.Success(movies)
 
             repository.searchMovies(query, page).test {
-                awaitItem() shouldBeEqualTo Result.Loading
                 awaitItem() shouldBeEqualTo Result.Success(movies)
                 awaitComplete()
             }
@@ -66,7 +65,6 @@ class RemoteSearchMoviesRepositoryTest {
             coEvery { datasource.searchMovies(query, page) } throws IOException(exceptionMessage)
 
             repository.searchMovies(query, page).test {
-                awaitItem() shouldBeEqualTo Result.Loading
                 val error = awaitItem() as Result.Error
                 error.exception.shouldBeInstanceOf<IOException>()
                 error.exception.message shouldBeEqualTo exceptionMessage
@@ -90,7 +88,6 @@ class RemoteSearchMoviesRepositoryTest {
                 )
 
             repository.searchMovies(query, page).test {
-                awaitItem() shouldBeEqualTo Result.Loading
                 val error = awaitItem() as Result.Error
                 error.exception.shouldBeInstanceOf<HttpException>()
                 awaitComplete()
@@ -121,7 +118,6 @@ class RemoteSearchMoviesRepositoryTest {
             coEvery { datasource.getPopularMovies(page) } returns Result.Success(movies)
 
             repository.getPopularMovies(page).test {
-                awaitItem() shouldBeEqualTo Result.Loading
                 awaitItem() shouldBeEqualTo Result.Success(movies)
                 awaitComplete()
             }
@@ -135,7 +131,6 @@ class RemoteSearchMoviesRepositoryTest {
             coEvery { datasource.getPopularMovies(page) } throws IOException(exceptionMessage)
 
             repository.getPopularMovies(page).test {
-                awaitItem() shouldBeEqualTo Result.Loading
                 val error = awaitItem() as Result.Error
                 error.exception.shouldBeInstanceOf<IOException>()
                 error.exception.message shouldBeEqualTo exceptionMessage
@@ -158,7 +153,6 @@ class RemoteSearchMoviesRepositoryTest {
                 )
 
             repository.getPopularMovies(page).test {
-                awaitItem() shouldBeEqualTo Result.Loading
                 val error = awaitItem() as Result.Error
                 error.exception.shouldBeInstanceOf<HttpException>()
                 awaitComplete()

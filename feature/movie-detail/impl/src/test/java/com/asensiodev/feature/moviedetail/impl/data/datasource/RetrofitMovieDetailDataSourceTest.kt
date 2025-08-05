@@ -50,7 +50,6 @@ class RetrofitMovieDetailDataSourceTest {
             coEvery { apiService.movieDetail(movieId) } returns movieApiModel
 
             dataSource.getMovieDetail(movieId).test {
-                awaitItem() shouldBeEqualTo Result.Loading
                 awaitItem() shouldBeEqualTo Result.Success(expectedDomainMovie)
                 awaitComplete()
             }
@@ -65,7 +64,6 @@ class RetrofitMovieDetailDataSourceTest {
             coEvery { apiService.movieDetail(movieId) } throws IOException(exceptionMessage)
 
             dataSource.getMovieDetail(movieId).test {
-                awaitItem() shouldBeEqualTo Result.Loading
                 val error = awaitItem() as Result.Error
                 error.exception.shouldBeInstanceOf<IOException>()
                 error.exception.message shouldBeEqualTo exceptionMessage
@@ -89,7 +87,6 @@ class RetrofitMovieDetailDataSourceTest {
                 )
 
             dataSource.getMovieDetail(movieId).test {
-                awaitItem() shouldBeEqualTo Result.Loading
                 val error = awaitItem() as Result.Error
                 error.exception.shouldBeInstanceOf<HttpException>()
                 awaitComplete()

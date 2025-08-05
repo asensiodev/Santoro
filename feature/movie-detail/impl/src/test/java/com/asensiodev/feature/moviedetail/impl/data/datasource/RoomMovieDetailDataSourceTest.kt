@@ -31,7 +31,6 @@ class RoomMovieDetailDataSourceTest {
             coEvery { databaseRepository.getMovieById(movieId) } returns Result.Success(movie)
 
             dataSource.getMovieDetail(movieId).test {
-                awaitItem() shouldBeEqualTo Result.Loading
                 awaitItem() shouldBeEqualTo Result.Success(movie)
                 awaitComplete()
             }
@@ -46,7 +45,6 @@ class RoomMovieDetailDataSourceTest {
             coEvery { databaseRepository.getMovieById(movieId) } returns Result.Error(exception)
 
             dataSource.getMovieDetail(movieId).test {
-                awaitItem() shouldBeEqualTo Result.Loading
                 val error = awaitItem() as Result.Error
                 error.exception shouldBeEqualTo exception
                 awaitComplete()

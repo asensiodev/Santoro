@@ -39,7 +39,6 @@ class RoomDatabaseRepositoryTest {
                 )
             every { movieDao.getWatchedMovies() } returns flowOf(movieEntities)
             repository.getWatchedMovies().test {
-                awaitItem() shouldBeEqualTo Result.Loading
                 awaitItem() shouldBeEqualTo Result.Success(movieEntities.map { it.toDomain() })
                 awaitComplete()
             }
@@ -50,7 +49,6 @@ class RoomDatabaseRepositoryTest {
         runTest {
             every { movieDao.getWatchedMovies() } returns flowOf(emptyList())
             repository.getWatchedMovies().test {
-                awaitItem() shouldBeEqualTo Result.Loading
                 awaitItem() shouldBeEqualTo Result.Success(emptyList())
                 awaitComplete()
             }
@@ -66,7 +64,6 @@ class RoomDatabaseRepositoryTest {
                 )
             every { movieDao.getWatchlistMovies() } returns flowOf(watchlistEntities)
             repository.getWatchlistMovies().test {
-                awaitItem() shouldBeEqualTo Result.Loading
                 awaitItem() shouldBeEqualTo Result.Success(watchlistEntities.map { it.toDomain() })
                 awaitComplete()
             }
@@ -77,7 +74,6 @@ class RoomDatabaseRepositoryTest {
         runTest {
             every { movieDao.getWatchlistMovies() } returns flowOf(emptyList())
             repository.getWatchlistMovies().test {
-                awaitItem() shouldBeEqualTo Result.Loading
                 awaitItem() shouldBeEqualTo Result.Success(emptyList())
                 awaitComplete()
             }
@@ -121,7 +117,6 @@ class RoomDatabaseRepositoryTest {
                 )
             every { movieDao.searchWatchedMoviesByTitle(query) } returns flowOf(movieEntities)
             repository.searchWatchedMoviesByTitle(query).test {
-                awaitItem() shouldBeEqualTo Result.Loading
                 awaitItem() shouldBeEqualTo Result.Success(movieEntities.map { it.toDomain() })
                 awaitComplete()
             }
@@ -138,7 +133,6 @@ class RoomDatabaseRepositoryTest {
                 )
             every { movieDao.searchWatchlistMoviesByTitle(query) } returns flowOf(watchlistEntities)
             repository.searchWatchlistMoviesByTitle(query).test {
-                awaitItem() shouldBeEqualTo Result.Loading
                 awaitItem() shouldBeEqualTo Result.Success(watchlistEntities.map { it.toDomain() })
                 awaitComplete()
             }
@@ -150,7 +144,6 @@ class RoomDatabaseRepositoryTest {
             val query = "NoMatch"
             every { movieDao.searchWatchlistMoviesByTitle(query) } returns flowOf(emptyList())
             repository.searchWatchlistMoviesByTitle(query).test {
-                awaitItem() shouldBeEqualTo Result.Loading
                 awaitItem() shouldBeEqualTo Result.Success(emptyList())
                 awaitComplete()
             }

@@ -79,7 +79,7 @@ class DefaultMovieDetailRepositoryTest {
         }
 
     @Test
-    fun `GIVEN remote loading and local success WHEN getMovieDetail THEN returns local movie`() =
+    fun `GIVEN local success WHEN getMovieDetail THEN returns local movie`() =
         runTest {
             val movieId = 2
             val localMovie =
@@ -99,7 +99,7 @@ class DefaultMovieDetailRepositoryTest {
                 )
 
             every { localDataSource.getMovieDetail(movieId) } returns flowOf(Result.Success(localMovie))
-            every { remoteDataSource.getMovieDetail(movieId) } returns flowOf(Result.Loading)
+            every { remoteDataSource.getMovieDetail(movieId) } returns flowOf(Result.Error(Exception()))
 
             repository.getMovieDetail(movieId).test {
                 awaitItem() shouldBeEqualTo Result.Success(localMovie)
@@ -166,20 +166,6 @@ class DefaultMovieDetailRepositoryTest {
 
             repository.getMovieDetail(movieId).test {
                 awaitItem() shouldBeEqualTo Result.Success(localMovie)
-                awaitComplete()
-            }
-        }
-
-    @Test
-    fun `GIVEN remote loading and local loading WHEN getMovieDetail THEN returns Loading`() =
-        runTest {
-            val movieId = 6
-
-            every { localDataSource.getMovieDetail(movieId) } returns flowOf(Result.Loading)
-            every { remoteDataSource.getMovieDetail(movieId) } returns flowOf(Result.Loading)
-
-            repository.getMovieDetail(movieId).test {
-                awaitItem() shouldBeEqualTo Result.Loading
                 awaitComplete()
             }
         }
