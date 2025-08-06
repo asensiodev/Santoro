@@ -21,36 +21,42 @@ class AuthorizationInterceptorTest {
             }
 
         val request = Request.Builder().url("https://example.com").build()
+        val capturedRequest = slot<Request>()
+
         val chain =
             mockk<Interceptor.Chain> {
                 every { request() } returns request
-                every { proceed(any()) } returns mockk<Response>()
+                every { proceed(capture(capturedRequest)) } returns mockk<Response>()
             }
-
-        val slot = slot<Request>()
-        every { chain.proceed(capture(slot)) } answers { mockk() }
 
         val interceptor = AuthorizationInterceptor(apiKeyProvider)
 
         interceptor.intercept(chain)
 
-        slot.captured.header("Authorization") shouldBeEqualTo "Bearer $apiKey"
-        slot.captured.header("accept") shouldBeEqualTo "application/json"
+        capturedRequest.captured.header("Authorization") shouldBeEqualTo "Bearer $apiKey"
+        capturedRequest.captured.header("accept") shouldBeEqualTo "application/json"
     }
 
     @Test
-    fun `GIVEN a null API key WHEN intercept is called THEN throws an IllegalStateException`() {
+    fun `GIVEN ApiKeyProvider throws error WHEN intercept is called THEN throws exception`() {
         val apiKeyProvider =
             mockk<ApiKeyProvider> {
-                every { getApiKey() } returns null
+                every { getApiKey() } throws IllegalStateException("API key not initialized")
+            }
+
+        val request = Request.Builder().url("https://example.com").build()
+        val chain =
+            mockk<Interceptor.Chain> {
+                every { request() } returns request
             }
 
         val interceptor = AuthorizationInterceptor(apiKeyProvider)
 
-        val chain = mockk<Interceptor.Chain>()
+        val exception =
+            assertThrows<IllegalStateException> {
+                interceptor.intercept(chain)
+            }
 
-        assertThrows<IllegalStateException> {
-            interceptor.intercept(chain)
-        }
+        exception.message shouldBeEqualTo "API key not initialized"
     }
 }

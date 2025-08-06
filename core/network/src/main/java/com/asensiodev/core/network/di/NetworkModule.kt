@@ -1,8 +1,9 @@
 package com.asensiodev.core.network.di
 
 import com.asensiodev.core.buildconfig.BuildConfig
+import com.asensiodev.core.network.data.ApiKeyInitializer
 import com.asensiodev.core.network.data.ApiKeyProvider
-import com.asensiodev.core.network.data.RemoteConfigApiKeyProvider
+import com.asensiodev.core.network.data.CachedApiKeyProvider
 import com.asensiodev.core.network.data.interceptor.AuthorizationInterceptor
 import com.asensiodev.library.remoteconfig.api.RemoteConfigProvider
 import dagger.Module
@@ -20,8 +21,13 @@ import javax.inject.Singleton
 object NetworkModule {
     @Provides
     @Singleton
-    fun provideApiKeyProvider(remoteConfigProvider: RemoteConfigProvider): ApiKeyProvider =
-        RemoteConfigApiKeyProvider(remoteConfigProvider)
+    fun provideApiKeyInitializer(remoteConfigProvider: RemoteConfigProvider): ApiKeyInitializer =
+        ApiKeyInitializer(remoteConfigProvider)
+
+    @Provides
+    @Singleton
+    fun provideApiKeyProvider(initializer: ApiKeyInitializer): ApiKeyProvider =
+        CachedApiKeyProvider(initializer)
 
     @Provides
     @Singleton
