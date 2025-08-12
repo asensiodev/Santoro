@@ -3,7 +3,7 @@ package com.asensiodev.library.remoteconfig.impl
 import com.asensiodev.library.remoteconfig.api.RemoteConfigName
 import com.asensiodev.library.remoteconfig.api.RemoteConfigProvider
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
-import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
+import com.google.firebase.remoteconfig.remoteConfigSettings
 import javax.inject.Inject
 import javax.inject.Singleton
 

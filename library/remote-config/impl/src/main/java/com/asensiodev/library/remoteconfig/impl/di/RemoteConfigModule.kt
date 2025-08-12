@@ -2,9 +2,9 @@ package com.asensiodev.library.remoteconfig.impl.di
 
 import com.asensiodev.library.remoteconfig.api.RemoteConfigProvider
 import com.asensiodev.library.remoteconfig.impl.FirebaseRemoteConfigProvider
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.Firebase
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
-import com.google.firebase.remoteconfig.ktx.remoteConfig
+import com.google.firebase.remoteconfig.remoteConfig
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
