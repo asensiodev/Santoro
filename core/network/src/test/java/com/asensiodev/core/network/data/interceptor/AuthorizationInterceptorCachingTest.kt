@@ -1,7 +1,7 @@
 package com.asensiodev.core.network.data.interceptor
 
 import com.asensiodev.core.network.data.ApiKeyInitializer
-import com.asensiodev.core.network.data.ApiKeyProvider
+import com.asensiodev.core.network.data.ApiKeyProviderContract
 import com.asensiodev.core.network.data.CachedApiKeyProvider
 import com.asensiodev.library.remoteconfig.api.RemoteConfigName
 import com.asensiodev.library.remoteconfig.api.RemoteConfigProvider
@@ -21,14 +21,14 @@ import org.junit.jupiter.api.Test
 class AuthorizationInterceptorCachingTest {
     private val remoteConfigProvider = mockk<RemoteConfigProvider>()
     private lateinit var initializer: ApiKeyInitializer
-    private lateinit var apiKeyProvider: ApiKeyProvider
+    private lateinit var apiKeyProviderContract: ApiKeyProviderContract
     private lateinit var interceptor: AuthorizationInterceptor
 
     @BeforeEach
     fun setUp() {
         initializer = ApiKeyInitializer(remoteConfigProvider)
-        apiKeyProvider = CachedApiKeyProvider(initializer)
-        interceptor = AuthorizationInterceptor(apiKeyProvider)
+        apiKeyProviderContract = CachedApiKeyProvider(initializer)
+        interceptor = AuthorizationInterceptor(apiKeyProviderContract)
     }
 
     @Test

@@ -1,6 +1,6 @@
 package com.asensiodev.core.network.data.interceptor
 
-import com.asensiodev.core.network.data.ApiKeyProvider
+import com.asensiodev.core.network.data.ApiKeyProviderContract
 import okhttp3.Interceptor
 import okhttp3.Response
 import javax.inject.Inject
@@ -8,10 +8,10 @@ import javax.inject.Inject
 internal class AuthorizationInterceptor
     @Inject
     constructor(
-        private val apiKeyProvider: ApiKeyProvider,
+        private val apiKeyProviderContract: ApiKeyProviderContract,
     ) : Interceptor {
         override fun intercept(chain: Interceptor.Chain): Response {
-            val apiKey = apiKeyProvider.getApiKey()
+            val apiKey = apiKeyProviderContract.getApiKey()
             val originalRequest = chain.request()
             val requestWithHeaders =
                 originalRequest

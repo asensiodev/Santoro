@@ -2,7 +2,7 @@ package com.asensiodev.core.network.di
 
 import com.asensiodev.core.buildconfig.BuildConfig
 import com.asensiodev.core.network.data.ApiKeyInitializer
-import com.asensiodev.core.network.data.ApiKeyProvider
+import com.asensiodev.core.network.data.ApiKeyProviderContract
 import com.asensiodev.core.network.data.CachedApiKeyProvider
 import com.asensiodev.core.network.data.interceptor.AuthorizationInterceptor
 import com.asensiodev.library.remoteconfig.api.RemoteConfigProvider
@@ -26,15 +26,15 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideApiKeyProvider(initializer: ApiKeyInitializer): ApiKeyProvider =
+    fun provideApiKeyProvider(initializer: ApiKeyInitializer): ApiKeyProviderContract =
         CachedApiKeyProvider(initializer)
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(apiKeyProvider: ApiKeyProvider): OkHttpClient =
+    fun provideOkHttpClient(apiKeyProviderContract: ApiKeyProviderContract): OkHttpClient =
         OkHttpClient
             .Builder()
-            .addInterceptor(AuthorizationInterceptor(apiKeyProvider))
+            .addInterceptor(AuthorizationInterceptor(apiKeyProviderContract))
             .apply {
                 if (BuildConfig.DEBUG) {
                     addInterceptor(provideLoggingInterceptor())

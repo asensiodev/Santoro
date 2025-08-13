@@ -1,5 +1,5 @@
 package com.asensiodev.core.network.data
 
-interface ApiKeyProvider {
+interface ApiKeyProviderContract {
     fun getApiKey(): String
 }

@@ -1,6 +1,6 @@
 package com.asensiodev.core.network.data.interceptor
 
-import com.asensiodev.core.network.data.ApiKeyProvider
+import com.asensiodev.core.network.data.ApiKeyProviderContract
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -15,8 +15,8 @@ class AuthorizationInterceptorTest {
     @Test
     fun `GIVEN a valid API key WHEN intercept is called THEN adds the Authorization header`() {
         val apiKey = "test_api_key"
-        val apiKeyProvider =
-            mockk<ApiKeyProvider> {
+        val apiKeyProviderContract =
+            mockk<ApiKeyProviderContract> {
                 every { getApiKey() } returns apiKey
             }
 
@@ -29,7 +29,7 @@ class AuthorizationInterceptorTest {
                 every { proceed(capture(capturedRequest)) } returns mockk<Response>()
             }
 
-        val interceptor = AuthorizationInterceptor(apiKeyProvider)
+        val interceptor = AuthorizationInterceptor(apiKeyProviderContract)
 
         interceptor.intercept(chain)
 
@@ -39,8 +39,8 @@ class AuthorizationInterceptorTest {
 
     @Test
     fun `GIVEN ApiKeyProvider throws error WHEN intercept is called THEN throws exception`() {
-        val apiKeyProvider =
-            mockk<ApiKeyProvider> {
+        val apiKeyProviderContract =
+            mockk<ApiKeyProviderContract> {
                 every { getApiKey() } throws IllegalStateException("API key not initialized")
             }
 
@@ -50,7 +50,7 @@ class AuthorizationInterceptorTest {
                 every { request() } returns request
             }
 
-        val interceptor = AuthorizationInterceptor(apiKeyProvider)
+        val interceptor = AuthorizationInterceptor(apiKeyProviderContract)
 
         val exception =
             assertThrows<IllegalStateException> {

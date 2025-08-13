@@ -6,6 +6,6 @@ internal class CachedApiKeyProvider
     @Inject
     constructor(
         private val initializer: ApiKeyInitializer,
-    ) : ApiKeyProvider {
+    ) : ApiKeyProviderContract {
         override fun getApiKey(): String = initializer.getCachedApiKey()
     }
