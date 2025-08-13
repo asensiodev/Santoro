@@ -1,5 +1,6 @@
 package com.asensiodev.feature.moviedetail.impl.presentation
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.Hyphens
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.datasource.LoremIpsum
@@ -89,6 +92,8 @@ internal fun MovieDetailScreen(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val scrollState = rememberScrollState()
+
     when {
         uiState.isLoading -> LoadingIndicator()
         uiState.errorMessage != null ->
@@ -103,6 +108,7 @@ internal fun MovieDetailScreen(
                 onToggleWatchlist = onToggleWatchlist,
                 onToggleWatched = onToggleWatched,
                 modifier = modifier,
+                scrollState = scrollState,
             )
     }
 }
@@ -113,13 +119,14 @@ internal fun MovieDetailContent(
     onToggleWatchlist: () -> Unit,
     onToggleWatched: () -> Unit,
     modifier: Modifier = Modifier,
+    scrollState: ScrollState,
 ) {
     Column(
         modifier =
             modifier
                 .fillMaxSize()
                 .padding(Spacings.spacing24)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(Spacings.spacing12),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -205,6 +212,8 @@ private fun MovieOverview(uiState: MovieDetailUiState) {
                     PlatformTextStyle(
                         includeFontPadding = false,
                     ),
+                hyphens = Hyphens.Auto,
+                lineBreak = LineBreak.Paragraph,
             ),
     )
 }

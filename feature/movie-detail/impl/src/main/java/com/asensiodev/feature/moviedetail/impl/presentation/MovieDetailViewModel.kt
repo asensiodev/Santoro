@@ -53,20 +53,21 @@ internal class MovieDetailViewModel
         }
 
         fun toggleWatchlist() {
-            val movie = uiState.value.movie
-            if (movie != null) {
-                val updatedMovie = movie.copy(isInWatchlist = !movie.isInWatchlist)
-                showLoading()
-                viewModelScope.launch {
-                    when (val result = updateMovieStateUseCase(updatedMovie.toDomain())) {
-                        is Result.Success -> {
-                            _uiState.update { it.copy(movie = updatedMovie, isLoading = false) }
+            val movie = uiState.value.movie ?: return
+            val updatedMovie = movie.copy(isInWatchlist = !movie.isInWatchlist)
+            viewModelScope.launch {
+                when (val result = updateMovieStateUseCase(updatedMovie.toDomain())) {
+                    is Result.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                movie = updatedMovie,
+                            )
                         }
+                    }
 
-                        is Result.Error -> {
-                            _uiState.update {
-                                it.copy(errorMessage = result.exception.message)
-                            }
+                    is Result.Error -> {
+                        _uiState.update {
+                            it.copy(errorMessage = result.exception.message)
                         }
                     }
                 }
@@ -74,20 +75,17 @@ internal class MovieDetailViewModel
         }
 
         fun toggleWatched() {
-            val movie = uiState.value.movie
-            if (movie != null) {
-                val updatedMovie = movie.copy(isWatched = !movie.isWatched)
-                showLoading()
-                viewModelScope.launch {
-                    when (val result = updateMovieStateUseCase(updatedMovie.toDomain())) {
-                        is Result.Success -> {
-                            _uiState.update { it.copy(movie = updatedMovie, isLoading = false) }
-                        }
+            val movie = uiState.value.movie ?: return
+            val updatedMovie = movie.copy(isWatched = !movie.isWatched)
+            viewModelScope.launch {
+                when (val result = updateMovieStateUseCase(updatedMovie.toDomain())) {
+                    is Result.Success -> {
+                        _uiState.update { it.copy(movie = updatedMovie) }
+                    }
 
-                        is Result.Error -> {
-                            _uiState.update {
-                                it.copy(errorMessage = result.exception.message)
-                            }
+                    is Result.Error -> {
+                        _uiState.update {
+                            it.copy(errorMessage = result.exception.message)
                         }
                     }
                 }
