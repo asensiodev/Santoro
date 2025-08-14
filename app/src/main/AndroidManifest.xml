@@ -25,6 +25,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-    </application>
+        <!-- App Startup provider -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
 
+            <!-- Initializer -->
+            <meta-data
+                android:name="com.asensiodev.core.network.init.ApiKeyStartupInitializer"
+                android:value="androidx.startup" />
+        </provider>
+    </application>
 </manifest>

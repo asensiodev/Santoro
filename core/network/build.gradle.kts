@@ -11,9 +11,11 @@ dependencies {
     implementation(projects.core.domain)
     implementation(projects.core.buildConfig)
     implementation(projects.library.remoteConfig.api)
+    implementation(projects.library.secureStorage.api)
 
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson.converter)
     implementation(libs.gson)
     implementation(libs.okhttp.logging.interceptor)
+    implementation(libs.androidx.startup)
 }

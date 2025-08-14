@@ -1,6 +1,6 @@
 package com.asensiodev.core.network.data.interceptor
 
-import com.asensiodev.core.network.data.ApiKeyProviderContract
+import com.asensiodev.core.network.api.ApiKeyProviderContract
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot

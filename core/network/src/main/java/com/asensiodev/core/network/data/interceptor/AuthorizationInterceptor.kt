@@ -1,24 +1,26 @@
 package com.asensiodev.core.network.data.interceptor
 
-import com.asensiodev.core.network.data.ApiKeyProviderContract
+import com.asensiodev.core.network.api.ApiKeyProviderContract
 import okhttp3.Interceptor
 import okhttp3.Response
 import javax.inject.Inject
 
-internal class AuthorizationInterceptor
+class AuthorizationInterceptor
     @Inject
     constructor(
-        private val apiKeyProviderContract: ApiKeyProviderContract,
+        private val apiKeyProvider: ApiKeyProviderContract,
     ) : Interceptor {
         override fun intercept(chain: Interceptor.Chain): Response {
-            val apiKey = apiKeyProviderContract.getApiKey()
+            val apiKey: String? = apiKeyProvider.getApiKey()
+
             val originalRequest = chain.request()
-            val requestWithHeaders =
-                originalRequest
-                    .newBuilder()
-                    .addHeader("accept", "application/json")
-                    .addHeader("Authorization", "Bearer $apiKey")
-                    .build()
-            return chain.proceed(requestWithHeaders)
+            val builder = originalRequest.newBuilder()
+            builder.addHeader("Accept", "application/json")
+
+            if (!apiKey.isNullOrBlank()) {
+                builder.addHeader("Authorization", "Bearer $apiKey")
+            }
+
+            return chain.proceed(builder.build())
         }
     }

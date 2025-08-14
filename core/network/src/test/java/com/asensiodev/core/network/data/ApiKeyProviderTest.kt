@@ -1,5 +1,6 @@
 package com.asensiodev.core.network.data
 
+import com.asensiodev.core.network.api.ApiKeyProviderContract
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.Test
 

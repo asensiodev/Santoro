@@ -1,7 +1,6 @@
 package com.asensiodev.core.network.data.interceptor
 
-import com.asensiodev.core.network.data.ApiKeyInitializer
-import com.asensiodev.core.network.data.ApiKeyProviderContract
+import com.asensiodev.core.network.api.ApiKeyProviderContract
 import com.asensiodev.core.network.data.CachedApiKeyProvider
 import com.asensiodev.library.remoteconfig.api.RemoteConfigName
 import com.asensiodev.library.remoteconfig.api.RemoteConfigProvider

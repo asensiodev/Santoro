@@ -46,6 +46,8 @@ dependencies {
     implementation(projects.santoro.feature.movieDetail.impl)
     implementation(projects.santoro.library.remoteConfig.api)
     implementation(projects.santoro.library.remoteConfig.impl)
+    implementation(projects.santoro.library.secureStorage.api)
+    implementation(projects.santoro.library.secureStorage.impl)
 
     implementation(projects.core.designSystem)
     implementation(projects.core.stringResources)
@@ -59,6 +61,7 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.remote.config)
     implementation(libs.firebase.crashlytics)
+    implementation(libs.androidx.startup)
 }
 
 tasks

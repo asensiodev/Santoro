@@ -1,11 +1,13 @@
 package com.asensiodev.core.network.data
 
-import jakarta.inject.Inject
+import com.asensiodev.core.network.api.ApiKeyProviderContract
+import com.asensiodev.core.network.data.repository.ApiKeyRepository
+import javax.inject.Inject
 
-internal class CachedApiKeyProvider
+class CachedApiKeyProvider
     @Inject
     constructor(
-        private val initializer: ApiKeyInitializer,
+        private val repository: ApiKeyRepository,
     ) : ApiKeyProviderContract {
-        override fun getApiKey(): String = initializer.getCachedApiKey()
+        override fun getApiKey(): String? = repository.getSyncOrNull()
     }
