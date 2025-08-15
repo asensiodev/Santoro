@@ -18,7 +18,6 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
                 add("implementation", project(":core:domain"))
 
                 "ksp"(libs.findLibrary("hilt-compiler").get())
-                "implementation"(libs.findLibrary("hilt-navigation-compose").get())
             }
         }
     }

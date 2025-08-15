@@ -21,44 +21,42 @@ class ApiKeyAuthenticator
             route: Route?,
             response: Response,
         ): Request? {
-            val attempts: Int = countAttempts(response)
-            val shouldRetry: Boolean = attempts < 1
+            var newRequest: Request? = null
 
-            val refreshed: Boolean =
-                if (shouldRetry) {
+            val attempts: Int = countAuthenticationAttempts(response)
+            if (attempts < 1) {
+                val wasKeyRefreshed: Boolean =
                     runBlocking {
-                        val before: String? = repository.getSyncOrNull()
                         try {
-                            refresher.refreshOrNoop()
-                            refresher.refreshIfChanged()
+                            refresher.ensureKeyUpToDate()
+                            val refreshedApiKey: String? = repository.getSyncOrNull()
+                            !refreshedApiKey.isNullOrBlank()
                         } catch (_: Throwable) {
                             false
-                        }?.let {
-                            val after: String? = repository.getSyncOrNull()
-                            !after.isNullOrBlank() && after != before
-                        } ?: false
+                        }
                     }
-                } else {
-                    false
-                }
 
-            return if (refreshed) {
-                val newApiKey: String = repository.getSync()
-                response.request
-                    .newBuilder()
-                    .header("Authorization", "Bearer $newApiKey")
-                    .build()
-            } else {
-                null
+                if (wasKeyRefreshed) {
+                    val currentApiKey: String? = repository.getSyncOrNull()
+                    if (!currentApiKey.isNullOrBlank()) {
+                        newRequest =
+                            response.request
+                                .newBuilder()
+                                .header("Authorization", "Bearer $currentApiKey")
+                                .build()
+                    }
+                }
             }
+
+            return newRequest
         }
 
-        private fun countAttempts(response: Response): Int {
+        private fun countAuthenticationAttempts(response: Response): Int {
             var count = 1
-            var prior: Response? = response.priorResponse
-            while (prior != null) {
+            var previousResponse: Response? = response.priorResponse
+            while (previousResponse != null) {
                 count += 1
-                prior = prior.priorResponse
+                previousResponse = previousResponse.priorResponse
             }
             return count
         }

@@ -9,6 +9,9 @@
     <!-- Top App Bar -->
     <string name="navigate_back">Back</string>
 
+    <!-- API Key Gate -->
+    <string name="api_key_gate_error_message">Failed to configure service.</string>
+
     <!-- Search Movies Screen -->
     <string name="search_movies_top_bar_title">Search movies</string>
     <string name="search_movies_textfield_placeholder">Type to search movies</string>

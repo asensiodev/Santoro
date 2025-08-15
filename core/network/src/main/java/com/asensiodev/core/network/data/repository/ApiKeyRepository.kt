@@ -18,16 +18,6 @@ class ApiKeyRepository
         @Volatile
         private var cached: String? = null
 
-        fun getSync(): String {
-            val inMemory: String? = cached
-            if (inMemory != null) return inMemory
-
-            val persisted: String? = storage.read()
-            check(!persisted.isNullOrBlank()) { "API key missing" }
-            cached = persisted
-            return persisted
-        }
-
         fun getSyncOrNull(): String? {
             val inMemory: String? = cached
             val persisted: String? = storage.read()

@@ -14,33 +14,23 @@ class ApiKeyRefresher
         private val remoteConfig: RemoteConfigProvider,
     ) {
         /**
-         * If there is no local key, fetch from Remote Config and persist.
-         * If there is already a key, do nothing.
+         * Ensures the local API key is present and up-to-date:
+         * - If there is no local key: tries to fetch from Remote Config and persist.
+         * - If there is a local key: fetches from RC and updates only when non-blank and different.
+         * If RC fails or returns blank, this method is a no-op.
          */
-        suspend fun refreshOrNoop() {
-            val existing: String? = repository.getSyncOrNull()
-            if (!existing.isNullOrBlank()) return
-
-            repository.refreshFromRemote(
-                fetch = {
-                    remoteConfig.getStringParameter(RemoteConfigName.TMDB_SANTORO_API_KEY)
-                },
-            )
-        }
-
-        /**
-         * If there is a local key, try to fetch from Remote Config and update
-         * only when the value is non-blank and different. If RC fails or returns blank, do nothing.
-         */
-        suspend fun refreshIfChanged() {
+        suspend fun ensureKeyUpToDate() {
             val current: String? = repository.getSyncOrNull()
-            if (current.isNullOrBlank()) return
 
             val remote: String =
                 remoteConfig.getStringParameter(
                     RemoteConfigName.TMDB_SANTORO_API_KEY,
                 )
-            val shouldUpdate: Boolean = remote.isNotBlank() && remote != current
+            if (remote.isBlank()) {
+                return
+            }
+
+            val shouldUpdate: Boolean = current.isNullOrBlank() || remote != current
             if (shouldUpdate) {
                 repository.refreshFromRemote(fetch = { remote })
             }

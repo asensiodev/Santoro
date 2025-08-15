@@ -16,16 +16,12 @@ class ApiKeyStartupInitializer : Initializer<Unit> {
                 context,
                 ApiKeyInitializerEntryPoint::class.java,
             )
-
         val refresher: ApiKeyRefresher = entryPoint.apiKeyRefresher()
 
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         scope.launch {
             withTimeoutOrNull(STARTUP_TIMEOUT_MS) {
-                refresher.refreshOrNoop()
-            }
-            withTimeoutOrNull(STARTUP_TIMEOUT_MS) {
-                refresher.refreshIfChanged()
+                refresher.ensureKeyUpToDate()
             }
         }
     }

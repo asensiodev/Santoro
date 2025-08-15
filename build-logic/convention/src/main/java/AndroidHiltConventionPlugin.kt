@@ -7,13 +7,13 @@ class AndroidHiltConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             pluginManager.apply("com.google.devtools.ksp")
+            pluginManager.withPlugin("com.android.base") {
+                pluginManager.apply("com.google.dagger.hilt.android")
+            }
             dependencies {
                 "ksp"(libs.findLibrary("dagger.hilt.compiler").get())
                 "implementation"(libs.findLibrary("dagger.hilt").get())
-            }
-
-            pluginManager.withPlugin("com.android.base") {
-                pluginManager.apply("com.google.dagger.hilt.android")
+                "implementation"(libs.findLibrary("hilt-navigation-compose").get())
             }
         }
     }
