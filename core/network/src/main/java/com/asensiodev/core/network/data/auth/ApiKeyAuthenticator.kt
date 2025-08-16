@@ -23,33 +23,29 @@ class ApiKeyAuthenticator
         ): Request? {
             var newRequest: Request? = null
 
-            val attempts: Int = countAuthenticationAttempts(response)
-            if (attempts < 1) {
-                val wasKeyRefreshed: Boolean =
-                    runBlocking {
-                        try {
-                            refresher.ensureKeyUpToDate()
-                            val refreshedApiKey: String? = repository.getSyncOrNull()
-                            !refreshedApiKey.isNullOrBlank()
-                        } catch (_: Throwable) {
-                            false
-                        }
-                    }
-
-                if (wasKeyRefreshed) {
-                    val currentApiKey: String? = repository.getSyncOrNull()
-                    if (!currentApiKey.isNullOrBlank()) {
-                        newRequest =
-                            response.request
-                                .newBuilder()
-                                .header("Authorization", "Bearer $currentApiKey")
-                                .build()
-                    }
+            if (countAuthenticationAttempts(response) <= 1) {
+                val refreshedApiKey: String? = fetchApiKey()
+                if (!refreshedApiKey.isNullOrBlank()) {
+                    newRequest =
+                        response.request
+                            .newBuilder()
+                            .header("Authorization", "Bearer $refreshedApiKey")
+                            .build()
                 }
             }
 
             return newRequest
         }
+
+        private fun fetchApiKey(): String? =
+            runBlocking {
+                try {
+                    refresher.ensureKeyUpToDate()
+                    repository.getSyncOrNull()
+                } catch (_: Throwable) {
+                    null
+                }
+            }
 
         private fun countAuthenticationAttempts(response: Response): Int {
             var count = 1
