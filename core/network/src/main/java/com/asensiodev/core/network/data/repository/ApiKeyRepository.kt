@@ -20,20 +20,13 @@ class ApiKeyRepository
 
         fun getSyncOrNull(): String? {
             val inMemory: String? = cached
-            val persisted: String? = storage.read()
+            val persisted: String? = if (inMemory == null) storage.read() else null
 
-            val result: String? =
-                when {
-                    inMemory != null -> inMemory
-                    !persisted.isNullOrBlank() -> {
-                        cached = persisted
-                        persisted
-                    }
-
-                    else -> null
-                }
-
-            return result
+            return when {
+                inMemory != null -> inMemory
+                !persisted.isNullOrBlank() -> persisted.also { persisted -> cached = persisted }
+                else -> null
+            }
         }
 
         suspend fun refreshFromRemote(fetch: suspend () -> String) {
