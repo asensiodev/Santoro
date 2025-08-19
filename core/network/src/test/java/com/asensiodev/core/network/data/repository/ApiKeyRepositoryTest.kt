@@ -1,13 +1,14 @@
 package com.asensiodev.core.network.data.repository
 
 import com.asensiodev.core.network.data.ApiKeyStorage
+import com.asensiodev.core.testing.verifyNever
+import com.asensiodev.core.testing.verifyOnce
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
-import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.BeforeEach
@@ -31,7 +32,7 @@ class ApiKeyRepositoryTest {
         val result = repository.getSyncOrNull()
 
         result shouldBeEqualTo "cached-key"
-        verify(exactly = 0) { storage.read() }
+        verifyNever { storage.read() }
     }
 
     @Test
@@ -42,7 +43,7 @@ class ApiKeyRepositoryTest {
 
         result shouldBeEqualTo "persisted-key"
         repository.getSyncOrNull() shouldBeEqualTo "persisted-key"
-        verify(exactly = 1) { storage.read() }
+        verifyOnce { storage.read() }
     }
 
     @Test
@@ -64,7 +65,7 @@ class ApiKeyRepositoryTest {
                 repository.refreshFromRemote { "" }
             }
         }
-        verify(exactly = 0) { storage.write(any()) }
+        verifyNever { storage.write(any()) }
     }
 
     private fun ApiKeyRepository.refreshFromMemory(value: String) {
