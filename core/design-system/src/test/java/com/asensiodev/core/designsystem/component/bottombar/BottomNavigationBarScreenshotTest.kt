@@ -4,8 +4,10 @@ import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import com.android.ide.common.rendering.api.SessionParams
 import com.asensiodev.core.designsystem.PreviewContent
+import com.asensiodev.core.designsystem.theme.AppIcons
 import org.junit.Rule
 import org.junit.Test
+import com.asensiodev.santoro.core.stringresources.R as SR
 
 class BottomNavigationBarScreenshotTest {
     @get:Rule
@@ -22,9 +24,27 @@ class BottomNavigationBarScreenshotTest {
         paparazzi.snapshot {
             PreviewContent {
                 BottomNavigationBar(
-                    BottomNavItem.entries,
-                    selectedItem = null,
-                    onItemSelected = {},
+                    items =
+                        listOf(
+                            BottomNavItem(
+                                icon = AppIcons.SearchIcon,
+                                labelRes = SR.string.search_movies,
+                                isSelected = true,
+                                onClick = {},
+                            ),
+                            BottomNavItem(
+                                icon = AppIcons.WatchedMoviesIcon,
+                                labelRes = SR.string.watched_movies,
+                                isSelected = false,
+                                onClick = {},
+                            ),
+                            BottomNavItem(
+                                icon = AppIcons.WatchlistIcon,
+                                labelRes = SR.string.watchlist,
+                                isSelected = false,
+                                onClick = {},
+                            ),
+                        ),
                 )
             }
         }

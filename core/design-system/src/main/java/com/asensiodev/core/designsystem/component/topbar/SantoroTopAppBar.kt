@@ -15,23 +15,16 @@ import com.asensiodev.santoro.core.stringresources.R as SR
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun TopAppBar(
+fun SantoroTopAppBar(
     title: String,
-    onBackClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
+    onBackClick: (() -> Unit)? = null,
 ) {
     TopAppBar(
-        title = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-            )
-        },
+        title = { Text(text = title, style = MaterialTheme.typography.titleLarge) },
         navigationIcon = {
             onBackClick?.let {
-                IconButton(
-                    onClick = onBackClick,
-                ) {
+                IconButton(onClick = onBackClick) {
                     Icon(
                         imageVector = AppIcons.ArrowBackIcon,
                         contentDescription = stringResource(SR.string.navigate_back),
@@ -46,7 +39,7 @@ fun TopAppBar(
 @PreviewLightDark
 @Composable
 fun SantoroTopAppBarPreview() {
-    TopAppBar(
+    SantoroTopAppBar(
         title = stringResource(SR.string.search_movies_top_bar_title),
         onBackClick = {},
     )

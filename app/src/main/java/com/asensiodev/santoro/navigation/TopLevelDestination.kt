@@ -1,29 +1,39 @@
+// app/navigation/TopLevelDestination.kt
 package com.asensiodev.santoro.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.asensiodev.core.designsystem.theme.AppIcons
+import com.asensiodev.santoro.core.stringresources.R
 import kotlin.reflect.KClass
-import com.asensiodev.santoro.core.stringresources.R as SR
 
 enum class TopLevelDestination(
-    val icon: ImageVector,
-    @StringRes val label: Int,
     val route: KClass<*>,
+    @StringRes val titleRes: Int,
+    @StringRes val labelRes: Int,
+    val icon: ImageVector,
 ) {
     SEARCH_MOVIES(
-        icon = AppIcons.SearchIcon,
-        label = SR.string.search_movies,
         route = NavRoutes.SearchMovies::class,
+        titleRes = R.string.search_movies_top_bar_title,
+        labelRes = R.string.search_movies,
+        icon = AppIcons.SearchIcon,
     ),
     WATCHED_MOVIES(
-        icon = AppIcons.WatchedMoviesIcon,
-        label = SR.string.watched_movies,
         route = NavRoutes.WatchedMovies::class,
+        titleRes = R.string.watched_movies_top_bar_title,
+        labelRes = R.string.watched_movies,
+        icon = AppIcons.WatchedMoviesIcon,
     ),
     WATCHLIST(
-        icon = AppIcons.WatchlistIcon,
-        label = SR.string.watchlist,
         route = NavRoutes.Watchlist::class,
+        titleRes = R.string.watchlist_top_bar_title,
+        labelRes = R.string.watchlist,
+        icon = AppIcons.WatchlistIcon,
     ),
+    ;
+
+    companion object {
+        val routes: Set<KClass<*>> = entries.map { destination -> destination.route }.toSet()
+    }
 }
