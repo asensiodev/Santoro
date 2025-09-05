@@ -6,7 +6,7 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.asensiodev.feature.moviedetail.api.navigation.MovieDetailRoute
-import com.asensiodev.feature.moviedetail.impl.presentation.MovieDetailScreenRoute
+import com.asensiodev.feature.moviedetail.impl.presentation.MovieDetailRoute as ScreenRoute
 
 fun NavController.navigateToMovieDetail(
     movieId: Int,
@@ -15,9 +15,9 @@ fun NavController.navigateToMovieDetail(
     navigate(MovieDetailRoute(movieId), navOptions)
 }
 
-fun NavGraphBuilder.movieDetailRoute() {
+fun NavGraphBuilder.movieDetailRoute(onBackClicked: () -> Unit) {
     composable<MovieDetailRoute> { backStackEntry ->
         val args = backStackEntry.toRoute<MovieDetailRoute>()
-        MovieDetailScreenRoute(movieId = args.movieId)
+        ScreenRoute(movieId = args.movieId, onBackClicked = onBackClicked)
     }
 }

@@ -37,7 +37,9 @@ class MainActivity : ComponentActivity() {
                             SantoroMainTabComponent(mainNavController = mainNavController)
                         }
 
-                        movieDetailRoute()
+                        movieDetailRoute(
+                            onBackClicked = { mainNavController.popBackStack() },
+                        )
                     }
                 }
             }

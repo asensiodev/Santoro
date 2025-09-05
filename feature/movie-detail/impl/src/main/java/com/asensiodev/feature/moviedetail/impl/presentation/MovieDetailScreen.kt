@@ -42,6 +42,7 @@ import coil3.compose.AsyncImage
 import com.asensiodev.core.designsystem.PreviewContentFullSize
 import com.asensiodev.core.designsystem.component.errorContent.ErrorContent
 import com.asensiodev.core.designsystem.component.loadingIndicator.LoadingIndicator
+import com.asensiodev.core.designsystem.component.topbar.SantoroAppBar
 import com.asensiodev.core.designsystem.theme.AppIcons
 import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.core.designsystem.theme.displayFontFamily
@@ -52,8 +53,9 @@ import com.asensiodev.santoro.core.designsystem.R as DR
 import com.asensiodev.santoro.core.stringresources.R as SR
 
 @Composable
-internal fun MovieDetailScreenRoute(
+internal fun MovieDetailRoute(
     movieId: Int,
+    onBackClicked: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MovieDetailViewModel = hiltViewModel(),
 ) {
@@ -68,6 +70,7 @@ internal fun MovieDetailScreenRoute(
         onToggleWatchlist = viewModel::toggleWatchlist,
         onToggleWatched = viewModel::toggleWatched,
         onRetry = { viewModel.fetchMovieDetails(uiState.movie?.id ?: 0) },
+        onBackClicked = onBackClicked,
         modifier = modifier,
     )
 }
@@ -78,26 +81,32 @@ internal fun MovieDetailScreen(
     onToggleWatchlist: () -> Unit,
     onToggleWatched: () -> Unit,
     onRetry: () -> Unit,
+    onBackClicked: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
 
-    when {
-        uiState.isLoading -> LoadingIndicator()
-        uiState.errorMessage != null ->
-            ErrorContent(
-                message = stringResource(SR.string.error_message_retry),
-                onRetry = { onRetry() },
-            )
+    SantoroAppBar(
+        title = stringResource(SR.string.movie_detail_top_bar_title),
+        onBackClicked = onBackClicked,
+    ) {
+        when {
+            uiState.isLoading -> LoadingIndicator()
+            uiState.errorMessage != null ->
+                ErrorContent(
+                    message = stringResource(SR.string.error_message_retry),
+                    onRetry = { onRetry() },
+                )
 
-        uiState.movie != null ->
-            MovieDetailContent(
-                uiState = uiState,
-                onToggleWatchlist = onToggleWatchlist,
-                onToggleWatched = onToggleWatched,
-                modifier = modifier,
-                scrollState = scrollState,
-            )
+            uiState.movie != null ->
+                MovieDetailContent(
+                    uiState = uiState,
+                    onToggleWatchlist = onToggleWatchlist,
+                    onToggleWatched = onToggleWatched,
+                    modifier = modifier,
+                    scrollState = scrollState,
+                )
+        }
     }
 }
 
@@ -305,6 +314,7 @@ private fun MovieDetailScreenPreview() {
             onToggleWatchlist = {},
             onToggleWatched = {},
             onRetry = {},
+            onBackClicked = {},
         )
     }
 }
