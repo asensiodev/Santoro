@@ -23,22 +23,10 @@ import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.feature.watchedmovies.impl.presentation.component.MovieCard
 import com.asensiodev.feature.watchedmovies.impl.presentation.model.MovieUi
-import javax.inject.Inject
 import com.asensiodev.santoro.core.stringresources.R as SR
 
-class WatchedMoviesScreen
-    @Inject
-    constructor() {
-        @Composable
-        fun Screen(onMovieClick: (Int) -> Unit) {
-            WatchedMoviesRoot(
-                onMovieClick = onMovieClick,
-            )
-        }
-    }
-
 @Composable
-internal fun WatchedMoviesRoot(
+internal fun WatchedMoviesRoute(
     onMovieClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: WatchedMoviesViewModel = hiltViewModel(),
@@ -74,19 +62,18 @@ internal fun WatchedMoviesScreen(
         )
         when {
             uiState.isLoading -> LoadingIndicator()
-            uiState.errorMessage != null -> {
+
+            uiState.errorMessage != null ->
                 ErrorContent(
                     message = stringResource(SR.string.error_message_retry),
                     onRetry = { onQueryChanged(uiState.query) },
                 )
-            }
 
-            uiState.hasResults -> {
+            uiState.hasResults ->
                 MovieList(
                     movies = uiState.movies,
                     onMovieClick = onMovieClick,
                 )
-            }
 
             else ->
                 NoResultsContent(
@@ -97,7 +84,7 @@ internal fun WatchedMoviesScreen(
 }
 
 @Composable
-fun MovieList(
+private fun MovieList(
     movies: List<MovieUi>,
     onMovieClick: (Int) -> Unit,
     modifier: Modifier = Modifier,

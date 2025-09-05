@@ -37,22 +37,10 @@ import com.asensiodev.feature.searchmovies.impl.presentation.component.MovieCard
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 import com.asensiodev.ui.LaunchEffectOnce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import javax.inject.Inject
 import com.asensiodev.santoro.core.stringresources.R as SR
 
-class SearchMoviesScreen
-    @Inject
-    constructor() {
-        @Composable
-        fun Screen(onMovieClick: (Int) -> Unit) {
-            SearchMoviesRoot(
-                onMovieClick = onMovieClick,
-            )
-        }
-    }
-
 @Composable
-internal fun SearchMoviesRoot(
+internal fun SearchMoviesRoute(
     onMovieClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SearchMoviesViewModel = hiltViewModel(),
@@ -67,13 +55,9 @@ internal fun SearchMoviesRoot(
         uiState = uiState,
         onQueryChanged = viewModel::updateQuery,
         onMovieClick = onMovieClick,
+        onLoadMorePopularMovies = viewModel::loadMorePopularMovies,
+        onLoadMoreSearchedMovies = viewModel::loadMoreSearchResults,
         modifier = modifier,
-        onLoadMorePopularMovies = {
-            viewModel.loadMorePopularMovies()
-        },
-        onLoadMoreSearchedMovies = {
-            viewModel.loadMoreSearchResults()
-        },
     )
 }
 

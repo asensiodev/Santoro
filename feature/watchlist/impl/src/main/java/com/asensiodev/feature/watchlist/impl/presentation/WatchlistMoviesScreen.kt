@@ -23,22 +23,10 @@ import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.feature.watchlist.impl.presentation.component.MovieCard
 import com.asensiodev.feature.watchlist.impl.presentation.model.MovieUi
-import javax.inject.Inject
 import com.asensiodev.santoro.core.stringresources.R as SR
 
-class WatchlistMoviesScreen
-    @Inject
-    constructor() {
-        @Composable
-        fun Screen(onMovieClick: (Int) -> Unit) {
-            WatchlistMoviesRoot(
-                onMovieClick = onMovieClick,
-            )
-        }
-    }
-
 @Composable
-internal fun WatchlistMoviesRoot(
+internal fun WatchlistMoviesRoute(
     onMovieClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: WatchlistMoviesViewModel = hiltViewModel(),
@@ -53,6 +41,7 @@ internal fun WatchlistMoviesRoot(
     )
 }
 
+// 🔹 UI pura sin ViewModel (usada por previews y el entrypoint)
 @Composable
 internal fun WatchlistMoviesScreen(
     uiState: WatchlistMoviesUiState,
@@ -96,6 +85,7 @@ internal fun WatchlistMoviesScreen(
     }
 }
 
+// Don't move to commons because I want to customize for each screen
 @Composable
 fun MovieList(
     movies: List<MovieUi>,

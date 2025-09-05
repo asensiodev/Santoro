@@ -48,23 +48,11 @@ import com.asensiodev.core.designsystem.theme.displayFontFamily
 import com.asensiodev.feature.moviedetail.impl.presentation.component.AnimatedIconWithText
 import com.asensiodev.feature.moviedetail.impl.presentation.component.GenreChip
 import com.asensiodev.feature.moviedetail.impl.presentation.model.MovieUi
-import javax.inject.Inject
 import com.asensiodev.santoro.core.designsystem.R as DR
 import com.asensiodev.santoro.core.stringresources.R as SR
 
-class MovieDetailScreen
-    @Inject
-    constructor() {
-        @Composable
-        fun Screen(movieId: Int) {
-            MovieDetailRoot(
-                movieId = movieId,
-            )
-        }
-    }
-
 @Composable
-internal fun MovieDetailRoot(
+internal fun MovieDetailScreenRoute(
     movieId: Int,
     modifier: Modifier = Modifier,
     viewModel: MovieDetailViewModel = hiltViewModel(),
