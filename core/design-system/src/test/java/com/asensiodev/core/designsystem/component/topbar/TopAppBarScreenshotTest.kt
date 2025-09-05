@@ -21,10 +21,10 @@ class TopAppBarScreenshotTest {
     fun captureScreenshot() {
         paparazzi.snapshot {
             PreviewContent {
-                SantoroTopAppBar(
-                    title = "Search movies",
-                    onBackClick = {},
-                )
+                SantoroAppBar(
+                    title = "Movie detail",
+                    onBackClicked = {},
+                ) {}
             }
         }
     }
