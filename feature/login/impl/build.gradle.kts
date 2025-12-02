@@ -8,4 +8,8 @@ android {
 }
 
 dependencies {
+    implementation(projects.feature.login.api)
+
+    implementation(libs.firebase.auth)
+    implementation(libs.google.identity)
 }
