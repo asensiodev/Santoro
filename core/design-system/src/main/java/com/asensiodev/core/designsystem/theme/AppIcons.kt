@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.List
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Done
@@ -17,4 +18,5 @@ object AppIcons {
     val ArrowBackIcon = Icons.AutoMirrored.Rounded.ArrowBack
     val ClearIcon = Icons.Filled.Clear
     val RefreshIcon = Icons.Filled.Refresh
+    val UserIcon = Icons.Filled.Person
 }
