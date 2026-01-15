@@ -1,4 +1,4 @@
-package com.asensiodev.impl.presentation
+package com.asensiodev.login.impl.presentation
 
 internal data class LoginUiState(
     val isLoading: Boolean = false,

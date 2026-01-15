@@ -36,6 +36,8 @@ android {
 }
 
 dependencies {
+    implementation(projects.santoro.feature.login.api)
+    implementation(projects.santoro.feature.login.impl)
     implementation(projects.santoro.feature.searchMovies.api)
     implementation(projects.santoro.feature.searchMovies.impl)
     implementation(projects.santoro.feature.watchedMovies.api)
@@ -49,6 +51,8 @@ dependencies {
     implementation(projects.santoro.library.secureStorage.api)
     implementation(projects.santoro.library.secureStorage.impl)
 
+    implementation(projects.core.auth)
+    implementation(projects.core.domain)
     implementation(projects.core.designSystem)
     implementation(projects.core.stringResources)
     implementation(projects.core.network)

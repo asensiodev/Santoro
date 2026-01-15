@@ -1,4 +1,4 @@
-package com.asensiodev.impl.domain.usecase
+package com.asensiodev.login.impl.domain.usecase
 
 import com.asensiodev.auth.domain.repository.AuthRepository
 import javax.inject.Inject

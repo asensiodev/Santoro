@@ -47,4 +47,7 @@
     <string name="query_text_field_clear_button_description">Clear search</string>
     <string name="error_message_retry">"Ups! An error occurred, please tap to retry"</string>
 
+    <!-- Google Auth ID -->
+    <string name="default_web_client_id" translatable="false">792126816216-49vquegl1mcdcm52655qhgrs9l9ou5cf.apps.googleusercontent.com</string>
+
 </resources>
