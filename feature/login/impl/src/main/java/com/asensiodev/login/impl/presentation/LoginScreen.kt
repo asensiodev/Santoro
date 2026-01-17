@@ -18,7 +18,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,18 +41,11 @@ import com.asensiodev.santoro.core.stringresources.R as SR
 
 @Composable
 internal fun LoginRoute(
-    onSignInSuccess: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: LoginViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-
-    LaunchedEffect(uiState.isSignInSuccessful) {
-        if (uiState.isSignInSuccessful) {
-            onSignInSuccess()
-        }
-    }
 
     LoginScreen(
         uiState = uiState,

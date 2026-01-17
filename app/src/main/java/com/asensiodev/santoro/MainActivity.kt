@@ -103,9 +103,7 @@ fun SantoroApp(
         navController = mainNavController,
         startDestination = startDestination,
     ) {
-        loginScreen(
-            onSignInSuccess = {},
-        )
+        loginScreen()
 
         composable<TabHost> {
             SantoroMainTabComponent(mainNavController = mainNavController)
