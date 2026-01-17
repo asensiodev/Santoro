@@ -13,8 +13,8 @@ import javax.inject.Singleton
 class EncryptedPrefsSecureKeyValueStore
     @Inject
     constructor(
-        @ApplicationContext context: Context,
-        fileName: String,
+        @ApplicationContext private val context: Context,
+        private val fileName: String,
     ) : SecureKeyValueStore {
         private val masterKey: MasterKey =
             MasterKey
@@ -22,7 +22,19 @@ class EncryptedPrefsSecureKeyValueStore
                 .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
                 .build()
 
-        private val prefs =
+        private val prefs = createEncryptedPrefs()
+
+        private fun createEncryptedPrefs(): android.content.SharedPreferences =
+            try {
+                buildEncryptedPrefs()
+            } catch (_: Exception) {
+                // If the key is invalid (e.g. after a reinstall or restore), delete the old file and try again.
+                // This prevents the app from crashing on startup.
+                context.deleteSharedPreferences(fileName)
+                buildEncryptedPrefs()
+            }
+
+        private fun buildEncryptedPrefs(): android.content.SharedPreferences =
             EncryptedSharedPreferences.create(
                 context,
                 fileName,
