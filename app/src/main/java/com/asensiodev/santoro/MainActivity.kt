@@ -25,6 +25,7 @@ import com.asensiodev.login.impl.presentation.navigation.loginScreen
 import com.asensiodev.santoro.navigation.SantoroMainTabComponent
 import com.asensiodev.santoro.navigation.TabHost
 import com.asensiodev.santoro.presentation.onboarding.GuestOnboardingBottomSheet
+import com.asensiodev.settings.impl.presentation.navigation.settingsRoute
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.drop
 
@@ -110,6 +111,10 @@ fun SantoroApp(
         }
 
         movieDetailRoute(
+            onBackClicked = { mainNavController.popBackStack() },
+        )
+
+        settingsRoute(
             onBackClicked = { mainNavController.popBackStack() },
         )
     }

@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.asensiodev.feature.moviedetail.impl.presentation.navigation.navigateToMovieDetail
+import com.asensiodev.feature.searchmovies.api.navigation.SearchMoviesRoute
 import com.asensiodev.feature.searchmovies.impl.navigation.searchMoviesRoute
 import com.asensiodev.feature.watchedmovies.impl.navigation.watchedMoviesRoute
 import com.asensiodev.feature.watchlist.impl.navigation.watchlistRoute
@@ -19,7 +20,7 @@ fun SantoroTabNavGraph(
 ) {
     NavHost(
         navController = navController,
-        startDestination = com.asensiodev.feature.searchmovies.api.navigation.SearchMoviesRoute,
+        startDestination = SearchMoviesRoute,
         modifier = Modifier.padding(paddingValues),
     ) {
         searchMoviesRoute(

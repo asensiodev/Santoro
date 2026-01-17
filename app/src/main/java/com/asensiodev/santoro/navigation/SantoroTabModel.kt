@@ -7,6 +7,7 @@ import com.asensiodev.feature.searchmovies.api.navigation.SearchMoviesRoute
 import com.asensiodev.feature.watchedmovies.api.navigation.WatchedMoviesRoute
 import com.asensiodev.feature.watchlist.api.navigation.WatchlistRoute
 import com.asensiodev.santoro.core.stringresources.R
+import com.asensiodev.settings.api.navigation.SettingsRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -17,6 +18,7 @@ data class SantoroTabModel(
     @StringRes val labelRes: Int,
     val icon: ImageVector,
     val route: Any,
+    val isRootDestination: Boolean = false,
 )
 
 val SantoroTabs =
@@ -38,5 +40,12 @@ val SantoroTabs =
             labelRes = R.string.watchlist,
             icon = AppIcons.WatchlistIcon,
             route = WatchlistRoute,
+        ),
+        SantoroTabModel(
+            titleRes = R.string.settings_title,
+            labelRes = R.string.settings_title,
+            icon = AppIcons.SettingsIcon,
+            route = SettingsRoute,
+            isRootDestination = true,
         ),
     )

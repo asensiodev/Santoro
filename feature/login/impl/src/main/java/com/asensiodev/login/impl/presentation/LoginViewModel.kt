@@ -3,9 +3,9 @@ package com.asensiodev.login.impl.presentation
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.asensiodev.login.impl.domain.usecase.SignInAnonymouslyUseCase
-import com.asensiodev.login.impl.domain.usecase.SignInWithGoogleUseCase
-import com.asensiodev.login.impl.presentation.helper.GoogleSignInHelper
+import com.asensiodev.auth.domain.usecase.SignInAnonymouslyUseCase
+import com.asensiodev.auth.domain.usecase.SignInWithGoogleUseCase
+import com.asensiodev.auth.helper.GoogleSignInHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

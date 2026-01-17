@@ -9,4 +9,8 @@ android {
 
 dependencies {
     implementation(projects.feature.settings.api)
+
+    implementation(projects.core.auth)
+    implementation(projects.core.domain)
+    implementation(projects.core.ui)
 }

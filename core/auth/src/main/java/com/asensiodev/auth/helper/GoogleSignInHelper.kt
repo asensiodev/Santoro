@@ -1,4 +1,4 @@
-package com.asensiodev.login.impl.presentation.helper
+package com.asensiodev.auth.helper
 
 import android.content.Context
 import androidx.credentials.CredentialManager
@@ -15,7 +15,7 @@ import javax.inject.Singleton
 class GoogleSignInHelper
     @Inject
     constructor(
-        @param:ApplicationContext private val context: Context,
+        @ApplicationContext private val context: Context,
     ) {
         private val credentialManager = CredentialManager.create(context)
 

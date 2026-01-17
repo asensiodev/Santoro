@@ -42,6 +42,15 @@
     <string name="watchlist_icon_button">Watchlist</string>
     <string name="watched_icon_button">Watched</string>
 
+    <!-- Settings Screen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_link_google">Link Google account</string>
+    <string name="settings_logout">Logout</string>
+    <string name="settings_version">Version %s</string>
+    <string name="settings_author">AsensioDev</string>
+
     <!-- Generic -->
     <string name="unknown_value">Unknown</string>
     <string name="query_text_field_clear_button_description">Clear search</string>

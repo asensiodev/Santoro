@@ -46,6 +46,8 @@ dependencies {
     implementation(projects.santoro.feature.watchlist.impl)
     implementation(projects.santoro.feature.movieDetail.api)
     implementation(projects.santoro.feature.movieDetail.impl)
+    implementation(projects.santoro.feature.settings.api)
+    implementation(projects.santoro.feature.settings.impl)
     implementation(projects.santoro.library.remoteConfig.api)
     implementation(projects.santoro.library.remoteConfig.impl)
     implementation(projects.santoro.library.secureStorage.api)

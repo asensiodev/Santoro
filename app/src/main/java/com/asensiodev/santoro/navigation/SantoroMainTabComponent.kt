@@ -28,12 +28,16 @@ fun SantoroMainTabComponent(mainNavController: NavHostController) {
                                 currentDestination?.destination?.route?.startsWith(routeName) ==
                                     true,
                             onClick = {
-                                tabNavController.navigate(tab.route) {
-                                    popUpTo(tabNavController.graph.startDestinationId) {
-                                        saveState = true
+                                if (tab.isRootDestination) {
+                                    mainNavController.navigate(tab.route)
+                                } else {
+                                    tabNavController.navigate(tab.route) {
+                                        popUpTo(tabNavController.graph.startDestinationId) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
                                 }
                             },
                         )
