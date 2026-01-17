@@ -42,7 +42,7 @@ internal class LoginViewModel
         private suspend fun performGoogleLogin(idToken: String) {
             signInWithGoogleUseCase(idToken)
                 .onSuccess {
-                    _uiState.update { it.copy(isLoading = false, isSignInSuccessful = true) }
+                    _uiState.update { it.copy(isSignInSuccessful = true) }
                 }.onFailure { e ->
                     _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
                 }
@@ -53,7 +53,7 @@ internal class LoginViewModel
                 _uiState.update { it.copy(isLoading = true, errorMessage = null) }
                 signInAnonymouslyUseCase()
                     .onSuccess {
-                        _uiState.update { it.copy(isLoading = false, isSignInSuccessful = true) }
+                        _uiState.update { it.copy(isSignInSuccessful = true) }
                     }.onFailure { e ->
                         _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
                     }

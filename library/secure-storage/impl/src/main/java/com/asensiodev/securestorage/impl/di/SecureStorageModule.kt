@@ -24,6 +24,18 @@ object SecureStorageModule {
             context = context,
             fileName = FILE_API,
         )
+
+    @Provides
+    @Singleton
+    @Named("user_preferences")
+    fun provideUserPreferencesSecureStore(
+        @ApplicationContext context: Context,
+    ): SecureKeyValueStore =
+        EncryptedPrefsSecureKeyValueStore(
+            context = context,
+            fileName = FILE_USER_PREFS,
+        )
 }
 
 private const val FILE_API = "secure_api_store"
+private const val FILE_USER_PREFS = "secure_user_prefs"

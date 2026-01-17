@@ -50,4 +50,9 @@
     <!-- Google Auth ID -->
     <string name="default_web_client_id" translatable="false">792126816216-49vquegl1mcdcm52655qhgrs9l9ou5cf.apps.googleusercontent.com</string>
 
+    <!-- Guest Onboarding -->
+    <string name="guest_onboarding_title">Welcome to Santoro!</string>
+    <string name="guest_onboarding_description">You are browsing as a <b>guest</b>. You have full access to search for movies, add them to your Watchlist and mark them as watched.\n\n<b>Note:</b> Your lists are saved on this device only. If you change phones or uninstall the app, your data will be lost unless you link a Google account later.</string>
+    <string name="guest_onboarding_button">Got it, let\'s explore!</string>
+
 </resources>

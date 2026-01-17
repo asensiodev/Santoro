@@ -5,5 +5,6 @@ plugins {
 
 dependencies {
     implementation(projects.core.domain)
+    implementation(projects.library.secureStorage.api)
     implementation(libs.gson)
 }

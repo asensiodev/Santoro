@@ -14,6 +14,7 @@ class JvmLibraryConventionPlugin : Plugin<Project> {
             configureKotlinJvm()
             dependencies {
                 "implementation"(libs.findLibrary("kotlinx-coroutines-core").get())
+                "implementation"(libs.findLibrary("javax-inject").get())
             }
         }
     }

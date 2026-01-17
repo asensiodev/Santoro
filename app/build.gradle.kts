@@ -53,6 +53,7 @@ dependencies {
 
     implementation(projects.core.auth)
     implementation(projects.core.domain)
+    implementation(projects.core.data)
     implementation(projects.core.designSystem)
     implementation(projects.core.stringResources)
     implementation(projects.core.network)
