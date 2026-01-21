@@ -1,5 +1,7 @@
 package com.asensiodev.settings.impl.presentation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,12 +14,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -33,10 +37,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.asensiodev.core.designsystem.component.banner.Banner
+import com.asensiodev.core.designsystem.component.loadingIndicator.LoadingIndicator
 import com.asensiodev.core.designsystem.component.topbar.SantoroAppBar
 import com.asensiodev.core.designsystem.theme.AppIcons
 import com.asensiodev.core.designsystem.theme.Size
+import com.asensiodev.settings.impl.presentation.component.AccountLinkedSuccessBottomSheet
 import com.asensiodev.ui.LaunchEffectOnce
+import com.asensiodev.ui.UiText
 import com.asensiodev.santoro.core.designsystem.R as DR
 import com.asensiodev.santoro.core.stringresources.R as SR
 
@@ -62,20 +70,42 @@ internal fun SettingsScreenRoute(
         viewModel.observeAuthState()
     }
 
-    SettingsScreen(
-        onBackClicked = onBackClicked,
-        onAppearanceClicked = { /* TODO */ },
-        onLanguageClicked = { /* TODO */ },
-        onLinkGoogleAccountClicked = {
-            viewModel.onSignInWithGoogleClicked(context)
-        },
-        onLogoutClicked = {
-            viewModel.onLogoutClicked()
-        },
-        isAnonymous = uiState.isAnonymous,
-        versionName = versionName ?: "Unknown",
-        modifier = modifier,
-    )
+    Box(modifier = Modifier.fillMaxSize()) {
+        SettingsScreen(
+            onBackClicked = onBackClicked,
+            onAppearanceClicked = { /* TODO */ },
+            onLanguageClicked = { /* TODO */ },
+            onLinkGoogleAccountClicked = {
+                viewModel.onSignInWithGoogleClicked(context)
+            },
+            onRetryError = { viewModel.onSignInWithGoogleClicked(context) },
+            onLogoutClicked = {
+                viewModel.onLogoutClicked()
+            },
+            onLinkAccountSuccessDismiss = viewModel::onLinkAccountSuccessDismiss,
+            onAccountCollisionDialogDismiss = viewModel::onAccountCollisionDialogDismiss,
+            onAccountCollisionDialogConfirm = viewModel::onAccountCollisionDialogConfirm,
+            isAnonymous = uiState.isAnonymous,
+            versionName = versionName ?: "Unknown",
+            error = uiState.error,
+            isLinkAccountSuccessful = uiState.isLinkAccountSuccessful,
+            showAccountCollisionDialog = uiState.showAccountCollisionDialog,
+            modifier = modifier,
+        )
+
+        if (uiState.isLoading) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.7f))
+                        .clickable(enabled = false) {},
+                contentAlignment = Alignment.Center,
+            ) {
+                LoadingIndicator()
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -85,11 +115,26 @@ internal fun SettingsScreen(
     onAppearanceClicked: () -> Unit,
     onLanguageClicked: () -> Unit,
     onLinkGoogleAccountClicked: () -> Unit,
+    onRetryError: () -> Unit,
     onLogoutClicked: () -> Unit,
+    onLinkAccountSuccessDismiss: () -> Unit,
+    onAccountCollisionDialogDismiss: () -> Unit,
+    onAccountCollisionDialogConfirm: () -> Unit,
     isAnonymous: Boolean,
     versionName: String,
+    error: UiText?,
+    isLinkAccountSuccessful: Boolean,
+    showAccountCollisionDialog: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    if (isLinkAccountSuccessful) {
+        AccountLinkedSuccessBottomSheet(
+            onDismiss = onLinkAccountSuccessDismiss,
+        )
+    }
+    if (showAccountCollisionDialog) {
+        AccountAlreadyExistsDialog(onAccountCollisionDialogDismiss, onAccountCollisionDialogConfirm)
+    }
     SantoroAppBar(
         title = stringResource(SR.string.settings_title),
         onBackClicked = onBackClicked,
@@ -99,9 +144,11 @@ internal fun SettingsScreen(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(vertical = Size.size16),
+                    .verticalScroll(rememberScrollState()),
         ) {
+            if (error != null) {
+                ErrorBanner(error, onRetryError)
+            }
             SettingsItem(
                 text = stringResource(SR.string.settings_appearance),
                 icon = AppIcons.SettingsIcon,
@@ -127,12 +174,55 @@ internal fun SettingsScreen(
                     showChevron = false,
                 )
             }
-
             Spacer(modifier = Modifier.height(Size.size32))
-
             VersionSection(versionName)
         }
     }
+}
+
+@Composable
+private fun ErrorBanner(
+    error: UiText,
+    onRetryError: () -> Unit,
+) {
+    Banner(
+        message = error.asString(),
+        onRetry = onRetryError,
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Size.size16, vertical = Size.size8),
+    )
+}
+
+@Composable
+private fun AccountAlreadyExistsDialog(
+    onAccountCollisionDialogDismiss: () -> Unit,
+    onAccountCollisionDialogConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onAccountCollisionDialogDismiss,
+        title = {
+            Text(text = stringResource(SR.string.settings_account_collision_title))
+        },
+        text = {
+            Text(text = stringResource(SR.string.settings_account_collision_message))
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onAccountCollisionDialogConfirm,
+            ) {
+                Text(text = stringResource(SR.string.settings_account_collision_confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onAccountCollisionDialogDismiss,
+            ) {
+                Text(text = stringResource(SR.string.settings_account_collision_cancel))
+            }
+        },
+    )
 }
 
 @Composable
@@ -264,8 +354,15 @@ fun SettingsScreenPreview() {
         onAppearanceClicked = {},
         onLanguageClicked = {},
         onLinkGoogleAccountClicked = {},
+        onRetryError = {},
         onLogoutClicked = {},
         isAnonymous = true,
         versionName = "1.0.0",
+        error = null,
+        isLinkAccountSuccessful = false,
+        onLinkAccountSuccessDismiss = {},
+        onAccountCollisionDialogDismiss = {},
+        onAccountCollisionDialogConfirm = {},
+        showAccountCollisionDialog = false,
     )
 }

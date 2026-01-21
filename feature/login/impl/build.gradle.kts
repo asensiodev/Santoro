@@ -10,4 +10,5 @@ android {
 dependencies {
     implementation(projects.feature.login.api)
     implementation(projects.core.auth)
+    implementation(projects.core.ui)
 }

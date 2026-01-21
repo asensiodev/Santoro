@@ -19,5 +19,8 @@ internal class DefaultAuthRepository
         override suspend fun signInWithGoogle(idToken: String): Result<SantoroUser> =
             dataSource.signInWithGoogle(idToken)
 
+        override suspend fun linkWithGoogle(idToken: String): Result<SantoroUser> =
+            dataSource.linkWithGoogle(idToken)
+
         override suspend fun signOut() = dataSource.signOut()
     }

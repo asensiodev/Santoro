@@ -3,6 +3,7 @@ package com.asensiodev.core.designsystem.theme
 import androidx.compose.ui.unit.dp
 
 object Size {
+    val size1 = 1.dp
     val size2 = 2.dp
     val size4 = 4.dp
     val size8 = 8.dp
@@ -12,6 +13,7 @@ object Size {
     val size32 = 32.dp
     val size40 = 40.dp
     val size48 = 48.dp
+    val size56 = 56.dp
     val size64 = 64.dp
     val size80 = 80.dp
     val size88 = 88.dp

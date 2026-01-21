@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.asensiodev.auth.domain.usecase.SignInAnonymouslyUseCase
 import com.asensiodev.auth.domain.usecase.SignInWithGoogleUseCase
 import com.asensiodev.auth.helper.GoogleSignInHelper
+import com.asensiodev.ui.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.asensiodev.santoro.core.stringresources.R as SR
 
 @HiltViewModel
 internal class LoginViewModel
@@ -33,8 +35,16 @@ internal class LoginViewModel
                     .signIn(activityContext)
                     .onSuccess { idToken ->
                         performGoogleLogin(idToken)
-                    }.onFailure { error ->
-                        _uiState.update { it.copy(isLoading = false, errorMessage = error.message) }
+                    }.onFailure { _ ->
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage =
+                                    UiText.StringResource(
+                                        SR.string.login_error_google_sign_in,
+                                    ),
+                            )
+                        }
                     }
             }
         }
@@ -43,8 +53,16 @@ internal class LoginViewModel
             signInWithGoogleUseCase(idToken)
                 .onSuccess {
                     _uiState.update { it.copy(isSignInSuccessful = true) }
-                }.onFailure { e ->
-                    _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
+                }.onFailure { _ ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage =
+                                UiText.StringResource(
+                                    SR.string.login_error_google_sign_in,
+                                ),
+                        )
+                    }
                 }
         }
 
@@ -54,13 +72,17 @@ internal class LoginViewModel
                 signInAnonymouslyUseCase()
                     .onSuccess {
                         _uiState.update { it.copy(isSignInSuccessful = true) }
-                    }.onFailure { e ->
-                        _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
+                    }.onFailure { _ ->
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage =
+                                    UiText.StringResource(
+                                        SR.string.login_error_anonymous,
+                                    ),
+                            )
+                        }
                     }
             }
-        }
-
-        fun resetState() {
-            _uiState.update { LoginUiState() }
         }
     }

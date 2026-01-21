@@ -1,8 +1,10 @@
 package com.asensiodev.auth
 
 import com.asensiodev.auth.data.mapper.toSantoroUser
+import com.asensiodev.auth.domain.exception.AccountCollisionException
 import com.asensiodev.core.domain.model.SantoroUser
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -44,6 +46,24 @@ internal class FirebaseAuthDataSource
                 val authResult = firebaseAuth.signInWithCredential(credential).await()
                 val user = authResult.user!!.toSantoroUser()
                 Result.success(user)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+
+        override suspend fun linkWithGoogle(idToken: String): Result<SantoroUser> =
+            try {
+                val credential = GoogleAuthProvider.getCredential(idToken, null)
+                val currentUser = firebaseAuth.currentUser ?: error("No user logged in")
+                val authResult = currentUser.linkWithCredential(credential).await()
+                val user = authResult.user!!.toSantoroUser()
+                Result.success(user)
+            } catch (fce: FirebaseAuthUserCollisionException) {
+                Result.failure(
+                    AccountCollisionException(
+                        "This account is already linked to another user.",
+                        fce,
+                    ),
+                )
             } catch (e: Exception) {
                 Result.failure(e)
             }
