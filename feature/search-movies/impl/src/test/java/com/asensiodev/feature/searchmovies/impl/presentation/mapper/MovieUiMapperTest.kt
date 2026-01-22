@@ -13,6 +13,7 @@ class MovieUiMapperTest {
                 id = 1,
                 title = "Inception",
                 posterPath = "/inception.jpg",
+                backdropPath = null,
                 overview = "A thief who steals corporate secrets.",
                 releaseDate = "2010-07-16",
                 popularity = 8.3,
@@ -29,6 +30,8 @@ class MovieUiMapperTest {
                 id = 1,
                 title = "Inception",
                 posterPath = "https://image.tmdb.org/t/p/w500/inception.jpg",
+                backdropPath = null,
+                voteAverage = 8.8,
             )
 
         val result = movie.toUi()
@@ -44,6 +47,7 @@ class MovieUiMapperTest {
                     id = 1,
                     title = "Inception",
                     posterPath = "/inception.jpg",
+                    backdropPath = null,
                     overview = "A thief who steals corporate secrets.",
                     releaseDate = "2010-07-16",
                     popularity = 8.3,
@@ -58,6 +62,7 @@ class MovieUiMapperTest {
                     id = 2,
                     title = "The Dark Knight",
                     posterPath = "/dark_knight.jpg",
+                    backdropPath = null,
                     overview = "Batman faces the Joker in Gotham City.",
                     releaseDate = "2008-07-18",
                     popularity = 9.0,
@@ -76,11 +81,15 @@ class MovieUiMapperTest {
                     id = 1,
                     title = "Inception",
                     posterPath = "https://image.tmdb.org/t/p/w500/inception.jpg",
+                    backdropPath = null,
+                    voteAverage = 8.8,
                 ),
                 MovieUi(
                     id = 2,
                     title = "The Dark Knight",
                     posterPath = "https://image.tmdb.org/t/p/w500/dark_knight.jpg",
+                    backdropPath = null,
+                    voteAverage = 9.1,
                 ),
             )
 

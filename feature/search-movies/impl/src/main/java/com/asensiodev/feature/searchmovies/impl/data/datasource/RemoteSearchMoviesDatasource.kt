@@ -33,9 +33,42 @@ internal class RemoteSearchMoviesDatasource
                 Result.Error(e)
             }
 
+        override suspend fun getNowPlayingMovies(page: Int): Result<List<Movie>> =
+            try {
+                val response: SearchMoviesResponseApiModel = apiService.getNowPlayingMovies(page)
+                val movies = response.toDomain()
+                Result.Success(movies)
+            } catch (e: IOException) {
+                Result.Error(e)
+            } catch (e: HttpException) {
+                Result.Error(e)
+            }
+
         override suspend fun getPopularMovies(page: Int): Result<List<Movie>> =
             try {
                 val response: SearchMoviesResponseApiModel = apiService.getPopularMovies(page)
+                val movies = response.toDomain()
+                Result.Success(movies)
+            } catch (e: IOException) {
+                Result.Error(e)
+            } catch (e: HttpException) {
+                Result.Error(e)
+            }
+
+        override suspend fun getTopRatedMovies(page: Int): Result<List<Movie>> =
+            try {
+                val response: SearchMoviesResponseApiModel = apiService.getTopRatedMovies(page)
+                val movies = response.toDomain()
+                Result.Success(movies)
+            } catch (e: IOException) {
+                Result.Error(e)
+            } catch (e: HttpException) {
+                Result.Error(e)
+            }
+
+        override suspend fun getUpcomingMovies(page: Int): Result<List<Movie>> =
+            try {
+                val response: SearchMoviesResponseApiModel = apiService.getUpcomingMovies(page)
                 val movies = response.toDomain()
                 Result.Success(movies)
             } catch (e: IOException) {

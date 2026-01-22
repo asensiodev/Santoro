@@ -9,5 +9,12 @@ internal interface SearchMoviesRepository {
         query: String,
         page: Int,
     ): Flow<Result<List<Movie>>>
+
+    fun getNowPlayingMovies(page: Int): Flow<Result<List<Movie>>>
+
     fun getPopularMovies(page: Int): Flow<Result<List<Movie>>>
+
+    fun getTopRatedMovies(page: Int): Flow<Result<List<Movie>>>
+
+    fun getUpcomingMovies(page: Int): Flow<Result<List<Movie>>>
 }

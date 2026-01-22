@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
-// TODO: move all loadings to UI layer
 class RoomDatabaseRepository
     @Inject
     constructor(

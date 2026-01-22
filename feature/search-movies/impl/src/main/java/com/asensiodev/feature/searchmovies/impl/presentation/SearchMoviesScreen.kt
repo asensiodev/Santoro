@@ -3,27 +3,39 @@ package com.asensiodev.feature.searchmovies.impl.presentation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
+import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asensiodev.core.designsystem.PreviewContentFullSize
@@ -33,6 +45,7 @@ import com.asensiodev.core.designsystem.component.noresultscontent.NoResultsCont
 import com.asensiodev.core.designsystem.component.querytextfield.QueryTextField
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
+import com.asensiodev.feature.searchmovies.impl.presentation.component.HeroMovieCard
 import com.asensiodev.feature.searchmovies.impl.presentation.component.MovieCard
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 import com.asensiodev.ui.LaunchEffectOnce
@@ -83,10 +96,10 @@ internal fun SearchMoviesScreen(
             onQueryChanged = onQueryChanged,
         )
         if (uiState.query.isBlank()) {
-            PopularMoviesContent(
+            DashboardContent(
                 uiState = uiState,
                 onMovieClick = onMovieClick,
-                onLoadMore = onLoadMorePopularMovies,
+                onLoadMorePopular = onLoadMorePopularMovies,
             )
         } else {
             SearchMoviesContent(
@@ -100,46 +113,174 @@ internal fun SearchMoviesScreen(
 }
 
 @Composable
-private fun PopularMoviesContent(
+private fun DashboardContent(
     uiState: SearchMoviesUiState,
     onMovieClick: (Int) -> Unit,
-    onLoadMore: () -> Unit,
+    onLoadMorePopular: () -> Unit,
 ) {
-    when {
-        uiState.isInitialLoading -> {
+    if (uiState.screenState is SearchScreenState.Loading) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
             LoadingIndicator()
         }
+    } else if (uiState.screenState is SearchScreenState.Error) {
+        ErrorContent(
+            message = uiState.screenState.message,
+            onRetry = {
+                // TODO: Implement retry logic for dashboard
+            },
+        )
+    } else {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(Spacings.spacing24),
+        ) {
+            if (uiState.nowPlayingMovies.isNotEmpty()) {
+                NowPlayingSection(
+                    movies = uiState.nowPlayingMovies,
+                    onMovieClick = onMovieClick,
+                )
+            }
 
-        uiState.errorMessage != null && !uiState.hasPopularMoviesResults -> {
-            NoResultsContent(
-                text = stringResource(SR.string.search_movies_no_popular_movies_results_text),
+            if (uiState.popularMovies.isNotEmpty()) {
+                MovieSection(
+                    title = stringResource(SR.string.search_movies_popular_movies_title),
+                    movies = uiState.popularMovies,
+                    onMovieClick = onMovieClick,
+                    onLoadMore = onLoadMorePopular,
+                    isLoading = uiState.isPopularLoadingMore,
+                )
+            }
+
+            if (uiState.topRatedMovies.isNotEmpty()) {
+                MovieSection(
+                    title = stringResource(SR.string.search_movies_top_rated_title),
+                    movies = uiState.topRatedMovies,
+                    onMovieClick = onMovieClick,
+                )
+            }
+
+            if (uiState.upcomingMovies.isNotEmpty()) {
+                MovieSection(
+                    title = stringResource(SR.string.search_movies_upcoming_title),
+                    movies = uiState.upcomingMovies,
+                    onMovieClick = onMovieClick,
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NowPlayingSection(
+    movies: List<MovieUi>,
+    onMovieClick: (Int) -> Unit,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(Spacings.spacing12),
+    ) {
+        Text(
+            text = stringResource(SR.string.search_movies_now_playing_title),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = Spacings.spacing16),
+        )
+
+        val carouselState = rememberCarouselState { movies.size }
+        val configuration = LocalConfiguration.current
+        val screenWidth = configuration.screenWidthDp.dp
+        val heroItemWidth = screenWidth - Size.size48
+
+        HorizontalMultiBrowseCarousel(
+            state = carouselState,
+            preferredItemWidth = heroItemWidth,
+            itemSpacing = Spacings.spacing12,
+            contentPadding =
+                PaddingValues(
+                    horizontal = Spacings.spacing16,
+                ),
+            modifier =
+                Modifier
+                    .width(screenWidth)
+                    .height(Size.size260),
+        ) { index ->
+            val movie = movies[index]
+            HeroMovieCard(
+                movie = movie,
+                onClick = { onMovieClick(movie.id) },
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .maskClip(MaterialTheme.shapes.extraLarge),
             )
         }
+    }
+}
 
-        uiState.hasPopularMoviesResults -> {
-            Text(
-                text =
-                    stringResource(
-                        SR.string.search_movies_popular_movies_title,
-                    ),
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            MovieList(
-                movies = uiState.popularMovies,
-                onMovieClick = onMovieClick,
-                onLoadMore = onLoadMore,
-                isLoading = uiState.isPopularMoviesLoading,
-                isEndReached = uiState.isPopularEndReached,
-            )
-        }
+@Composable
+private fun MovieSection(
+    title: String,
+    movies: List<MovieUi>,
+    onMovieClick: (Int) -> Unit,
+    onLoadMore: (() -> Unit)? = null,
+    isLoading: Boolean = false,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(Spacings.spacing12),
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+        )
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
+            contentPadding =
+                PaddingValues(
+                    end = Spacings.spacing16,
+                ),
+        ) {
+            itemsIndexed(
+                movies,
+                key = { index, movie -> "$title-$index-${movie.id}" },
+            ) { index, movie ->
+                MovieCard(
+                    movie = movie,
+                    onClick = { onMovieClick(movie.id) },
+                    modifier =
+                        Modifier
+                            .width(Size.size120)
+                            .height(Size.size180),
+                )
 
-        else -> {
-            NoResultsContent(
-                text = stringResource(SR.string.search_movies_no_popular_movies_results_text),
-            )
+                if (onLoadMore != null && index == movies.lastIndex && !isLoading) {
+                    LaunchedEffect(Unit) {
+                        onLoadMore()
+                    }
+                }
+            }
+
+            if (isLoading) {
+                item {
+                    Box(
+                        modifier =
+                            Modifier
+                                .height(Size.size180)
+                                .width(Size.size50),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        LoadingIndicator()
+                    }
+                }
+            }
         }
     }
 }
@@ -152,8 +293,11 @@ private fun SearchMoviesContent(
     onLoadMore: () -> Unit,
 ) {
     when {
-        uiState.isInitialLoading -> LoadingIndicator()
-        uiState.errorMessage != null && !uiState.hasSearchResults -> {
+        uiState.screenState is SearchScreenState.Loading -> {
+            LoadingIndicator()
+        }
+
+        uiState.screenState is SearchScreenState.Error -> {
             ErrorContent(
                 message = stringResource(SR.string.error_message_retry),
                 onRetry = { onQueryChanged(uiState.query) },
@@ -165,15 +309,16 @@ private fun SearchMoviesContent(
                 movies = uiState.searchMovieResults,
                 onMovieClick = onMovieClick,
                 onLoadMore = onLoadMore,
-                isLoading = uiState.isSearchLoading,
+                isLoading = uiState.isSearchLoadingMore,
                 isEndReached = uiState.isSearchEndReached,
             )
         }
 
-        else ->
+        else -> {
             NoResultsContent(
                 text = stringResource(SR.string.search_movies_no_search_results_text),
             )
+        }
     }
 }
 
@@ -187,6 +332,13 @@ private fun MovieList(
     modifier: Modifier = Modifier,
 ) {
     val lazyGridState = rememberLazyGridState()
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(lazyGridState.isScrollInProgress) {
+        if (lazyGridState.isScrollInProgress) {
+            keyboardController?.hide()
+        }
+    }
 
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = Size.size88),
@@ -275,6 +427,8 @@ private fun SearchMoviesScreenPreview() {
                 id = index,
                 title = "Sample Movie $index",
                 posterPath = null,
+                backdropPath = null,
+                voteAverage = 7.5,
             )
         }
 
@@ -282,11 +436,10 @@ private fun SearchMoviesScreenPreview() {
         SearchMoviesScreen(
             uiState =
                 SearchMoviesUiState(
-                    query = "",
+                    nowPlayingMovies = sampleMovies,
                     popularMovies = sampleMovies,
-                    isSearchLoading = false,
-                    errorMessage = null,
-                    hasPopularMoviesResults = true,
+                    topRatedMovies = sampleMovies,
+                    upcomingMovies = sampleMovies,
                 ),
             onQueryChanged = {},
             onMovieClick = {},
@@ -296,9 +449,9 @@ private fun SearchMoviesScreenPreview() {
     }
 }
 
-private const val MOVIE_SAMPLE_LIST_SIZE = 5
-private const val LOAD_MORE_MOVIES_THRESHOLD = 4
-private const val LOADING_GRID_ITEM_KEY = "loading_item_key"
+private const val LOAD_MORE_MOVIES_THRESHOLD = 5
+private const val MOVIE_SAMPLE_LIST_SIZE = 10
+private const val LOADING_GRID_ITEM_KEY = "loading_item"
 
 private data class PaginationInfo(
     val lastVisibleIndex: Int,

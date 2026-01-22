@@ -34,6 +34,7 @@ class SearchMoviesUseCaseTest {
                         id = 1,
                         title = "Inception",
                         posterPath = "/inception.jpg",
+                        backdropPath = null,
                         overview = "A thief who steals corporate secrets.",
                         releaseDate = "2010-07-16",
                         popularity = 8.3,

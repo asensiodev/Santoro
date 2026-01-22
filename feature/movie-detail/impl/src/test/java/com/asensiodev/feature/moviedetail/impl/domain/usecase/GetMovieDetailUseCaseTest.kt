@@ -35,6 +35,7 @@ class GetMovieDetailUseCaseTest {
                     overview = "A depressed man suffers from insomnia...",
                     releaseDate = "1999-10-15",
                     posterPath = null,
+                    backdropPath = null,
                     popularity = 4.5,
                     voteAverage = 6.7,
                     voteCount = 1857,

@@ -13,6 +13,7 @@ fun MovieApiModel.toDomain() =
         title = title,
         overview = overview,
         posterPath = posterPath,
+        backdropPath = backdropPath,
         releaseDate = releaseDate,
         popularity = popularity ?: 0.0,
         voteAverage = voteAverage ?: 0.0,

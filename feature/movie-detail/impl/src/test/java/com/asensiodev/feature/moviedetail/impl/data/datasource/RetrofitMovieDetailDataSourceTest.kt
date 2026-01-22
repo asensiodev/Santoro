@@ -38,6 +38,7 @@ class RetrofitMovieDetailDataSourceTest {
                     title = "Test Movie",
                     overview = "This is a test overview",
                     posterPath = null,
+                    backdropPath = null,
                     releaseDate = null,
                     popularity = null,
                     voteAverage = null,

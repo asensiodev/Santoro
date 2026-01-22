@@ -33,6 +33,7 @@ class UpdateMovieStateUseCaseTest {
                     overview = "A thief who steals corporate secrets through the use of dream-sharing technology.",
                     releaseDate = "2010-07-16",
                     posterPath = null,
+                    backdropPath = null,
                     popularity = 8.3,
                     voteAverage = 8.8,
                     voteCount = 32000,

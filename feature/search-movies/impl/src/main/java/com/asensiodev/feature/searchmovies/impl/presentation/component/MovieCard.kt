@@ -1,24 +1,26 @@
 package com.asensiodev.feature.searchmovies.impl.presentation.component
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
@@ -36,35 +38,16 @@ internal fun MovieCard(
 ) {
     Card(
         onClick = onClick,
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .height(Size.size128),
+        modifier = modifier,
+        shape = MaterialTheme.shapes.medium,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            ),
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier =
-                Modifier
-                    .fillMaxSize(),
-        ) {
-            if (movie.posterPath == null) {
-                Icon(
-                    painter = painterResource(DR.drawable.ic_movie_card_placeholder),
-                    contentDescription = null,
-                    modifier =
-                        Modifier
-                            .size(Size.size160)
-                            .weight(FULL_WEIGHT)
-                            .padding(Spacings.spacing8),
-                )
-                Text(
-                    text = movie.title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(Spacings.spacing8),
-                )
-            } else {
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (movie.posterPath != null) {
                 AsyncImage(
                     model =
                         ImageRequest
@@ -73,14 +56,33 @@ internal fun MovieCard(
                             .crossfade(true)
                             .build(),
                     contentDescription = movie.title,
-                    // placeholder = painterResource(DR.drawable.ic_movie_card_placeholder),
-                    error = painterResource(DR.drawable.ic_movie_card_placeholder),
                     contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else {
+                Column(
                     modifier =
                         Modifier
-                            .size(Size.size160)
-                            .clip(MaterialTheme.shapes.medium),
-                )
+                            .fillMaxSize()
+                            .padding(Spacings.spacing8),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(DR.drawable.ic_movie_card_placeholder),
+                        contentDescription = null,
+                        modifier = Modifier.size(Size.size48),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = movie.title,
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = Spacings.spacing8),
+                    )
+                }
             }
         }
     }
@@ -94,14 +96,17 @@ private fun MovieCardPreview() {
             id = 1,
             title = "Sample Movie",
             posterPath = null,
+            backdropPath = null,
+            voteAverage = 10.0,
         )
 
     PreviewContentFullSize {
-        MovieCard(
-            movie = sampleMovie,
-            onClick = {},
-        )
+        Box(modifier = Modifier.padding(16.dp)) {
+            MovieCard(
+                movie = sampleMovie,
+                onClick = {},
+                modifier = Modifier.size(width = 120.dp, height = 180.dp),
+            )
+        }
     }
 }
-
-private const val FULL_WEIGHT = 1f

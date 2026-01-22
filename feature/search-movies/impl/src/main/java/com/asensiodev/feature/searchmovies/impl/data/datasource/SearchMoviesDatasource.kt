@@ -9,5 +9,11 @@ internal interface SearchMoviesDatasource {
         page: Int,
     ): Result<List<Movie>>
 
+    suspend fun getNowPlayingMovies(page: Int): Result<List<Movie>>
+
+    suspend fun getTopRatedMovies(page: Int): Result<List<Movie>>
+
     suspend fun getPopularMovies(page: Int): Result<List<Movie>>
+
+    suspend fun getUpcomingMovies(page: Int): Result<List<Movie>>
 }

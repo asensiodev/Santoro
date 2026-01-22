@@ -214,6 +214,7 @@ class MovieDetailViewModelTest {
             title = "Inception",
             overview = "A skilled thief is offered a chance to erase his criminal record.",
             posterPath = "https://image.tmdb.org/t/p/w500/path/to/poster.jpg",
+            backdropPath = null,
             releaseDate = "2010-07-16",
             popularity = 80.0,
             voteAverage = 8.8,

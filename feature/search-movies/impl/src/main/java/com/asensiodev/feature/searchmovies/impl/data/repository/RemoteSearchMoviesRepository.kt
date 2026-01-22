@@ -34,10 +34,58 @@ internal class RemoteSearchMoviesRepository
                 }
             }
 
+        override fun getNowPlayingMovies(page: Int): Flow<Result<List<Movie>>> =
+            flow {
+                try {
+                    val response = remoteDatasource.getNowPlayingMovies(page)
+                    if (response is Result.Success) {
+                        emit(Result.Success(response.data))
+                    } else if (response is Result.Error) {
+                        emit(Result.Error(response.exception))
+                    }
+                } catch (e: IOException) {
+                    emit(Result.Error(e))
+                } catch (e: HttpException) {
+                    emit(Result.Error(e))
+                }
+            }
+
         override fun getPopularMovies(page: Int): Flow<Result<List<Movie>>> =
             flow {
                 try {
                     val response = remoteDatasource.getPopularMovies(page)
+                    if (response is Result.Success) {
+                        emit(Result.Success(response.data))
+                    } else if (response is Result.Error) {
+                        emit(Result.Error(response.exception))
+                    }
+                } catch (e: IOException) {
+                    emit(Result.Error(e))
+                } catch (e: HttpException) {
+                    emit(Result.Error(e))
+                }
+            }
+
+        override fun getTopRatedMovies(page: Int): Flow<Result<List<Movie>>> =
+            flow {
+                try {
+                    val response = remoteDatasource.getTopRatedMovies(page)
+                    if (response is Result.Success) {
+                        emit(Result.Success(response.data))
+                    } else if (response is Result.Error) {
+                        emit(Result.Error(response.exception))
+                    }
+                } catch (e: IOException) {
+                    emit(Result.Error(e))
+                } catch (e: HttpException) {
+                    emit(Result.Error(e))
+                }
+            }
+
+        override fun getUpcomingMovies(page: Int): Flow<Result<List<Movie>>> =
+            flow {
+                try {
+                    val response = remoteDatasource.getUpcomingMovies(page)
                     if (response is Result.Success) {
                         emit(Result.Success(response.data))
                     } else if (response is Result.Error) {

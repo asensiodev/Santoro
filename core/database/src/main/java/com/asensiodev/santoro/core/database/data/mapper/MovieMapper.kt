@@ -12,6 +12,7 @@ fun MovieEntity.toDomain(): Movie =
         title = title,
         overview = overview,
         posterPath = posterPath,
+        backdropPath = null,
         releaseDate = releaseDate,
         popularity = popularity,
         voteAverage = voteAverage,
