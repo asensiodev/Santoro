@@ -26,6 +26,8 @@ class MovieUiMapperTest {
                 genres = listOf(Genre("Action"), Genre("Sci-Fi")),
                 productionCountries = listOf(ProductionCountry("USA")),
                 cast = listOf(CastMember(1, "Leo", "Cobb", "/leo.jpg")),
+                runtime = 148,
+                director = "Christopher Nolan",
                 isWatched = true,
                 isInWatchlist = false,
             )
@@ -43,6 +45,8 @@ class MovieUiMapperTest {
                 genres = listOf("Action", "Sci-Fi"),
                 productionCountries = listOf("USA"),
                 cast = listOf(CastMemberUi(1, "Leo", "Cobb", "https://image.tmdb.org/t/p/w185/leo.jpg")),
+                runtime = "2h 28m",
+                director = "Christopher Nolan",
                 isWatched = true,
                 isInWatchlist = false,
             )
@@ -67,6 +71,8 @@ class MovieUiMapperTest {
                 genres = listOf("Action", "Sci-Fi"),
                 productionCountries = listOf("USA"),
                 cast = listOf(CastMemberUi(1, "Leo", "Cobb", "https://image.tmdb.org/t/p/w185/leo.jpg")),
+                runtime = "2h 28m",
+                director = "Christopher Nolan",
                 isWatched = true,
                 isInWatchlist = false,
             )
@@ -85,6 +91,8 @@ class MovieUiMapperTest {
                 genres = listOf(Genre("Action"), Genre("Sci-Fi")),
                 productionCountries = listOf(ProductionCountry("USA")),
                 cast = listOf(CastMember(1, "Leo", "Cobb", "/leo.jpg")),
+                runtime = null,
+                director = "Christopher Nolan",
                 isWatched = true,
                 isInWatchlist = false,
             )

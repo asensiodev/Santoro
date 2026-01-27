@@ -80,6 +80,7 @@ class SearchMoviesResponseApiModelMapperTest {
             genres = listOf(),
             productionCountries = listOf(),
             credits = null,
+            runtime = null,
         )
 
     private fun createMovie(

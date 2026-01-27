@@ -45,6 +45,7 @@ class RetrofitMovieDetailDataSourceTest {
                     voteCount = null,
                     genres = listOf(),
                     productionCountries = listOf(),
+                    runtime = 120,
                     credits = null,
                 )
             val expectedDomainMovie = movieApiModel.toDomain()

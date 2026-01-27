@@ -18,11 +18,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -76,6 +78,7 @@ import com.asensiodev.core.designsystem.component.topbar.SantoroAppBar
 import com.asensiodev.core.designsystem.theme.AppIcons
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
+import com.asensiodev.core.designsystem.theme.Weights
 import com.asensiodev.feature.moviedetail.impl.presentation.component.GenreChip
 import com.asensiodev.feature.moviedetail.impl.presentation.model.CastMemberUi
 import com.asensiodev.feature.moviedetail.impl.presentation.model.MovieUi
@@ -353,10 +356,11 @@ internal fun MovieDetailContent(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
+            val unknown = stringResource(SR.string.unknown_value)
             InfoRow(
-                duration = "2h 15m",
-                director = "Christopher Nolan",
-                country = movie.productionCountries.firstOrNull() ?: "USA",
+                duration = movie.runtime ?: unknown,
+                director = movie.director ?: unknown,
+                country = movie.productionCountries.firstOrNull() ?: unknown,
             )
             Column(verticalArrangement = Arrangement.spacedBy(Spacings.spacing8)) {
                 Text(
@@ -516,34 +520,69 @@ fun InfoRow(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min),
+        horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        InfoItem(icon = Icons.Rounded.DateRange, label = duration)
-        InfoItem(icon = Icons.Rounded.Person, label = director)
-        InfoItem(icon = Icons.Rounded.Place, label = country)
+        InfoItem(
+            icon = Icons.Rounded.DateRange,
+            label = duration,
+            modifier = Modifier.weight(Weights.W08),
+        )
+        VerticalDivider()
+        InfoItem(
+            icon = Icons.Rounded.Person,
+            label = director,
+            modifier = Modifier.weight(Weights.W12),
+        )
+        VerticalDivider()
+        InfoItem(
+            icon = Icons.Rounded.Place,
+            label = country,
+            modifier = Modifier.weight(Weights.W10),
+        )
     }
+}
+
+@Composable
+fun VerticalDivider() {
+    Box(
+        modifier =
+            Modifier
+                .width(Size.size1)
+                .fillMaxHeight()
+                .padding(vertical = Spacings.spacing4)
+                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+    )
 }
 
 @Composable
 fun InfoItem(
     icon: ImageVector,
     label: String,
+    modifier: Modifier = Modifier,
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier,
+    ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(Size.size24),
         )
-        Spacer(modifier = Modifier.height(Spacings.spacing4))
+        Spacer(modifier = Modifier.height(Spacings.spacing8))
         Text(
             text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
+            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
         )
     }
 }
@@ -681,6 +720,8 @@ private fun MovieDetailScreenPreview() {
                                 ),
                             productionCountries = listOf("USA", "Canada"),
                             cast = emptyList(),
+                            runtime = "1h 55m",
+                            director = "Gary Fleder",
                             isWatched = false,
                             isInWatchlist = false,
                         ),

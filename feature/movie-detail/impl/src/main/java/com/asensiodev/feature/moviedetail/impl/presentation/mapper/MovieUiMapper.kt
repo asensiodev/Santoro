@@ -21,6 +21,8 @@ internal fun Movie.toUi(): MovieUi =
         genres = genres.map { it.name },
         productionCountries = productionCountries.map { it.name },
         cast = cast.map { it.toUi() },
+        runtime = runtime?.let { formatRuntime(it) },
+        director = director,
         isWatched = isWatched,
         isInWatchlist = isInWatchlist,
         watchedAt = watchedAt,
@@ -40,6 +42,8 @@ internal fun MovieUi.toDomain(): Movie =
         genres = genres.map { Genre(it) },
         productionCountries = productionCountries.map { ProductionCountry(it) },
         cast = cast.map { it.toDomain() },
+        runtime = null,
+        director = director,
         isWatched = isWatched,
         isInWatchlist = isInWatchlist,
         watchedAt = watchedAt,
@@ -64,3 +68,16 @@ private fun CastMemberUi.toDomain() =
 private const val BASE_POSTER_URL = "https://image.tmdb.org/t/p/w500"
 private const val BASE_BACKDROP_URL = "https://image.tmdb.org/t/p/w780"
 private const val BASE_PROFILE_URL = "https://image.tmdb.org/t/p/w185"
+
+private fun formatRuntime(minutes: Int): String {
+    val hours = minutes / HOUR_MINUTES
+    val remainingMinutes = minutes % MINUTE_SECONDS
+    return if (hours > 0) {
+        "${hours}h ${remainingMinutes}m"
+    } else {
+        "${remainingMinutes}m"
+    }
+}
+
+private const val HOUR_MINUTES = 60
+private const val MINUTE_SECONDS = 60

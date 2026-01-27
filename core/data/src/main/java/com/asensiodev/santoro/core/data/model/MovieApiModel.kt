@@ -25,6 +25,8 @@ data class MovieApiModel(
     val genres: List<GenreApiModel>?,
     @SerializedName("production_countries")
     val productionCountries: List<ProductionCountryApiModel>?,
+    @SerializedName("runtime")
+    val runtime: Int?,
     @SerializedName("credits")
     val credits: CreditsApiModel?,
 )

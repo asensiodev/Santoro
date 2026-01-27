@@ -23,6 +23,8 @@ fun MovieApiModel.toDomain() =
         genres = genres?.map { it.toDomain() } ?: emptyList(),
         productionCountries = productionCountries?.map { it.toDomain() } ?: emptyList(),
         cast = credits?.cast?.map { it.toDomain() } ?: emptyList(),
+        runtime = runtime,
+        director = credits?.crew?.firstOrNull { it.job == "Director" }?.name,
         isWatched = false,
         isInWatchlist = false,
         watchedAt = null,
