@@ -22,6 +22,7 @@ fun MovieApiModel.toDomain() =
         productionCountries = productionCountries?.map { it.toDomain() } ?: emptyList(),
         isWatched = false,
         isInWatchlist = false,
+        watchedAt = null,
     )
 
 fun GenreApiModel.toDomain() =

@@ -30,4 +30,15 @@ internal interface SearchMoviesApiService {
     suspend fun getUpcomingMovies(
         @Query("page") page: Int,
     ): SearchMoviesResponseApiModel
+
+    @GET("trending/movie/day")
+    suspend fun getTrendingMovies(
+        @Query("page") page: Int,
+    ): SearchMoviesResponseApiModel
+
+    @GET("discover/movie")
+    suspend fun getMoviesByGenre(
+        @Query("with_genres") genreId: Int,
+        @Query("page") page: Int,
+    ): SearchMoviesResponseApiModel
 }

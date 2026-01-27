@@ -30,6 +30,9 @@ class MovieUiMapperTest {
                 id = 1,
                 title = "Inception",
                 posterPath = "https://image.tmdb.org/t/p/w500/inception.jpg",
+                releaseYear = "2010",
+                genres = "",
+                rating = 8.8,
             )
 
         val result = movie.toUi()
@@ -79,11 +82,17 @@ class MovieUiMapperTest {
                     id = 1,
                     title = "Inception",
                     posterPath = "https://image.tmdb.org/t/p/w500/inception.jpg",
+                    releaseYear = "2010",
+                    genres = "",
+                    rating = 8.8,
                 ),
                 MovieUi(
                     id = 2,
                     title = "The Dark Knight",
                     posterPath = "https://image.tmdb.org/t/p/w500/dark_knight.jpg",
+                    releaseYear = "2008",
+                    genres = "",
+                    rating = 9.1,
                 ),
             )
 

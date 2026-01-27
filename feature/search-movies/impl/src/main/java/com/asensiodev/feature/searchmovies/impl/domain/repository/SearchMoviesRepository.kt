@@ -17,4 +17,11 @@ internal interface SearchMoviesRepository {
     fun getTopRatedMovies(page: Int): Flow<Result<List<Movie>>>
 
     fun getUpcomingMovies(page: Int): Flow<Result<List<Movie>>>
+
+    fun getTrendingMovies(page: Int): Flow<Result<List<Movie>>>
+
+    fun getMoviesByGenre(
+        genreId: Int,
+        page: Int,
+    ): Flow<Result<List<Movie>>>
 }

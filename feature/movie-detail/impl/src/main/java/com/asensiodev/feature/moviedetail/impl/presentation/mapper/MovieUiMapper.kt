@@ -10,6 +10,7 @@ internal fun Movie.toUi(): MovieUi =
         id = id,
         title = title,
         posterPath = posterPath?.let { BASE_POSTER_URL + it },
+        backdropPath = backdropPath?.let { BASE_BACKDROP_URL + it },
         overview = overview,
         releaseDate = releaseDate,
         popularity = popularity,
@@ -19,6 +20,7 @@ internal fun Movie.toUi(): MovieUi =
         productionCountries = productionCountries.map { it.name },
         isWatched = isWatched,
         isInWatchlist = isInWatchlist,
+        watchedAt = watchedAt,
     )
 
 internal fun MovieUi.toDomain(): Movie =
@@ -26,7 +28,7 @@ internal fun MovieUi.toDomain(): Movie =
         id = id,
         title = title,
         posterPath = posterPath?.removePrefix(BASE_POSTER_URL),
-        backdropPath = null,
+        backdropPath = backdropPath?.removePrefix(BASE_BACKDROP_URL),
         overview = overview,
         releaseDate = releaseDate,
         popularity = popularity,
@@ -36,6 +38,8 @@ internal fun MovieUi.toDomain(): Movie =
         productionCountries = productionCountries.map { ProductionCountry(it) },
         isWatched = isWatched,
         isInWatchlist = isInWatchlist,
+        watchedAt = watchedAt,
     )
 
 private const val BASE_POSTER_URL = "https://image.tmdb.org/t/p/w500"
+private const val BASE_BACKDROP_URL = "https://image.tmdb.org/t/p/w780"

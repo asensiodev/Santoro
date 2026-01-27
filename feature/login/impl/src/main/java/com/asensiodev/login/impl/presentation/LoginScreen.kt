@@ -1,5 +1,6 @@
 package com.asensiodev.login.impl.presentation
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -33,6 +35,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asensiodev.core.designsystem.PreviewContentFullSize
@@ -134,15 +137,15 @@ private fun LoginContent(
                 tint = Color.White,
                 modifier =
                     Modifier
-                        .size(Size.size104)
+                        .size(Size.size120)
                         .background(
-                            Color.White.copy(alpha = 0.1f),
-                            shape = MaterialTheme.shapes.medium,
-                        ).padding(Spacings.spacing16),
+                            color = Color.White.copy(alpha = 0.1f),
+                            shape = CircleShape,
+                        ).padding(Spacings.spacing24),
             )
             Spacer(modifier = Modifier.height(Spacings.spacing24))
             Text(
-                text = "Santoro",
+                text = stringResource(SR.string.app_name),
                 style = MaterialTheme.typography.displayMedium,
                 fontFamily = displayFontFamily,
                 color = Color.White,
@@ -182,7 +185,7 @@ private fun LoginButtonsSection(
                 containerColor = Color.White,
                 contentColor = Color.Black,
             ),
-        shape = MaterialTheme.shapes.medium,
+        shape = CircleShape,
     ) {
         Icon(
             painter = painterResource(id = DR.drawable.ic_google_logo),
@@ -194,7 +197,7 @@ private fun LoginButtonsSection(
         Text(
             text = stringResource(SR.string.login_google_login_button),
             style =
-                MaterialTheme.typography.labelLarge.copy(
+                MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
                 ),
         )
@@ -208,10 +211,11 @@ private fun LoginButtonsSection(
                 .height(Size.size56),
         colors =
             ButtonDefaults.buttonColors(
-                containerColor = Color.White.copy(alpha = 0.15f),
+                containerColor = Color.Transparent,
                 contentColor = Color.White,
             ),
-        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
+        shape = CircleShape,
     ) {
         Icon(
             imageVector = AppIcons.UserIcon,
@@ -219,7 +223,13 @@ private fun LoginButtonsSection(
             modifier = Modifier.size(Size.size24),
         )
         Spacer(modifier = Modifier.width(Spacings.spacing12))
-        Text(stringResource(SR.string.login_anonymous_login_button))
+        Text(
+            text = stringResource(SR.string.login_anonymous_login_button),
+            style =
+                MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                ),
+        )
     }
 }
 

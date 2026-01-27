@@ -4,9 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -19,9 +18,8 @@ import com.asensiodev.core.designsystem.component.errorContent.ErrorContent
 import com.asensiodev.core.designsystem.component.loadingIndicator.LoadingIndicator
 import com.asensiodev.core.designsystem.component.noresultscontent.NoResultsContent
 import com.asensiodev.core.designsystem.component.querytextfield.QueryTextField
-import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
-import com.asensiodev.feature.watchlist.impl.presentation.component.MovieCard
+import com.asensiodev.feature.watchlist.impl.presentation.component.WatchlistMovieItem
 import com.asensiodev.feature.watchlist.impl.presentation.model.MovieUi
 import com.asensiodev.santoro.core.stringresources.R as SR
 
@@ -37,16 +35,17 @@ internal fun WatchlistMoviesRoute(
         uiState = uiState,
         onQueryChanged = viewModel::updateQuery,
         onMovieClick = onMovieClick,
+        onRemoveMovie = { /* TODO: Implement remove logic */ },
         modifier = modifier,
     )
 }
 
-// 🔹 UI pura sin ViewModel (usada por previews y el entrypoint)
 @Composable
 internal fun WatchlistMoviesScreen(
     uiState: WatchlistMoviesUiState,
     onQueryChanged: (String) -> Unit,
     onMovieClick: (Int) -> Unit,
+    onRemoveMovie: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -74,6 +73,7 @@ internal fun WatchlistMoviesScreen(
                 MovieList(
                     movies = uiState.movies,
                     onMovieClick = onMovieClick,
+                    onRemoveMovie = onRemoveMovie,
                 )
             }
 
@@ -85,23 +85,25 @@ internal fun WatchlistMoviesScreen(
     }
 }
 
-// Don't move to commons because I want to customize for each screen
 @Composable
 fun MovieList(
     movies: List<MovieUi>,
     onMovieClick: (Int) -> Unit,
+    onRemoveMovie: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = Size.size88),
-        horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
+    LazyColumn(
         verticalArrangement = Arrangement.spacedBy(Spacings.spacing8),
         modifier = modifier,
     ) {
-        items(movies) { movie ->
-            MovieCard(
+        items(
+            items = movies,
+            key = { it.id },
+        ) { movie ->
+            WatchlistMovieItem(
                 movie = movie,
                 onClick = { onMovieClick(movie.id) },
+                onRemoveClick = { onRemoveMovie(movie.id) },
             )
         }
     }
@@ -109,13 +111,16 @@ fun MovieList(
 
 @PreviewLightDark
 @Composable
-private fun WatchlistdMoviesScreenPreview() {
+private fun WatchlistMoviesScreenPreview() {
     val sampleMovies =
         List(MOVIE_SAMPLE_LIST_SIZE) { index ->
             MovieUi(
                 id = index,
                 title = "Sample Movie $index",
                 posterPath = null,
+                releaseYear = "2023",
+                genres = "Action, Drama",
+                rating = 8.5,
             )
         }
 
@@ -130,6 +135,7 @@ private fun WatchlistdMoviesScreenPreview() {
                 ),
             onQueryChanged = {},
             onMovieClick = {},
+            onRemoveMovie = {},
         )
     }
 }

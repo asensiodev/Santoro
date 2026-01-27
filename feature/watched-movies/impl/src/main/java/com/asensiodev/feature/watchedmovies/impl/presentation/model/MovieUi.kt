@@ -4,4 +4,5 @@ data class MovieUi(
     val id: Int,
     val title: String,
     val posterPath: String?,
+    val watchedDate: String?,
 )

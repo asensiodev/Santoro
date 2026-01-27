@@ -97,4 +97,39 @@ internal class RemoteSearchMoviesRepository
                     emit(Result.Error(e))
                 }
             }
+
+        override fun getTrendingMovies(page: Int): Flow<Result<List<Movie>>> =
+            flow {
+                try {
+                    val response = remoteDatasource.getTrendingMovies(page)
+                    if (response is Result.Success) {
+                        emit(Result.Success(response.data))
+                    } else if (response is Result.Error) {
+                        emit(Result.Error(response.exception))
+                    }
+                } catch (e: IOException) {
+                    emit(Result.Error(e))
+                } catch (e: HttpException) {
+                    emit(Result.Error(e))
+                }
+            }
+
+        override fun getMoviesByGenre(
+            genreId: Int,
+            page: Int,
+        ): Flow<Result<List<Movie>>> =
+            flow {
+                try {
+                    val response = remoteDatasource.getMoviesByGenre(genreId, page)
+                    if (response is Result.Success) {
+                        emit(Result.Success(response.data))
+                    } else if (response is Result.Error) {
+                        emit(Result.Error(response.exception))
+                    }
+                } catch (e: IOException) {
+                    emit(Result.Error(e))
+                } catch (e: HttpException) {
+                    emit(Result.Error(e))
+                }
+            }
     }

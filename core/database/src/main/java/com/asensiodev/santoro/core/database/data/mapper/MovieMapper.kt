@@ -21,6 +21,7 @@ fun MovieEntity.toDomain(): Movie =
         productionCountries = productionCountries.toProductionCountries(),
         isWatched = isWatched,
         isInWatchlist = isInWatchlist,
+        watchedAt = watchedAt,
     )
 
 fun String.toGenres(): List<Genre> {
@@ -48,5 +49,6 @@ fun Movie.toEntity(): MovieEntity {
         productionCountries = gson.toJson(productionCountries),
         isWatched = isWatched,
         isInWatchlist = isInWatchlist,
+        watchedAt = watchedAt,
     )
 }

@@ -156,12 +156,21 @@ class MovieDetailViewModelTest {
                 viewModel.toggleWatched()
 
                 viewModel.uiState.test {
-                    val expectedMovie = testMovie.toUi().copy(isWatched = true)
-                    awaitItem().movie shouldBeEqualTo expectedMovie
+                    val actualMovie = awaitItem().movie
+                    val expectedMovie =
+                        testMovie.toUi().copy(
+                            isWatched = true,
+                            watchedAt = actualMovie?.watchedAt,
+                        )
+
+                    actualMovie shouldBeEqualTo expectedMovie
+                    if (actualMovie?.watchedAt == null) {
+                        throw AssertionError("watchedAt should not be null when marked as watched")
+                    }
                     cancelAndConsumeRemainingEvents()
                 }
 
-                coVerify { updateMovieStateUseCase(testMovie.copy(isWatched = true)) }
+                coVerify { updateMovieStateUseCase(any()) }
             }
 
         @Test

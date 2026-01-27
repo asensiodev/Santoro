@@ -96,6 +96,7 @@ private fun MovieCardPreview() {
                     id = 1,
                     title = "Sample Movie",
                     posterPath = null,
+                    watchedDate = "14/03/2050",
                 ),
             onClick = {},
         )

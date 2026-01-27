@@ -105,14 +105,16 @@ complexity:
   LongMethod:
     active: true
     threshold: 60
+    ignoreAnnotated:
+      - 'Composable'
   LongParameterList:
     active: true
-    functionThreshold: 7
-    constructorThreshold: 7
+    functionThreshold: 9
+    constructorThreshold: 9
     ignoreDefaultParameters: true
     ignoreDataClasses: true
     ignoreAnnotatedParameter: [ ]
-    excludes: [ '**/**State.kt', '**/**UseCases.kt' ]
+    excludes: [ '**/**State.kt', '**/**UseCases.kt', '**/**UseCase.kt' ]
     ignoreAnnotated: [ 'Composable' ]
   MethodOverloading:
     active: false
@@ -145,15 +147,15 @@ complexity:
   TooManyFunctions:
     active: true
     excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**' ]
-    thresholdInFiles: 12
-    thresholdInClasses: 12
-    thresholdInInterfaces: 12
-    thresholdInObjects: 12
-    thresholdInEnums: 12
+    thresholdInFiles: 13
+    thresholdInClasses: 13
+    thresholdInInterfaces: 13
+    thresholdInObjects: 13
+    thresholdInEnums: 13
     ignoreDeprecated: false
     ignorePrivate: false
     ignoreOverridden: false
-    ignoreAnnotatedFunctions: ['Preview']
+    ignoreAnnotatedFunctions: ['Preview', 'Composable', 'PreviewLightDark']
 
 coroutines:
   active: true

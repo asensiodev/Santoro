@@ -9,3 +9,8 @@ sealed class Result<out T> {
         val exception: Throwable,
     ) : Result<Nothing>()
 }
+
+fun <T> Result<T>.getOrDefault(defaultValue: T): T =
+    if (this is Result.Success) this.data else defaultValue
+
+fun <T> Result<T>.getOrNull(): T? = if (this is Result.Success) this.data else null

@@ -4,10 +4,13 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asensiodev.core.domain.Result
+import com.asensiodev.core.domain.getOrDefault
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetMoviesByGenreUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetNowPlayingMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetPopularMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTopRatedMoviesUseCase
+import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTrendingMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetUpcomingMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.presentation.mapper.toUiList
@@ -37,13 +40,14 @@ internal class SearchMoviesViewModel
         private val getPopularMoviesUseCase: GetPopularMoviesUseCase,
         private val getTopRatedMoviesUseCase: GetTopRatedMoviesUseCase,
         private val getUpcomingMoviesUseCase: GetUpcomingMoviesUseCase,
+        private val getTrendingMoviesUseCase: GetTrendingMoviesUseCase,
+        private val getMoviesByGenreUseCase: GetMoviesByGenreUseCase,
     ) : ViewModel() {
         private var searchJob: Job? = null
         private val _uiState = MutableStateFlow(SearchMoviesUiState())
         val uiState: StateFlow<SearchMoviesUiState> = _uiState.asStateFlow()
 
-        private val searchQuery =
-            savedStateHandle.getStateFlow(SEARCH_QUERY_KEY, "")
+        private val searchQuery = savedStateHandle.getStateFlow(SEARCH_QUERY_KEY, "")
 
         @OptIn(FlowPreview::class)
         fun loadInitialData() {
@@ -57,38 +61,100 @@ internal class SearchMoviesViewModel
                 }.launchIn(viewModelScope)
         }
 
+        fun updateQuery(query: String) {
+            _uiState.update { it.copy(query = query) }
+
+            if (query.isNotBlank() && _uiState.value.selectedGenreId != null) {
+                clearGenreSelection()
+            }
+
+            savedStateHandle[SEARCH_QUERY_KEY] = query
+        }
+
+        fun onGenreSelected(genreId: Int) {
+            if (_uiState.value.query.isNotBlank()) {
+                updateQuery("")
+            }
+
+            _uiState.update {
+                it.copy(
+                    selectedGenreId = genreId,
+                    searchMovieResults = emptyList(),
+                    currentSearchPage = FIRST_PAGE,
+                    isSearchEndReached = false,
+                )
+            }
+            fetchMoviesByGenre(genreId, FIRST_PAGE, isInitialLoad = true)
+        }
+
+        fun clearGenreSelection() {
+            _uiState.update {
+                it.copy(
+                    selectedGenreId = null,
+                    searchMovieResults = emptyList(),
+                    screenState = SearchScreenState.Content,
+                )
+            }
+        }
+
         private fun handleQueryChange(query: String) {
             if (query.isBlank()) {
                 _uiState.update {
                     it.copy(
-                        query = query,
                         screenState = SearchScreenState.Content,
-                        searchMovieResults = emptyList(),
+                        searchMovieResults =
+                            if (it.selectedGenreId == null) {
+                                emptyList()
+                            } else {
+                                it.searchMovieResults
+                            },
                         currentSearchPage = FIRST_PAGE,
                         isSearchEndReached = false,
                     )
                 }
             } else {
-                val currentUiQuery = _uiState.value.query
-                val isNewQuery = currentUiQuery != query
                 _uiState.update {
                     it.copy(
-                        query = query,
-                        searchMovieResults = if (isNewQuery) emptyList() else it.searchMovieResults,
-                        currentSearchPage = if (isNewQuery) FIRST_PAGE else it.currentSearchPage,
-                        isSearchEndReached = if (isNewQuery) false else it.isSearchEndReached,
+                        searchMovieResults = emptyList(),
+                        currentSearchPage = FIRST_PAGE,
+                        isSearchEndReached = false,
                     )
                 }
                 fetchSearchMoviesResult(
                     query,
                     FIRST_PAGE,
-                    isInitialLoad = isNewQuery,
+                    isInitialLoad = true,
                 )
             }
         }
 
-        fun updateQuery(query: String) {
-            savedStateHandle[SEARCH_QUERY_KEY] = query
+        private fun fetchMoviesByGenre(
+            genreId: Int,
+            page: Int,
+            isInitialLoad: Boolean,
+        ) {
+            if (isInitialLoad) searchJob?.cancel()
+
+            _uiState.update {
+                it.copy(
+                    screenState =
+                        if (isInitialLoad &&
+                            it.searchMovieResults.isEmpty()
+                        ) {
+                            SearchScreenState.Loading
+                        } else {
+                            it.screenState
+                        },
+                    isSearchLoadingMore = !isInitialLoad,
+                )
+            }
+
+            searchJob =
+                viewModelScope.launch {
+                    getMoviesByGenreUseCase(genreId, page).collect { result ->
+                        handleSearchResult(result, isInitialLoad, page)
+                    }
+                }
         }
 
         private fun fetchSearchMoviesResult(
@@ -170,11 +236,18 @@ internal class SearchMoviesViewModel
         fun loadMoreSearchResults() {
             val currentPage = _uiState.value.currentSearchPage
             val query = _uiState.value.query
-            if (!_uiState.value.isSearchLoadingMore &&
-                !_uiState.value.isSearchEndReached &&
-                query.isNotBlank()
-            ) {
-                fetchSearchMoviesResult(query, currentPage + NEXT_PAGE)
+            val selectedGenreId = _uiState.value.selectedGenreId
+
+            if (!_uiState.value.isSearchLoadingMore && !_uiState.value.isSearchEndReached) {
+                if (query.isNotBlank()) {
+                    fetchSearchMoviesResult(query, currentPage + NEXT_PAGE)
+                } else if (selectedGenreId != null) {
+                    fetchMoviesByGenre(
+                        selectedGenreId,
+                        currentPage + NEXT_PAGE,
+                        isInitialLoad = false,
+                    )
+                }
             }
         }
 
@@ -182,31 +255,46 @@ internal class SearchMoviesViewModel
             _uiState.update { it.copy(screenState = SearchScreenState.Loading) }
 
             viewModelScope.launch {
-                val popularDeferred = async { getPopularMoviesUseCase(FIRST_PAGE).first() }
-                val nowPlayingDeferred = async { getNowPlayingMoviesUseCase(FIRST_PAGE).first() }
-                val topRatedDeferred = async { getTopRatedMoviesUseCase(FIRST_PAGE).first() }
-                val upcomingDeferred = async { getUpcomingMoviesUseCase(FIRST_PAGE).first() }
-
                 val results =
                     DashboardResults(
-                        popular = popularDeferred.await(),
-                        nowPlaying = nowPlayingDeferred.await(),
-                        topRated = topRatedDeferred.await(),
-                        upcoming = upcomingDeferred.await(),
+                        popular = async { getPopularMoviesUseCase(FIRST_PAGE).first() }.await(),
+                        nowPlaying =
+                            async {
+                                getNowPlayingMoviesUseCase(
+                                    FIRST_PAGE,
+                                ).first()
+                            }.await(),
+                        topRated =
+                            async {
+                                getTopRatedMoviesUseCase(
+                                    FIRST_PAGE,
+                                ).first()
+                            }.await(),
+                        upcoming =
+                            async {
+                                getUpcomingMoviesUseCase(
+                                    FIRST_PAGE,
+                                ).first()
+                            }.await(),
+                        trending =
+                            async {
+                                getTrendingMoviesUseCase(
+                                    FIRST_PAGE,
+                                ).first()
+                            }.await(),
                     )
 
                 _uiState.update { state ->
-                    val popularList = results.popular.getOrDefault(emptyList()).toUiList()
                     val nowPlayingList = results.nowPlaying.getOrDefault(emptyList()).toUiList()
-                    val topRatedList = results.topRated.getOrDefault(emptyList()).toUiList()
-                    val upcomingList = results.upcoming.getOrDefault(emptyList()).toUiList()
+                    val popularList = results.popular.getOrDefault(emptyList()).toUiList()
 
                     state.copy(
                         screenState = SearchScreenState.Content,
-                        popularMovies = popularList,
                         nowPlayingMovies = nowPlayingList,
-                        topRatedMovies = topRatedList,
-                        upcomingMovies = upcomingList,
+                        popularMovies = popularList,
+                        topRatedMovies = results.topRated.getOrDefault(emptyList()).toUiList(),
+                        upcomingMovies = results.upcoming.getOrDefault(emptyList()).toUiList(),
+                        trendingMovies = results.trending.getOrDefault(emptyList()).toUiList(),
                         currentPopularPage =
                             if (popularList.isNotEmpty()) {
                                 FIRST_PAGE +
@@ -219,9 +307,6 @@ internal class SearchMoviesViewModel
                 }
             }
         }
-
-        private fun <T> Result<T>.getOrDefault(defaultValue: T): T =
-            if (this is Result.Success) this.data else defaultValue
 
         private fun getPopularMovies() {
             _uiState.update { it.copy(isPopularLoadingMore = true) }
@@ -256,6 +341,7 @@ internal class SearchMoviesViewModel
             val nowPlaying: Result<List<Movie>>,
             val topRated: Result<List<Movie>>,
             val upcoming: Result<List<Movie>>,
+            val trending: Result<List<Movie>>,
         )
     }
 

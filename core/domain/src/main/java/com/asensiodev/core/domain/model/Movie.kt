@@ -14,4 +14,5 @@ data class Movie(
     val productionCountries: List<ProductionCountry>,
     val isWatched: Boolean,
     val isInWatchlist: Boolean,
+    val watchedAt: Long? = null,
 )

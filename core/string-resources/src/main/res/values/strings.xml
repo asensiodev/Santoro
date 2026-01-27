@@ -28,6 +28,19 @@
     <string name="search_movies_popular_movies_title">Popular movies</string>
     <string name="search_movies_top_rated_title">Top Rated</string>
     <string name="search_movies_upcoming_title">Upcoming</string>
+    <string name="search_movies_trending_title">Trending Now</string>
+    <string name="search_movies_action_title">Action</string>
+    <string name="search_movies_comedy_title">Comedy</string>
+    <string name="search_movies_horror_title">Horror</string>
+    <string name="search_movies_animation_title">Animation</string>
+    <string name="search_movies_documentary_title">Documentary</string>
+    <string name="search_movies_drama_title">Drama</string>
+    <string name="search_movies_history_title">History</string>
+    <string name="search_movies_music_title">Music</string>
+    <string name="search_movies_mystery_title">Mystery</string>
+    <string name="search_movies_scifi_title">Science Fiction</string>
+    <string name="search_movies_thriller_title">Thriller</string>
+    <string name="search_movies_western_title">Western</string>
     <string name="search_movies_error_button_retry">Retry</string>
     <string name="vote_average_format">%.1f</string>
 

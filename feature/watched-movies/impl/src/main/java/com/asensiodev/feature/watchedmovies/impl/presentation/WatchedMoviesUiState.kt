@@ -3,9 +3,14 @@ package com.asensiodev.feature.watchedmovies.impl.presentation
 import com.asensiodev.feature.watchedmovies.impl.presentation.model.MovieUi
 
 internal data class WatchedMoviesUiState(
-    val query: String = "",
-    val movies: List<MovieUi> = emptyList(),
+    val movies: Map<String, List<MovieUi>> = emptyMap(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val hasResults: Boolean = false,
-)
+    val query: String = "",
+) {
+    val hasResults: Boolean
+        get() = movies.isNotEmpty()
+
+    val totalWatchedMovies: Int
+        get() = movies.values.sumOf { it.size }
+}

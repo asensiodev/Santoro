@@ -31,7 +31,7 @@ internal class MovieDetailViewModel
                 getMovieDetailUseCase(movieId)
                     .collect { result ->
                         when (result) {
-                            is Result.Success ->
+                            is Result.Success -> {
                                 _uiState.update {
                                     it.copy(
                                         isLoading = false,
@@ -39,14 +39,16 @@ internal class MovieDetailViewModel
                                         errorMessage = null,
                                     )
                                 }
+                            }
 
-                            is Result.Error ->
+                            is Result.Error -> {
                                 _uiState.update {
                                     it.copy(
                                         isLoading = false,
                                         errorMessage = result.exception.message,
                                     )
                                 }
+                            }
                         }
                     }
             }
@@ -76,11 +78,21 @@ internal class MovieDetailViewModel
 
         fun toggleWatched() {
             val movie = uiState.value.movie ?: return
-            val updatedMovie = movie.copy(isWatched = !movie.isWatched)
+            val isNowWatched = !movie.isWatched
+            val updatedMovie =
+                movie.copy(
+                    isWatched = isNowWatched,
+                    watchedAt = if (isNowWatched) System.currentTimeMillis() else null,
+                )
+
             viewModelScope.launch {
                 when (val result = updateMovieStateUseCase(updatedMovie.toDomain())) {
                     is Result.Success -> {
-                        _uiState.update { it.copy(movie = updatedMovie) }
+                        _uiState.update {
+                            it.copy(
+                                movie = updatedMovie,
+                            )
+                        }
                     }
 
                     is Result.Error -> {

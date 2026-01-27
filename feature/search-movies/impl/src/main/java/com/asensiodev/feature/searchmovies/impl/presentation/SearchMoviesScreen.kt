@@ -1,9 +1,11 @@
 package com.asensiodev.feature.searchmovies.impl.presentation
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,8 +20,11 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
@@ -30,7 +35,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -47,6 +54,7 @@ import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.feature.searchmovies.impl.presentation.component.HeroMovieCard
 import com.asensiodev.feature.searchmovies.impl.presentation.component.MovieCard
+import com.asensiodev.feature.searchmovies.impl.presentation.model.GenreConstants
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 import com.asensiodev.ui.LaunchEffectOnce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -70,6 +78,8 @@ internal fun SearchMoviesRoute(
         onMovieClick = onMovieClick,
         onLoadMorePopularMovies = viewModel::loadMorePopularMovies,
         onLoadMoreSearchedMovies = viewModel::loadMoreSearchResults,
+        onGenreSelected = viewModel::onGenreSelected,
+        onClearGenreSelection = viewModel::clearGenreSelection,
         modifier = modifier,
     )
 }
@@ -79,15 +89,25 @@ internal fun SearchMoviesScreen(
     uiState: SearchMoviesUiState,
     onQueryChanged: (String) -> Unit,
     onMovieClick: (Int) -> Unit,
+    onGenreSelected: (Int) -> Unit,
+    onClearGenreSelection: () -> Unit,
     modifier: Modifier = Modifier,
     onLoadMorePopularMovies: () -> Unit,
     onLoadMoreSearchedMovies: () -> Unit,
 ) {
+    val focusManager = LocalFocusManager.current
+
     Column(
         modifier =
             modifier
                 .fillMaxSize()
-                .padding(Spacings.spacing16),
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = {
+                            focusManager.clearFocus()
+                        },
+                    )
+                }.padding(Spacings.spacing16),
         verticalArrangement = Arrangement.spacedBy(Spacings.spacing12),
     ) {
         QueryTextField(
@@ -95,11 +115,25 @@ internal fun SearchMoviesScreen(
             placeholder = stringResource(SR.string.search_movies_textfield_placeholder),
             onQueryChanged = onQueryChanged,
         )
-        if (uiState.query.isBlank()) {
+
+        GenreFilterChips(
+            selectedGenreId = uiState.selectedGenreId,
+            onGenreSelected = onGenreSelected,
+            onClearGenre = onClearGenreSelection,
+        )
+
+        if (uiState.query.isBlank() && uiState.selectedGenreId == null) {
             DashboardContent(
                 uiState = uiState,
                 onMovieClick = onMovieClick,
                 onLoadMorePopular = onLoadMorePopularMovies,
+            )
+        } else if (uiState.selectedGenreId != null) {
+            SearchMoviesContent(
+                uiState = uiState,
+                onQueryChanged = onQueryChanged,
+                onMovieClick = onMovieClick,
+                onLoadMore = onLoadMoreSearchedMovies,
             )
         } else {
             SearchMoviesContent(
@@ -149,6 +183,14 @@ private fun DashboardContent(
                 )
             }
 
+            if (uiState.trendingMovies.isNotEmpty()) {
+                MovieSection(
+                    title = stringResource(SR.string.search_movies_trending_title),
+                    movies = uiState.trendingMovies,
+                    onMovieClick = onMovieClick,
+                )
+            }
+
             if (uiState.popularMovies.isNotEmpty()) {
                 MovieSection(
                     title = stringResource(SR.string.search_movies_popular_movies_title),
@@ -191,7 +233,6 @@ private fun NowPlayingSection(
             text = stringResource(SR.string.search_movies_now_playing_title),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = Spacings.spacing16),
         )
 
         val carouselState = rememberCarouselState { movies.size }
@@ -203,10 +244,6 @@ private fun NowPlayingSection(
             state = carouselState,
             preferredItemWidth = heroItemWidth,
             itemSpacing = Spacings.spacing12,
-            contentPadding =
-                PaddingValues(
-                    horizontal = Spacings.spacing16,
-                ),
             modifier =
                 Modifier
                     .width(screenWidth)
@@ -341,7 +378,7 @@ private fun MovieList(
     }
 
     LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = Size.size88),
+        columns = GridCells.Adaptive(minSize = Size.size112),
         horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
         verticalArrangement = Arrangement.spacedBy(Spacings.spacing8),
         modifier = modifier,
@@ -354,6 +391,7 @@ private fun MovieList(
             MovieCard(
                 movie = movie,
                 onClick = { onMovieClick(movie.id) },
+                modifier = Modifier.aspectRatio(POSTER_ASPECT_RATIO),
             )
         }
         if (isLoading && !isEndReached) {
@@ -418,6 +456,45 @@ private fun generateUniqueKey(
     movie: MovieUi,
 ) = "$index-${movie.id}"
 
+@Composable
+private fun GenreFilterChips(
+    selectedGenreId: Int?,
+    onGenreSelected: (Int) -> Unit,
+    onClearGenre: () -> Unit,
+) {
+    val focusManager = LocalFocusManager.current
+
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
+        contentPadding = PaddingValues(horizontal = Spacings.spacing4),
+    ) {
+        items(
+            count = GenreConstants.availableGenres.size,
+            key = { index -> GenreConstants.availableGenres[index].id },
+        ) { index ->
+            val genre = GenreConstants.availableGenres[index]
+            FilterChip(
+                selected = selectedGenreId == genre.id,
+                onClick = {
+                    focusManager.clearFocus()
+                    if (selectedGenreId == genre.id) {
+                        onClearGenre()
+                    } else {
+                        onGenreSelected(genre.id)
+                    }
+                },
+                label = { Text(text = stringResource(genre.nameRes)) },
+                colors =
+                    FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    ),
+                shape = RoundedCornerShape(Size.size16),
+            )
+        }
+    }
+}
+
 @PreviewLightDark
 @Composable
 private fun SearchMoviesScreenPreview() {
@@ -445,6 +522,8 @@ private fun SearchMoviesScreenPreview() {
             onMovieClick = {},
             onLoadMorePopularMovies = {},
             onLoadMoreSearchedMovies = {},
+            onGenreSelected = {},
+            onClearGenreSelection = {},
         )
     }
 }
@@ -452,6 +531,7 @@ private fun SearchMoviesScreenPreview() {
 private const val LOAD_MORE_MOVIES_THRESHOLD = 5
 private const val MOVIE_SAMPLE_LIST_SIZE = 10
 private const val LOADING_GRID_ITEM_KEY = "loading_item"
+private const val POSTER_ASPECT_RATIO = 2f / 3f
 
 private data class PaginationInfo(
     val lastVisibleIndex: Int,

@@ -54,11 +54,12 @@ internal class WatchedMoviesViewModel
                     .collect { result ->
                         when (result) {
                             is Result.Success -> {
+                                val movies = result.data.toUiList()
+                                val groupedMovies = movies.groupBy { it.watchedDate ?: "Unknown" }
                                 _uiState.update {
                                     it.copy(
                                         isLoading = false,
-                                        movies = result.data.toUiList(),
-                                        hasResults = result.data.isNotEmpty(),
+                                        movies = groupedMovies,
                                         errorMessage = null,
                                     )
                                 }
@@ -69,7 +70,6 @@ internal class WatchedMoviesViewModel
                                     it.copy(
                                         isLoading = false,
                                         errorMessage = result.exception.message,
-                                        hasResults = false,
                                     )
                                 }
                             }
@@ -90,11 +90,11 @@ internal class WatchedMoviesViewModel
                     when (result) {
                         is Result.Success -> {
                             val moviesUi = result.data.toUiList()
+                            val groupedMovies = moviesUi.groupBy { it.watchedDate ?: "Unknown" }
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
-                                    movies = moviesUi,
-                                    hasResults = moviesUi.isNotEmpty(),
+                                    movies = groupedMovies,
                                     errorMessage = null,
                                 )
                             }
@@ -105,7 +105,6 @@ internal class WatchedMoviesViewModel
                                 it.copy(
                                     isLoading = false,
                                     errorMessage = result.exception.message,
-                                    hasResults = false,
                                 )
                             }
                         }

@@ -116,21 +116,23 @@ private fun HeroCardContent(
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
-        Spacer(modifier = Modifier.height(Spacings.spacing8))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.Rounded.Star,
-                contentDescription = null,
-                tint = Color(AMBER_COLOR),
-                modifier = Modifier.size(Size.size18),
-            )
-            Spacer(modifier = Modifier.width(Spacings.spacing4))
-            Text(
-                text = stringResource(SR.string.vote_average_format, voteAverage),
-                style = MaterialTheme.typography.labelLarge,
-                color = Color.White.copy(alpha = TEXT_ALPHA),
-                fontWeight = FontWeight.Bold,
-            )
+        if (voteAverage > 0.0) {
+            Spacer(modifier = Modifier.height(Spacings.spacing8))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Rounded.Star,
+                    contentDescription = null,
+                    tint = Color(AMBER_COLOR),
+                    modifier = Modifier.size(Size.size18),
+                )
+                Spacer(modifier = Modifier.width(Spacings.spacing4))
+                Text(
+                    text = stringResource(SR.string.vote_average_format, voteAverage),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.White.copy(alpha = TEXT_ALPHA),
+                    fontWeight = FontWeight.Bold,
+                )
+            }
         }
     }
 }
