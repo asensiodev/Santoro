@@ -31,6 +31,8 @@ class MovieApiMapperTest {
                 voteCount = 10000,
                 genres = genreApiModels,
                 productionCountries = productionCountryApiModels,
+                backdropPath = null,
+                credits = null,
             )
 
         val expectedMovie =
@@ -50,6 +52,7 @@ class MovieApiMapperTest {
                         ProductionCountry("USA"),
                         ProductionCountry("UK"),
                     ),
+                cast = emptyList(),
                 isWatched = false,
                 isInWatchlist = false,
             )
@@ -60,12 +63,12 @@ class MovieApiMapperTest {
     }
 
     @Test
-    fun `GIVEN a MovieApiModel with null optional fields WHEN toDomain THEN returns default values`() {
+    fun `GIVEN a MovieApiModel with null optional fields WHEN toDomain THEN returns expected Movie with defaults`() {
         val movieApiModel =
             MovieApiModel(
                 id = 2,
                 title = "Unknown",
-                overview = "No overview available",
+                overview = "No description",
                 posterPath = null,
                 releaseDate = null,
                 popularity = null,
@@ -73,13 +76,15 @@ class MovieApiMapperTest {
                 voteCount = null,
                 genres = null,
                 productionCountries = null,
+                backdropPath = null,
+                credits = null,
             )
 
         val expectedMovie =
             Movie(
                 id = 2,
                 title = "Unknown",
-                overview = "No overview available",
+                overview = "No description",
                 posterPath = null,
                 backdropPath = null,
                 releaseDate = null,
@@ -88,6 +93,7 @@ class MovieApiMapperTest {
                 voteCount = 0,
                 genres = emptyList(),
                 productionCountries = emptyList(),
+                cast = emptyList(),
                 isWatched = false,
                 isInWatchlist = false,
             )

@@ -53,6 +53,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -76,12 +77,21 @@ import com.asensiodev.core.designsystem.theme.AppIcons
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.feature.moviedetail.impl.presentation.component.GenreChip
+import com.asensiodev.feature.moviedetail.impl.presentation.model.CastMemberUi
 import com.asensiodev.feature.moviedetail.impl.presentation.model.MovieUi
 import java.util.Locale
 import com.asensiodev.santoro.core.designsystem.R as DR
 import com.asensiodev.santoro.core.stringresources.R as SR
 
 private const val GOLD_COLOR = 0xFFFFC107
+private const val POSTER_RATIO = 2f / 3f
+private val POSTER_WIDTH = Size.size100
+private val HEADER_HEIGHT = 280.dp
+private val BACKDROP_HEIGHT = 250.dp
+private const val MOVIE_ID = 12
+private const val WORDS = 40
+private const val YEAR_INDEX = 0
+private const val DATE_DELIMITER = "-"
 
 @Composable
 internal fun MovieDetailRoute(
@@ -228,7 +238,7 @@ internal fun MovieDetailContent(
                             MaterialTheme.typography.headlineSmall.copy(
                                 fontWeight = FontWeight.Bold,
                                 shadow =
-                                    androidx.compose.ui.graphics.Shadow(
+                                    Shadow(
                                         color = Color.Black,
                                         blurRadius = 4f,
                                     ),
@@ -253,6 +263,7 @@ internal fun MovieDetailContent(
                         }
                         if (movie.voteAverage > 0.0) {
                             Icon(
+                                // TODO(): update this with custom icon
                                 imageVector = AppIcons.WatchedMoviesIcon,
                                 contentDescription = null,
                                 tint = Color(GOLD_COLOR),
@@ -277,8 +288,6 @@ internal fun MovieDetailContent(
                 }
             }
         }
-
-        // --- 2. Action Buttons ---
         Row(
             modifier =
                 Modifier
@@ -349,7 +358,6 @@ internal fun MovieDetailContent(
                 director = "Christopher Nolan",
                 country = movie.productionCountries.firstOrNull() ?: "USA",
             )
-
             Column(verticalArrangement = Arrangement.spacedBy(Spacings.spacing8)) {
                 Text(
                     text = "Overview",
@@ -372,9 +380,8 @@ internal fun MovieDetailContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-
             CastSection(
-                cast = getDummyCast(),
+                cast = movie.cast,
             )
 
             Spacer(modifier = Modifier.height(Spacings.spacing48))
@@ -501,61 +508,6 @@ fun MovieGenresChipsSection(
 
 fun getYearFromDate(date: String?): String? = date?.split(DATE_DELIMITER)?.getOrNull(YEAR_INDEX)
 
-@PreviewLightDark
-@Composable
-private fun MovieDetailScreenPreview() {
-    PreviewContentFullSize {
-        MovieDetailScreen(
-            uiState =
-                MovieDetailUiState(
-                    isLoading = false,
-                    movie =
-                        MovieUi(
-                            id = MOVIE_ID,
-                            title = "Things To Do In Denver When You're Dead",
-                            overview = LoremIpsum(WORDS).values.first(),
-                            posterPath = null,
-                            releaseDate = "2023-01-01",
-                            popularity = 10.0,
-                            voteAverage = 8.5,
-                            voteCount = 1000,
-                            genres =
-                                listOf(
-                                    "Action",
-                                    "Adventure",
-                                    "Drama",
-                                    "Family",
-                                    "Anime",
-                                    "Comedy",
-                                    "Terror",
-                                    "Thriller",
-                                    "Comedy",
-                                    "Comedy",
-                                ),
-                            productionCountries = listOf("USA", "Canada"),
-                            isWatched = false,
-                            isInWatchlist = false,
-                        ),
-                    errorMessage = null,
-                    hasResults = false,
-                ),
-            onToggleWatchlist = {},
-            onToggleWatched = {},
-            onRetry = {},
-            onBackClicked = {},
-        )
-    }
-}
-
-private const val POSTER_RATIO = 2f / 3f
-private val POSTER_WIDTH = Size.size100
-private val HEADER_HEIGHT = 280.dp
-private val BACKDROP_HEIGHT = 250.dp
-private const val MOVIE_ID = 12
-private const val WORDS = 40
-private const val YEAR_INDEX = 0
-private const val DATE_DELIMITER = "-"
-
 @Composable
 fun InfoRow(
     duration: String,
@@ -663,7 +615,7 @@ fun BounceButton(
     contentColor: Color,
     hasBorder: Boolean,
     modifier: Modifier = Modifier,
-    content: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit,
+    content: @Composable RowScope.() -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -672,7 +624,6 @@ fun BounceButton(
         targetValue = if (isPressed) 0.95f else 1f,
         label = "buttonScale",
     )
-
     Button(
         onClick = onClick,
         modifier =
@@ -702,34 +653,44 @@ fun BounceButton(
     )
 }
 
-data class CastMemberUi(
-    val name: String,
-    val character: String,
-    val profileUrl: String?,
-)
-
-fun getDummyCast(): List<CastMemberUi> =
-    listOf(
-        CastMemberUi(
-            "Leonardo DiCaprio",
-            "Cobb",
-            "https://image.tmdb.org/t/p/w200/wo2hJpn04vbtmh0B9utCFdsQhxM.jpg",
-        ),
-        CastMemberUi(
-            "Joseph Gordon-Levitt",
-            "Arthur",
-            "https://image.tmdb.org/t/p/w200/4X1wv5C5R1J1wN1wJ1wN1wN1wN1.jpg",
-        ),
-        CastMemberUi(
-            "Ellen Page",
-            "Ariadne",
-            "https://image.tmdb.org/t/p/w200/4X1wv5C5R1J1wN1wJ1wN1wN1wN1.jpg",
-        ),
-        CastMemberUi(
-            "Tom Hardy",
-            "Eames",
-            "https://image.tmdb.org/t/p/w200/4X1wv5C5R1J1wN1wJ1wN1wN1wN1.jpg",
-        ),
-        CastMemberUi("Ken Watanabe", "Saito", null),
-        CastMemberUi("Cillian Murphy", "Robert Fischer", null),
-    )
+@PreviewLightDark
+@Composable
+private fun MovieDetailScreenPreview() {
+    PreviewContentFullSize {
+        MovieDetailScreen(
+            uiState =
+                MovieDetailUiState(
+                    isLoading = false,
+                    movie =
+                        MovieUi(
+                            id = MOVIE_ID,
+                            title = "Things To Do In Denver When You're Dead",
+                            overview = LoremIpsum(WORDS).values.first(),
+                            posterPath = null,
+                            releaseDate = "2023-01-01",
+                            popularity = 10.0,
+                            voteAverage = 8.5,
+                            voteCount = 1000,
+                            genres =
+                                listOf(
+                                    "Action",
+                                    "Adventure",
+                                    "Drama",
+                                    "Comedy",
+                                    "Comedy",
+                                ),
+                            productionCountries = listOf("USA", "Canada"),
+                            cast = emptyList(),
+                            isWatched = false,
+                            isInWatchlist = false,
+                        ),
+                    errorMessage = null,
+                    hasResults = false,
+                ),
+            onToggleWatchlist = {},
+            onToggleWatched = {},
+            onRetry = {},
+            onBackClicked = {},
+        )
+    }
+}

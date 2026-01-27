@@ -230,6 +230,7 @@ class MovieDetailViewModelTest {
             voteCount = 20000,
             genres = listOf(),
             productionCountries = listOf(),
+            cast = listOf(),
             isWatched = false,
             isInWatchlist = false,
         )

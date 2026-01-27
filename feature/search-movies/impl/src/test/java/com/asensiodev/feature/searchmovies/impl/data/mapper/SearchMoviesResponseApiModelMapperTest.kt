@@ -79,6 +79,7 @@ class SearchMoviesResponseApiModelMapperTest {
             voteCount = 32000,
             genres = listOf(),
             productionCountries = listOf(),
+            credits = null,
         )
 
     private fun createMovie(
@@ -101,6 +102,7 @@ class SearchMoviesResponseApiModelMapperTest {
             voteCount = 32000,
             genres = listOf(),
             productionCountries = listOf(),
+            cast = emptyList(),
             isWatched = false,
             isInWatchlist = false,
         )

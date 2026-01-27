@@ -21,6 +21,7 @@ class MovieUiMapperTest {
                 voteCount = 32000,
                 genres = listOf(),
                 productionCountries = listOf(),
+                cast = emptyList(),
                 isWatched = false,
                 isInWatchlist = true,
             )
@@ -56,6 +57,7 @@ class MovieUiMapperTest {
                     voteCount = 32000,
                     genres = listOf(),
                     productionCountries = listOf(),
+                    cast = emptyList(),
                     isWatched = false,
                     isInWatchlist = true,
                 ),
@@ -71,6 +73,7 @@ class MovieUiMapperTest {
                     voteCount = 41000,
                     genres = listOf(),
                     productionCountries = listOf(),
+                    cast = emptyList(),
                     isWatched = false,
                     isInWatchlist = true,
                 ),

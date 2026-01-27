@@ -46,6 +46,7 @@ class DefaultMovieDetailRepositoryTest {
                     voteCount = 100,
                     genres = listOf(),
                     productionCountries = listOf(),
+                    cast = listOf(),
                     isWatched = true,
                     isInWatchlist = false,
                 )
@@ -62,6 +63,7 @@ class DefaultMovieDetailRepositoryTest {
                     voteCount = 200,
                     genres = listOf(),
                     productionCountries = listOf(),
+                    cast = listOf(),
                     isWatched = false,
                     isInWatchlist = true,
                 )
@@ -97,6 +99,7 @@ class DefaultMovieDetailRepositoryTest {
                     voteCount = 50,
                     genres = listOf(),
                     productionCountries = listOf(),
+                    cast = listOf(),
                     isWatched = true,
                     isInWatchlist = true,
                 )
@@ -160,6 +163,7 @@ class DefaultMovieDetailRepositoryTest {
                     voteCount = 150,
                     genres = listOf(),
                     productionCountries = listOf(),
+                    cast = listOf(),
                     isWatched = false,
                     isInWatchlist = true,
                 )
@@ -190,6 +194,7 @@ class DefaultMovieDetailRepositoryTest {
                     voteCount = 250,
                     genres = listOf(),
                     productionCountries = listOf(),
+                    cast = listOf(),
                     isWatched = true,
                     isInWatchlist = true,
                 )
@@ -218,6 +223,7 @@ class DefaultMovieDetailRepositoryTest {
                     voteCount = 50,
                     genres = listOf(),
                     productionCountries = listOf(),
+                    cast = listOf(),
                     isWatched = false,
                     isInWatchlist = false,
                 )
@@ -248,6 +254,7 @@ class DefaultMovieDetailRepositoryTest {
                     voteCount = 120,
                     genres = listOf(),
                     productionCountries = listOf(),
+                    cast = listOf(),
                     isWatched = true,
                     isInWatchlist = true,
                 )
@@ -264,6 +271,7 @@ class DefaultMovieDetailRepositoryTest {
                     voteCount = 220,
                     genres = listOf(),
                     productionCountries = listOf(),
+                    cast = listOf(),
                     isWatched = false,
                     isInWatchlist = false,
                 )

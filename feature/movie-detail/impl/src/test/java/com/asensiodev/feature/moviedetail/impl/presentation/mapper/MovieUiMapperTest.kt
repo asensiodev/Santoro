@@ -1,8 +1,10 @@
 package com.asensiodev.feature.moviedetail.impl.presentation.mapper
 
+import com.asensiodev.core.domain.model.CastMember
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.ProductionCountry
+import com.asensiodev.feature.moviedetail.impl.presentation.model.CastMemberUi
 import com.asensiodev.feature.moviedetail.impl.presentation.model.MovieUi
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.Test
@@ -23,6 +25,7 @@ class MovieUiMapperTest {
                 voteCount = 32000,
                 genres = listOf(Genre("Action"), Genre("Sci-Fi")),
                 productionCountries = listOf(ProductionCountry("USA")),
+                cast = listOf(CastMember(1, "Leo", "Cobb", "/leo.jpg")),
                 isWatched = true,
                 isInWatchlist = false,
             )
@@ -39,6 +42,7 @@ class MovieUiMapperTest {
                 voteCount = 32000,
                 genres = listOf("Action", "Sci-Fi"),
                 productionCountries = listOf("USA"),
+                cast = listOf(CastMemberUi(1, "Leo", "Cobb", "https://image.tmdb.org/t/p/w185/leo.jpg")),
                 isWatched = true,
                 isInWatchlist = false,
             )
@@ -62,6 +66,7 @@ class MovieUiMapperTest {
                 voteCount = 32000,
                 genres = listOf("Action", "Sci-Fi"),
                 productionCountries = listOf("USA"),
+                cast = listOf(CastMemberUi(1, "Leo", "Cobb", "https://image.tmdb.org/t/p/w185/leo.jpg")),
                 isWatched = true,
                 isInWatchlist = false,
             )
@@ -79,6 +84,7 @@ class MovieUiMapperTest {
                 voteCount = 32000,
                 genres = listOf(Genre("Action"), Genre("Sci-Fi")),
                 productionCountries = listOf(ProductionCountry("USA")),
+                cast = listOf(CastMember(1, "Leo", "Cobb", "/leo.jpg")),
                 isWatched = true,
                 isInWatchlist = false,
             )
