@@ -36,10 +36,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.DateRange
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.Place
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -266,8 +262,7 @@ internal fun MovieDetailContent(
                         }
                         if (movie.voteAverage > 0.0) {
                             Icon(
-                                // TODO(): update this with custom icon
-                                imageVector = AppIcons.WatchedMoviesIcon,
+                                imageVector = AppIcons.Star,
                                 contentDescription = null,
                                 tint = Color(GOLD_COLOR),
                                 modifier = Modifier.size(Size.size16),
@@ -303,7 +298,7 @@ internal fun MovieDetailContent(
                     if (movie.isInWatchlist) {
                         MaterialTheme.colorScheme.primary
                     } else {
-                        MaterialTheme.colorScheme.surface
+                        MaterialTheme.colorScheme.surfaceVariant // Modern Inactive State
                     },
                 animationSpec = tween(durationMillis = 300),
                 label = "watchlistColor",
@@ -313,7 +308,7 @@ internal fun MovieDetailContent(
                     if (movie.isInWatchlist) {
                         MaterialTheme.colorScheme.onPrimary
                     } else {
-                        MaterialTheme.colorScheme.primary
+                        MaterialTheme.colorScheme.onSurfaceVariant
                     },
                 animationSpec = tween(durationMillis = 300),
                 label = "watchlistContentColor",
@@ -324,12 +319,14 @@ internal fun MovieDetailContent(
                 watchlistContentColor,
                 movie,
             )
+
+            // Watched Button Colors
             val watchedContainerColor by animateColorAsState(
                 targetValue =
                     if (movie.isWatched) {
-                        MaterialTheme.colorScheme.secondaryContainer
+                        MaterialTheme.colorScheme.secondary
                     } else {
-                        MaterialTheme.colorScheme.surface
+                        MaterialTheme.colorScheme.surfaceVariant // Modern Inactive State
                     },
                 animationSpec = tween(durationMillis = 300),
                 label = "watchedColor",
@@ -337,18 +334,19 @@ internal fun MovieDetailContent(
             val watchedContentColor by animateColorAsState(
                 targetValue =
                     if (movie.isWatched) {
-                        MaterialTheme.colorScheme.onSecondaryContainer
+                        MaterialTheme.colorScheme.onSecondary
                     } else {
-                        MaterialTheme.colorScheme.primary
+                        MaterialTheme.colorScheme.onSurfaceVariant
                     },
                 animationSpec = tween(durationMillis = 300),
                 label = "watchedContentColor",
             )
             WatchedButton(onToggleWatched, watchedContainerColor, watchedContentColor, movie)
         }
+        Spacer(modifier = Modifier.height(Spacings.spacing8))
         Column(
             modifier = Modifier.padding(horizontal = Spacings.spacing16),
-            verticalArrangement = Arrangement.spacedBy(Spacings.spacing24),
+            verticalArrangement = Arrangement.spacedBy(Spacings.spacing16),
         ) {
             if (movie.genres.isNotEmpty()) {
                 MovieGenresChipsSection(
@@ -404,7 +402,7 @@ private fun RowScope.WatchlistButton(
         onClick = onToggleWatchlist,
         containerColor = watchlistContainerColor,
         contentColor = watchlistContentColor,
-        hasBorder = !movie.isInWatchlist,
+        hasBorder = false,
         modifier = Modifier.weight(1f),
     ) {
         AnimatedContent(
@@ -416,7 +414,7 @@ private fun RowScope.WatchlistButton(
         ) { isInWatchlist ->
             Icon(
                 imageVector =
-                    if (isInWatchlist) AppIcons.WatchlistIcon else AppIcons.AddIcon,
+                    if (isInWatchlist) AppIcons.Watchlist else AppIcons.WatchlistOutlined,
                 contentDescription = null,
                 modifier = Modifier.size(Size.size18),
             )
@@ -445,7 +443,7 @@ private fun RowScope.WatchedButton(
         onClick = onToggleWatched,
         containerColor = watchedContainerColor,
         contentColor = watchedContentColor,
-        hasBorder = !movie.isWatched,
+        hasBorder = false,
         modifier = Modifier.weight(1f),
     ) {
         AnimatedContent(
@@ -458,9 +456,9 @@ private fun RowScope.WatchedButton(
             Icon(
                 imageVector =
                     if (isWatched) {
-                        AppIcons.WatchedMoviesIcon
+                        AppIcons.Watched
                     } else {
-                        AppIcons.WatchedMoviesIcon
+                        AppIcons.WatchedOutlined
                     },
                 contentDescription = null,
                 modifier = Modifier.size(Size.size18),
@@ -528,19 +526,19 @@ fun InfoRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         InfoItem(
-            icon = Icons.Rounded.DateRange,
+            icon = AppIcons.Duration,
             label = duration,
             modifier = Modifier.weight(Weights.W08),
         )
         VerticalDivider()
         InfoItem(
-            icon = Icons.Rounded.Person,
+            icon = AppIcons.Director,
             label = director,
             modifier = Modifier.weight(Weights.W12),
         )
         VerticalDivider()
         InfoItem(
-            icon = Icons.Rounded.Place,
+            icon = AppIcons.Country,
             label = country,
             modifier = Modifier.weight(Weights.W10),
         )

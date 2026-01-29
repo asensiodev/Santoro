@@ -4,7 +4,8 @@ import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.vector.ImageVector
 
 data class BottomNavItem(
-    val icon: ImageVector,
+    val selectedIcon: ImageVector,
+    val unselectedIcon: ImageVector,
     @StringRes val labelRes: Int,
     val isSelected: Boolean,
     val onClick: () -> Unit,

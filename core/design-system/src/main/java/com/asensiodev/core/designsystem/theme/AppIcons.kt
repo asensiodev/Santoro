@@ -4,27 +4,51 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ExitToApp
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.rounded.List
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.BookmarkBorder
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Done
+import androidx.compose.material.icons.rounded.Bookmark
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Public
+import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.Videocam
+import androidx.compose.ui.graphics.vector.ImageVector
 
 object AppIcons {
-    val SearchIcon = Icons.Rounded.Search
-    val WatchedMoviesIcon = Icons.Rounded.Done
-    val WatchlistIcon = Icons.AutoMirrored.Rounded.List
-    val SettingsIcon = Icons.Rounded.AccountCircle
-    val AddIcon = Icons.Rounded.Add
-    val InfoIcon = Icons.Filled.Info
-    val ExitToAppIcon = Icons.AutoMirrored.Rounded.ExitToApp
-    val ChevronRightIcon = Icons.AutoMirrored.Rounded.KeyboardArrowRight
-    val ArrowBackIcon = Icons.AutoMirrored.Rounded.ArrowBack
-    val ClearIcon = Icons.Filled.Clear
-    val RefreshIcon = Icons.Filled.Refresh
-    val UserIcon = Icons.Filled.Person
+    val Home: ImageVector = Icons.Rounded.Home
+    val HomeOutlined: ImageVector = Icons.Outlined.Home
+
+    val Watched: ImageVector = Icons.Rounded.CheckCircle
+    val WatchedOutlined: ImageVector = Icons.Outlined.CheckCircle
+
+    val Watchlist: ImageVector = Icons.Rounded.Bookmark
+    val WatchlistOutlined: ImageVector = Icons.Outlined.BookmarkBorder
+
+    val Profile: ImageVector = Icons.Rounded.AccountCircle
+    val ProfileOutlined: ImageVector = Icons.Outlined.AccountCircle
+
+    // General UI Actions
+    val Search: ImageVector = Icons.Rounded.Search
+    val Add = Icons.Rounded.Add
+    val Info = Icons.Filled.Info
+    val ExitToApp = Icons.AutoMirrored.Rounded.ExitToApp
+    val ChevronRight = Icons.AutoMirrored.Rounded.KeyboardArrowRight
+    val ArrowBack = Icons.AutoMirrored.Rounded.ArrowBack
+    val Clear = Icons.Filled.Clear
+    val Refresh = Icons.Filled.Refresh
+    val Star = Icons.Rounded.Star
+
+    // Movie Detail Metadata
+    val Duration = Icons.Rounded.Schedule
+    val Director = Icons.Rounded.Videocam
+    val Country = Icons.Rounded.Public
 }

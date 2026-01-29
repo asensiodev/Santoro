@@ -37,7 +37,7 @@ fun SantoroAppBar(
                 navigationIcon = {
                     IconButton(onClick = onBackClicked) {
                         Icon(
-                            imageVector = AppIcons.ArrowBackIcon,
+                            imageVector = AppIcons.ArrowBack,
                             contentDescription = "Back",
                         )
                     }

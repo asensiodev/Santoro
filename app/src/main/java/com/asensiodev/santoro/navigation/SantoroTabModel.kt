@@ -16,7 +16,8 @@ data object TabHost
 data class SantoroTabModel(
     @StringRes val titleRes: Int,
     @StringRes val labelRes: Int,
-    val icon: ImageVector,
+    val selectedIcon: ImageVector,
+    val unselectedIcon: ImageVector,
     val route: Any,
     val isRootDestination: Boolean = false,
 )
@@ -26,25 +27,29 @@ val SantoroTabs =
         SantoroTabModel(
             titleRes = R.string.search_movies_top_bar_title,
             labelRes = R.string.search_movies,
-            icon = AppIcons.SearchIcon,
+            selectedIcon = AppIcons.Home,
+            unselectedIcon = AppIcons.HomeOutlined,
             route = SearchMoviesRoute,
         ),
         SantoroTabModel(
             titleRes = R.string.watched_movies_top_bar_title,
             labelRes = R.string.watched_movies,
-            icon = AppIcons.WatchedMoviesIcon,
+            selectedIcon = AppIcons.Watched,
+            unselectedIcon = AppIcons.WatchedOutlined,
             route = WatchedMoviesRoute,
         ),
         SantoroTabModel(
             titleRes = R.string.watchlist_top_bar_title,
             labelRes = R.string.watchlist,
-            icon = AppIcons.WatchlistIcon,
+            selectedIcon = AppIcons.Watchlist,
+            unselectedIcon = AppIcons.WatchlistOutlined,
             route = WatchlistRoute,
         ),
         SantoroTabModel(
             titleRes = R.string.settings_title,
             labelRes = R.string.settings_title,
-            icon = AppIcons.SettingsIcon,
+            selectedIcon = AppIcons.Profile,
+            unselectedIcon = AppIcons.ProfileOutlined,
             route = SettingsRoute,
             isRootDestination = true,
         ),

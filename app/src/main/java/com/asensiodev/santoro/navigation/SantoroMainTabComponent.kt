@@ -22,7 +22,8 @@ fun SantoroMainTabComponent(mainNavController: NavHostController) {
                         val routeName = tab.route::class.qualifiedName.orEmpty()
 
                         BottomNavItem(
-                            icon = tab.icon,
+                            selectedIcon = tab.selectedIcon,
+                            unselectedIcon = tab.unselectedIcon,
                             labelRes = tab.labelRes,
                             isSelected =
                                 currentDestination?.destination?.route?.startsWith(routeName) ==

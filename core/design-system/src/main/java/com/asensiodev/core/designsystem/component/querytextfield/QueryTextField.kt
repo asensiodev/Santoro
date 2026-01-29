@@ -55,7 +55,7 @@ fun QueryTextField(
             ),
         leadingIcon = {
             Icon(
-                imageVector = AppIcons.SearchIcon,
+                imageVector = AppIcons.Search,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -64,7 +64,7 @@ fun QueryTextField(
             if (query.isNotEmpty()) {
                 IconButton(onClick = { onQueryChanged(EMPTY_STRING) }) {
                     Icon(
-                        imageVector = AppIcons.ClearIcon,
+                        imageVector = AppIcons.Clear,
                         contentDescription =
                             stringResource(
                                 SR.string.query_text_field_clear_button_description,

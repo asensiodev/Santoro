@@ -46,7 +46,7 @@ fun ErrorContent(
         )
         IconButton(onClick = onRetry) {
             Icon(
-                imageVector = AppIcons.RefreshIcon,
+                imageVector = AppIcons.Refresh,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSecondary,
                 modifier =

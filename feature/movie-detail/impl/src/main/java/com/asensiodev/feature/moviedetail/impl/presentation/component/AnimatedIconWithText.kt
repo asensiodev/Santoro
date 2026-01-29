@@ -86,8 +86,8 @@ private fun AnimatedIconWithTextSelectedPreview() {
         AnimatedIconWithText(
             isSelected = true,
             onClick = {},
-            selectedIcon = AppIcons.WatchedMoviesIcon,
-            unselectedIcon = AppIcons.AddIcon,
+            selectedIcon = AppIcons.Watched,
+            unselectedIcon = AppIcons.Add,
             label = "Label",
         )
     }
@@ -100,8 +100,8 @@ private fun AnimatedIconWithTextUnselectedPreview() {
         AnimatedIconWithText(
             isSelected = false,
             onClick = {},
-            selectedIcon = AppIcons.WatchedMoviesIcon,
-            unselectedIcon = AppIcons.AddIcon,
+            selectedIcon = AppIcons.Watched,
+            unselectedIcon = AppIcons.Add,
             label = "Label",
         )
     }

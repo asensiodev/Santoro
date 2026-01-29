@@ -1,13 +1,12 @@
 package com.asensiodev.feature.moviedetail.impl.presentation.component
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.asensiodev.core.designsystem.PreviewContent
 import com.asensiodev.core.designsystem.theme.Size
@@ -21,12 +20,14 @@ fun GenreChip(
     Text(
         text = text,
         style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurface,
+        color = MaterialTheme.colorScheme.onSurfaceVariant, // Lighter text color
         modifier =
             modifier
-                .clip(RoundedCornerShape(Size.size48))
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(horizontal = Spacings.spacing12, vertical = Spacings.spacing4),
+                .border(
+                    width = Size.size1,
+                    color = MaterialTheme.colorScheme.outlineVariant, // Outline style
+                    shape = RoundedCornerShape(Size.size48),
+                ).padding(horizontal = Spacings.spacing12, vertical = Spacings.spacing4),
     )
 }
 

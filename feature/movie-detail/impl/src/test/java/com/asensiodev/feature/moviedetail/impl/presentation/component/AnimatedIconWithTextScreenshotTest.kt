@@ -25,9 +25,9 @@ class AnimatedIconWithTextScreenshotTest {
                 AnimatedIconWithText(
                     isSelected = true,
                     onClick = {},
-                    selectedIcon = AppIcons.WatchedMoviesIcon,
-                    unselectedIcon = AppIcons.AddIcon,
-                    label = "Label",
+                    selectedIcon = AppIcons.Watched,
+                    unselectedIcon = AppIcons.Add,
+                    label = "Watched",
                 )
             }
         }

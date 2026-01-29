@@ -218,7 +218,7 @@ private fun LoginButtonsSection(
         shape = CircleShape,
     ) {
         Icon(
-            imageVector = AppIcons.UserIcon,
+            imageVector = AppIcons.Profile,
             contentDescription = null,
             modifier = Modifier.size(Size.size24),
         )

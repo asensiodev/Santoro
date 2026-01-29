@@ -27,19 +27,22 @@ class BottomNavigationBarScreenshotTest {
                     items =
                         listOf(
                             BottomNavItem(
-                                icon = AppIcons.SearchIcon,
+                                selectedIcon = AppIcons.Home,
+                                unselectedIcon = AppIcons.HomeOutlined,
                                 labelRes = SR.string.search_movies,
                                 isSelected = true,
                                 onClick = {},
                             ),
                             BottomNavItem(
-                                icon = AppIcons.WatchedMoviesIcon,
+                                selectedIcon = AppIcons.Watched,
+                                unselectedIcon = AppIcons.WatchedOutlined,
                                 labelRes = SR.string.watched_movies,
                                 isSelected = false,
                                 onClick = {},
                             ),
                             BottomNavItem(
-                                icon = AppIcons.WatchlistIcon,
+                                selectedIcon = AppIcons.Watchlist,
+                                unselectedIcon = AppIcons.WatchlistOutlined,
                                 labelRes = SR.string.watchlist,
                                 isSelected = false,
                                 onClick = {},

@@ -42,7 +42,7 @@ fun AccountLinkedSuccessBottomSheet(onDismiss: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Icon(
-                imageVector = AppIcons.WatchedMoviesIcon,
+                imageVector = AppIcons.Watched,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(Size.size64),

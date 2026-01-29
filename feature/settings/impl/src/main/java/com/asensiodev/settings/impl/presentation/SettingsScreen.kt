@@ -151,12 +151,12 @@ internal fun SettingsScreen(
             }
             SettingsItem(
                 text = stringResource(SR.string.settings_appearance),
-                icon = AppIcons.SettingsIcon,
+                icon = AppIcons.Profile,
                 onClick = onAppearanceClicked,
             )
             SettingsItem(
                 text = stringResource(SR.string.settings_language),
-                icon = AppIcons.InfoIcon,
+                icon = AppIcons.Info,
                 onClick = onLanguageClicked,
             )
             if (isAnonymous) {
@@ -168,7 +168,7 @@ internal fun SettingsScreen(
             } else {
                 SettingsItem(
                     text = stringResource(SR.string.settings_logout),
-                    icon = AppIcons.ExitToAppIcon,
+                    icon = AppIcons.ExitToApp,
                     onClick = onLogoutClicked,
                     color = MaterialTheme.colorScheme.error,
                     showChevron = false,
@@ -333,7 +333,7 @@ private fun SettingsItemContent(
 
                 if (showChevron) {
                     Icon(
-                        imageVector = AppIcons.ChevronRightIcon,
+                        imageVector = AppIcons.ChevronRight,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
