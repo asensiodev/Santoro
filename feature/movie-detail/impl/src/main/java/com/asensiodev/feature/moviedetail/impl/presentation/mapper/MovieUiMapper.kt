@@ -5,6 +5,7 @@ import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.ProductionCountry
 import com.asensiodev.feature.moviedetail.impl.presentation.model.CastMemberUi
+import com.asensiodev.feature.moviedetail.impl.presentation.model.GenreUi
 import com.asensiodev.feature.moviedetail.impl.presentation.model.MovieUi
 
 internal fun Movie.toUi(): MovieUi =
@@ -18,7 +19,7 @@ internal fun Movie.toUi(): MovieUi =
         popularity = popularity,
         voteAverage = voteAverage,
         voteCount = voteCount,
-        genres = genres.map { it.name },
+        genres = genres.map { GenreUi(id = it.id, name = it.name) },
         productionCountries = productionCountries.map { it.name },
         cast = cast.map { it.toUi() },
         runtime = runtime?.let { formatRuntime(it) },
@@ -39,7 +40,7 @@ internal fun MovieUi.toDomain(): Movie =
         popularity = popularity,
         voteAverage = voteAverage,
         voteCount = voteCount,
-        genres = genres.map { Genre(it) },
+        genres = genres.map { Genre(id = it.id, name = it.name) },
         productionCountries = productionCountries.map { ProductionCountry(it) },
         cast = cast.map { it.toDomain() },
         runtime = null,

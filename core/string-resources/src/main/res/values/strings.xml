@@ -23,6 +23,8 @@
     <string name="search_movies_top_bar_title">Search movies</string>
     <string name="search_movies_textfield_placeholder">Type to search movies</string>
     <string name="search_movies_no_search_results_text">Ups! No movies found</string>
+    <string name="search_movies_no_results_with_filters_message">We couldn\'t find any movies matching \"%1$s\" with the selected genre</string>
+    <string name="search_movies_remove_genre_filter_button">Search without genre filter</string>
     <string name="search_movies_no_popular_movies_results_text">Start your search to begin finding movies</string>
     <string name="search_movies_now_playing_title">Now Playing</string>
     <string name="search_movies_popular_movies_title">Popular movies</string>
@@ -85,6 +87,7 @@
     <string name="query_text_field_clear_button_description">Clear search</string>
     <string name="error_message_retry">Ups! An error occurred, please tap to retry</string>
     <string name="error_message_retry_button">Retry</string>
+    <string name="error_content_button">Try Again</string>
 
     <!-- Google Auth ID -->
     <string name="default_web_client_id" translatable="false">792126816216-49vquegl1mcdcm52655qhgrs9l9ou5cf.apps.googleusercontent.com</string>

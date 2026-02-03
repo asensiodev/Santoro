@@ -10,7 +10,7 @@ data class MovieUi(
     val popularity: Double,
     val voteAverage: Double,
     val voteCount: Int,
-    val genres: List<String>,
+    val genres: List<GenreUi>,
     val productionCountries: List<String>,
     val cast: List<CastMemberUi>,
     val runtime: String?,

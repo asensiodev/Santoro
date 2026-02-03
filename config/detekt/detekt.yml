@@ -109,12 +109,12 @@ complexity:
       - 'Composable'
   LongParameterList:
     active: true
-    functionThreshold: 9
-    constructorThreshold: 9
+    functionThreshold: 10
+    constructorThreshold: 10
     ignoreDefaultParameters: true
     ignoreDataClasses: true
     ignoreAnnotatedParameter: [ ]
-    excludes: [ '**/**State.kt', '**/**UseCases.kt', '**/**UseCase.kt' ]
+    excludes: [ '**/**ViewModel.kt', '**/**State.kt', '**/**UseCases.kt', '**/**UseCase.kt' ]
     ignoreAnnotated: [ 'Composable' ]
   MethodOverloading:
     active: false

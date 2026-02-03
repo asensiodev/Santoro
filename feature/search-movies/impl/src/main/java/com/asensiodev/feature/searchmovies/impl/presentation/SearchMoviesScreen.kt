@@ -1,15 +1,23 @@
 package com.asensiodev.feature.searchmovies.impl.presentation
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -18,13 +26,16 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
@@ -32,6 +43,9 @@ import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,6 +55,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -50,8 +65,10 @@ import com.asensiodev.core.designsystem.component.errorContent.ErrorContent
 import com.asensiodev.core.designsystem.component.loadingIndicator.LoadingIndicator
 import com.asensiodev.core.designsystem.component.noresultscontent.NoResultsContent
 import com.asensiodev.core.designsystem.component.querytextfield.QueryTextField
+import com.asensiodev.core.designsystem.theme.AppIcons
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
+import com.asensiodev.core.designsystem.theme.Weights
 import com.asensiodev.feature.searchmovies.impl.presentation.component.HeroMovieCard
 import com.asensiodev.feature.searchmovies.impl.presentation.component.MovieCard
 import com.asensiodev.feature.searchmovies.impl.presentation.model.GenreConstants
@@ -80,6 +97,7 @@ internal fun SearchMoviesRoute(
         onLoadMoreSearchedMovies = viewModel::loadMoreSearchResults,
         onGenreSelected = viewModel::onGenreSelected,
         onClearGenreSelection = viewModel::clearGenreSelection,
+        onSearchWithoutGenreFilter = viewModel::searchWithoutGenreFilter,
         modifier = modifier,
     )
 }
@@ -91,6 +109,7 @@ internal fun SearchMoviesScreen(
     onMovieClick: (Int) -> Unit,
     onGenreSelected: (Int) -> Unit,
     onClearGenreSelection: () -> Unit,
+    onSearchWithoutGenreFilter: () -> Unit,
     modifier: Modifier = Modifier,
     onLoadMorePopularMovies: () -> Unit,
     onLoadMoreSearchedMovies: () -> Unit,
@@ -134,6 +153,7 @@ internal fun SearchMoviesScreen(
                 onQueryChanged = onQueryChanged,
                 onMovieClick = onMovieClick,
                 onLoadMore = onLoadMoreSearchedMovies,
+                onSearchWithoutGenreFilter = onSearchWithoutGenreFilter,
             )
         } else {
             SearchMoviesContent(
@@ -141,6 +161,7 @@ internal fun SearchMoviesScreen(
                 onQueryChanged = onQueryChanged,
                 onMovieClick = onMovieClick,
                 onLoadMore = onLoadMoreSearchedMovies,
+                onSearchWithoutGenreFilter = onSearchWithoutGenreFilter,
             )
         }
     }
@@ -328,6 +349,7 @@ private fun SearchMoviesContent(
     onQueryChanged: (String) -> Unit,
     onMovieClick: (Int) -> Unit,
     onLoadMore: () -> Unit,
+    onSearchWithoutGenreFilter: () -> Unit,
 ) {
     when {
         uiState.screenState is SearchScreenState.Loading -> {
@@ -338,6 +360,14 @@ private fun SearchMoviesContent(
             ErrorContent(
                 message = stringResource(SR.string.error_message_retry),
                 onRetry = { onQueryChanged(uiState.query) },
+            )
+        }
+
+        uiState.screenState is SearchScreenState.Empty -> {
+            EmptySearchWithFiltersContent(
+                query = uiState.query,
+                hasGenreFilter = uiState.selectedGenreId != null,
+                onSearchWithoutGenreFilter = onSearchWithoutGenreFilter,
             )
         }
 
@@ -464,34 +494,159 @@ private fun GenreFilterChips(
 ) {
     val focusManager = LocalFocusManager.current
 
-    LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
-        contentPadding = PaddingValues(horizontal = Spacings.spacing4),
+    var genreToShow by remember { mutableStateOf<Int?>(null) }
+
+    if (selectedGenreId != null) {
+        genreToShow = selectedGenreId
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        items(
-            count = GenreConstants.availableGenres.size,
-            key = { index -> GenreConstants.availableGenres[index].id },
-        ) { index ->
-            val genre = GenreConstants.availableGenres[index]
-            FilterChip(
-                selected = selectedGenreId == genre.id,
-                onClick = {
-                    focusManager.clearFocus()
-                    if (selectedGenreId == genre.id) {
+        AnimatedVisibility(
+            visible = selectedGenreId != null,
+            enter =
+                fadeIn(animationSpec = tween(ANIMATION_DURATION_MS)) +
+                    expandHorizontally(animationSpec = tween(ANIMATION_DURATION_MS)),
+            exit =
+                fadeOut(
+                    animationSpec = tween(ANIMATION_DURATION_MS),
+                ) + shrinkHorizontally(animationSpec = tween(ANIMATION_DURATION_MS)),
+        ) {
+            val selectedGenre = GenreConstants.availableGenres.find { it.id == genreToShow }
+            if (selectedGenre != null) {
+                FilterChip(
+                    selected = true,
+                    onClick = {
+                        focusManager.clearFocus()
                         onClearGenre()
-                    } else {
-                        onGenreSelected(genre.id)
-                    }
-                },
-                label = { Text(text = stringResource(genre.nameRes)) },
-                colors =
-                    FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    ),
-                shape = RoundedCornerShape(Size.size16),
-            )
+                    },
+                    label = { Text(text = stringResource(selectedGenre.nameRes)) },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = AppIcons.Clear,
+                            contentDescription =
+                                stringResource(
+                                    SR.string.query_text_field_clear_button_description,
+                                ),
+                            modifier = Modifier.size(FilterChipDefaults.IconSize),
+                        )
+                    },
+                    colors =
+                        FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            selectedTrailingIconColor =
+                                MaterialTheme.colorScheme
+                                    .onPrimaryContainer,
+                        ),
+                    shape = RoundedCornerShape(Size.size16),
+                    modifier = Modifier.padding(horizontal = Spacings.spacing4),
+                )
+            }
         }
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
+            contentPadding = PaddingValues(horizontal = Spacings.spacing4),
+            modifier = Modifier.weight(Weights.W10),
+        ) {
+            items(
+                items = GenreConstants.availableGenres,
+                key = { it.id },
+            ) { genre ->
+                val isSelected = genre.id == selectedGenreId
+                FilterChip(
+                    selected = isSelected,
+                    onClick = {
+                        focusManager.clearFocus()
+                        if (isSelected) {
+                            onClearGenre()
+                        } else {
+                            onGenreSelected(genre.id)
+                        }
+                    },
+                    label = { Text(text = stringResource(genre.nameRes)) },
+                    colors =
+                        FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        ),
+                    shape = RoundedCornerShape(Size.size16),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptySearchWithFiltersContent(
+    query: String,
+    hasGenreFilter: Boolean,
+    onSearchWithoutGenreFilter: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier =
+            modifier
+                .fillMaxSize()
+                .padding(Spacings.spacing24),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Spacings.spacing24, Alignment.CenterVertically),
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(Spacings.spacing16),
+        ) {
+            Icon(
+                imageVector = AppIcons.SearchOff,
+                contentDescription = null,
+                modifier = Modifier.size(Size.size120),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            )
+
+            if (hasGenreFilter && query.isNotBlank()) {
+                Text(
+                    text =
+                        stringResource(
+                            SR.string.search_movies_no_results_with_filters_message,
+                            query,
+                        ),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
+            } else {
+                Text(
+                    text = stringResource(SR.string.search_movies_no_search_results_text),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+
+        if (hasGenreFilter && query.isNotBlank()) {
+            Button(
+                onClick = onSearchWithoutGenreFilter,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(text = stringResource(SR.string.search_movies_remove_genre_filter_button))
+            }
+        }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun EmptySearchWithFiltersContentPreview() {
+    PreviewContentFullSize {
+        EmptySearchWithFiltersContent(
+            query = "casino",
+            hasGenreFilter = true,
+            onSearchWithoutGenreFilter = {},
+        )
     }
 }
 
@@ -524,6 +679,7 @@ private fun SearchMoviesScreenPreview() {
             onLoadMoreSearchedMovies = {},
             onGenreSelected = {},
             onClearGenreSelection = {},
+            onSearchWithoutGenreFilter = {},
         )
     }
 }
@@ -532,6 +688,7 @@ private const val LOAD_MORE_MOVIES_THRESHOLD = 5
 private const val MOVIE_SAMPLE_LIST_SIZE = 10
 private const val LOADING_GRID_ITEM_KEY = "loading_item"
 private const val POSTER_ASPECT_RATIO = 2f / 3f
+private const val ANIMATION_DURATION_MS = 300
 
 private data class PaginationInfo(
     val lastVisibleIndex: Int,

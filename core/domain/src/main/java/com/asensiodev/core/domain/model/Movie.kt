@@ -11,6 +11,7 @@ data class Movie(
     val voteAverage: Double,
     val voteCount: Int,
     val genres: List<Genre>,
+    val genreIds: List<Int> = emptyList(),
     val productionCountries: List<ProductionCountry>,
     val cast: List<CastMember> = emptyList(),
     val runtime: Int? = null,

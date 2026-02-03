@@ -23,6 +23,8 @@ data class MovieApiModel(
     val voteCount: Int?,
     @SerializedName("genres")
     val genres: List<GenreApiModel>?,
+    @SerializedName("genre_ids")
+    val genreIds: List<Int>?,
     @SerializedName("production_countries")
     val productionCountries: List<ProductionCountryApiModel>?,
     @SerializedName("runtime")

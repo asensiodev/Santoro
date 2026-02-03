@@ -5,6 +5,7 @@ import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.ProductionCountry
 import com.asensiodev.feature.moviedetail.impl.presentation.model.CastMemberUi
+import com.asensiodev.feature.moviedetail.impl.presentation.model.GenreUi
 import com.asensiodev.feature.moviedetail.impl.presentation.model.MovieUi
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.Test
@@ -23,7 +24,7 @@ class MovieUiMapperTest {
                 popularity = 8.3,
                 voteAverage = 8.8,
                 voteCount = 32000,
-                genres = listOf(Genre("Action"), Genre("Sci-Fi")),
+                genres = listOf(Genre(0, "Action"), Genre(1, "Sci-Fi")),
                 productionCountries = listOf(ProductionCountry("USA")),
                 cast = listOf(CastMember(1, "Leo", "Cobb", "/leo.jpg")),
                 runtime = 148,
@@ -42,7 +43,7 @@ class MovieUiMapperTest {
                 popularity = 8.3,
                 voteAverage = 8.8,
                 voteCount = 32000,
-                genres = listOf("Action", "Sci-Fi"),
+                genres = listOf(GenreUi(0, "Action"), GenreUi(1, "Sci-Fi")),
                 productionCountries = listOf("USA"),
                 cast = listOf(CastMemberUi(1, "Leo", "Cobb", "https://image.tmdb.org/t/p/w185/leo.jpg")),
                 runtime = "2h 28m",
@@ -68,7 +69,7 @@ class MovieUiMapperTest {
                 popularity = 8.3,
                 voteAverage = 8.8,
                 voteCount = 32000,
-                genres = listOf("Action", "Sci-Fi"),
+                genres = listOf(GenreUi(0, "Action"), GenreUi(1, "Sci-Fi")),
                 productionCountries = listOf("USA"),
                 cast = listOf(CastMemberUi(1, "Leo", "Cobb", "https://image.tmdb.org/t/p/w185/leo.jpg")),
                 runtime = "2h 28m",
@@ -88,7 +89,7 @@ class MovieUiMapperTest {
                 popularity = 8.3,
                 voteAverage = 8.8,
                 voteCount = 32000,
-                genres = listOf(Genre("Action"), Genre("Sci-Fi")),
+                genres = listOf(Genre(0, "Action"), Genre(1, "Sci-Fi")),
                 productionCountries = listOf(ProductionCountry("USA")),
                 cast = listOf(CastMember(1, "Leo", "Cobb", "/leo.jpg")),
                 runtime = null,

@@ -21,6 +21,7 @@ fun MovieApiModel.toDomain() =
         voteAverage = voteAverage ?: 0.0,
         voteCount = voteCount ?: 0,
         genres = genres?.map { it.toDomain() } ?: emptyList(),
+        genreIds = genreIds ?: genres?.map { it.id } ?: emptyList(),
         productionCountries = productionCountries?.map { it.toDomain() } ?: emptyList(),
         cast = credits?.cast?.map { it.toDomain() } ?: emptyList(),
         runtime = runtime,
@@ -32,6 +33,7 @@ fun MovieApiModel.toDomain() =
 
 fun GenreApiModel.toDomain() =
     Genre(
+        id = id,
         name = name,
     )
 

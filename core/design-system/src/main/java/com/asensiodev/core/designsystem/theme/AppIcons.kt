@@ -7,6 +7,7 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.CheckCircle
@@ -38,6 +39,7 @@ object AppIcons {
 
     // General UI Actions
     val Search: ImageVector = Icons.Rounded.Search
+    val SearchOff: ImageVector = Icons.Filled.SearchOff
     val Add = Icons.Rounded.Add
     val Info = Icons.Filled.Info
     val ExitToApp = Icons.AutoMirrored.Rounded.ExitToApp

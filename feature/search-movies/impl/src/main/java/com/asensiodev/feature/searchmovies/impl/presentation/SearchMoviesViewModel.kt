@@ -12,6 +12,7 @@ import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetPopularMoviesU
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTopRatedMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTrendingMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetUpcomingMoviesUseCase
+import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesByQueryAndGenreUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.presentation.mapper.toUiList
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -42,6 +43,7 @@ internal class SearchMoviesViewModel
         private val getUpcomingMoviesUseCase: GetUpcomingMoviesUseCase,
         private val getTrendingMoviesUseCase: GetTrendingMoviesUseCase,
         private val getMoviesByGenreUseCase: GetMoviesByGenreUseCase,
+        private val searchMoviesByQueryAndGenreUseCase: SearchMoviesByQueryAndGenreUseCase,
     ) : ViewModel() {
         private var searchJob: Job? = null
         private val _uiState = MutableStateFlow(SearchMoviesUiState())
@@ -64,18 +66,11 @@ internal class SearchMoviesViewModel
         fun updateQuery(query: String) {
             _uiState.update { it.copy(query = query) }
 
-            if (query.isNotBlank() && _uiState.value.selectedGenreId != null) {
-                clearGenreSelection()
-            }
-
             savedStateHandle[SEARCH_QUERY_KEY] = query
         }
 
         fun onGenreSelected(genreId: Int) {
-            if (_uiState.value.query.isNotBlank()) {
-                updateQuery("")
-            }
-
+            searchJob?.cancel()
             _uiState.update {
                 it.copy(
                     selectedGenreId = genreId,
@@ -84,85 +79,68 @@ internal class SearchMoviesViewModel
                     isSearchEndReached = false,
                 )
             }
-            fetchMoviesByGenre(genreId, FIRST_PAGE, isInitialLoad = true)
+            performSearch(FIRST_PAGE, isInitialLoad = true)
         }
 
         fun clearGenreSelection() {
+            val currentQuery = _uiState.value.query
             _uiState.update {
                 it.copy(
                     selectedGenreId = null,
                     searchMovieResults = emptyList(),
-                    screenState = SearchScreenState.Content,
+                    currentSearchPage = FIRST_PAGE,
+                    isSearchEndReached = false,
+                    screenState =
+                        if (currentQuery.isBlank()) {
+                            SearchScreenState.Content
+                        } else {
+                            it.screenState
+                        },
                 )
+            }
+            if (currentQuery.isNotBlank()) {
+                performSearch(FIRST_PAGE, isInitialLoad = true)
+            }
+        }
+
+        fun searchWithoutGenreFilter() {
+            val currentQuery = _uiState.value.query
+            _uiState.update {
+                it.copy(
+                    selectedGenreId = null,
+                    searchMovieResults = emptyList(),
+                    currentSearchPage = FIRST_PAGE,
+                    isSearchEndReached = false,
+                )
+            }
+            if (currentQuery.isNotBlank()) {
+                performSearch(FIRST_PAGE, isInitialLoad = true)
             }
         }
 
         private fun handleQueryChange(query: String) {
-            if (query.isBlank()) {
-                _uiState.update {
-                    it.copy(
-                        screenState = SearchScreenState.Content,
-                        searchMovieResults =
-                            if (it.selectedGenreId == null) {
-                                emptyList()
-                            } else {
-                                it.searchMovieResults
-                            },
-                        currentSearchPage = FIRST_PAGE,
-                        isSearchEndReached = false,
-                    )
-                }
-            } else {
-                _uiState.update {
-                    it.copy(
-                        searchMovieResults = emptyList(),
-                        currentSearchPage = FIRST_PAGE,
-                        isSearchEndReached = false,
-                    )
-                }
-                fetchSearchMoviesResult(
-                    query,
-                    FIRST_PAGE,
-                    isInitialLoad = true,
+            _uiState.update {
+                it.copy(
+                    searchMovieResults = emptyList(),
+                    currentSearchPage = FIRST_PAGE,
+                    isSearchEndReached = false,
                 )
+            }
+            if (query.isBlank() && _uiState.value.selectedGenreId == null) {
+                _uiState.update { it.copy(screenState = SearchScreenState.Content) }
+            } else {
+                performSearch(FIRST_PAGE, isInitialLoad = true)
             }
         }
 
-        private fun fetchMoviesByGenre(
-            genreId: Int,
+        private fun performSearch(
             page: Int,
             isInitialLoad: Boolean,
         ) {
             if (isInitialLoad) searchJob?.cancel()
 
-            _uiState.update {
-                it.copy(
-                    screenState =
-                        if (isInitialLoad &&
-                            it.searchMovieResults.isEmpty()
-                        ) {
-                            SearchScreenState.Loading
-                        } else {
-                            it.screenState
-                        },
-                    isSearchLoadingMore = !isInitialLoad,
-                )
-            }
-
-            searchJob =
-                viewModelScope.launch {
-                    getMoviesByGenreUseCase(genreId, page).collect { result ->
-                        handleSearchResult(result, isInitialLoad, page)
-                    }
-                }
-        }
-
-        private fun fetchSearchMoviesResult(
-            query: String,
-            page: Int,
-            isInitialLoad: Boolean = false,
-        ) {
-            if (isInitialLoad) searchJob?.cancel()
+            val query = _uiState.value.query
+            val selectedGenreId = _uiState.value.selectedGenreId
 
             _uiState.update {
                 it.copy(
@@ -178,7 +156,26 @@ internal class SearchMoviesViewModel
 
             searchJob =
                 viewModelScope.launch {
-                    searchMoviesUseCase(query, page).collect { result ->
+                    val searchFlow =
+                        when {
+                            query.isNotBlank() && selectedGenreId != null -> {
+                                searchMoviesByQueryAndGenreUseCase(query, selectedGenreId, page)
+                            }
+
+                            query.isNotBlank() -> {
+                                searchMoviesUseCase(query, page)
+                            }
+
+                            selectedGenreId != null -> {
+                                getMoviesByGenreUseCase(selectedGenreId, page)
+                            }
+
+                            else -> {
+                                return@launch
+                            }
+                        }
+
+                    searchFlow.collect { result ->
                         handleSearchResult(result, isInitialLoad, page)
                     }
                 }
@@ -192,15 +189,24 @@ internal class SearchMoviesViewModel
             when (result) {
                 is Result.Success -> {
                     val newMovies = result.data.toUiList()
+
                     val updatedResults =
                         if (isInitialLoad) {
                             newMovies
                         } else {
                             _uiState.value.searchMovieResults + newMovies
                         }
+
+                    val finalState =
+                        if (isInitialLoad && newMovies.isEmpty()) {
+                            SearchScreenState.Empty
+                        } else {
+                            SearchScreenState.Content
+                        }
+
                     _uiState.update {
                         it.copy(
-                            screenState = SearchScreenState.Content,
+                            screenState = finalState,
                             isSearchLoadingMore = false,
                             searchMovieResults = updatedResults,
                             currentSearchPage = page,
@@ -239,14 +245,8 @@ internal class SearchMoviesViewModel
             val selectedGenreId = _uiState.value.selectedGenreId
 
             if (!_uiState.value.isSearchLoadingMore && !_uiState.value.isSearchEndReached) {
-                if (query.isNotBlank()) {
-                    fetchSearchMoviesResult(query, currentPage + NEXT_PAGE)
-                } else if (selectedGenreId != null) {
-                    fetchMoviesByGenre(
-                        selectedGenreId,
-                        currentPage + NEXT_PAGE,
-                        isInitialLoad = false,
-                    )
+                if (query.isNotBlank() || selectedGenreId != null) {
+                    performSearch(currentPage + NEXT_PAGE, isInitialLoad = false)
                 }
             }
         }

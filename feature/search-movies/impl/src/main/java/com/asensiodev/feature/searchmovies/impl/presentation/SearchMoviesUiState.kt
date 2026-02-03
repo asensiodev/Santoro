@@ -8,6 +8,7 @@ internal sealed interface SearchScreenState {
     data class Error(
         val message: String,
     ) : SearchScreenState
+    data object Empty : SearchScreenState
 }
 
 internal data class SearchMoviesUiState(

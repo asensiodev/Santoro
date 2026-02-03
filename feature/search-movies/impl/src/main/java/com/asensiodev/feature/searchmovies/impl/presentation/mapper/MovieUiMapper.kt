@@ -10,6 +10,7 @@ internal fun Movie.toUi(): MovieUi =
         posterPath = posterPath?.let { BASE_POSTER_URL + it },
         backdropPath = backdropPath?.let { BASE_BACKDROP_URL + it },
         voteAverage = voteAverage,
+        genreIds = genres.map { it.id },
     )
 
 internal fun List<Movie>.toUiList(): List<MovieUi> = this.map { it.toUi() }

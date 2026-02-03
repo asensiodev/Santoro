@@ -80,6 +80,7 @@ import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.core.designsystem.theme.Weights
 import com.asensiodev.feature.moviedetail.impl.presentation.component.GenreChip
 import com.asensiodev.feature.moviedetail.impl.presentation.model.CastMemberUi
+import com.asensiodev.feature.moviedetail.impl.presentation.model.GenreUi
 import com.asensiodev.feature.moviedetail.impl.presentation.model.MovieUi
 import java.util.Locale
 import com.asensiodev.santoro.core.designsystem.R as DR
@@ -98,6 +99,11 @@ private const val DATE_DELIMITER = "-"
 private const val COLLAPSE_THRESHOLD_FACTOR = 0.6f
 private const val FULLY_COLLAPSED_AT_FACTOR = 1.2f
 private const val APP_BAR_TITLE_ALPHA_OFFSET = 0.5f
+private const val MOVIE_RUNTIME_MINUTES = 115
+private const val GENRE_ACTION_ID = 1
+private const val GENRE_ADVENTURE_ID = 2
+private const val GENRE_DRAMA_ID = 3
+private const val GENRE_COMEDY_ID = 4
 
 @Composable
 internal fun MovieDetailRoute(
@@ -548,11 +554,6 @@ private fun MovieDetailsSection(
             )
         }
         CastSection(cast = movie.cast)
-        CastSection(cast = movie.cast)
-        CastSection(cast = movie.cast)
-        CastSection(cast = movie.cast)
-        CastSection(cast = movie.cast)
-        CastSection(cast = movie.cast)
         Spacer(modifier = Modifier.height(Spacings.spacing48))
     }
 }
@@ -646,7 +647,7 @@ private fun RowScope.WatchedButton(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MovieGenresChipsSection(
-    genres: List<String>,
+    genres: List<GenreUi>,
     modifier: Modifier = Modifier,
 ) {
     FlowRow(
@@ -655,7 +656,7 @@ fun MovieGenresChipsSection(
         verticalArrangement = Arrangement.spacedBy(Spacings.spacing8),
     ) {
         genres.forEach { genre ->
-            GenreChip(text = genre)
+            GenreChip(text = genre.name)
         }
     }
 }
@@ -862,15 +863,15 @@ private fun MovieDetailScreenPreview() {
                             voteCount = 1000,
                             genres =
                                 listOf(
-                                    "Action",
-                                    "Adventure",
-                                    "Drama",
-                                    "Comedy",
-                                    "Comedy",
+                                    GenreUi(GENRE_ACTION_ID, "Action"),
+                                    GenreUi(GENRE_ADVENTURE_ID, "Adventure"),
+                                    GenreUi(GENRE_DRAMA_ID, "Drama"),
+                                    GenreUi(GENRE_COMEDY_ID, "Comedy"),
+                                    GenreUi(GENRE_COMEDY_ID, "Comedy"),
                                 ),
                             productionCountries = listOf("USA", "Canada"),
                             cast = emptyList(),
-                            runtime = "1h 55m",
+                            runtime = "1h ${MOVIE_RUNTIME_MINUTES % 60}m",
                             director = "Gary Fleder",
                             isWatched = false,
                             isInWatchlist = false,

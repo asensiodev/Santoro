@@ -44,6 +44,7 @@ class RetrofitMovieDetailDataSourceTest {
                     voteAverage = null,
                     voteCount = null,
                     genres = listOf(),
+                    genreIds = listOf(),
                     productionCountries = listOf(),
                     runtime = 120,
                     credits = null,
