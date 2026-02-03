@@ -38,9 +38,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -70,7 +74,6 @@ import coil3.compose.AsyncImage
 import com.asensiodev.core.designsystem.PreviewContentFullSize
 import com.asensiodev.core.designsystem.component.errorContent.ErrorContent
 import com.asensiodev.core.designsystem.component.loadingIndicator.LoadingIndicator
-import com.asensiodev.core.designsystem.component.topbar.SantoroAppBar
 import com.asensiodev.core.designsystem.theme.AppIcons
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
@@ -87,10 +90,14 @@ private const val POSTER_RATIO = 2f / 3f
 private val POSTER_WIDTH = Size.size100
 private val HEADER_HEIGHT = 280.dp
 private val BACKDROP_HEIGHT = 250.dp
+private const val PARALLAX_FACTOR = 0.5f
 private const val MOVIE_ID = 12
 private const val WORDS = 40
 private const val YEAR_INDEX = 0
 private const val DATE_DELIMITER = "-"
+private const val COLLAPSE_THRESHOLD_FACTOR = 0.6f
+private const val FULLY_COLLAPSED_AT_FACTOR = 1.2f
+private const val APP_BAR_TITLE_ALPHA_OFFSET = 0.5f
 
 @Composable
 internal fun MovieDetailRoute(
@@ -115,6 +122,7 @@ internal fun MovieDetailRoute(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun MovieDetailScreen(
     uiState: MovieDetailUiState,
@@ -126,11 +134,18 @@ internal fun MovieDetailScreen(
 ) {
     val scrollState = rememberScrollState()
 
-    SantoroAppBar(
-        title = "",
-        onBackClicked = onBackClicked,
-        backgroundColor = Color.Transparent,
-    ) {
+    val collapseThreshold = HEADER_HEIGHT.value * COLLAPSE_THRESHOLD_FACTOR
+    val fullyCollapsedAt = HEADER_HEIGHT.value * FULLY_COLLAPSED_AT_FACTOR
+    val scrollProgress =
+        (
+            (scrollState.value - collapseThreshold) /
+                (fullyCollapsedAt - collapseThreshold)
+        ).coerceIn(0f, 1f)
+
+    val appBarBackgroundAlpha = scrollProgress
+    val appBarTitleAlpha = ((scrollProgress - APP_BAR_TITLE_ALPHA_OFFSET) * 2f).coerceIn(0f, 1f)
+
+    Box(modifier = modifier.fillMaxSize()) {
         when {
             uiState.isLoading -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -150,12 +165,83 @@ internal fun MovieDetailScreen(
                     uiState = uiState,
                     onToggleWatchlist = onToggleWatchlist,
                     onToggleWatched = onToggleWatched,
-                    modifier = modifier,
                     scrollState = scrollState,
                 )
             }
         }
+
+        CollapsibleTopAppBar(
+            title = uiState.movie?.title.orEmpty(),
+            backgroundAlpha = appBarBackgroundAlpha,
+            titleAlpha = appBarTitleAlpha,
+            onBackClicked = onBackClicked,
+        )
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CollapsibleTopAppBar(
+    title: String,
+    backgroundAlpha: Float,
+    titleAlpha: Float,
+    onBackClicked: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val backgroundColor by animateColorAsState(
+        targetValue = MaterialTheme.colorScheme.surface.copy(alpha = backgroundAlpha),
+        animationSpec = tween(durationMillis = 150),
+        label = "appBarBackground",
+    )
+
+    val iconTint by animateColorAsState(
+        targetValue =
+            if (backgroundAlpha > 0.5f) {
+                MaterialTheme.colorScheme.onSurface
+            } else {
+                Color.White
+            },
+        animationSpec = tween(durationMillis = 150),
+        label = "iconTint",
+    )
+
+    val titleColor by animateColorAsState(
+        targetValue =
+            if (backgroundAlpha > 0.5f) {
+                MaterialTheme.colorScheme.onSurface
+            } else {
+                Color.White
+            },
+        animationSpec = tween(durationMillis = 150),
+        label = "titleColor",
+    )
+
+    TopAppBar(
+        title = {
+            Text(
+                text = title,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = titleColor,
+                modifier = Modifier.graphicsLayer { alpha = titleAlpha },
+            )
+        },
+        navigationIcon = {
+            IconButton(onClick = onBackClicked) {
+                Icon(
+                    imageVector = AppIcons.ArrowBack,
+                    contentDescription = null,
+                    tint = iconTint,
+                )
+            }
+        },
+        colors =
+            TopAppBarDefaults.topAppBarColors(
+                containerColor = backgroundColor,
+                scrolledContainerColor = backgroundColor,
+            ),
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -167,227 +253,307 @@ internal fun MovieDetailContent(
     scrollState: ScrollState,
 ) {
     val movie = uiState.movie!!
-    Column(
+
+    Box(modifier = modifier.fillMaxSize()) {
+        ParallaxBackdrop(
+            movie = movie,
+            scrollValue = scrollState.value,
+        )
+
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState),
+        ) {
+            MovieHeaderSection(movie = movie)
+
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.background),
+            ) {
+                WatchlistActionsRow(
+                    movie = movie,
+                    onToggleWatchlist = onToggleWatchlist,
+                    onToggleWatched = onToggleWatched,
+                )
+                Spacer(modifier = Modifier.height(Spacings.spacing8))
+                MovieDetailsSection(movie = movie)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ParallaxBackdrop(
+    movie: MovieUi,
+    scrollValue: Int,
+    modifier: Modifier = Modifier,
+) {
+    Box(
         modifier =
             modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState),
+                .fillMaxWidth()
+                .height(BACKDROP_HEIGHT + 50.dp)
+                .graphicsLayer {
+                    translationY = -scrollValue * PARALLAX_FACTOR
+                    alpha = 1f - (scrollValue / BACKDROP_HEIGHT.toPx()).coerceIn(0f, 1f)
+                },
     ) {
+        AsyncImage(
+            model = movie.backdropPath ?: movie.posterPath,
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+            error = painterResource(DR.drawable.ic_movie_card_placeholder),
+        )
         Box(
             modifier =
                 Modifier
-                    .fillMaxWidth()
-                    .height(HEADER_HEIGHT),
-        ) {
-            MoviePoster(movie)
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(BACKDROP_HEIGHT)
-                        .background(
-                            brush =
-                                Brush.verticalGradient(
-                                    colors =
-                                        listOf(
-                                            Color.Transparent,
-                                            Color.Black.copy(alpha = 0.3f),
-                                            Color.Black.copy(alpha = 0.7f),
-                                            MaterialTheme.colorScheme.background,
-                                        ),
-                                    startY = 0f,
-                                    endY = Float.POSITIVE_INFINITY,
-                                ),
-                        ),
-            )
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.BottomStart)
-                        .padding(horizontal = Spacings.spacing16),
-                verticalAlignment = Alignment.Bottom,
-            ) {
-                AsyncImage(
-                    model = movie.posterPath,
-                    contentDescription = movie.title,
-                    modifier =
-                        Modifier
-                            .width(POSTER_WIDTH)
-                            .aspectRatio(POSTER_RATIO)
-                            .padding(bottom = Spacings.spacing16)
-                            .shadow(
-                                elevation = Size.size8,
-                                shape = MaterialTheme.shapes.small,
-                            ).clip(MaterialTheme.shapes.small)
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentScale = ContentScale.Crop,
-                    error = painterResource(DR.drawable.ic_movie_card_placeholder),
-                )
-                Spacer(modifier = Modifier.width(Spacings.spacing16))
-                Column(
-                    modifier =
-                        Modifier
-                            .padding(bottom = Spacings.spacing24)
-                            .weight(1f),
-                ) {
-                    Text(
-                        text = movie.title,
-                        style =
-                            MaterialTheme.typography.headlineSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                shadow =
-                                    Shadow(
-                                        color = Color.Black,
-                                        blurRadius = 4f,
+                    .fillMaxSize()
+                    .background(
+                        brush =
+                            Brush.verticalGradient(
+                                colors =
+                                    listOf(
+                                        Color.Transparent,
+                                        Color.Black.copy(alpha = 0.3f),
+                                        Color.Black.copy(alpha = 0.7f),
+                                        MaterialTheme.colorScheme.background,
                                     ),
+                                startY = 0f,
+                                endY = Float.POSITIVE_INFINITY,
                             ),
-                        color = Color.White,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Spacer(modifier = Modifier.height(Spacings.spacing8))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (!movie.releaseDate.isNullOrEmpty()) {
-                            Text(
-                                text = getYearFromDate(movie.releaseDate) ?: "",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                            )
-                            Text(
-                                text = " • ",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                            )
-                        }
-                        if (movie.voteAverage > 0.0) {
-                            Icon(
-                                imageVector = AppIcons.Star,
-                                contentDescription = null,
-                                tint = Color(GOLD_COLOR),
-                                modifier = Modifier.size(Size.size16),
-                            )
-                            Spacer(modifier = Modifier.width(Size.size4))
-                            Text(
-                                text =
-                                    String.format(
-                                        Locale.getDefault(),
-                                        "%.1f",
-                                        movie.voteAverage,
-                                    ),
-                                style =
-                                    MaterialTheme.typography.labelLarge.copy(
-                                        fontWeight = FontWeight.Bold,
-                                    ),
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
-                    }
-                }
-            }
-        }
+                    ),
+        )
+    }
+}
+
+@Composable
+private fun MovieHeaderSection(
+    movie: MovieUi,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(HEADER_HEIGHT),
+    ) {
         Row(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Spacings.spacing16, vertical = Spacings.spacing12),
-            horizontalArrangement = Arrangement.spacedBy(Spacings.spacing12),
+                    .align(Alignment.BottomStart)
+                    .padding(horizontal = Spacings.spacing16),
+            verticalAlignment = Alignment.Bottom,
         ) {
-            val watchlistContainerColor by animateColorAsState(
-                targetValue =
-                    if (movie.isInWatchlist) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.surfaceVariant // Modern Inactive State
-                    },
-                animationSpec = tween(durationMillis = 300),
-                label = "watchlistColor",
+            AsyncImage(
+                model = movie.posterPath,
+                contentDescription = movie.title,
+                modifier =
+                    Modifier
+                        .width(POSTER_WIDTH)
+                        .aspectRatio(POSTER_RATIO)
+                        .padding(bottom = Spacings.spacing16)
+                        .shadow(
+                            elevation = Size.size8,
+                            shape = MaterialTheme.shapes.small,
+                        ).clip(MaterialTheme.shapes.small)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentScale = ContentScale.Crop,
+                error = painterResource(DR.drawable.ic_movie_card_placeholder),
             )
-            val watchlistContentColor by animateColorAsState(
-                targetValue =
-                    if (movie.isInWatchlist) {
-                        MaterialTheme.colorScheme.onPrimary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                animationSpec = tween(durationMillis = 300),
-                label = "watchlistContentColor",
-            )
-            WatchlistButton(
-                onToggleWatchlist,
-                watchlistContainerColor,
-                watchlistContentColor,
-                movie,
-            )
-
-            // Watched Button Colors
-            val watchedContainerColor by animateColorAsState(
-                targetValue =
-                    if (movie.isWatched) {
-                        MaterialTheme.colorScheme.secondary
-                    } else {
-                        MaterialTheme.colorScheme.surfaceVariant // Modern Inactive State
-                    },
-                animationSpec = tween(durationMillis = 300),
-                label = "watchedColor",
-            )
-            val watchedContentColor by animateColorAsState(
-                targetValue =
-                    if (movie.isWatched) {
-                        MaterialTheme.colorScheme.onSecondary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                animationSpec = tween(durationMillis = 300),
-                label = "watchedContentColor",
-            )
-            WatchedButton(onToggleWatched, watchedContainerColor, watchedContentColor, movie)
-        }
-        Spacer(modifier = Modifier.height(Spacings.spacing8))
-        Column(
-            modifier = Modifier.padding(horizontal = Spacings.spacing16),
-            verticalArrangement = Arrangement.spacedBy(Spacings.spacing16),
-        ) {
-            if (movie.genres.isNotEmpty()) {
-                MovieGenresChipsSection(
-                    genres = movie.genres,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            val unknown = stringResource(SR.string.unknown_value)
-            InfoRow(
-                duration = movie.runtime ?: unknown,
-                director = movie.director ?: unknown,
-                country = movie.productionCountries.firstOrNull() ?: unknown,
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(Spacings.spacing8)) {
+            Spacer(modifier = Modifier.width(Spacings.spacing16))
+            Column(
+                modifier =
+                    Modifier
+                        .padding(bottom = Spacings.spacing24)
+                        .weight(1f),
+            ) {
                 Text(
-                    text = "Overview",
+                    text = movie.title,
                     style =
-                        MaterialTheme.typography.titleMedium.copy(
+                        MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Bold,
+                            shadow =
+                                Shadow(
+                                    color = Color.Black,
+                                    blurRadius = 4f,
+                                ),
                         ),
+                    color = Color.White,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
                 )
-                Text(
-                    text =
-                        movie.overview.ifEmpty {
-                            stringResource(
-                                SR.string.default_no_description,
-                            )
-                        },
-                    style =
-                        MaterialTheme.typography.bodyLarge.copy(
-                            lineHeight = 28.sp,
-                        ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Spacer(modifier = Modifier.height(Spacings.spacing8))
+                MovieMetadataRow(movie = movie)
             }
-            CastSection(
-                cast = movie.cast,
-            )
-
-            Spacer(modifier = Modifier.height(Spacings.spacing48))
         }
+    }
+}
+
+@Composable
+private fun MovieMetadataRow(
+    movie: MovieUi,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (!movie.releaseDate.isNullOrEmpty()) {
+            Text(
+                text = getYearFromDate(movie.releaseDate) ?: "",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+            )
+            Text(
+                text = " • ",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            )
+        }
+        if (movie.voteAverage > 0.0) {
+            Icon(
+                imageVector = AppIcons.Star,
+                contentDescription = null,
+                tint = Color(GOLD_COLOR),
+                modifier = Modifier.size(Size.size16),
+            )
+            Spacer(modifier = Modifier.width(Size.size4))
+            Text(
+                text =
+                    String.format(
+                        Locale.getDefault(),
+                        "%.1f",
+                        movie.voteAverage,
+                    ),
+                style =
+                    MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                    ),
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+    }
+}
+
+@Composable
+private fun WatchlistActionsRow(
+    movie: MovieUi,
+    onToggleWatchlist: () -> Unit,
+    onToggleWatched: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = Spacings.spacing16, vertical = Spacings.spacing12),
+        horizontalArrangement = Arrangement.spacedBy(Spacings.spacing12),
+    ) {
+        val watchlistContainerColor by animateColorAsState(
+            targetValue =
+                if (movie.isInWatchlist) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant
+                },
+            animationSpec = tween(durationMillis = 300),
+            label = "watchlistColor",
+        )
+        val watchlistContentColor by animateColorAsState(
+            targetValue =
+                if (movie.isInWatchlist) {
+                    MaterialTheme.colorScheme.onPrimary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+            animationSpec = tween(durationMillis = 300),
+            label = "watchlistContentColor",
+        )
+        WatchlistButton(
+            onToggleWatchlist,
+            watchlistContainerColor,
+            watchlistContentColor,
+            movie,
+        )
+
+        val watchedContainerColor by animateColorAsState(
+            targetValue =
+                if (movie.isWatched) {
+                    MaterialTheme.colorScheme.secondary
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant
+                },
+            animationSpec = tween(durationMillis = 300),
+            label = "watchedColor",
+        )
+        val watchedContentColor by animateColorAsState(
+            targetValue =
+                if (movie.isWatched) {
+                    MaterialTheme.colorScheme.onSecondary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+            animationSpec = tween(durationMillis = 300),
+            label = "watchedContentColor",
+        )
+        WatchedButton(onToggleWatched, watchedContainerColor, watchedContentColor, movie)
+    }
+}
+
+@Composable
+private fun MovieDetailsSection(
+    movie: MovieUi,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.padding(horizontal = Spacings.spacing16),
+        verticalArrangement = Arrangement.spacedBy(Spacings.spacing16),
+    ) {
+        if (movie.genres.isNotEmpty()) {
+            MovieGenresChipsSection(
+                genres = movie.genres,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        val unknown = stringResource(SR.string.unknown_value)
+        InfoRow(
+            duration = movie.runtime ?: unknown,
+            director = movie.director ?: unknown,
+            country = movie.productionCountries.firstOrNull() ?: unknown,
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(Spacings.spacing8)) {
+            Text(
+                text = "Overview",
+                style =
+                    MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                    ),
+            )
+            Text(
+                text =
+                    movie.overview.ifEmpty {
+                        stringResource(SR.string.default_no_description)
+                    },
+                style =
+                    MaterialTheme.typography.bodyLarge.copy(
+                        lineHeight = 28.sp,
+                    ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        CastSection(cast = movie.cast)
+        CastSection(cast = movie.cast)
+        CastSection(cast = movie.cast)
+        CastSection(cast = movie.cast)
+        CastSection(cast = movie.cast)
+        CastSection(cast = movie.cast)
+        Spacer(modifier = Modifier.height(Spacings.spacing48))
     }
 }
 
@@ -475,20 +641,6 @@ private fun RowScope.WatchedButton(
             maxLines = 1,
         )
     }
-}
-
-@Composable
-private fun MoviePoster(movie: MovieUi) {
-    AsyncImage(
-        model = movie.backdropPath ?: movie.posterPath,
-        contentDescription = null,
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(BACKDROP_HEIGHT),
-        contentScale = ContentScale.Crop,
-        error = painterResource(DR.drawable.ic_movie_card_placeholder),
-    )
 }
 
 @OptIn(ExperimentalLayoutApi::class)
