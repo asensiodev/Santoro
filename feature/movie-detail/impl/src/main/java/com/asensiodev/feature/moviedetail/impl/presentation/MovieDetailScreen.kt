@@ -411,18 +411,6 @@ private fun MovieMetadataRow(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (!movie.releaseDate.isNullOrEmpty()) {
-            Text(
-                text = getYearFromDate(movie.releaseDate) ?: "",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-            )
-            Text(
-                text = " • ",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-            )
-        }
         if (movie.voteAverage > 0.0) {
             Icon(
                 imageVector = AppIcons.Star,

@@ -15,6 +15,7 @@ import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Bookmark
+import androidx.compose.material.icons.rounded.CalendarToday
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Help
@@ -63,5 +64,5 @@ object AppIcons {
     val Writer = Icons.Rounded.Edit
     val Music = Icons.Rounded.MusicNote
     val Camera = Icons.Rounded.PhotoCamera
-    val Calendar = Icons.Rounded.Schedule
+    val Calendar = Icons.Rounded.CalendarToday
 }
