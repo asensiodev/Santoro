@@ -17,12 +17,14 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Help
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.Videocam
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -51,6 +53,8 @@ object AppIcons {
     val Clear = Icons.Filled.Clear
     val Refresh = Icons.Filled.Refresh
     val Star = Icons.Rounded.Star
+    val Settings = Icons.Rounded.Settings
+    val Help = Icons.Rounded.Help
 
     // Movie Detail Metadata
     val Duration = Icons.Rounded.Schedule

@@ -1,4 +1,4 @@
-package com.asensiodev.settings.impl.presentation
+package com.asensiodev.settings.impl.presentation.profile
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -7,7 +7,6 @@ import com.asensiodev.auth.domain.exception.AccountCollisionException
 import com.asensiodev.auth.domain.usecase.LinkWithGoogleUseCase
 import com.asensiodev.auth.domain.usecase.ObserveAuthStateUseCase
 import com.asensiodev.auth.domain.usecase.SignInWithGoogleUseCase
-import com.asensiodev.auth.domain.usecase.SignOutUseCase
 import com.asensiodev.auth.helper.GoogleSignInHelper
 import com.asensiodev.ui.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,25 +19,27 @@ import javax.inject.Inject
 import com.asensiodev.santoro.core.stringresources.R as SR
 
 @HiltViewModel
-internal class SettingsViewModel
+internal class ProfileViewModel
     @Inject
     constructor(
         private val observeAuthStateUseCase: ObserveAuthStateUseCase,
-        private val signOutUseCase: SignOutUseCase,
         private val signInWithGoogleUseCase: SignInWithGoogleUseCase,
         private val linkWithGoogleUseCase: LinkWithGoogleUseCase,
         private val googleSignInHelper: GoogleSignInHelper,
     ) : ViewModel() {
-        private val _uiState = MutableStateFlow(SettingsUiState())
-        val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+        private val _uiState = MutableStateFlow(ProfileUiState())
+        val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
         private var pendingIdToken: String? = null
 
         fun observeAuthState() {
             viewModelScope.launch {
+                _uiState.update { it.copy(isLoading = true) }
                 observeAuthStateUseCase().collect { user ->
                     _uiState.update {
                         it.copy(
+                            isLoading = false,
+                            user = user,
                             isAnonymous = user?.isAnonymous == true,
                         )
                     }
@@ -48,7 +49,7 @@ internal class SettingsViewModel
 
         fun onSignInWithGoogleClicked(context: Context) {
             viewModelScope.launch {
-                _uiState.update { it.copy(isLoading = true, error = null) }
+                _uiState.update { it.copy(isLoading = true) }
                 googleSignInHelper
                     .signIn(context)
                     .onSuccess { idToken ->
@@ -75,6 +76,7 @@ internal class SettingsViewModel
                             it.copy(
                                 isLoading = false,
                                 isLinkAccountSuccessful = true,
+                                error = null,
                             )
                         }
                     }.onFailure { error ->
@@ -84,6 +86,7 @@ internal class SettingsViewModel
                                 it.copy(
                                     isLoading = false,
                                     showAccountCollisionDialog = true,
+                                    error = null,
                                 )
                             }
                         } else {
@@ -101,7 +104,7 @@ internal class SettingsViewModel
             } else {
                 signInWithGoogleUseCase(idToken)
                     .onSuccess {
-                        _uiState.update { it.copy(isLoading = false) }
+                        _uiState.update { it.copy(isLoading = false, error = null) }
                     }.onFailure { _ ->
                         _uiState.update {
                             it.copy(
@@ -114,6 +117,10 @@ internal class SettingsViewModel
                         }
                     }
             }
+        }
+
+        fun onLinkAccountSuccessDismiss() {
+            _uiState.update { it.copy(isLinkAccountSuccessful = false) }
         }
 
         fun onAccountCollisionDialogDismiss() {
@@ -146,20 +153,6 @@ internal class SettingsViewModel
                             }
                         }
                 }
-            }
-        }
-
-        fun onErrorDismiss() {
-            _uiState.update { it.copy(error = null) }
-        }
-
-        fun onLinkAccountSuccessDismiss() {
-            _uiState.update { it.copy(isLinkAccountSuccessful = false) }
-        }
-
-        fun onLogoutClicked() {
-            viewModelScope.launch {
-                signOutUseCase()
             }
         }
     }

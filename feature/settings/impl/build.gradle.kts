@@ -13,4 +13,6 @@ dependencies {
     implementation(projects.core.auth)
     implementation(projects.core.domain)
     implementation(projects.core.ui)
+
+    implementation(libs.bundles.coil)
 }

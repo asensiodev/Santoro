@@ -8,5 +8,6 @@ internal fun FirebaseUser.toSantoroUser(): SantoroUser =
         uid = this.uid,
         email = this.email,
         displayName = this.displayName,
+        photoUrl = this.photoUrl?.toString(),
         isAnonymous = this.isAnonymous,
     )

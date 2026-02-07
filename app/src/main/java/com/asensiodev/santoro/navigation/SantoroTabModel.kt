@@ -7,7 +7,7 @@ import com.asensiodev.feature.searchmovies.api.navigation.SearchMoviesRoute
 import com.asensiodev.feature.watchedmovies.api.navigation.WatchedMoviesRoute
 import com.asensiodev.feature.watchlist.api.navigation.WatchlistRoute
 import com.asensiodev.santoro.core.stringresources.R
-import com.asensiodev.settings.api.navigation.SettingsRoute
+import com.asensiodev.settings.api.navigation.ProfileRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -46,11 +46,10 @@ val SantoroTabs =
             route = WatchlistRoute,
         ),
         SantoroTabModel(
-            titleRes = R.string.settings_title,
-            labelRes = R.string.settings_title,
+            titleRes = R.string.profile_title,
+            labelRes = R.string.profile_title,
             selectedIcon = AppIcons.Profile,
             unselectedIcon = AppIcons.ProfileOutlined,
-            route = SettingsRoute,
-            isRootDestination = true,
+            route = ProfileRoute,
         ),
     )

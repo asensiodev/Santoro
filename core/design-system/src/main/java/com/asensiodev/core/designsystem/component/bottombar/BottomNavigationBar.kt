@@ -138,6 +138,13 @@ fun BottomNavigationBarPreview() {
                     isSelected = false,
                     onClick = {},
                 ),
+                BottomNavItem(
+                    selectedIcon = AppIcons.Profile,
+                    unselectedIcon = AppIcons.ProfileOutlined,
+                    labelRes = SR.string.settings,
+                    isSelected = false,
+                    onClick = {},
+                ),
             ),
     )
 }

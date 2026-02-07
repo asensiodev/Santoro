@@ -11,6 +11,8 @@ import com.asensiodev.feature.searchmovies.api.navigation.SearchMoviesRoute
 import com.asensiodev.feature.searchmovies.impl.navigation.searchMoviesRoute
 import com.asensiodev.feature.watchedmovies.impl.navigation.watchedMoviesRoute
 import com.asensiodev.feature.watchlist.impl.navigation.watchlistRoute
+import com.asensiodev.settings.api.navigation.SettingsRoute
+import com.asensiodev.settings.impl.presentation.navigation.profileRoute
 
 @Composable
 fun SantoroTabNavGraph(
@@ -38,6 +40,12 @@ fun SantoroTabNavGraph(
         watchlistRoute(
             onMovieClick = { movieId ->
                 mainNavController.navigateToMovieDetail(movieId)
+            },
+        )
+
+        profileRoute(
+            onAppSettingsClicked = {
+                mainNavController.navigate(SettingsRoute)
             },
         )
     }

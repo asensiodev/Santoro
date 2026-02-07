@@ -1,4 +1,4 @@
-package com.asensiodev.settings.impl.presentation
+package com.asensiodev.settings.impl.presentation.settings
 
 import com.asensiodev.ui.UiText
 
