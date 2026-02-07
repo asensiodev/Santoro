@@ -63,6 +63,12 @@
     <string name="rating">Rating: %.1f</string>
     <string name="watchlist_icon_button">Watchlist</string>
     <string name="watched_icon_button">Watched</string>
+    <string name="key_crew_title">Crew</string>
+    <string name="cast_title">Cast</string>
+    <string name="crew_role_director">Director</string>
+    <string name="crew_role_writer">Writer</string>
+    <string name="crew_role_cinematographer">Cinematographer</string>
+    <string name="crew_role_composer">Composer</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">Settings</string>

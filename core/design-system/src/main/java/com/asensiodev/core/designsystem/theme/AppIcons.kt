@@ -16,7 +16,10 @@ import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Search
@@ -53,4 +56,8 @@ object AppIcons {
     val Duration = Icons.Rounded.Schedule
     val Director = Icons.Rounded.Videocam
     val Country = Icons.Rounded.Public
+    val Writer = Icons.Rounded.Edit
+    val Music = Icons.Rounded.MusicNote
+    val Camera = Icons.Rounded.PhotoCamera
+    val Calendar = Icons.Rounded.Schedule
 }

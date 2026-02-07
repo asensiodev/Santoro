@@ -13,6 +13,7 @@ data class MovieUi(
     val genres: List<GenreUi>,
     val productionCountries: List<String>,
     val cast: List<CastMemberUi>,
+    val keyCrew: List<CrewMemberUi> = emptyList(),
     val runtime: String?,
     val director: String?,
     val isWatched: Boolean,

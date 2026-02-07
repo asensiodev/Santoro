@@ -1,10 +1,13 @@
 package com.asensiodev.feature.moviedetail.impl.presentation.mapper
 
 import com.asensiodev.core.domain.model.CastMember
+import com.asensiodev.core.domain.model.CrewMember
+import com.asensiodev.core.domain.model.CrewRole
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.ProductionCountry
 import com.asensiodev.feature.moviedetail.impl.presentation.model.CastMemberUi
+import com.asensiodev.feature.moviedetail.impl.presentation.model.CrewMemberUi
 import com.asensiodev.feature.moviedetail.impl.presentation.model.GenreUi
 import com.asensiodev.feature.moviedetail.impl.presentation.model.MovieUi
 
@@ -22,6 +25,7 @@ internal fun Movie.toUi(): MovieUi =
         genres = genres.map { GenreUi(id = it.id, name = it.name) },
         productionCountries = productionCountries.map { it.name },
         cast = cast.map { it.toUi() },
+        keyCrew = crew.toUiCrew(),
         runtime = runtime?.let { formatRuntime(it) },
         director = director,
         isWatched = isWatched,
@@ -66,9 +70,13 @@ private fun CastMemberUi.toDomain() =
         profilePath = profileUrl?.removePrefix(BASE_PROFILE_URL),
     )
 
-private const val BASE_POSTER_URL = "https://image.tmdb.org/t/p/w500"
-private const val BASE_BACKDROP_URL = "https://image.tmdb.org/t/p/w780"
-private const val BASE_PROFILE_URL = "https://image.tmdb.org/t/p/w185"
+private fun List<CrewMember>.toUiCrew(): List<CrewMemberUi> =
+    this
+        .filter { it.role != CrewRole.UNKNOWN }
+        .map { member ->
+            CrewMemberUi(name = member.name, role = member.role)
+        }.distinctBy { it.name to it.role }
+        .sortedBy { it.role.ordinal }
 
 private fun formatRuntime(minutes: Int): String {
     val hours = minutes / HOUR_MINUTES
@@ -80,5 +88,8 @@ private fun formatRuntime(minutes: Int): String {
     }
 }
 
+private const val BASE_POSTER_URL = "https://image.tmdb.org/t/p/w500"
+private const val BASE_BACKDROP_URL = "https://image.tmdb.org/t/p/w780"
+private const val BASE_PROFILE_URL = "https://image.tmdb.org/t/p/w185"
 private const val HOUR_MINUTES = 60
 private const val MINUTE_SECONDS = 60

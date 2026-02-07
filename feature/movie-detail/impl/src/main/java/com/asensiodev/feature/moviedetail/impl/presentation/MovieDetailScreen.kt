@@ -67,7 +67,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.datasource.LoremIpsum
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
@@ -78,8 +77,10 @@ import com.asensiodev.core.designsystem.theme.AppIcons
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.core.designsystem.theme.Weights
+import com.asensiodev.core.domain.model.CrewRole
 import com.asensiodev.feature.moviedetail.impl.presentation.component.GenreChip
 import com.asensiodev.feature.moviedetail.impl.presentation.model.CastMemberUi
+import com.asensiodev.feature.moviedetail.impl.presentation.model.CrewMemberUi
 import com.asensiodev.feature.moviedetail.impl.presentation.model.GenreUi
 import com.asensiodev.feature.moviedetail.impl.presentation.model.MovieUi
 import java.util.Locale
@@ -529,9 +530,9 @@ private fun MovieDetailsSection(
         }
         val unknown = stringResource(SR.string.unknown_value)
         InfoRow(
-            duration = movie.runtime ?: unknown,
-            director = movie.director ?: unknown,
+            year = getYearFromDate(movie.releaseDate) ?: unknown,
             country = movie.productionCountries.firstOrNull() ?: unknown,
+            duration = movie.runtime ?: unknown,
         )
         Column(verticalArrangement = Arrangement.spacedBy(Spacings.spacing8)) {
             Text(
@@ -546,14 +547,14 @@ private fun MovieDetailsSection(
                     movie.overview.ifEmpty {
                         stringResource(SR.string.default_no_description)
                     },
-                style =
-                    MaterialTheme.typography.bodyLarge.copy(
-                        lineHeight = 28.sp,
-                    ),
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         CastSection(cast = movie.cast)
+        if (movie.keyCrew.isNotEmpty()) {
+            CrewGridSection(crew = movie.keyCrew)
+        }
         Spacer(modifier = Modifier.height(Spacings.spacing48))
     }
 }
@@ -665,9 +666,9 @@ fun getYearFromDate(date: String?): String? = date?.split(DATE_DELIMITER)?.getOr
 
 @Composable
 fun InfoRow(
-    duration: String,
-    director: String,
+    year: String,
     country: String,
+    duration: String,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -679,20 +680,20 @@ fun InfoRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         InfoItem(
-            icon = AppIcons.Duration,
-            label = duration,
-            modifier = Modifier.weight(Weights.W08),
-        )
-        VerticalDivider()
-        InfoItem(
-            icon = AppIcons.Director,
-            label = director,
-            modifier = Modifier.weight(Weights.W12),
+            icon = AppIcons.Calendar,
+            label = year,
+            modifier = Modifier.weight(Weights.W10),
         )
         VerticalDivider()
         InfoItem(
             icon = AppIcons.Country,
             label = country,
+            modifier = Modifier.weight(Weights.W10),
+        )
+        VerticalDivider()
+        InfoItem(
+            icon = AppIcons.Duration,
+            label = duration,
             modifier = Modifier.weight(Weights.W10),
         )
     }
@@ -739,10 +740,107 @@ fun InfoItem(
 }
 
 @Composable
+fun CrewGridSection(
+    crew: List<CrewMemberUi>,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(Spacings.spacing12),
+    ) {
+        Text(
+            text = stringResource(SR.string.key_crew_title),
+            style =
+                MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                ),
+        )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(Spacings.spacing12),
+        ) {
+            crew.chunked(2).forEach { rowItems ->
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Spacings.spacing16),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    rowItems.forEach { member ->
+                        CrewMemberItem(
+                            member = member,
+                            modifier = Modifier.weight(Weights.W10),
+                        )
+                    }
+                    if (rowItems.size == 1) {
+                        Spacer(modifier = Modifier.weight(Weights.W10))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CrewMemberItem(
+    member: CrewMemberUi,
+    modifier: Modifier = Modifier,
+) {
+    val (icon, jobLabel) =
+        when (member.role) {
+            CrewRole.DIRECTOR -> {
+                AppIcons.Director to stringResource(SR.string.crew_role_director)
+            }
+
+            CrewRole.WRITER -> {
+                AppIcons.Writer to stringResource(SR.string.crew_role_writer)
+            }
+
+            CrewRole.CINEMATOGRAPHER -> {
+                AppIcons.Camera to
+                    stringResource(SR.string.crew_role_cinematographer)
+            }
+
+            CrewRole.COMPOSER -> {
+                AppIcons.Music to stringResource(SR.string.crew_role_composer)
+            }
+
+            CrewRole.UNKNOWN -> {
+                AppIcons.Info to stringResource(SR.string.unknown_value)
+            }
+        }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(Size.size16),
+        )
+        Spacer(modifier = Modifier.width(Spacings.spacing8))
+        Column {
+            Text(
+                text = member.name,
+                style =
+                    MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = jobLabel,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
 fun CastSection(cast: List<CastMemberUi>) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacings.spacing12)) {
         Text(
-            text = "Cast & Crew",
+            text = stringResource(SR.string.cast_title),
             style =
                 MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
@@ -871,6 +969,19 @@ private fun MovieDetailScreenPreview() {
                                 ),
                             productionCountries = listOf("USA", "Canada"),
                             cast = emptyList(),
+                            keyCrew =
+                                listOf(
+                                    CrewMemberUi(name = "Gary Fleder", role = CrewRole.DIRECTOR),
+                                    CrewMemberUi(name = "Scott Rosenberg", role = CrewRole.WRITER),
+                                    CrewMemberUi(
+                                        name = "Elliot Davis",
+                                        role = CrewRole.CINEMATOGRAPHER,
+                                    ),
+                                    CrewMemberUi(
+                                        name = "Michael Convertino",
+                                        role = CrewRole.COMPOSER,
+                                    ),
+                                ),
                             runtime = "1h ${MOVIE_RUNTIME_MINUTES % 60}m",
                             director = "Gary Fleder",
                             isWatched = false,

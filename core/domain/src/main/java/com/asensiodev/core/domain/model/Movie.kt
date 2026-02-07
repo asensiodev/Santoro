@@ -14,6 +14,7 @@ data class Movie(
     val genreIds: List<Int> = emptyList(),
     val productionCountries: List<ProductionCountry>,
     val cast: List<CastMember> = emptyList(),
+    val crew: List<CrewMember> = emptyList(),
     val runtime: Int? = null,
     val director: String? = null,
     val isWatched: Boolean,
