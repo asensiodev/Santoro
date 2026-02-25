@@ -114,6 +114,7 @@ internal fun MovieDetailRoute(
     viewModel: MovieDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     LaunchedEffect(movieId) {
         viewModel.fetchMovieDetails(movieId)
@@ -125,6 +126,7 @@ internal fun MovieDetailRoute(
         onToggleWatched = viewModel::toggleWatched,
         onRetry = { viewModel.fetchMovieDetails(uiState.movie?.id ?: 0) },
         onBackClicked = onBackClicked,
+        onShareClicked = { uiState.movie?.let { movie -> ShareMovieHelper.share(context, movie) } },
         modifier = modifier,
     )
 }
@@ -137,6 +139,7 @@ internal fun MovieDetailScreen(
     onToggleWatched: () -> Unit,
     onRetry: () -> Unit,
     onBackClicked: () -> Unit,
+    onShareClicked: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
@@ -182,6 +185,7 @@ internal fun MovieDetailScreen(
             backgroundAlpha = appBarBackgroundAlpha,
             titleAlpha = appBarTitleAlpha,
             onBackClicked = onBackClicked,
+            onShareClicked = onShareClicked,
         )
     }
 }
@@ -193,6 +197,7 @@ private fun CollapsibleTopAppBar(
     backgroundAlpha: Float,
     titleAlpha: Float,
     onBackClicked: () -> Unit,
+    onShareClicked: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val backgroundColor by animateColorAsState(
@@ -238,6 +243,18 @@ private fun CollapsibleTopAppBar(
                 Icon(
                     imageVector = AppIcons.ArrowBack,
                     contentDescription = null,
+                    tint = iconTint,
+                )
+            }
+        },
+        actions = {
+            IconButton(onClick = onShareClicked) {
+                Icon(
+                    imageVector = AppIcons.Share,
+                    contentDescription =
+                        stringResource(
+                            SR.string.movie_detail_share_icon_description,
+                        ),
                     tint = iconTint,
                 )
             }
@@ -982,6 +999,7 @@ private fun MovieDetailScreenPreview() {
             onToggleWatched = {},
             onRetry = {},
             onBackClicked = {},
+            onShareClicked = {},
         )
     }
 }

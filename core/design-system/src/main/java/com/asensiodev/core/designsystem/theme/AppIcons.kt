@@ -26,6 +26,7 @@ import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.Videocam
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -56,6 +57,7 @@ object AppIcons {
     val Star = Icons.Rounded.Star
     val Settings = Icons.Rounded.Settings
     val Help = Icons.Rounded.Help
+    val Share = Icons.Rounded.Share
 
     // Movie Detail Metadata
     val Duration = Icons.Rounded.Schedule

@@ -1,14 +1,14 @@
-?# PRP — Share Movie
+# PRP — Share Movie
 
 | Field           | Value                                          |
 |-----------------|------------------------------------------------|
 | **PRP ID**      | PRP-002                                        |
 | **Version**     | 1.0                                            |
-| **Status**      | 🟡 Draft                                       |
+| **Status**      | ✅ Done                                        |
 | **PRD ref**     | [PRD.md](../prd/PRD.md) — §F-03               |
 | **Feature**     | Share a movie from Movie Detail                |
 | **Date**        | 2026-02-25                                     |
-| **Author**      | @asensio                                       |
+| **Author**      | @asensiodev                                    |
 
 ---
 
@@ -73,22 +73,22 @@ https://www.themoviedb.org/movie/27205
 
 ### Phase 1 — Domain / helper
 
-- [ ] Create `ShareMovieHelper` in `feature/movie-detail/impl` — pure function that builds the share `Intent` from a `MovieUi` and launches `startActivity(Intent.createChooser(...))`
-- [ ] Add string resource `movie_detail_share_text` (format: `🎬 %1$s (%2$s)\n⭐ %3$.1f/10\n\nCheck it out on TMDB:\nhttps://www.themoviedb.org/movie/%4$d`)
-- [ ] Add string resource `movie_detail_share_chooser_title` (`"Share via"`)
-- [ ] Add string resource `movie_detail_share_icon_description` (`"Share movie"`)
+- [x] Create `ShareMovieHelper` in `feature/movie-detail/impl` — pure function that builds the share `Intent` from a `MovieUi` and launches `startActivity(Intent.createChooser(...))`
+- [x] Add string resource `movie_detail_share_text` (format: `🎬 %1$s (%2$s)\n⭐ %3$.1f/10\n\nCheck it out on TMDB:\nhttps://www.themoviedb.org/movie/%4$d`)
+- [x] Add string resource `movie_detail_share_chooser_title` (`"Share via"`)
+- [x] Add string resource `movie_detail_share_icon_description` (`"Share movie"`)
 
 ### Phase 2 — Presentation layer
 
-- [ ] Add `onShareClicked: () -> Unit` param to `MovieDetailScreen` and `MovieDetailRoute`
-- [ ] Wire `onShareClicked` in `MovieDetailRoute` using `LocalContext` + `ShareMovieHelper`
-- [ ] Add share `IconButton` to `CollapsibleTopAppBar` (trailing end, tint matches existing back icon)
-- [ ] Pass `onShareClicked` down to `CollapsibleTopAppBar`
+- [x] Add `onShareClicked: () -> Unit` param to `MovieDetailScreen` and `MovieDetailRoute`
+- [x] Wire `onShareClicked` in `MovieDetailRoute` using `LocalContext` + `ShareMovieHelper`
+- [x] Add share `IconButton` to `CollapsibleTopAppBar` (trailing end, tint matches existing back icon)
+- [x] Pass `onShareClicked` down to `CollapsibleTopAppBar`
 
 ### Phase 3 — Tests
 
-- [ ] Unit: `ShareMovieHelper` — verify `Intent` action is `ACTION_SEND`, type is `text/plain`, and `EXTRA_TEXT` contains title, year, rating, and TMDB URL
-- [ ] Unit: `ShareMovieHelper` — verify `EXTRA_TITLE` equals chooser title string
+- [x] Unit: `ShareMovieHelper` — verify `EXTRA_TEXT` contains title, year, rating, and TMDB URL
+- [x] Unit: `ShareMovieHelper` — verify null releaseDate handled gracefully
 
 ---
 

@@ -2,15 +2,15 @@
 
 > Copy this file and rename it to `PRP-<feature-slug>.md`.
 
-| Field           | Value                                                        |
-|-----------------|--------------------------------------------------------------|
-| **PRP ID**      | PRP-XXX                                                      |
-| **Version**     | 1.0                                                          |
-| **Status**      | 🟡 Draft · 🔵 In Progress · ✅ Done                          |
-| **PRD ref**     | [PRD.md](../prd/PRD.md) — §F-XX                             |
-| **Feature**     | _Name of the feature_                                        |
-| **Date**        | YYYY-MM-DD                                                   |
-| **Author**      | @asensio                                                     |
+| Field           | Value                            |
+|-----------------|----------------------------------|
+| **PRP ID**      | PRP-XXX                          |
+| **Version**     | 1.0                              |
+| **Status**      | 🟡 Draft · 🔵 In Progress · ✅ Done |
+| **PRD ref**     | [PRD.md](../prd/PRD.md) — §F-XX  |
+| **Feature**     | _Name of the feature_            |
+| **Date**        | YYYY-MM-DD                       |
+| **Author**      | @asensiodev                      |
 
 ---
 

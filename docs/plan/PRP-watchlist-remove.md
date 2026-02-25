@@ -8,7 +8,7 @@
 | **PRD ref**     | [PRD.md](../prd/PRD.md) — §F-04 · G-01        |
 | **Feature**     | Remove a movie from the Watchlist              |
 | **Date**        | 2026-02-25                                     |
-| **Author**      | @asensio                                       |
+| **Author**      | @asensiodev                                    |
 
 ---
 

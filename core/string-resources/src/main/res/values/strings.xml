@@ -73,6 +73,9 @@
     <string name="crew_role_director">Director</string>
     <string name="crew_role_writer">Writer</string>
     <string name="crew_role_cinematographer">Cinematographer</string>
+    <string name="movie_detail_share_text">🎬 %1$s (%2$s)\n⭐ %3$.1f/10\n\nCheck it out on TMDB:\nhttps://www.themoviedb.org/movie/%4$d</string>
+    <string name="movie_detail_share_chooser_title">Share via</string>
+    <string name="movie_detail_share_icon_description">Share movie</string>
     <string name="crew_role_composer">Composer</string>
 
     <!-- Settings Screen -->

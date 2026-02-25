@@ -5,7 +5,7 @@
 | **Version**  | 1.0                            |
 | **Status**   | ✅ Current                     |
 | **Date**     | 2026-02-25                     |
-| **Author**   | @asensio                       |
+| **Author**   | @asensiodev                    |
 | **Platform** | Android (Native)               |
 
 ---
