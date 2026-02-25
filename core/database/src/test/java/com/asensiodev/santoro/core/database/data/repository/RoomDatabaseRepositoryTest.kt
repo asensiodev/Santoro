@@ -198,4 +198,26 @@ class RoomDatabaseRepositoryTest {
             error.shouldNotBeNull()
             error.exception.shouldBeInstanceOf<RuntimeException>()
         }
+
+    @Test
+    fun `GIVEN a movie id WHEN removeFromWatchlist THEN delegates to dao and returns success`() =
+        runTest {
+            coEvery { movieDao.removeFromWatchlist(1) } just runs
+
+            val result = repository.removeFromWatchlist(1)
+
+            result shouldBeEqualTo Result.Success(true)
+        }
+
+    @Test
+    fun `GIVEN dao throws exception WHEN removeFromWatchlist THEN returns error`() =
+        runTest {
+            coEvery { movieDao.removeFromWatchlist(any()) } throws RuntimeException("DB error")
+
+            val result = repository.removeFromWatchlist(1)
+
+            val error = result as? Result.Error
+            error.shouldNotBeNull()
+            error.exception.shouldBeInstanceOf<RuntimeException>()
+        }
 }

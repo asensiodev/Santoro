@@ -3,6 +3,7 @@ package com.asensiodev.feature.watchlist.impl.di
 import com.asensiodev.core.domain.dispatcher.DispatcherProvider
 import com.asensiodev.feature.watchlist.impl.domain.usecase.AddMovieToWatchlistUseCase
 import com.asensiodev.feature.watchlist.impl.domain.usecase.GetWatchlistMoviesUseCase
+import com.asensiodev.feature.watchlist.impl.domain.usecase.RemoveFromWatchlistUseCase
 import com.asensiodev.feature.watchlist.impl.domain.usecase.SearchWatchlistMoviesUseCase
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import dagger.Module
@@ -34,4 +35,11 @@ internal object WatchlistMoviesModule {
         repository: DatabaseRepository,
         dispatchers: DispatcherProvider,
     ): SearchWatchlistMoviesUseCase = SearchWatchlistMoviesUseCase(repository, dispatchers)
+
+    @Provides
+    @Singleton
+    internal fun provideRemoveFromWatchlistUseCase(
+        repository: DatabaseRepository,
+        dispatchers: DispatcherProvider,
+    ): RemoveFromWatchlistUseCase = RemoveFromWatchlistUseCase(repository, dispatchers)
 }

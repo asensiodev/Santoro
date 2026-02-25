@@ -11,4 +11,5 @@ interface DatabaseRepository {
     fun searchWatchedMoviesByTitle(query: String): Flow<Result<List<Movie>>>
     fun searchWatchlistMoviesByTitle(query: String): Flow<Result<List<Movie>>>
     suspend fun updateMovieState(movie: Movie): Result<Boolean>
+    suspend fun removeFromWatchlist(movieId: Int): Result<Boolean>
 }

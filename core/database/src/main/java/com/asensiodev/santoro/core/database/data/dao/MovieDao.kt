@@ -38,4 +38,7 @@ interface MovieDao {
 
     @Update
     suspend fun updateMovie(movie: MovieEntity)
+
+    @Query("UPDATE movies SET isInWatchlist = 0 WHERE id = :movieId")
+    suspend fun removeFromWatchlist(movieId: Int)
 }

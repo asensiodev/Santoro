@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asensiodev.core.domain.Result
 import com.asensiodev.feature.watchlist.impl.domain.usecase.GetWatchlistMoviesUseCase
+import com.asensiodev.feature.watchlist.impl.domain.usecase.RemoveFromWatchlistUseCase
 import com.asensiodev.feature.watchlist.impl.domain.usecase.SearchWatchlistMoviesUseCase
 import com.asensiodev.feature.watchlist.impl.presentation.mapper.toUiList
+import com.asensiodev.feature.watchlist.impl.presentation.model.MovieUi
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +26,7 @@ internal class WatchlistMoviesViewModel
     constructor(
         private val getWatchlistMoviesUseCase: GetWatchlistMoviesUseCase,
         private val searchWatchlistMoviesUseCase: SearchWatchlistMoviesUseCase,
+        private val removeFromWatchlistUseCase: RemoveFromWatchlistUseCase,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(WatchlistMoviesUiState())
         val uiState: StateFlow<WatchlistMoviesUiState> = _uiState.asStateFlow()
@@ -114,6 +117,22 @@ internal class WatchlistMoviesViewModel
 
         private fun showLoading() {
             _uiState.update { it.copy(isLoading = true) }
+        }
+
+        fun onRemoveMovieClicked(movie: MovieUi) {
+            _uiState.update { it.copy(movieToRemove = movie) }
+        }
+
+        fun onRemoveDismissed() {
+            _uiState.update { it.copy(movieToRemove = null) }
+        }
+
+        fun onRemoveConfirmed() {
+            val movie = _uiState.value.movieToRemove ?: return
+            _uiState.update { it.copy(movieToRemove = null) }
+            viewModelScope.launch {
+                removeFromWatchlistUseCase(movie.id)
+            }
         }
     }
 

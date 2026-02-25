@@ -8,4 +8,5 @@ internal data class WatchlistMoviesUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val hasResults: Boolean = false,
+    val movieToRemove: MovieUi? = null,
 )

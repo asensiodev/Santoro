@@ -80,4 +80,14 @@ class RoomDatabaseRepository
             } catch (e: Exception) {
                 Result.Error(e)
             }
+
+        override suspend fun removeFromWatchlist(movieId: Int): Result<Boolean> =
+            try {
+                movieDao.removeFromWatchlist(movieId)
+                Result.Success(true)
+            } catch (e: SQLiteException) {
+                Result.Error(e)
+            } catch (e: Exception) {
+                Result.Error(e)
+            }
     }
