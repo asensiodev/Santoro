@@ -10,7 +10,7 @@ docs/
 │   └── PRD.md          # single source of truth — Git tracks history
 └── plan/
     ├── PRP-TEMPLATE.md
-    └── PRP-<feature>-v<N>.md
+    └── PRP-<feature>.md
 ```
 
 ---
@@ -18,7 +18,7 @@ docs/
 ## Workflow
 
 ```
-PRD.md  →  PRP-<feature>-v1.0.md  →  execute phase by phase  →  mark checkboxes
+PRD.md  →  PRP-<feature>.md  →  execute phase by phase  →  mark checkboxes
 ```
 
 1. Write / review `PRD.md`.
@@ -35,8 +35,9 @@ PRD.md  →  PRP-<feature>-v1.0.md  →  execute phase by phase  →  mark check
 - Single file. No version number in the filename — Git history is the version log.
 - Add a `## Changelog` entry at the bottom for every meaningful update.
 
-### PRP (`plan/PRP-<feature-slug>-v<N>.md`)
-- One file per feature / initiative.
-- Version bumped (`v2`, `v3`…) only if the scope changes significantly mid-execution.
+### PRP (`plan/PRP-<feature-slug>.md`)
+- One file per feature / initiative. No version number in the filename — Git tracks history.
+- The `Version` field inside the document is informational metadata only.
 - References the PRD section it derives from (`§F-XX`).
 - Checkboxes are the source of truth for progress.
+- **Create a PRP only when you are ready to plan and execute it.** Future ideas that are out of scope belong as a one-liner in the current PRP's `## Out of Scope / Follow-ups` section — not as a new file.

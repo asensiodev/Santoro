@@ -1,5 +1,7 @@
 # PRP — [Feature Name]
 
+> Copy this file and rename it to `PRP-<feature-slug>.md`.
+
 | Field           | Value                                                        |
 |-----------------|--------------------------------------------------------------|
 | **PRP ID**      | PRP-XXX                                                      |
