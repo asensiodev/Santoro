@@ -56,7 +56,9 @@ internal class DefaultSyncRepository
             return mergeWithLocalMovies(downloadResult.getOrDefault(emptyList()))
         }
 
-        private suspend fun mergeWithLocalMovies(remoteMovies: List<MovieSyncEntity>): Result<Unit> {
+        private suspend fun mergeWithLocalMovies(
+            remoteMovies: List<MovieSyncEntity>,
+        ): Result<Unit> {
             val localMoviesResult = databaseRepository.getMoviesForSync()
             if (localMoviesResult is Result.Error) return Result.Error(localMoviesResult.exception)
             return mergeMovies(
