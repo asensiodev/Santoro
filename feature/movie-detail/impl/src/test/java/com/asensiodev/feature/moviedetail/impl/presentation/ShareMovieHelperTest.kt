@@ -36,10 +36,11 @@ class ShareMovieHelperTest {
         every {
             context.getString(SR.string.movie_detail_share_text, any(), any(), any(), any())
         } answers {
-            val title = it.invocation.args[1] as String
-            val year = it.invocation.args[2] as String
-            val rating = it.invocation.args[3] as Double
-            val id = it.invocation.args[4] as Int
+            val varargs = it.invocation.args[1] as Array<*>
+            val title = varargs[0] as String
+            val year = varargs[1] as String
+            val rating = varargs[2] as Double
+            val id = varargs[3] as Int
             "🎬 $title ($year)\n⭐ ${"%.1f".format(
                 rating,
             )}/10\n\nCheck it out on TMDB:\nhttps://www.themoviedb.org/movie/$id"
