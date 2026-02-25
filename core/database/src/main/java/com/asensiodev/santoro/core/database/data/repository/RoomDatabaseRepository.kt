@@ -90,4 +90,61 @@ class RoomDatabaseRepository
             } catch (e: Exception) {
                 Result.Error(e)
             }
+
+        override suspend fun getMoviesForSync(): Result<List<Movie>> =
+            try {
+                Result.Success(movieDao.getMoviesForSync().map { it.toDomain() })
+            } catch (e: SQLiteException) {
+                Result.Error(e)
+            } catch (e: Exception) {
+                Result.Error(e)
+            }
+
+        override suspend fun upsertMovieFromSync(
+            movieId: Int,
+            title: String,
+            posterPath: String?,
+            isWatched: Boolean,
+            isInWatchlist: Boolean,
+            watchedAt: Long?,
+            updatedAt: Long,
+        ): Result<Unit> =
+            try {
+                movieDao.upsertMovieFromSync(
+                    movieId,
+                    title,
+                    posterPath,
+                    isWatched,
+                    isInWatchlist,
+                    watchedAt,
+                    updatedAt,
+                )
+                Result.Success(Unit)
+            } catch (e: SQLiteException) {
+                Result.Error(e)
+            } catch (e: Exception) {
+                Result.Error(e)
+            }
+
+        override suspend fun updateMovieSyncState(
+            movieId: Int,
+            isWatched: Boolean,
+            isInWatchlist: Boolean,
+            watchedAt: Long?,
+            updatedAt: Long,
+        ): Result<Unit> =
+            try {
+                movieDao.updateMovieSyncState(
+                    movieId,
+                    isWatched,
+                    isInWatchlist,
+                    watchedAt,
+                    updatedAt,
+                )
+                Result.Success(Unit)
+            } catch (e: SQLiteException) {
+                Result.Error(e)
+            } catch (e: Exception) {
+                Result.Error(e)
+            }
     }

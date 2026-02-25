@@ -6,7 +6,9 @@ import com.asensiodev.feature.watchlist.impl.domain.usecase.GetWatchlistMoviesUs
 import com.asensiodev.feature.watchlist.impl.domain.usecase.RemoveFromWatchlistUseCase
 import com.asensiodev.feature.watchlist.impl.domain.usecase.SearchWatchlistMoviesUseCase
 import com.asensiodev.feature.watchlist.impl.presentation.model.MovieUi
+import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +30,7 @@ class WatchlistMoviesViewModelTest {
     private val getWatchlistMoviesUseCase: GetWatchlistMoviesUseCase = mockk(relaxed = true)
     private val searchWatchlistMoviesUseCase: SearchWatchlistMoviesUseCase = mockk(relaxed = true)
     private val removeFromWatchlistUseCase: RemoveFromWatchlistUseCase = mockk(relaxed = true)
+    private val syncScheduler: WorkManagerSyncScheduler = mockk(relaxed = true)
 
     private lateinit var viewModel: WatchlistMoviesViewModel
 
@@ -52,6 +55,7 @@ class WatchlistMoviesViewModelTest {
                 getWatchlistMoviesUseCase = getWatchlistMoviesUseCase,
                 searchWatchlistMoviesUseCase = searchWatchlistMoviesUseCase,
                 removeFromWatchlistUseCase = removeFromWatchlistUseCase,
+                syncScheduler = syncScheduler,
             )
     }
 
@@ -107,5 +111,44 @@ class WatchlistMoviesViewModelTest {
 
             viewModel.uiState.value.movieToRemove
                 .shouldBeNull()
+        }
+
+    @Test
+    fun `GIVEN movieToRemove set WHEN onRemoveConfirmed THEN enqueues upload for that movie`() =
+        runTest {
+            coEvery { removeFromWatchlistUseCase(inceptionMovieUi.id) } returns Result.Success(true)
+            advanceUntilIdle()
+
+            viewModel.onRemoveMovieClicked(inceptionMovieUi)
+            viewModel.onRemoveConfirmed()
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { syncScheduler.enqueueUpload(inceptionMovieUi.id) }
+        }
+
+    @Test
+    fun `GIVEN remove fails WHEN onRemoveConfirmed THEN does not enqueue upload`() =
+        runTest {
+            coEvery {
+                removeFromWatchlistUseCase(inceptionMovieUi.id)
+            } returns Result.Error(Exception("db error"))
+            advanceUntilIdle()
+
+            viewModel.onRemoveMovieClicked(inceptionMovieUi)
+            viewModel.onRemoveConfirmed()
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { syncScheduler.enqueueUpload(any()) }
+        }
+
+    @Test
+    fun `GIVEN no movieToRemove WHEN onRemoveConfirmed THEN never enqueues upload`() =
+        runTest {
+            advanceUntilIdle()
+
+            viewModel.onRemoveConfirmed()
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { syncScheduler.enqueueUpload(any()) }
         }
 }

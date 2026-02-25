@@ -7,6 +7,7 @@ import com.asensiodev.core.testing.extension.CoroutineTestExtension
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseCase
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.UpdateMovieStateUseCase
 import com.asensiodev.feature.moviedetail.impl.presentation.mapper.toUi
+import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -27,6 +28,7 @@ class MovieDetailViewModelTest {
 
     private val getMovieDetailUseCase: GetMovieDetailUseCase = mockk()
     private val updateMovieStateUseCase: UpdateMovieStateUseCase = mockk()
+    private val syncScheduler: WorkManagerSyncScheduler = mockk(relaxed = true)
     private val testMovie = createTestMovie()
 
     private lateinit var viewModel: MovieDetailViewModel
@@ -37,6 +39,7 @@ class MovieDetailViewModelTest {
             MovieDetailViewModel(
                 getMovieDetailUseCase = getMovieDetailUseCase,
                 updateMovieStateUseCase = updateMovieStateUseCase,
+                syncScheduler = syncScheduler,
             )
     }
 
@@ -140,6 +143,34 @@ class MovieDetailViewModelTest {
                     cancelAndConsumeRemainingEvents()
                 }
             }
+
+        @Test
+        fun `GIVEN movie WHEN toggleWatchlist succeeds THEN enqueues upload`() =
+            runTest {
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.Success(testMovie))
+                coEvery { updateMovieStateUseCase(any()) } returns Result.Success(true)
+
+                viewModel.fetchMovieDetails(testMovie.id)
+                advanceUntilIdle()
+                viewModel.toggleWatchlist()
+                advanceUntilIdle()
+
+                coVerify(exactly = 1) { syncScheduler.enqueueUpload(testMovie.id) }
+            }
+
+        @Test
+        fun `GIVEN movie WHEN toggleWatchlist fails THEN does not enqueue upload`() =
+            runTest {
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.Success(testMovie))
+                coEvery { updateMovieStateUseCase(any()) } returns Result.Error(Exception("error"))
+
+                viewModel.fetchMovieDetails(testMovie.id)
+                advanceUntilIdle()
+                viewModel.toggleWatchlist()
+                advanceUntilIdle()
+
+                coVerify(exactly = 0) { syncScheduler.enqueueUpload(any()) }
+            }
     }
 
     @Nested
@@ -194,26 +225,31 @@ class MovieDetailViewModelTest {
             }
 
         @Test
-        fun `GIVEN movie id WHEN fetchMovieDetails THEN returns expected movie`() =
+        fun `GIVEN movie WHEN toggleWatched succeeds THEN enqueues upload`() =
             runTest {
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.Success(testMovie))
+                coEvery { updateMovieStateUseCase(any()) } returns Result.Success(true)
 
-                viewModel.uiState.test {
-                    awaitItem() shouldBeEqualTo MovieDetailUiState()
+                viewModel.fetchMovieDetails(testMovie.id)
+                advanceUntilIdle()
+                viewModel.toggleWatched()
+                advanceUntilIdle()
 
-                    viewModel.fetchMovieDetails(testMovie.id)
+                coVerify(exactly = 1) { syncScheduler.enqueueUpload(testMovie.id) }
+            }
 
-                    awaitItem() shouldBeEqualTo MovieDetailUiState(isLoading = true)
+        @Test
+        fun `GIVEN movie WHEN toggleWatched fails THEN does not enqueue upload`() =
+            runTest {
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.Success(testMovie))
+                coEvery { updateMovieStateUseCase(any()) } returns Result.Error(Exception("error"))
 
-                    awaitItem() shouldBeEqualTo
-                        MovieDetailUiState(
-                            isLoading = false,
-                            movie = testMovie.toUi(),
-                            errorMessage = null,
-                        )
+                viewModel.fetchMovieDetails(testMovie.id)
+                advanceUntilIdle()
+                viewModel.toggleWatched()
+                advanceUntilIdle()
 
-                    cancelAndConsumeRemainingEvents()
-                }
+                coVerify(exactly = 0) { syncScheduler.enqueueUpload(any()) }
             }
     }
 
@@ -233,5 +269,6 @@ class MovieDetailViewModelTest {
             cast = listOf(),
             isWatched = false,
             isInWatchlist = false,
+            updatedAt = 0L,
         )
 }

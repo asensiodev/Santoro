@@ -41,4 +41,42 @@ interface MovieDao {
 
     @Query("UPDATE movies SET isInWatchlist = 0 WHERE id = :movieId")
     suspend fun removeFromWatchlist(movieId: Int)
+
+    @Query("SELECT * FROM movies WHERE isWatched = 1 OR isInWatchlist = 1")
+    suspend fun getMoviesForSync(): List<MovieEntity>
+
+    @Query(
+        """INSERT OR REPLACE INTO movies
+           (id, title, overview, posterPath, releaseDate,
+            popularity, voteAverage, voteCount, genres, productionCountries,
+            isWatched, isInWatchlist, watchedAt, updatedAt)
+           VALUES (:movieId, :title, '', :posterPath, NULL,
+            0.0, 0.0, 0, '', '',
+            :isWatched, :isInWatchlist, :watchedAt, :updatedAt)""",
+    )
+    suspend fun upsertMovieFromSync(
+        movieId: Int,
+        title: String,
+        posterPath: String?,
+        isWatched: Boolean,
+        isInWatchlist: Boolean,
+        watchedAt: Long?,
+        updatedAt: Long,
+    )
+
+    @Query(
+        """UPDATE movies
+           SET isWatched = :isWatched,
+               isInWatchlist = :isInWatchlist,
+               watchedAt = :watchedAt,
+               updatedAt = :updatedAt
+           WHERE id = :movieId""",
+    )
+    suspend fun updateMovieSyncState(
+        movieId: Int,
+        isWatched: Boolean,
+        isInWatchlist: Boolean,
+        watchedAt: Long?,
+        updatedAt: Long,
+    )
 }

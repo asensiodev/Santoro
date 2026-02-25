@@ -36,6 +36,11 @@
             <meta-data
                 android:name="com.asensiodev.core.network.init.ApiKeyStartupInitializer"
                 android:value="androidx.startup" />
+            <!-- Disable automatic WorkManager init — we use HiltWorkerFactory via Configuration.Provider -->
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
         </provider>
     </application>
 </manifest>

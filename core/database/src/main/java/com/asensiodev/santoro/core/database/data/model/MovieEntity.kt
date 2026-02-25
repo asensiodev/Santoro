@@ -18,4 +18,5 @@ data class MovieEntity(
     val isWatched: Boolean = false,
     val isInWatchlist: Boolean = false,
     val watchedAt: Long? = null,
+    val updatedAt: Long = 0L,
 )

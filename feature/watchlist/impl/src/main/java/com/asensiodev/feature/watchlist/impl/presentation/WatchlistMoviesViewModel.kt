@@ -8,6 +8,7 @@ import com.asensiodev.feature.watchlist.impl.domain.usecase.RemoveFromWatchlistU
 import com.asensiodev.feature.watchlist.impl.domain.usecase.SearchWatchlistMoviesUseCase
 import com.asensiodev.feature.watchlist.impl.presentation.mapper.toUiList
 import com.asensiodev.feature.watchlist.impl.presentation.model.MovieUi
+import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +28,7 @@ internal class WatchlistMoviesViewModel
         private val getWatchlistMoviesUseCase: GetWatchlistMoviesUseCase,
         private val searchWatchlistMoviesUseCase: SearchWatchlistMoviesUseCase,
         private val removeFromWatchlistUseCase: RemoveFromWatchlistUseCase,
+        private val syncScheduler: WorkManagerSyncScheduler,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(WatchlistMoviesUiState())
         val uiState: StateFlow<WatchlistMoviesUiState> = _uiState.asStateFlow()
@@ -131,7 +133,10 @@ internal class WatchlistMoviesViewModel
             val movie = _uiState.value.movieToRemove ?: return
             _uiState.update { it.copy(movieToRemove = null) }
             viewModelScope.launch {
-                removeFromWatchlistUseCase(movie.id)
+                when (removeFromWatchlistUseCase(movie.id)) {
+                    is Result.Success -> syncScheduler.enqueueUpload(movie.id)
+                    is Result.Error -> Unit
+                }
             }
         }
     }

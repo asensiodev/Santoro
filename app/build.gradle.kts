@@ -59,6 +59,10 @@ dependencies {
     implementation(projects.core.designSystem)
     implementation(projects.core.stringResources)
     implementation(projects.core.network)
+    implementation(projects.core.sync)
+
+    implementation(libs.workmanager)
+    implementation(libs.workmanager.hilt)
 
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)

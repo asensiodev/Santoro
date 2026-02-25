@@ -5,10 +5,16 @@ import androidx.lifecycle.viewModelScope
 import com.asensiodev.auth.domain.usecase.ObserveAuthStateUseCase
 import com.asensiodev.core.domain.usecase.ObserveHasSeenGuestOnboardingUseCase
 import com.asensiodev.core.domain.usecase.SetHasSeenGuestOnboardingUseCase
+import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -20,6 +26,7 @@ class MainActivityViewModel
         observeAuthStateUseCase: ObserveAuthStateUseCase,
         observeHasSeenGuestOnboardingUseCase: ObserveHasSeenGuestOnboardingUseCase,
         private val setHasSeenGuestOnboardingUseCase: SetHasSeenGuestOnboardingUseCase,
+        private val syncScheduler: WorkManagerSyncScheduler,
     ) : ViewModel() {
         val uiState: StateFlow<MainActivityUiState> =
             combine(
@@ -38,6 +45,17 @@ class MainActivityViewModel
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = MainActivityUiState.Loading,
             )
+
+        init {
+            uiState
+                .drop(1)
+                .distinctUntilChangedBy { it is MainActivityUiState.Authenticated }
+                .filter { it is MainActivityUiState.Authenticated }
+                .onEach {
+                    syncScheduler.schedulePeriodicSync()
+                    syncScheduler.scheduleImmediateSync()
+                }.launchIn(viewModelScope)
+        }
 
         fun dismissGuestOnboarding() {
             viewModelScope.launch {

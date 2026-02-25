@@ -22,6 +22,7 @@ fun MovieEntity.toDomain(): Movie =
         isWatched = isWatched,
         isInWatchlist = isInWatchlist,
         watchedAt = watchedAt,
+        updatedAt = updatedAt,
     )
 
 fun String.toGenres(): List<Genre> {
@@ -50,5 +51,6 @@ fun Movie.toEntity(): MovieEntity {
         isWatched = isWatched,
         isInWatchlist = isInWatchlist,
         watchedAt = watchedAt,
+        updatedAt = System.currentTimeMillis(),
     )
 }

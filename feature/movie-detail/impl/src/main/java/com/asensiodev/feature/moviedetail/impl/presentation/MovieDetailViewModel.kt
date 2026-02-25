@@ -7,6 +7,7 @@ import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseC
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.UpdateMovieStateUseCase
 import com.asensiodev.feature.moviedetail.impl.presentation.mapper.toDomain
 import com.asensiodev.feature.moviedetail.impl.presentation.mapper.toUi
+import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +22,7 @@ internal class MovieDetailViewModel
     constructor(
         private val getMovieDetailUseCase: GetMovieDetailUseCase,
         private val updateMovieStateUseCase: UpdateMovieStateUseCase,
+        private val syncScheduler: WorkManagerSyncScheduler,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(MovieDetailUiState())
         val uiState: StateFlow<MovieDetailUiState> = _uiState.asStateFlow()
@@ -60,17 +62,12 @@ internal class MovieDetailViewModel
             viewModelScope.launch {
                 when (val result = updateMovieStateUseCase(updatedMovie.toDomain())) {
                     is Result.Success -> {
-                        _uiState.update {
-                            it.copy(
-                                movie = updatedMovie,
-                            )
-                        }
+                        _uiState.update { it.copy(movie = updatedMovie) }
+                        syncScheduler.enqueueUpload(movie.id)
                     }
 
                     is Result.Error -> {
-                        _uiState.update {
-                            it.copy(errorMessage = result.exception.message)
-                        }
+                        _uiState.update { it.copy(errorMessage = result.exception.message) }
                     }
                 }
             }
@@ -84,21 +81,15 @@ internal class MovieDetailViewModel
                     isWatched = isNowWatched,
                     watchedAt = if (isNowWatched) System.currentTimeMillis() else null,
                 )
-
             viewModelScope.launch {
                 when (val result = updateMovieStateUseCase(updatedMovie.toDomain())) {
                     is Result.Success -> {
-                        _uiState.update {
-                            it.copy(
-                                movie = updatedMovie,
-                            )
-                        }
+                        _uiState.update { it.copy(movie = updatedMovie) }
+                        syncScheduler.enqueueUpload(movie.id)
                     }
 
                     is Result.Error -> {
-                        _uiState.update {
-                            it.copy(errorMessage = result.exception.message)
-                        }
+                        _uiState.update { it.copy(errorMessage = result.exception.message) }
                     }
                 }
             }

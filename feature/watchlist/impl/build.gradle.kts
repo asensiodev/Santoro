@@ -10,6 +10,7 @@ android {
 dependencies {
     implementation(projects.feature.watchlist.api)
     implementation(projects.core.database)
+    implementation(projects.core.sync)
 
     implementation(libs.bundles.coil)
 }

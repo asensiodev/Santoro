@@ -38,12 +38,9 @@ kover = "0.9.1"
 mockk = "1.13.13"
 paparazzi = "1.3.5"
 splashscreen = "1.0.1"
-turbine = "1.2.1"
-appcompat = "1.7.1"
-material = "1.12.0"
 storage = "1.6.0"
-appcompatVersion = "1.7.1"
-materialVersion = "1.13.0"
+turbine = "1.2.1"
+workmanager = "2.10.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -85,6 +82,11 @@ javax-inject = { module = "javax.inject:javax.inject", version = "1" }
 # Coroutines
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "coroutines" }
+google-play-services-tasks = { group = "com.google.android.gms", name = "play-services-tasks", version = "18.2.0" }
+workmanager = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workmanager" }
+workmanager-hilt = { group = "androidx.hilt", name = "hilt-work", version.ref = "hilt" }
+workmanager-testing = { group = "androidx.work", name = "work-testing", version.ref = "workmanager" }
 
 # Encrypted Shared Prefs
 encrypted-shared-prefs = { group = "androidx.security", name = "security-crypto", version = "1.1.0-alpha03" }
@@ -110,8 +112,9 @@ firebase-bom = { module = "com.google.firebase:firebase-bom", version = "34.7.0"
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth-ktx", version = "23.2.1" }
-google-identity = { group = "com.google.android.gms", name = "play-services-auth", version = "21.4.0" }
 firebase-remote-config = { module = "com.google.firebase:firebase-config" }
+firebase-firestore = { module = "com.google.firebase:firebase-firestore-ktx", version = "25.1.4" }
+google-identity = { group = "com.google.android.gms", name = "play-services-auth", version = "21.4.0" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -140,8 +143,6 @@ kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-pl
 ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
 room-gradlePlugin = { group = "androidx.room", name = "room-gradle-plugin", version.ref = "room" }
 androidx-storage = { group = "androidx.test.services", name = "storage", version.ref = "storage" }
-androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompatVersion" }
-material = { group = "com.google.android.material", name = "material", version.ref = "materialVersion" }
 
 [bundles]
 compose = [

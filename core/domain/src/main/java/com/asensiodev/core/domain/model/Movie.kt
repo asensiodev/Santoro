@@ -20,4 +20,5 @@ data class Movie(
     val isWatched: Boolean,
     val isInWatchlist: Boolean,
     val watchedAt: Long? = null,
+    val updatedAt: Long = 0L,
 )
