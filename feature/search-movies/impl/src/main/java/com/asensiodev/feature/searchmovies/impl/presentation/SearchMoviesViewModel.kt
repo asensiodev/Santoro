@@ -21,6 +21,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -51,7 +53,22 @@ internal class SearchMoviesViewModel
         private val _uiState = MutableStateFlow(SearchMoviesUiState())
         val uiState: StateFlow<SearchMoviesUiState> = _uiState.asStateFlow()
 
+        private val _effect = Channel<SearchMoviesEffect>(Channel.BUFFERED)
+        val effect = _effect.receiveAsFlow()
+
         private val searchQuery = savedStateHandle.getStateFlow(SEARCH_QUERY_KEY, "")
+
+        fun process(intent: SearchMoviesIntent) {
+            when (intent) {
+                is SearchMoviesIntent.LoadInitialData -> loadInitialData()
+                is SearchMoviesIntent.UpdateQuery -> updateQuery(intent.query)
+                is SearchMoviesIntent.SelectGenre -> onGenreSelected(intent.genreId)
+                is SearchMoviesIntent.ClearGenre -> clearGenreSelection()
+                is SearchMoviesIntent.SearchWithoutGenreFilter -> searchWithoutGenreFilter()
+                is SearchMoviesIntent.LoadMoreSearchResults -> loadMoreSearchResults()
+                is SearchMoviesIntent.LoadMorePopularMovies -> loadMorePopularMovies()
+            }
+        }
 
         @OptIn(FlowPreview::class)
         fun loadInitialData() {

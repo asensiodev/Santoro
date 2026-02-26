@@ -8,9 +8,11 @@ import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.core.domain.usecase.ObserveThemeUseCase
 import com.asensiodev.core.domain.usecase.SetThemeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -26,6 +28,19 @@ internal class SettingsViewModel
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(SettingsUiState())
         val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+
+        private val _effect = Channel<SettingsEffect>(Channel.BUFFERED)
+        val effect = _effect.receiveAsFlow()
+
+        fun process(intent: SettingsIntent) {
+            when (intent) {
+                is SettingsIntent.ObserveAuth -> observeAuthState()
+                is SettingsIntent.OnAppearanceClicked -> onAppearanceClicked()
+                is SettingsIntent.SetTheme -> setTheme(intent.option)
+                is SettingsIntent.DismissThemePicker -> dismissThemePicker()
+                is SettingsIntent.OnLogoutClicked -> onLogoutClicked()
+            }
+        }
 
         fun observeAuthState() {
             viewModelScope.launch {

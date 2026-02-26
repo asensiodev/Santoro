@@ -53,7 +53,7 @@ class SettingsViewModelTest {
     @Test
     fun `GIVEN onAppearanceClicked WHEN called THEN showThemePicker is true`() =
         runTest {
-            sut.onAppearanceClicked()
+            sut.process(SettingsIntent.OnAppearanceClicked)
 
             sut.uiState.value.showThemePicker shouldBeEqualTo true
         }
@@ -61,8 +61,8 @@ class SettingsViewModelTest {
     @Test
     fun `GIVEN showThemePicker is true WHEN dismissThemePicker THEN showThemePicker is false`() =
         runTest {
-            sut.onAppearanceClicked()
-            sut.dismissThemePicker()
+            sut.process(SettingsIntent.OnAppearanceClicked)
+            sut.process(SettingsIntent.DismissThemePicker)
 
             sut.uiState.value.showThemePicker shouldBeEqualTo false
         }
@@ -70,7 +70,7 @@ class SettingsViewModelTest {
     @Test
     fun `GIVEN setTheme DARK WHEN called THEN delegates to use case with DARK`() =
         runTest {
-            sut.setTheme(ThemeOption.DARK)
+            sut.process(SettingsIntent.SetTheme(ThemeOption.DARK))
             advanceUntilIdle()
 
             coVerify(exactly = 1) { setThemeUseCase(ThemeOption.DARK) }
@@ -79,8 +79,8 @@ class SettingsViewModelTest {
     @Test
     fun `GIVEN setTheme called WHEN completed THEN showThemePicker is false`() =
         runTest {
-            sut.onAppearanceClicked()
-            sut.setTheme(ThemeOption.LIGHT)
+            sut.process(SettingsIntent.OnAppearanceClicked)
+            sut.process(SettingsIntent.SetTheme(ThemeOption.LIGHT))
             advanceUntilIdle()
 
             sut.uiState.value.showThemePicker shouldBeEqualTo false

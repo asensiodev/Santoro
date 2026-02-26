@@ -59,7 +59,7 @@ internal fun ProfileScreenRoute(
     val context = LocalContext.current
 
     LaunchEffectOnce {
-        viewModel.observeAuthState()
+        viewModel.process(ProfileIntent.ObserveAuth)
     }
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -67,12 +67,20 @@ internal fun ProfileScreenRoute(
             onAppSettingsClicked = onAppSettingsClicked,
             onHelpClicked = { /* TODO */ },
             onLinkGoogleAccountClicked = {
-                viewModel.onSignInWithGoogleClicked(context)
+                viewModel.process(ProfileIntent.OnLinkGoogleClicked(context))
             },
-            onRetryError = { viewModel.onSignInWithGoogleClicked(context) },
-            onLinkAccountSuccessDismiss = viewModel::onLinkAccountSuccessDismiss,
-            onAccountCollisionDialogDismiss = viewModel::onAccountCollisionDialogDismiss,
-            onAccountCollisionDialogConfirm = viewModel::onAccountCollisionDialogConfirm,
+            onRetryError = { viewModel.process(ProfileIntent.OnLinkGoogleClicked(context)) },
+            onLinkAccountSuccessDismiss = { viewModel.process(ProfileIntent.DismissLinkSuccess) },
+            onAccountCollisionDialogDismiss = {
+                viewModel.process(
+                    ProfileIntent.DismissAccountCollision,
+                )
+            },
+            onAccountCollisionDialogConfirm = {
+                viewModel.process(
+                    ProfileIntent.ConfirmAccountCollision,
+                )
+            },
             uiState = uiState,
         )
 

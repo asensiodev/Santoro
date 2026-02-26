@@ -117,16 +117,27 @@ internal fun MovieDetailRoute(
     val context = androidx.compose.ui.platform.LocalContext.current
 
     LaunchedEffect(movieId) {
-        viewModel.fetchMovieDetails(movieId)
+        viewModel.process(MovieDetailIntent.FetchDetails(movieId))
     }
+
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is MovieDetailEffect.ShareMovie -> ShareMovieHelper.share(context, effect.movie)
+                is MovieDetailEffect.NavigateBack -> onBackClicked()
+            }
+        }
+    }
+
+    val onProcess = remember(viewModel) { viewModel::process }
 
     MovieDetailScreen(
         uiState = uiState,
-        onToggleWatchlist = viewModel::toggleWatchlist,
-        onToggleWatched = viewModel::toggleWatched,
-        onRetry = { viewModel.fetchMovieDetails(uiState.movie?.id ?: 0) },
+        onToggleWatchlist = { onProcess(MovieDetailIntent.ToggleWatchlist) },
+        onToggleWatched = { onProcess(MovieDetailIntent.ToggleWatched) },
+        onRetry = { onProcess(MovieDetailIntent.Retry) },
         onBackClicked = onBackClicked,
-        onShareClicked = { uiState.movie?.let { movie -> ShareMovieHelper.share(context, movie) } },
+        onShareClicked = { onProcess(MovieDetailIntent.ShareMovie) },
         modifier = modifier,
     )
 }

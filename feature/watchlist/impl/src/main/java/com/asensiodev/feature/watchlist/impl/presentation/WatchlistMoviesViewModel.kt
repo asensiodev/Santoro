@@ -10,6 +10,8 @@ import com.asensiodev.feature.watchlist.impl.presentation.mapper.toUiList
 import com.asensiodev.feature.watchlist.impl.presentation.model.MovieUi
 import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,6 +19,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -33,9 +36,13 @@ internal class WatchlistMoviesViewModel
         private val _uiState = MutableStateFlow(WatchlistMoviesUiState())
         val uiState: StateFlow<WatchlistMoviesUiState> = _uiState.asStateFlow()
 
+        private val _effect = Channel<WatchlistEffect>(Channel.BUFFERED)
+        val effect = _effect.receiveAsFlow()
+
         private val searchQuery = MutableStateFlow("")
 
-        init {
+        @OptIn(FlowPreview::class)
+        fun init() {
             fetchWatchlistMovies()
 
             searchQuery
@@ -48,6 +55,20 @@ internal class WatchlistMoviesViewModel
                         searchWatchlistMovies(query)
                     }
                 }.launchIn(viewModelScope)
+        }
+
+        init {
+            init()
+        }
+
+        fun process(intent: WatchlistIntent) {
+            when (intent) {
+                is WatchlistIntent.LoadMovies -> fetchWatchlistMovies()
+                is WatchlistIntent.UpdateQuery -> updateQuery(intent.query)
+                is WatchlistIntent.RequestRemove -> onRemoveMovieClicked(intent.movie)
+                is WatchlistIntent.ConfirmRemove -> onRemoveConfirmed()
+                is WatchlistIntent.DismissRemoveDialog -> onRemoveDismissed()
+            }
         }
 
         private fun fetchWatchlistMovies() {
@@ -81,7 +102,7 @@ internal class WatchlistMoviesViewModel
             }
         }
 
-        fun updateQuery(query: String) {
+        private fun updateQuery(query: String) {
             searchQuery.value = query
             _uiState.update { it.copy(query = query) }
         }
@@ -121,15 +142,15 @@ internal class WatchlistMoviesViewModel
             _uiState.update { it.copy(isLoading = true) }
         }
 
-        fun onRemoveMovieClicked(movie: MovieUi) {
+        private fun onRemoveMovieClicked(movie: MovieUi) {
             _uiState.update { it.copy(movieToRemove = movie) }
         }
 
-        fun onRemoveDismissed() {
+        private fun onRemoveDismissed() {
             _uiState.update { it.copy(movieToRemove = null) }
         }
 
-        fun onRemoveConfirmed() {
+        private fun onRemoveConfirmed() {
             val movie = _uiState.value.movieToRemove ?: return
             _uiState.update { it.copy(movieToRemove = null) }
             viewModelScope.launch {

@@ -9,9 +9,11 @@ import com.asensiodev.feature.moviedetail.impl.presentation.mapper.toDomain
 import com.asensiodev.feature.moviedetail.impl.presentation.mapper.toUi
 import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -27,7 +29,20 @@ internal class MovieDetailViewModel
         private val _uiState = MutableStateFlow(MovieDetailUiState())
         val uiState: StateFlow<MovieDetailUiState> = _uiState.asStateFlow()
 
-        fun fetchMovieDetails(movieId: Int) {
+        private val _effect = Channel<MovieDetailEffect>(Channel.BUFFERED)
+        val effect = _effect.receiveAsFlow()
+
+        fun process(intent: MovieDetailIntent) {
+            when (intent) {
+                is MovieDetailIntent.FetchDetails -> fetchMovieDetails(intent.movieId)
+                is MovieDetailIntent.ToggleWatched -> toggleWatched()
+                is MovieDetailIntent.ToggleWatchlist -> toggleWatchlist()
+                is MovieDetailIntent.ShareMovie -> emitShareEffect()
+                is MovieDetailIntent.Retry -> retryFetch()
+            }
+        }
+
+        private fun fetchMovieDetails(movieId: Int) {
             showLoading()
             viewModelScope.launch {
                 getMovieDetailUseCase(movieId)
@@ -42,7 +57,6 @@ internal class MovieDetailViewModel
                                     )
                                 }
                             }
-
                             is Result.Error -> {
                                 _uiState.update {
                                     it.copy(
@@ -56,7 +70,19 @@ internal class MovieDetailViewModel
             }
         }
 
-        fun toggleWatchlist() {
+        private fun retryFetch() {
+            val movieId = _uiState.value.movie?.id ?: return
+            fetchMovieDetails(movieId)
+        }
+
+        private fun emitShareEffect() {
+            val movie = _uiState.value.movie ?: return
+            viewModelScope.launch {
+                _effect.send(MovieDetailEffect.ShareMovie(movie))
+            }
+        }
+
+        private fun toggleWatchlist() {
             val movie = uiState.value.movie ?: return
             val updatedMovie = movie.copy(isInWatchlist = !movie.isInWatchlist)
             viewModelScope.launch {
@@ -65,7 +91,6 @@ internal class MovieDetailViewModel
                         _uiState.update { it.copy(movie = updatedMovie) }
                         syncScheduler.enqueueUpload(movie.id)
                     }
-
                     is Result.Error -> {
                         _uiState.update { it.copy(errorMessage = result.exception.message) }
                     }
@@ -73,7 +98,7 @@ internal class MovieDetailViewModel
             }
         }
 
-        fun toggleWatched() {
+        private fun toggleWatched() {
             val movie = uiState.value.movie ?: return
             val isNowWatched = !movie.isWatched
             val updatedMovie =
@@ -87,7 +112,6 @@ internal class MovieDetailViewModel
                         _uiState.update { it.copy(movie = updatedMovie) }
                         syncScheduler.enqueueUpload(movie.id)
                     }
-
                     is Result.Error -> {
                         _uiState.update { it.copy(errorMessage = result.exception.message) }
                     }

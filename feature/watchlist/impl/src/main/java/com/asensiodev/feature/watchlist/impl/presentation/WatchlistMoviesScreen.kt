@@ -21,7 +21,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -47,13 +49,20 @@ internal fun WatchlistMoviesRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is WatchlistEffect.NavigateToDetail -> onMovieClick(effect.movieId)
+            }
+        }
+    }
+
+    val onProcess = remember(viewModel) { viewModel::process }
+
     WatchlistMoviesScreen(
         uiState = uiState,
-        onQueryChanged = viewModel::updateQuery,
+        onProcess = onProcess,
         onMovieClick = onMovieClick,
-        onRemoveMovie = viewModel::onRemoveMovieClicked,
-        onRemoveConfirmed = viewModel::onRemoveConfirmed,
-        onRemoveDismissed = viewModel::onRemoveDismissed,
         modifier = modifier,
     )
 }
@@ -61,11 +70,8 @@ internal fun WatchlistMoviesRoute(
 @Composable
 internal fun WatchlistMoviesScreen(
     uiState: WatchlistMoviesUiState,
-    onQueryChanged: (String) -> Unit,
+    onProcess: (WatchlistIntent) -> Unit,
     onMovieClick: (Int) -> Unit,
-    onRemoveMovie: (MovieUi) -> Unit,
-    onRemoveConfirmed: () -> Unit,
-    onRemoveDismissed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -78,7 +84,7 @@ internal fun WatchlistMoviesScreen(
         QueryTextField(
             query = uiState.query,
             placeholder = stringResource(SR.string.watchlist_movies_textfield_placeholder),
-            onQueryChanged = onQueryChanged,
+            onQueryChanged = { onProcess(WatchlistIntent.UpdateQuery(it)) },
         )
         when {
             uiState.isLoading -> {
@@ -88,7 +94,7 @@ internal fun WatchlistMoviesScreen(
             uiState.errorMessage != null -> {
                 ErrorContent(
                     message = stringResource(SR.string.error_message_retry),
-                    onRetry = { onQueryChanged(uiState.query) },
+                    onRetry = { onProcess(WatchlistIntent.LoadMovies) },
                 )
             }
 
@@ -96,7 +102,7 @@ internal fun WatchlistMoviesScreen(
                 MovieList(
                     movies = uiState.movies,
                     onMovieClick = onMovieClick,
-                    onRemoveMovie = onRemoveMovie,
+                    onRemoveMovie = { onProcess(WatchlistIntent.RequestRemove(it)) },
                 )
             }
 
@@ -111,8 +117,8 @@ internal fun WatchlistMoviesScreen(
     uiState.movieToRemove?.let { movie ->
         ConfirmRemoveDialog(
             movieTitle = movie.title,
-            onConfirm = onRemoveConfirmed,
-            onDismiss = onRemoveDismissed,
+            onConfirm = { onProcess(WatchlistIntent.ConfirmRemove) },
+            onDismiss = { onProcess(WatchlistIntent.DismissRemoveDialog) },
         )
     }
 }
@@ -255,11 +261,8 @@ private fun WatchlistMoviesScreenPreview() {
                     errorMessage = null,
                     hasResults = true,
                 ),
-            onQueryChanged = {},
+            onProcess = {},
             onMovieClick = {},
-            onRemoveMovie = {},
-            onRemoveConfirmed = {},
-            onRemoveDismissed = {},
         )
     }
 }

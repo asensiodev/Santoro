@@ -86,19 +86,15 @@ internal fun SearchMoviesRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchEffectOnce {
-        viewModel.loadInitialData()
+        viewModel.process(SearchMoviesIntent.LoadInitialData)
     }
+
+    val onProcess = remember(viewModel) { viewModel::process }
 
     SearchMoviesScreen(
         uiState = uiState,
-        onQueryChanged = viewModel::updateQuery,
+        onProcess = onProcess,
         onMovieClick = onMovieClick,
-        onLoadMorePopularMovies = viewModel::loadMorePopularMovies,
-        onLoadMoreSearchedMovies = viewModel::loadMoreSearchResults,
-        onGenreSelected = viewModel::onGenreSelected,
-        onClearGenreSelection = viewModel::clearGenreSelection,
-        onSearchWithoutGenreFilter = viewModel::searchWithoutGenreFilter,
-        onRetry = viewModel::loadInitialData,
         modifier = modifier,
     )
 }
@@ -106,15 +102,9 @@ internal fun SearchMoviesRoute(
 @Composable
 internal fun SearchMoviesScreen(
     uiState: SearchMoviesUiState,
-    onQueryChanged: (String) -> Unit,
+    onProcess: (SearchMoviesIntent) -> Unit,
     onMovieClick: (Int) -> Unit,
-    onGenreSelected: (Int) -> Unit,
-    onClearGenreSelection: () -> Unit,
-    onSearchWithoutGenreFilter: () -> Unit,
-    onRetry: () -> Unit,
     modifier: Modifier = Modifier,
-    onLoadMorePopularMovies: () -> Unit,
-    onLoadMoreSearchedMovies: () -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -134,40 +124,36 @@ internal fun SearchMoviesScreen(
         QueryTextField(
             query = uiState.query,
             placeholder = stringResource(SR.string.search_movies_textfield_placeholder),
-            onQueryChanged = onQueryChanged,
+            onQueryChanged = { onProcess(SearchMoviesIntent.UpdateQuery(it)) },
         )
 
         GenreFilterChips(
             selectedGenreId = uiState.selectedGenreId,
-            onGenreSelected = onGenreSelected,
-            onClearGenre = onClearGenreSelection,
+            onGenreSelected = { onProcess(SearchMoviesIntent.SelectGenre(it)) },
+            onClearGenre = { onProcess(SearchMoviesIntent.ClearGenre) },
         )
 
         AnimatedVisibility(visible = uiState.isShowingStaleData) {
-            OfflineBanner(onRetry = onRetry)
+            OfflineBanner(onRetry = { onProcess(SearchMoviesIntent.LoadInitialData) })
         }
 
         if (uiState.query.isBlank() && uiState.selectedGenreId == null) {
             DashboardContent(
                 uiState = uiState,
                 onMovieClick = onMovieClick,
-                onLoadMorePopular = onLoadMorePopularMovies,
-            )
-        } else if (uiState.selectedGenreId != null) {
-            SearchMoviesContent(
-                uiState = uiState,
-                onQueryChanged = onQueryChanged,
-                onMovieClick = onMovieClick,
-                onLoadMore = onLoadMoreSearchedMovies,
-                onSearchWithoutGenreFilter = onSearchWithoutGenreFilter,
+                onLoadMorePopular = { onProcess(SearchMoviesIntent.LoadMorePopularMovies) },
             )
         } else {
             SearchMoviesContent(
                 uiState = uiState,
-                onQueryChanged = onQueryChanged,
+                onQueryChanged = { onProcess(SearchMoviesIntent.UpdateQuery(it)) },
                 onMovieClick = onMovieClick,
-                onLoadMore = onLoadMoreSearchedMovies,
-                onSearchWithoutGenreFilter = onSearchWithoutGenreFilter,
+                onLoadMore = { onProcess(SearchMoviesIntent.LoadMoreSearchResults) },
+                onSearchWithoutGenreFilter = {
+                    onProcess(
+                        SearchMoviesIntent.SearchWithoutGenreFilter,
+                    )
+                },
             )
         }
     }
@@ -717,14 +703,8 @@ private fun SearchMoviesScreenPreview() {
                     topRatedMovies = sampleMovies,
                     upcomingMovies = sampleMovies,
                 ),
-            onQueryChanged = {},
+            onProcess = {},
             onMovieClick = {},
-            onLoadMorePopularMovies = {},
-            onLoadMoreSearchedMovies = {},
-            onGenreSelected = {},
-            onClearGenreSelection = {},
-            onSearchWithoutGenreFilter = {},
-            onRetry = {},
         )
     }
 }

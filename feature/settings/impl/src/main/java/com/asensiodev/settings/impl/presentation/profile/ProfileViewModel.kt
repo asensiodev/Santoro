@@ -10,9 +10,11 @@ import com.asensiodev.auth.domain.usecase.SignInWithGoogleUseCase
 import com.asensiodev.auth.helper.GoogleSignInHelper
 import com.asensiodev.ui.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -30,7 +32,20 @@ internal class ProfileViewModel
         private val _uiState = MutableStateFlow(ProfileUiState())
         val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
+        private val _effect = Channel<ProfileEffect>(Channel.BUFFERED)
+        val effect = _effect.receiveAsFlow()
+
         private var pendingIdToken: String? = null
+
+        fun process(intent: ProfileIntent) {
+            when (intent) {
+                is ProfileIntent.ObserveAuth -> observeAuthState()
+                is ProfileIntent.OnLinkGoogleClicked -> onSignInWithGoogleClicked(intent.context)
+                is ProfileIntent.DismissLinkSuccess -> onLinkAccountSuccessDismiss()
+                is ProfileIntent.DismissAccountCollision -> onAccountCollisionDialogDismiss()
+                is ProfileIntent.ConfirmAccountCollision -> onAccountCollisionDialogConfirm()
+            }
+        }
 
         fun observeAuthState() {
             viewModelScope.launch {

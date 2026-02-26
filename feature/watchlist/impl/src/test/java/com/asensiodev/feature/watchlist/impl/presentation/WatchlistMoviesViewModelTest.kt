@@ -65,35 +65,35 @@ class WatchlistMoviesViewModelTest {
     }
 
     @Test
-    fun `GIVEN a movie WHEN onRemoveMovieClicked THEN movieToRemove is set in state`() =
+    fun `GIVEN a movie WHEN RequestRemove intent THEN movieToRemove is set in state`() =
         runTest {
             advanceUntilIdle()
 
-            viewModel.onRemoveMovieClicked(inceptionMovieUi)
+            viewModel.process(WatchlistIntent.RequestRemove(inceptionMovieUi))
 
             viewModel.uiState.value.movieToRemove shouldBeEqualTo inceptionMovieUi
         }
 
     @Test
-    fun `GIVEN movieToRemove set WHEN onRemoveDismissed THEN movieToRemove is cleared`() =
+    fun `GIVEN movieToRemove set WHEN DismissRemoveDialog intent THEN movieToRemove is cleared`() =
         runTest {
             advanceUntilIdle()
 
-            viewModel.onRemoveMovieClicked(inceptionMovieUi)
-            viewModel.onRemoveDismissed()
+            viewModel.process(WatchlistIntent.RequestRemove(inceptionMovieUi))
+            viewModel.process(WatchlistIntent.DismissRemoveDialog)
 
             viewModel.uiState.value.movieToRemove
                 .shouldBeNull()
         }
 
     @Test
-    fun `GIVEN movieToRemove set WHEN onRemoveConfirmed THEN calls use case and clears movieToRemove`() =
+    fun `GIVEN movieToRemove set WHEN ConfirmRemove intent THEN calls use case and clears movieToRemove`() =
         runTest {
             coEvery { removeFromWatchlistUseCase(inceptionMovieUi.id) } returns Result.Success(true)
             advanceUntilIdle()
 
-            viewModel.onRemoveMovieClicked(inceptionMovieUi)
-            viewModel.onRemoveConfirmed()
+            viewModel.process(WatchlistIntent.RequestRemove(inceptionMovieUi))
+            viewModel.process(WatchlistIntent.ConfirmRemove)
             advanceUntilIdle()
 
             viewModel.uiState.value.movieToRemove
@@ -102,11 +102,11 @@ class WatchlistMoviesViewModelTest {
         }
 
     @Test
-    fun `GIVEN no movieToRemove WHEN onRemoveConfirmed THEN use case is never called`() =
+    fun `GIVEN no movieToRemove WHEN ConfirmRemove intent THEN use case is never called`() =
         runTest {
             advanceUntilIdle()
 
-            viewModel.onRemoveConfirmed()
+            viewModel.process(WatchlistIntent.ConfirmRemove)
             advanceUntilIdle()
 
             viewModel.uiState.value.movieToRemove
@@ -114,39 +114,39 @@ class WatchlistMoviesViewModelTest {
         }
 
     @Test
-    fun `GIVEN movieToRemove set WHEN onRemoveConfirmed THEN enqueues upload for that movie`() =
+    fun `GIVEN movieToRemove set WHEN ConfirmRemove intent THEN enqueues upload for that movie`() =
         runTest {
             coEvery { removeFromWatchlistUseCase(inceptionMovieUi.id) } returns Result.Success(true)
             advanceUntilIdle()
 
-            viewModel.onRemoveMovieClicked(inceptionMovieUi)
-            viewModel.onRemoveConfirmed()
+            viewModel.process(WatchlistIntent.RequestRemove(inceptionMovieUi))
+            viewModel.process(WatchlistIntent.ConfirmRemove)
             advanceUntilIdle()
 
             coVerify(exactly = 1) { syncScheduler.enqueueUpload(inceptionMovieUi.id) }
         }
 
     @Test
-    fun `GIVEN remove fails WHEN onRemoveConfirmed THEN does not enqueue upload`() =
+    fun `GIVEN remove fails WHEN ConfirmRemove intent THEN does not enqueue upload`() =
         runTest {
             coEvery {
                 removeFromWatchlistUseCase(inceptionMovieUi.id)
             } returns Result.Error(Exception("db error"))
             advanceUntilIdle()
 
-            viewModel.onRemoveMovieClicked(inceptionMovieUi)
-            viewModel.onRemoveConfirmed()
+            viewModel.process(WatchlistIntent.RequestRemove(inceptionMovieUi))
+            viewModel.process(WatchlistIntent.ConfirmRemove)
             advanceUntilIdle()
 
             coVerify(exactly = 0) { syncScheduler.enqueueUpload(any()) }
         }
 
     @Test
-    fun `GIVEN no movieToRemove WHEN onRemoveConfirmed THEN never enqueues upload`() =
+    fun `GIVEN no movieToRemove WHEN ConfirmRemove intent THEN never enqueues upload`() =
         runTest {
             advanceUntilIdle()
 
-            viewModel.onRemoveConfirmed()
+            viewModel.process(WatchlistIntent.ConfirmRemove)
             advanceUntilIdle()
 
             coVerify(exactly = 0) { syncScheduler.enqueueUpload(any()) }

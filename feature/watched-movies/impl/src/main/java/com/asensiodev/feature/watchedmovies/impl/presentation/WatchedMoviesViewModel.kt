@@ -8,6 +8,7 @@ import com.asensiodev.feature.watchedmovies.impl.domain.usecase.SearchWatchedMov
 import com.asensiodev.feature.watchedmovies.impl.presentation.mapper.toUiList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -29,6 +31,9 @@ internal class WatchedMoviesViewModel
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(WatchedMoviesUiState())
         val uiState: StateFlow<WatchedMoviesUiState> = _uiState.asStateFlow()
+
+        private val _effect = Channel<WatchedMoviesEffect>(Channel.BUFFERED)
+        val effect = _effect.receiveAsFlow()
 
         private val searchQuery = MutableStateFlow("")
 
@@ -45,6 +50,13 @@ internal class WatchedMoviesViewModel
                         searchWatchedMovies(query)
                     }
                 }.launchIn(viewModelScope)
+        }
+
+        fun process(intent: WatchedMoviesIntent) {
+            when (intent) {
+                is WatchedMoviesIntent.LoadMovies -> fetchWatchedMovies()
+                is WatchedMoviesIntent.UpdateQuery -> updateQuery(intent.query)
+            }
         }
 
         private fun fetchWatchedMovies() {
@@ -78,8 +90,7 @@ internal class WatchedMoviesViewModel
             }
         }
 
-        fun updateQuery(query: String) {
-            searchQuery.value = query
+        private fun updateQuery(query: String) {
             _uiState.update { it.copy(query = query) }
         }
 

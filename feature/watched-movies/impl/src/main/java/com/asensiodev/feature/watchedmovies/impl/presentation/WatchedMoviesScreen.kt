@@ -24,7 +24,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -51,9 +53,19 @@ internal fun WatchedMoviesRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is WatchedMoviesEffect.NavigateToDetail -> onMovieClick(effect.movieId)
+            }
+        }
+    }
+
+    val onProcess = remember(viewModel) { viewModel::process }
+
     WatchedMoviesScreen(
         uiState = uiState,
-        onQueryChanged = viewModel::updateQuery,
+        onProcess = onProcess,
         onMovieClick = onMovieClick,
         modifier = modifier,
     )
@@ -62,7 +74,7 @@ internal fun WatchedMoviesRoute(
 @Composable
 internal fun WatchedMoviesScreen(
     uiState: WatchedMoviesUiState,
-    onQueryChanged: (String) -> Unit,
+    onProcess: (WatchedMoviesIntent) -> Unit,
     onMovieClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -77,7 +89,7 @@ internal fun WatchedMoviesScreen(
         QueryTextField(
             query = uiState.query,
             placeholder = stringResource(SR.string.watched_movies_textfield_placeholder),
-            onQueryChanged = onQueryChanged,
+            onQueryChanged = { onProcess(WatchedMoviesIntent.UpdateQuery(it)) },
         )
         when {
             uiState.isLoading -> {
@@ -87,7 +99,7 @@ internal fun WatchedMoviesScreen(
             uiState.errorMessage != null -> {
                 ErrorContent(
                     message = stringResource(SR.string.error_message_retry),
-                    onRetry = { onQueryChanged(uiState.query) },
+                    onRetry = { onProcess(WatchedMoviesIntent.LoadMovies) },
                 )
             }
 
@@ -228,7 +240,7 @@ private fun WatchedMoviesScreenPreview() {
                     isLoading = false,
                     errorMessage = null,
                 ),
-            onQueryChanged = {},
+            onProcess = {},
             onMovieClick = {},
         )
     }

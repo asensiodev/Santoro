@@ -54,17 +54,15 @@ internal fun SettingsScreenRoute(
         }
 
     LaunchEffectOnce {
-        viewModel.observeAuthState()
+        viewModel.process(SettingsIntent.ObserveAuth)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
         SettingsScreen(
             onBackClicked = onBackClicked,
-            onAppearanceClicked = viewModel::onAppearanceClicked,
+            onAppearanceClicked = { viewModel.process(SettingsIntent.OnAppearanceClicked) },
             onLanguageClicked = { /* TODO */ },
-            onLogoutClicked = {
-                viewModel.onLogoutClicked()
-            },
+            onLogoutClicked = { viewModel.process(SettingsIntent.OnLogoutClicked) },
             isAnonymous = uiState.isAnonymous,
             versionName = versionName ?: "Unknown",
             modifier = modifier,
@@ -86,8 +84,8 @@ internal fun SettingsScreenRoute(
         if (uiState.showThemePicker) {
             ThemePickerBottomSheet(
                 currentTheme = uiState.currentTheme,
-                onThemeSelected = viewModel::setTheme,
-                onDismiss = viewModel::dismissThemePicker,
+                onThemeSelected = { viewModel.process(SettingsIntent.SetTheme(it)) },
+                onDismiss = { viewModel.process(SettingsIntent.DismissThemePicker) },
             )
         }
     }
