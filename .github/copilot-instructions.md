@@ -46,7 +46,8 @@
     * **FORBIDDEN:** Using `it` in nested lambdas or multi-line blocks. Always use explicit names.
 * **Resources & Values:** NO magic numbers (raw values).
     * **Dimensions:** NO raw `.dp`. Use `Dimens`, `Size`, or `Weights`.
-    * **Text:** NO raw `.sp`. Use `MaterialTheme.typography` styles (preferred) or a centralized `TextSize` object.* **Style:** Immutability (`val`) preferred. No `!!`.
+    * **Text:** NO raw `.sp`. Use `MaterialTheme.typography` styles (preferred) or a centralized `TextSize` object.
+* **Style:** Immutability (`val`) preferred. No `!!`.
 * **Compose:** `modifier: Modifier = Modifier` as 1st optional param.
 
 **OUTPUT & INTERACTION (STRICTLY ENFORCE):**
@@ -68,7 +69,11 @@
 
 **PLANNED WORK — PRD / PRP SYSTEM:**
 * All planned features live in `docs/`. Read `docs/README.md` to understand the system.
+* **Two workflows supported:**
+    * **Own project:** `PRD.md → PRP → execute`
+    * **Corporate / sprint:** `Feature Brief (FB-XXX) → PRP → execute`
 * When executing a feature: locate its PRP in `docs/plan/`, read it top to bottom before touching any code.
+* If the PRP references a Feature Brief (`FB-XXX`) — read it first for context.
 * If the PRP has a **Prerequisites** section referencing a guide in `docs/guides/` — read the guide first.
 * Work **phase by phase**. Mark each checkbox `[x]` as you complete it.
 * If anything is ambiguous or contradicts the plan — **stop and ask**. Never decide unilaterally.

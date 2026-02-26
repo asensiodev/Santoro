@@ -9,7 +9,7 @@
 | **PRP ID**             | PRP-XXX                                   |
 | **Version**            | 1.0                                       |
 | **Status**             | 🟡 Draft · 🔵 In Progress · ✅ Done       |
-| **PRD ref**            | [PRD.md](../prd/PRD.md) — §F-XX          |
+| **PRD ref**            | [PRD.md](../prd/PRD.md) — §F-XX _or_ [FB-XXX](../briefs/FB-XXX-slug.md) |
 | **Feature**            | _Name of the feature_                     |
 | **Date**               | YYYY-MM-DD                                |
 | **Author**             | _@your-handle_                            |
@@ -21,7 +21,7 @@
 > If anything is ambiguous or doesn't fit the plan — **stop and ask** before deciding.
 
 > **Sections follow a fixed order.** Delete sections that don't apply, but do not reorder them.
-> A small UI feature may only need §1, §2, §5, §7.
+> A small UI feature may only need §1, §2, §5, §9.
 > An infra refactor may skip §4 (User Stories) and §5 (UX) entirely.
 
 ---
@@ -40,8 +40,10 @@ _Why are we building this? What problem does it solve?_
 
 ## 2. Goals
 
-- [ ] Goal 1
-- [ ] Goal 2
+- Goal 1
+- Goal 2
+
+---
 
 ## 3. Non-Goals
 
@@ -126,7 +128,32 @@ _Include new modules to create and existing modules to modify. Mention DI / nav 
 
 ---
 
-## 10. Open Questions
+## 10. Validation
+
+_How was this feature verified beyond automated tests? Fill after implementation._
+
+| What                        | Result | Notes                                    |
+|-----------------------------|--------|------------------------------------------|
+| Manual test on real device  | ✅ / ❌ / ⏭️ | _Device model, OS version, or why skipped_ |
+| Manual test on emulator     | ✅ / ❌ / ⏭️ | _API level, or why skipped_               |
+| Edge cases verified         | ✅ / ❌ / ⏭️ | _Which ones, or why skipped_              |
+| Accessibility check         | ✅ / ❌ / ⏭️ | _TalkBack, font scale, or why skipped_    |
+
+_⏭️ = skipped. If skipped, explain why (e.g. "backend not deployed yet", "no physical device available")._
+
+---
+
+## 11. Blockers
+
+_Impediments that paused or delayed this feature. Leave empty if none._
+
+| # | Blocker | Raised | Resolved | Impact |
+|---|---------|--------|----------|--------|
+| 1 | _e.g. Backend API not ready_ | _date_ | _date or "open"_ | _e.g. Phase 3 blocked 4 days_ |
+
+---
+
+## 12. Open Questions
 
 | # | Question | Resolution |
 |---|----------|------------|
@@ -134,13 +161,29 @@ _Include new modules to create and existing modules to modify. Mention DI / nav 
 
 ---
 
-## 11. Out of Scope / Follow-ups
+## 13. Decisions
+
+_Key technical choices made during planning or implementation. Useful for future reference ("why did we do X instead of Y?")._
+
+| # | Decision | Alternatives considered | Rationale |
+|---|----------|------------------------|-----------|
+| 1 |          |                        |           |
+
+---
+
+## 14. Out of Scope / Follow-ups
 
 - _Item 1_
 
 ---
 
-## 12. Changelog
+## 15. Handover Notes (optional)
+
+_If someone else picks up this feature, what do they need to know? Current state, blockers, gotchas, branch name, or WIP context._
+
+---
+
+## 16. Changelog
 
 | Version | Date       | Summary       |
 |---------|------------|---------------|
