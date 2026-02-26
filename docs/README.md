@@ -1,8 +1,8 @@
-# Santoro – Documentation
+# Documentation
 
 > **License:** This documentation system (PRD, PRP template, guides, and copilot-instructions) is © 2026 [Ángel Asensio](https://github.com/asensiodev) and licensed under [CC BY 4.0](./LICENSE).
 
-This folder contains all product and planning documentation for the Santoro Android app.
+This folder contains all product and planning documentation for the project.
 
 ## Structure
 

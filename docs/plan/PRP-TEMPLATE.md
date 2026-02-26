@@ -12,7 +12,7 @@
 | **PRD ref**            | [PRD.md](../prd/PRD.md) — §F-XX          |
 | **Feature**            | _Name of the feature_                     |
 | **Date**               | YYYY-MM-DD                                |
-| **Author**             | @asensiodev                               |
+| **Author**             | _@your-handle_                            |
 | **Definition of Done** | All checkboxes in all phases marked `[x]` |
 
 ---

@@ -10,7 +10,7 @@
 * **Confirm Assumptions:** Explicitly state assumptions if proceeding with partial info.
 
 **PHILOSOPHY: MINIMUM VIABLE ARCHITECTURE (MVA)**
-* Follow Petros Efthymiou's approach: **Scalability over complexity**.
+* **Scalability over complexity.**
 * Do NOT over-engineer. Start simple.
 
 **STRICT TECH STACK:**
