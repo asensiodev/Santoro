@@ -5,7 +5,7 @@
 | **PRP ID**      | PRP-004                                        |
 | **Version**     | 1.0                                            |
 | **Status**      | ✅ Done                                        |
-| **PRD ref**     | [PRD.md](../prd/PRD.md) — §G-06               |
+| **PRD ref**     | [PRD.md](../prd/PRD.md) — §F-14               |
 | **Feature**     | Room cache for TMDB browse results (TTL-based) |
 | **Date**        | 2026-02-26                                     |
 | **Author**      | @asensiodev                                    |
@@ -43,7 +43,9 @@ This means:
 - Cache search results per query string to avoid re-fetching on config changes or brief navigations away.
 - Keep the domain and presentation layers unaware of caching — the repository hides the strategy.
 
-### 2.1 Non-Goals
+---
+
+## 3. Non-Goals
 
 - Caching movie detail data (cast, crew, full metadata) — fetched from a different endpoint in `feature/movie-detail`; out of scope.
 - Caching by-genre browse results — lower priority; can be added later as the cache design supports it trivially.
@@ -53,7 +55,7 @@ This means:
 
 ---
 
-## 3. User Stories
+## 4. User Stories
 
 | ID    | As a…    | I want to…                                                   | So that…                                              | Acceptance Criteria |
 |-------|----------|--------------------------------------------------------------|-------------------------------------------------------|---------------------|
@@ -64,7 +66,7 @@ This means:
 
 ---
 
-## 4. Architecture
+## 6. Architecture
 
 ```
 Presentation (SearchMoviesViewModel)
@@ -98,7 +100,7 @@ The stale signal is surfaced via `StaleDataException` — an internal typed exce
 
 ---
 
-## 5. Data Model — Room Table
+## 7. Data Model — Room Table
 
 ### `BrowseCacheEntity` — new Room entity, table `browse_cache`
 
@@ -114,7 +116,7 @@ The stale signal is surfaced via `StaleDataException` — an internal typed exce
 
 ---
 
-## 6. Modules Affected / Created
+## 8. Modules Affected
 
 | Module | Change |
 |---|---|
@@ -124,7 +126,7 @@ The stale signal is surfaced via `StaleDataException` — an internal typed exce
 
 ---
 
-## 7. Phases & Tasks
+## 9. Phases & Tasks
 
 ### Phase 1 — Room: `BrowseCacheEntity` + `BrowseCacheDao`
 
@@ -212,9 +214,9 @@ The stale signal is surfaced via `StaleDataException` — an internal typed exce
 
 ---
 
-## 8. Technical Notes
+### Technical Notes
 
-### TTL Strategy
+#### TTL Strategy
 
 | Section | TTL | Rationale |
 |---|---|---|
@@ -222,19 +224,19 @@ The stale signal is surfaced via `StaleDataException` — an internal typed exce
 | `search:$query` | 5 min | Query results may evolve; users expect fresher data when searching |
 | By genre | Not cached v1 | Lower traffic path; trivial to add later with same pattern |
 
-### Pagination & Cache Interaction
+#### Pagination & Cache Interaction
 
 Popular is the only section with user-driven infinite scroll. Pages already loaded (page 1, 2, 3…) are each cached independently under key `("popular", N)`. On re-entry to the tab, `fetchDashboardData()` re-fetches page 1 of each section — within TTL this is instant. Subsequent pages from `loadMorePopularMovies()` also benefit from per-page caching transparently.
 
-### Search Cache Key Strategy
+#### Search Cache Key Strategy
 
 Key = `"search:${query.lowercase().trim()}"` — normalised to avoid duplicate entries for `" Inception "` vs `"inception"`. Each page is cached independently. Minimum query length for caching: anything that passes `query.isNotBlank()`.
 
-### Reverse Mapper (`Movie` → `MovieApiModel`)
+#### Reverse Mapper (`Movie` → `MovieApiModel`)
 
 Only a subset of fields are needed: `id`, `title`, `overview`, `posterPath`, `backdropPath`, `releaseDate`, `popularity`, `voteAverage`, `voteCount`, `genreIds`. The `genres` field (full name objects) is null in list responses — TMDB returns `genre_ids` in list endpoints. This reuses the existing `MovieApiModel` Gson serialisation already in `core/data`.
 
-### Offline Degradation UX Contract
+#### Offline Degradation UX Contract
 
 | State | UI |
 |---|---|
@@ -242,13 +244,13 @@ Only a subset of fields are needed: `id`, `title`, `overview`, `posterPath`, `ba
 | Network error + stale cache | Content screen + `isShowingStaleData = true` → banner with Retry |
 | Network error + no cache at all | `SearchScreenState.Error` with Retry |
 
-### `StaleDataException` Design
+#### `StaleDataException` Design
 
 Using a typed exception rather than a new `CacheResult<T>` sealed class keeps the domain interface (`SearchMoviesRepository`, all use cases) completely unchanged. The exception is internal to `feature/search-movies/impl` — only `CachingSearchMoviesRepository` emits it and only `SearchMoviesViewModel` handles it.
 
 ---
 
-## 9. Open Questions
+## 10. Open Questions
 
 | # | Question | Resolution |
 |---|----------|------------|
@@ -261,7 +263,7 @@ Using a typed exception rather than a new `CacheResult<T>` sealed class keeps th
 
 ---
 
-## 10. Out of Scope / Follow-ups
+## 11. Out of Scope / Follow-ups
 
 - Genre-browse cache (`"genre:$genreId"` key)
 - Pull-to-refresh to force cache invalidation
@@ -271,7 +273,7 @@ Using a typed exception rather than a new `CacheResult<T>` sealed class keeps th
 
 ---
 
-## 11. Changelog
+## 12. Changelog
 
 | Version | Date       | Summary       |
 |---------|------------|---------------|

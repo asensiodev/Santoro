@@ -5,7 +5,7 @@
 | **PRP ID**      | PRP-007                                            |
 | **Version**     | 1.0                                                |
 | **Status**      | ✅ Done                                            |
-| **PRD ref**     | [PRD.md](../prd/PRD.md) — §3.7 Settings (G-03)    |
+| **PRD ref**     | [PRD.md](../prd/PRD.md) — §3.7 Settings (F-11)    |
 | **Feature**     | Language Selector (English / Spanish)              |
 | **Date**        | 2026-02-26                                         |
 | **Author**      | @asensiodev                                        |
@@ -37,7 +37,9 @@ touching system settings. Below API 33 it falls back gracefully via the AppCompa
 - [x] UI language updates immediately without Activity restart
 - [x] Current selected language is highlighted in the bottom sheet
 
-### 2.1 Non-Goals
+---
+
+## 3. Non-Goals
 
 - More than 2 languages (future follow-up)
 - In-app locale override via manual `Configuration` wrapping (deprecated approach)
@@ -45,7 +47,7 @@ touching system settings. Below API 33 it falls back gracefully via the AppCompa
 
 ---
 
-## 3. User Stories
+## 4. User Stories
 
 | ID    | As a…     | I want to…                        | So that…                                  | Acceptance Criteria                                                   |
 |-------|-----------|-----------------------------------|-------------------------------------------|-----------------------------------------------------------------------|
@@ -56,7 +58,7 @@ touching system settings. Below API 33 it falls back gracefully via the AppCompa
 
 ---
 
-## 4. UX / Flows
+## 5. UX / Flows
 
 ```
 SettingsScreen
@@ -72,7 +74,7 @@ Theme picker (`ThemePickerBottomSheet`) for visual consistency.
 
 ---
 
-## 5. Technical Approach
+## 6. Architecture
 
 ### Locale API
 Use `AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(tag))`
@@ -91,7 +93,7 @@ If empty → system default → treat as English for the picker UI.
 
 ---
 
-## 6. Phases & Tasks
+## 9. Phases & Tasks
 
 ### Phase 1 — Domain / Model
 
@@ -123,7 +125,7 @@ If empty → system default → treat as English for the picker UI.
 
 ---
 
-## 7. Out of Scope / Follow-ups
+## 11. Out of Scope / Follow-ups
 
 - Additional languages beyond EN / ES
 - Language displayed in the Settings row subtitle (current language name)

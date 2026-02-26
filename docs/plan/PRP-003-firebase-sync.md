@@ -5,7 +5,7 @@
 | **PRP ID**      | PRP-003                                                            |
 | **Version**     | 1.0                                                                |
 | **Status**      | ✅ Completed                                                        |
-| **PRD ref**     | [PRD.md](../prd/PRD.md) — §G-05                                   |
+| **PRD ref**     | [PRD.md](../prd/PRD.md) — §F-13                                   |
 | **Feature**     | Cloud sync of Watched / Watchlist via Firestore (Offline-First)   |
 | **Date**        | 2026-02-25                                                         |
 | **Author**      | @asensiodev                                                        |
@@ -47,7 +47,9 @@ Santoro stores Watched and Watchlist data exclusively in Room. If the user insta
 - Sync happens silently in the background — no loading spinners, no blocking UI.
 - Anonymous users are synced to their anonymous `uid`. When they link a Google account, their data migrates to the new `uid`.
 
-### 2.1 Non-Goals
+---
+
+## 3. Non-Goals
 
 - Syncing TMDB browse data (popular, trending, search results) — always fetched from API.
 - Real-time multi-device sync (Firestore listeners) — WorkManager polling is sufficient for v1.
@@ -56,7 +58,7 @@ Santoro stores Watched and Watchlist data exclusively in Room. If the user insta
 
 ---
 
-## 3. User Stories
+## 4. User Stories
 
 | ID    | As a…    | I want to…                                              | So that…                                              | Acceptance Criteria |
 |-------|----------|---------------------------------------------------------|-------------------------------------------------------|---------------------|
@@ -66,7 +68,7 @@ Santoro stores Watched and Watchlist data exclusively in Room. If the user insta
 
 ---
 
-## 4. Architecture
+## 6. Architecture
 
 ```
 Presentation (ViewModel)
@@ -86,7 +88,7 @@ UploadWorker    Firestore
 
 ---
 
-## 5. Data model — Firestore document
+## 7. Data Model — Firestore document
 
 Each interacted movie is a document at `users/{uid}/movies/{movieId}`:
 
@@ -106,7 +108,7 @@ Only fields needed for sync are stored. Full movie metadata (cast, crew, genres)
 
 ---
 
-## 6. Modules affected / created
+## 8. Modules Affected
 
 | Module | Change |
 |---|---|
@@ -118,7 +120,7 @@ Only fields needed for sync are stored. Full movie metadata (cast, crew, genres)
 
 ---
 
-## 7. Phases & Tasks
+## 9. Phases & Tasks
 
 ### Phase 1 — Database layer: add `updatedAt`
 
@@ -203,30 +205,30 @@ Only fields needed for sync are stored. Full movie metadata (cast, crew, genres)
 
 ---
 
-## 8. Technical Notes
+### Technical Notes
 
-### Conflict resolution (last-write-wins)
+#### Conflict resolution (last-write-wins)
 Every Room write sets `updatedAt = System.currentTimeMillis()`. During `downloadAndMerge`:
 ```
 if (firestoreDoc.updatedAt > roomMovie.updatedAt) → upsert Firestore values into Room
 else → keep Room values (Room is more recent, upload will handle it)
 ```
 
-### Anonymous → Google account migration
+#### Anonymous → Google account migration
 Firebase Auth handles `uid` continuity when linking: the `uid` does **not** change after linking a Google account to an anonymous session. The Firestore path `users/{uid}/movies/` remains valid. No data migration needed — this is one of the core benefits of Firebase's anonymous account linking.
 
-### WorkManager network constraint
+#### WorkManager network constraint
 All workers use `Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()`. WorkManager will hold the job and execute it automatically when network becomes available.
 
-### Firestore coroutines
+#### Firestore coroutines
 Use `firebase-firestore-ktx` `.await()` extensions inside `withContext(Dispatchers.IO)`. No manual callbacks.
 
-### Preventing duplicate uploads
+#### Preventing duplicate uploads
 `enqueueUpload` uses a unique work name per `movieId` with `ExistingWorkPolicy.APPEND_OR_REPLACE`. If the user toggles a movie quickly multiple times, only the latest state is uploaded.
 
 ---
 
-## 9. Open Questions
+## 10. Open Questions
 
 | # | Question | Resolution |
 |---|----------|------------|
@@ -236,17 +238,17 @@ Use `firebase-firestore-ktx` `.await()` extensions inside `withContext(Dispatche
 
 ---
 
-## 10. Out of Scope / Follow-ups
+## 11. Out of Scope / Follow-ups
 
 - Real-time Firestore listeners (live multi-device sync without polling)
 - Batch write optimization for large lists
 - Sync status indicator in UI ("Last synced: 2 min ago")
 - Selective sync (user can disable cloud sync from Settings)
-- **PRP-004 — Browse cache (G-06):** Room as short-lived cache (TTL ~30 min) for popular/trending/search results, so the user doesn't re-hit the API on every navigation and the app degrades gracefully on slow networks. Independent of Firestore sync.
+- **PRP-004 — Browse cache (F-14):** Room as short-lived cache (TTL ~30 min) for popular/trending/search results, so the user doesn't re-hit the API on every navigation and the app degrades gracefully on slow networks. Independent of Firestore sync.
 
 ---
 
-## 11. Changelog
+## 12. Changelog
 
 | Version | Date       | Summary       |
 |---------|------------|---------------|

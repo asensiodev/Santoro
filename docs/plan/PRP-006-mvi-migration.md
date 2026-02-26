@@ -39,7 +39,7 @@ ViewModel → Channel<UiEffect>    (one-time side effects)
 
 ---
 
-## 2. Pattern Contract
+## 6. Architecture
 
 Every migrated feature follows this contract — no external library, pure Kotlin:
 
@@ -73,9 +73,7 @@ LaunchedEffect(Unit) {
 }
 ```
 
----
-
-## 3. Migration Order
+### Migration Order
 
 Feature-by-feature. Order by complexity (simplest first to validate pattern):
 
@@ -87,9 +85,7 @@ Feature-by-feature. Order by complexity (simplest first to validate pattern):
 | 4 | `settings` | `SettingsViewModel` + `ProfileViewModel` | Medium — auth side effects |
 | 5 | `search-movies` | `SearchMoviesViewModel` | High — most complex, pagination + cache |
 
----
-
-## 4. Files touched per feature (template)
+### Files touched per feature (template)
 
 For each feature:
 - Add `<Feature>Intent.kt`
@@ -100,7 +96,7 @@ For each feature:
 
 ---
 
-## 5. Phases & Tasks
+## 9. Phases & Tasks
 
 ### Phase 1 — Watchlist
 
@@ -155,5 +151,3 @@ For each feature:
 ### Phase 6 — Shared infrastructure in `core/ui`
 
 - [ ] Add `MviViewModel` base class to `core/ui` (optional, only if boilerplate is significant after all migrations)
-</content>
-</invoke>

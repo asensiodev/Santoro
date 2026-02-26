@@ -5,7 +5,7 @@
 | **PRP ID**      | PRP-001                                        |
 | **Version**     | 1.0                                            |
 | **Status**      | ✅ Done                                        |
-| **PRD ref**     | [PRD.md](../prd/PRD.md) — §F-04 · G-01        |
+| **PRD ref**     | [PRD.md](../prd/PRD.md) — §F-04               |
 | **Feature**     | Remove a movie from the Watchlist              |
 | **Date**        | 2026-02-25                                     |
 | **Author**      | @asensiodev                                    |
@@ -33,14 +33,16 @@ The fix is purely additive on the data layer and a one-line wire-up on the prese
 - The `DeleteMovieButton` (trash icon) is removed — swipe is the sole removal trigger.
 - The movie record is **not deleted** from the DB — only `isInWatchlist` is set to `false` (consistent with how `UpdateMovieStateUseCase` works in movie-detail).
 
-### 2.1 Non-Goals
+---
+
+## 3. Non-Goals
 
 - Undo / Snackbar after removal (future enhancement).
 - Removing from Watched list (separate feature).
 
 ---
 
-## 3. User Story
+## 4. User Story
 
 | ID    | As a…       | I want to…                              | So that…                              | Acceptance Criteria                                                                 |
 |-------|-------------|-----------------------------------------|---------------------------------------|-------------------------------------------------------------------------------------|
@@ -48,7 +50,7 @@ The fix is purely additive on the data layer and a one-line wire-up on the prese
 
 ---
 
-## 4. UX / Flow
+## 5. UX / Flow
 
 ```
 WatchlistMoviesScreen
@@ -66,7 +68,18 @@ WatchlistMoviesScreen
 
 ---
 
-## 5. Phases & Tasks
+## 8. Modules Affected
+
+- `core/database` — DAO + Repository interface + impl
+- `feature/watchlist/impl` — use case, DI module, ViewModel, UiState, Screen
+
+No schema migration needed. `isInWatchlist` column already exists in `MovieEntity`. The DAO update sets it to `0` — the movie row stays in the DB (it may still be `isWatched = true`).
+
+Why a dialog instead of direct delete: accidental taps on a list item's icon are common. A single confirmation step is the minimum safety net without being intrusive. Matches the pattern used in most top-tier apps (Letterboxd, Goodreads).
+
+---
+
+## 9. Phases & Tasks
 
 ### Phase 1 — Data layer
 
@@ -100,21 +113,7 @@ WatchlistMoviesScreen
 
 ---
 
-## 6. Technical Notes
-
-### Modules affected
-- `core/database` — DAO + Repository interface + impl
-- `feature/watchlist/impl` — use case, DI module, ViewModel, UiState, Screen
-
-### Data change
-No schema migration needed. `isInWatchlist` column already exists in `MovieEntity`. The DAO update sets it to `0` — the movie row stays in the DB (it may still be `isWatched = true`).
-
-### Why a dialog instead of direct delete
-Accidental taps on a list item's icon are common. A single confirmation step is the minimum safety net without being intrusive. Matches the pattern used in most top-tier apps (Letterboxd, Goodreads).
-
----
-
-## 7. Open Questions
+## 10. Open Questions
 
 | # | Question | Resolution |
 |---|----------|------------|
@@ -122,14 +121,14 @@ Accidental taps on a list item's icon are common. A single confirmation step is 
 
 ---
 
-## 8. Out of Scope / Follow-ups
+## 11. Out of Scope / Follow-ups
 
 - Snackbar with "Undo" after removal
 - Bulk remove / select mode
 
 ---
 
-## 9. Changelog
+## 12. Changelog
 
 | Version | Date       | Summary       |
 |---------|------------|---------------|

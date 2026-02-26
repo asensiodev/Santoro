@@ -30,7 +30,9 @@ Users discover movies in Santoro and want to recommend them to friends. There is
 - Uses the Android native Share Sheet — no custom UI, no hardcoded target apps.
 - Zero new dependencies required.
 
-### 2.1 Non-Goals
+---
+
+## 3. Non-Goals
 
 - Deep links / App Links so the recipient opens the movie inside Santoro (→ PRP-003).
 - Sharing from Watchlist or Watched list cards (follow-up, out of scope here).
@@ -38,7 +40,7 @@ Users discover movies in Santoro and want to recommend them to friends. There is
 
 ---
 
-## 3. User Story
+## 4. User Story
 
 | ID    | As a…    | I want to…                          | So that…                                      | Acceptance Criteria |
 |-------|----------|-------------------------------------|-----------------------------------------------|---------------------|
@@ -46,7 +48,7 @@ Users discover movies in Santoro and want to recommend them to friends. There is
 
 ---
 
-## 4. UX / Flow
+## 5. UX / Flow
 
 ```
 MovieDetailScreen
@@ -69,7 +71,28 @@ https://www.themoviedb.org/movie/27205
 
 ---
 
-## 5. Phases & Tasks
+## 8. Modules Affected
+
+- `feature/movie-detail/impl` — only
+
+Share Intent construction:
+```kotlin
+Intent(Intent.ACTION_SEND).apply {
+    type = "text/plain"
+    putExtra(Intent.EXTRA_TEXT, shareText)
+    putExtra(Intent.EXTRA_TITLE, chooserTitle)
+}
+```
+
+No new Gradle dependencies needed — `android.content.Intent` is part of the Android SDK.
+
+TMDB URL pattern: `https://www.themoviedb.org/movie/{movieId}` — stable, public, no auth required.
+
+TopAppBar placement: the share icon sits in `actions` of the existing `TopAppBar`. The back arrow stays in `navigationIcon`. No layout changes to the rest of the screen.
+
+---
+
+## 9. Phases & Tasks
 
 ### Phase 1 — Domain / helper
 
@@ -92,32 +115,7 @@ https://www.themoviedb.org/movie/27205
 
 ---
 
-## 6. Technical Notes
-
-### Modules affected
-- `feature/movie-detail/impl` — only
-
-### Share Intent construction
-```kotlin
-Intent(Intent.ACTION_SEND).apply {
-    type = "text/plain"
-    putExtra(Intent.EXTRA_TEXT, shareText)
-    putExtra(Intent.EXTRA_TITLE, chooserTitle)
-}
-// launched via: context.startActivity(Intent.createChooser(intent, null))
-```
-
-No new Gradle dependencies needed — `android.content.Intent` is part of the Android SDK.
-
-### TMDB URL pattern
-`https://www.themoviedb.org/movie/{movieId}` — stable, public, no auth required.
-
-### TopAppBar placement
-The share icon sits in `actions` of the existing `TopAppBar`. The back arrow stays in `navigationIcon`. No layout changes to the rest of the screen.
-
----
-
-## 7. Open Questions
+## 10. Open Questions
 
 | # | Question | Resolution |
 |---|----------|------------|
@@ -125,7 +123,7 @@ The share icon sits in `actions` of the existing `TopAppBar`. The back arrow sta
 
 ---
 
-## 8. Out of Scope / Follow-ups
+## 11. Out of Scope / Follow-ups
 
 - **PRP-003 — Deep Links:** Share a Santoro deep link so recipients with the app open the movie directly; recipients without the app are redirected to the Play Store.
 - Share from Watchlist / Watched list item (no detail screen required).
@@ -133,7 +131,7 @@ The share icon sits in `actions` of the existing `TopAppBar`. The back arrow sta
 
 ---
 
-## 9. Changelog
+## 12. Changelog
 
 | Version | Date       | Summary       |
 |---------|------------|---------------|

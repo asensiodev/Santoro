@@ -66,6 +66,7 @@
 **PLANNED WORK — PRD / PRP SYSTEM:**
 * All planned features live in `docs/`. Read `docs/README.md` to understand the system.
 * When executing a feature: locate its PRP in `docs/plan/`, read it top to bottom before touching any code.
+* If the PRP has a **Prerequisites** section referencing a guide in `docs/guides/` — read the guide first.
 * Work **phase by phase**. Mark each checkbox `[x]` as you complete it.
 * If anything is ambiguous or contradicts the plan — **stop and ask**. Never decide unilaterally.
 

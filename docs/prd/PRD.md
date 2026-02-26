@@ -2,7 +2,7 @@
 
 | Field        | Value                          |
 |--------------|--------------------------------|
-| **Version**  | 1.1                            |
+| **Version**  | 1.2                            |
 | **Status**   | ✅ Current                     |
 | **Date**     | 2026-02-26                     |
 | **Author**   | @asensiodev                    |
@@ -252,14 +252,14 @@ Modal navigation:
 
 ## 8. Open Items / Known Gaps (v1.0)
 
-| ID  | Item                                              | Priority |
-|-----|---------------------------------------------------|----------|
-| G-01| Remove from Watchlist (swipe or button) not wired | High     |
-| G-02| Appearance / theme toggle not implemented         | Medium   |
-| G-03| Language selector not implemented                 | Low      |
-| G-04| Help / Support screen not implemented             | Low      |
-| G-05| No cloud sync for Watched / Watchlist lists       | Medium   |
-| G-06| No offline cache for movie browsing data          | Medium   |
+| ID   | Item                                              | Priority |
+|------|---------------------------------------------------|----------|
+| F-04 | Remove from Watchlist (swipe or button) not wired | High     |
+| F-10 | Appearance / theme toggle not implemented         | Medium   |
+| F-11 | Language selector not implemented                 | Low      |
+| F-12 | Help / Support screen not implemented             | Low      |
+| F-13 | No cloud sync for Watched / Watchlist lists       | Medium   |
+| F-14 | No offline cache for movie browsing data          | Medium   |
 
 ---
 
@@ -298,3 +298,4 @@ Features approved for a future release. Each will get a PRP before implementatio
 |---------|------------|--------------------------------|
 | 1.0     | 2026-02-25 | Initial PRD — baseline feature set documented |
 | 1.1     | 2026-02-26 | Add F-08 Pull-to-Refresh and F-09 MVI Migration to planned backlog |
+| 1.2     | 2026-02-26 | Unify G-XX gap IDs into F-XX sequence (G-01→F-04, G-02→F-10, G-03→F-11, G-04→F-12, G-05→F-13, G-06→F-14) |

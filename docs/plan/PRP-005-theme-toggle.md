@@ -4,7 +4,7 @@
 |-----------------|------------------------------------------------|
 | **PRP ID**      | PRP-005                                        |
 | **Status**      | ✅ Done                                        |
-| **PRD ref**     | [PRD.md](../prd/PRD.md) — §G-02               |
+| **PRD ref**     | [PRD.md](../prd/PRD.md) — §F-10               |
 | **Feature**     | Let the user choose Light, Dark, or System theme |
 | **Date**        | 2026-02-26                                     |
 | **Author**      | @asensiodev                                    |
@@ -24,7 +24,7 @@
 
 ---
 
-## 2. Goal
+## 2. Goals
 
 - User can pick **Light**, **Dark**, or **System (follow device)** from Settings → Appearance.
 - Choice persists across app restarts (via `SecureKeyValueStore`, same pattern as onboarding flag).
@@ -33,7 +33,7 @@
 
 ---
 
-## 3. Out of Scope
+## 3. Non-Goals
 
 - Dynamic color (Material You) — not planned.
 - Per-feature theme overrides.
@@ -41,7 +41,7 @@
 
 ---
 
-## 4. Architecture
+## 6. Architecture
 
 ```
 Settings UI
@@ -62,9 +62,9 @@ SantoroTheme(darkTheme = …)   [core/design-system]
 
 ---
 
-## 5. Domain Model
+## 7. Data Model
 
-**`ThemeOption`** sealed interface in `core/domain`:
+**`ThemeOption`** enum in `core/domain`:
 
 ```kotlin
 enum class ThemeOption { LIGHT, DARK, SYSTEM }
@@ -75,17 +75,7 @@ Stored as a string key in `SecureKeyValueStore`:
 
 ---
 
-## 6. Open Questions
-
-| # | Question | Resolution |
-|---|----------|------------|
-| 1 | Where does the Appearance picker live — inline in `SettingsScreen` (e.g. radio group / segmented button) or a separate `AppearanceScreen`? | **Inline bottom sheet** — keeps navigation simple. A `ModalBottomSheet` with 3 options appears when tapping "Appearance". No new route needed. |
-| 2 | Store preference in `SecureKeyValueStore` (already used) or plain `DataStore`? | **SecureKeyValueStore** — consistent with existing `UserPreferencesRepository` pattern. No new dependency. |
-| 3 | Should `ThemeOption` live in `core/domain` or `core/design-system`? | **`core/domain`** — it's a user preference, not a design token. `core/design-system` only maps it to a `Boolean` for `SantoroTheme`. |
-
----
-
-## 7. Phases & Tasks
+## 9. Phases & Tasks
 
 ### Phase 1 — Domain
 
@@ -124,5 +114,13 @@ Stored as a string key in `SecureKeyValueStore`:
 - [x] Unit — `DefaultUserPreferencesRepository`: theme init, setTheme
 - [x] Unit — `SettingsViewModel`: onAppearanceClicked, setTheme, dismissThemePicker
 - [x] Unit — `MainActivityViewModel`: themeOption StateFlow
-</content>
-</invoke>
+
+---
+
+## 10. Open Questions
+
+| # | Question | Resolution |
+|---|----------|------------|
+| 1 | Where does the Appearance picker live — inline in `SettingsScreen` (e.g. radio group / segmented button) or a separate `AppearanceScreen`? | **Inline bottom sheet** — keeps navigation simple. A `ModalBottomSheet` with 3 options appears when tapping "Appearance". No new route needed. |
+| 2 | Store preference in `SecureKeyValueStore` (already used) or plain `DataStore`? | **SecureKeyValueStore** — consistent with existing `UserPreferencesRepository` pattern. No new dependency. |
+| 3 | Should `ThemeOption` live in `core/domain` or `core/design-system`? | **`core/domain`** — it's a user preference, not a design token. `core/design-system` only maps it to a `Boolean` for `SantoroTheme`. |
