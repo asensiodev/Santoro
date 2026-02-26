@@ -46,6 +46,8 @@
     <string name="search_movies_western_title">Western</string>
     <string name="search_movies_error_button_retry">Retry</string>
     <string name="vote_average_format">%.1f</string>
+    <string name="browse_offline_cache_banner">You\'re offline. Showing cached results.</string>
+    <string name="browse_offline_retry">Retry</string>
 
     <!-- Watched Movies Screen -->
     <string name="watched_movies_top_bar_title">Watched movies</string>
@@ -73,14 +75,18 @@
     <string name="crew_role_director">Director</string>
     <string name="crew_role_writer">Writer</string>
     <string name="crew_role_cinematographer">Cinematographer</string>
+    <string name="crew_role_composer">Composer</string>
     <string name="movie_detail_share_text">🎬 %1$s (%2$s)\n⭐ %3$.1f/10\n\nCheck it out on TMDB:\nhttps://www.themoviedb.org/movie/%4$d</string>
     <string name="movie_detail_share_chooser_title">Share via</string>
     <string name="movie_detail_share_icon_description">Share movie</string>
-    <string name="crew_role_composer">Composer</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">Settings</string>
     <string name="settings_appearance">Appearance</string>
+    <string name="settings_appearance_sheet_title">Appearance</string>
+    <string name="settings_appearance_system">System default</string>
+    <string name="settings_appearance_light">Light</string>
+    <string name="settings_appearance_dark">Dark</string>
     <string name="settings_language">Language</string>
     <string name="settings_link_google">Link Google account</string>
     <string name="settings_logout">Logout</string>
@@ -106,6 +112,11 @@
     <string name="profile_guest_name">Guest</string>
     <string name="profile_user_greeting">Hi, %s</string>
 
+    <!-- Guest Onboarding -->
+    <string name="guest_onboarding_title">Welcome to Santoro!</string>
+    <string name="guest_onboarding_description">You are browsing as a <b>guest</b>. You have full access to search for movies, add them to your Watchlist and mark them as watched.\n\n<b>Note:</b> Your lists are saved on this device only. If you change phones or uninstall the app, your data will be lost unless you link a Google account later.</string>
+    <string name="guest_onboarding_button">Got it, let\'s explore!</string>
+
     <!-- Generic -->
     <string name="unknown_value">Unknown</string>
     <string name="query_text_field_clear_button_description">Clear search</string>
@@ -115,18 +126,5 @@
 
     <!-- Google Auth ID -->
     <string name="default_web_client_id" translatable="false">792126816216-49vquegl1mcdcm52655qhgrs9l9ou5cf.apps.googleusercontent.com</string>
-
-    <!-- Guest Onboarding -->
-    <string name="guest_onboarding_title">Welcome to Santoro!</string>
-    <string name="guest_onboarding_description">You are browsing as a <b>guest</b>. You have full access to search for movies, add them to your Watchlist and mark them as watched.\n\n<b>Note:</b> Your lists are saved on this device only. If you change phones or uninstall the app, your data will be lost unless you link a Google account later.</string>
-    <string name="guest_onboarding_button">Got it, let\'s explore!</string>
-
-    <string name="browse_offline_cache_banner">You\'re offline. Showing cached results.</string>
-    <string name="browse_offline_retry">Retry</string>
-
-    <string name="settings_appearance_sheet_title">Appearance</string>
-    <string name="settings_appearance_system">System default</string>
-    <string name="settings_appearance_light">Light</string>
-    <string name="settings_appearance_dark">Dark</string>
 
 </resources>
