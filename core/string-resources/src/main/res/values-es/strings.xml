@@ -1,0 +1,133 @@
+<resources>
+    <string name="app_name">Santoro</string>
+
+    <!-- Bottom Nav Bar -->
+    <string name="search_movies">Buscar</string>
+    <string name="watched_movies">Vistas</string>
+    <string name="watchlist">Mi lista</string>
+    <string name="settings">Ajustes</string>
+
+    <!-- Top App Bar -->
+    <string name="navigate_back">Volver</string>
+
+    <!-- API Key Gate -->
+    <string name="api_key_gate_error_message">Error al configurar el servicio.</string>
+
+    <!-- Login Screen -->
+    <string name="login_anonymous_login_button">Continuar como invitado</string>
+    <string name="login_google_login_button">Iniciar sesión con Google</string>
+    <string name="login_slogan">Tu colección de películas, así de simple.</string>
+    <string name="login_error_anonymous">¡Ups! Hubo un problema al iniciar sesión como invitado.</string>
+    <string name="login_error_google_sign_in">¡Ups! Hubo un problema al iniciar sesión con Google.</string>
+
+    <!-- Search Movies Screen -->
+    <string name="search_movies_top_bar_title">Buscar películas</string>
+    <string name="search_movies_textfield_placeholder">Escribe para buscar películas</string>
+    <string name="search_movies_no_search_results_text">¡Ups! No se encontraron películas</string>
+    <string name="search_movies_no_results_with_filters_message">No encontramos películas que coincidan con \"%1$s\" con el género seleccionado</string>
+    <string name="search_movies_remove_genre_filter_button">Buscar sin filtro de género</string>
+    <string name="search_movies_no_popular_movies_results_text">Empieza tu búsqueda para encontrar películas</string>
+    <string name="search_movies_now_playing_title">En cartelera</string>
+    <string name="search_movies_popular_movies_title">Películas populares</string>
+    <string name="search_movies_top_rated_title">Mejor valoradas</string>
+    <string name="search_movies_upcoming_title">Próximamente</string>
+    <string name="search_movies_trending_title">Tendencias</string>
+    <string name="search_movies_action_title">Acción</string>
+    <string name="search_movies_comedy_title">Comedia</string>
+    <string name="search_movies_horror_title">Terror</string>
+    <string name="search_movies_animation_title">Animación</string>
+    <string name="search_movies_documentary_title">Documental</string>
+    <string name="search_movies_drama_title">Drama</string>
+    <string name="search_movies_history_title">Historia</string>
+    <string name="search_movies_music_title">Música</string>
+    <string name="search_movies_mystery_title">Misterio</string>
+    <string name="search_movies_scifi_title">Ciencia Ficción</string>
+    <string name="search_movies_thriller_title">Thriller</string>
+    <string name="search_movies_western_title">Western</string>
+    <string name="search_movies_error_button_retry">Reintentar</string>
+    <string name="vote_average_format">%.1f</string>
+    <string name="browse_offline_cache_banner">Sin conexión. Mostrando resultados en caché.</string>
+    <string name="browse_offline_retry">Reintentar</string>
+
+    <!-- Watched Movies Screen -->
+    <string name="watched_movies_top_bar_title">Películas vistas</string>
+    <string name="watched_movies_textfield_placeholder">Buscar en películas vistas</string>
+    <string name="watched_movies_no_results_text">Parece que aún no has visto ninguna película…</string>
+
+    <!-- Watchlist Screen -->
+    <string name="watchlist_top_bar_title">Mi lista</string>
+    <string name="watchlist_movies_textfield_placeholder">Buscar en tu lista</string>
+    <string name="watchlist_no_results_text">Parece que aún no has añadido ninguna película a tu lista…</string>
+    <string name="watchlist_remove_dialog_title">Eliminar de la lista</string>
+    <string name="watchlist_remove_dialog_body">"%s" será eliminada de tu lista.</string>
+    <string name="watchlist_remove_dialog_confirm">Eliminar</string>
+    <string name="watchlist_remove_dialog_cancel">Cancelar</string>
+
+    <!-- Movie Detail Screen -->
+    <string name="movie_detail_top_bar_title">Detalle de película</string>
+    <string name="default_no_description">Sin descripción disponible.</string>
+    <string name="untitled_movie">Sin título.</string>
+    <string name="rating">Valoración: %.1f</string>
+    <string name="watchlist_icon_button">Mi lista</string>
+    <string name="watched_icon_button">Vista</string>
+    <string name="key_crew_title">Equipo</string>
+    <string name="cast_title">Reparto</string>
+    <string name="crew_role_director">Director</string>
+    <string name="crew_role_writer">Guionista</string>
+    <string name="crew_role_cinematographer">Director de fotografía</string>
+    <string name="crew_role_composer">Compositor</string>
+    <string name="movie_detail_share_text">🎬 %1$s (%2$s)\n⭐ %3$.1f/10\n\nMírala en TMDB:\nhttps://www.themoviedb.org/movie/%4$d</string>
+    <string name="movie_detail_share_chooser_title">Compartir con</string>
+    <string name="movie_detail_share_icon_description">Compartir película</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_appearance">Apariencia</string>
+    <string name="settings_appearance_sheet_title">Apariencia</string>
+    <string name="settings_appearance_system">Predeterminado del sistema</string>
+    <string name="settings_appearance_light">Claro</string>
+    <string name="settings_appearance_dark">Oscuro</string>
+    <string name="settings_language">Idioma</string>
+    <string name="settings_language_picker_title">Idioma</string>
+    <string name="settings_language_english">Inglés</string>
+    <string name="settings_language_spanish">Español</string>
+    <string name="settings_link_google">Vincular cuenta de Google</string>
+    <string name="settings_logout">Cerrar sesión</string>
+    <string name="settings_version">Versión %s</string>
+    <string name="settings_author">Creado por AsensioDev</string>
+    <string name="settings_error_linking_account">¡Ups! Hubo un problema al vincular tu cuenta de Google.</string>
+    <string name="settings_error_google_sign_in">¡Ups! Hubo un problema al iniciar sesión con Google.</string>
+    <string name="settings_account_linked_title">¡Cuenta vinculada correctamente!</string>
+    <string name="settings_account_linked_description">Tu lista y películas vistas ahora están respaldadas en la nube. Puedes acceder a ellas desde cualquier dispositivo.</string>
+    <string name="settings_account_linked_button">¡Genial!</string>
+    <string name="settings_account_collision_title">La cuenta ya existe</string>
+    <string name="settings_account_collision_message">Esta cuenta de Google ya está vinculada a otro usuario. ¿Quieres cambiar a esa cuenta? Nota: tus datos actuales como invitado se perderán.</string>
+    <string name="settings_account_collision_confirm">Cambiar cuenta</string>
+    <string name="settings_account_collision_cancel">Cancelar</string>
+
+    <!-- Profile Screen -->
+    <string name="profile_title">Perfil</string>
+    <string name="profile_app_settings">Ajustes de la app</string>
+    <string name="profile_help_legal">Ayuda y aviso legal</string>
+    <string name="profile_growth_card_title">Guarda tu colección</string>
+    <string name="profile_growth_card_description">Vincula tu cuenta de Google para sincronizar tu lista y películas vistas entre dispositivos.</string>
+    <string name="profile_growth_card_button">Vincular cuenta de Google</string>
+    <string name="profile_guest_name">Invitado</string>
+    <string name="profile_user_greeting">Hola, %s</string>
+
+    <!-- Guest Onboarding -->
+    <string name="guest_onboarding_title">¡Bienvenido a Santoro!</string>
+    <string name="guest_onboarding_description">Estás navegando como <b>invitado</b>. Tienes acceso completo para buscar películas, añadirlas a tu lista y marcarlas como vistas.\n\n<b>Nota:</b> Tus listas se guardan solo en este dispositivo. Si cambias de móvil o desinstallas la app, tus datos se perderán a menos que vincules una cuenta de Google más adelante.</string>
+    <string name="guest_onboarding_button">¡Entendido, a explorar!</string>
+
+    <!-- Generic -->
+    <string name="unknown_value">Desconocido</string>
+    <string name="query_text_field_clear_button_description">Limpiar búsqueda</string>
+    <string name="error_message_retry">¡Ups! Ocurrió un error, toca para reintentar</string>
+    <string name="error_message_retry_button">Reintentar</string>
+    <string name="error_content_button">Intentar de nuevo</string>
+
+    <!-- Google Auth ID -->
+    <string name="default_web_client_id" translatable="false">792126816216-49vquegl1mcdcm52655qhgrs9l9ou5cf.apps.googleusercontent.com</string>
+
+</resources>

@@ -1,5 +1,6 @@
 package com.asensiodev.settings.impl.presentation.settings
 
+import com.asensiodev.core.domain.model.AppLanguage
 import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.ui.UiText
 
@@ -11,4 +12,6 @@ internal data class SettingsUiState(
     val showAccountCollisionDialog: Boolean = false,
     val currentTheme: ThemeOption = ThemeOption.SYSTEM,
     val showThemePicker: Boolean = false,
+    val showLanguagePicker: Boolean = false,
+    val currentLanguage: AppLanguage = AppLanguage.ENGLISH,
 )

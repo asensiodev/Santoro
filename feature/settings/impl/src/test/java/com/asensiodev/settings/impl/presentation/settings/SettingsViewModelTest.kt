@@ -2,6 +2,7 @@ package com.asensiodev.settings.impl.presentation.settings
 
 import com.asensiodev.auth.domain.usecase.ObserveAuthStateUseCase
 import com.asensiodev.auth.domain.usecase.SignOutUseCase
+import com.asensiodev.core.domain.model.AppLanguage
 import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.core.domain.usecase.ObserveThemeUseCase
 import com.asensiodev.core.domain.usecase.SetThemeUseCase
@@ -84,5 +85,31 @@ class SettingsViewModelTest {
             advanceUntilIdle()
 
             sut.uiState.value.showThemePicker shouldBeEqualTo false
+        }
+
+    @Test
+    fun `GIVEN OnLanguageClicked WHEN process THEN showLanguagePicker is true`() =
+        runTest {
+            sut.process(SettingsIntent.OnLanguageClicked)
+
+            sut.uiState.value.showLanguagePicker shouldBeEqualTo true
+        }
+
+    @Test
+    fun `GIVEN SetLanguage Spanish WHEN process THEN showLanguagePicker is false`() =
+        runTest {
+            sut.process(SettingsIntent.OnLanguageClicked)
+            sut.process(SettingsIntent.SetLanguage(AppLanguage.SPANISH))
+
+            sut.uiState.value.showLanguagePicker shouldBeEqualTo false
+        }
+
+    @Test
+    fun `GIVEN DismissLanguagePicker WHEN process THEN showLanguagePicker is false`() =
+        runTest {
+            sut.process(SettingsIntent.OnLanguageClicked)
+            sut.process(SettingsIntent.DismissLanguagePicker)
+
+            sut.uiState.value.showLanguagePicker shouldBeEqualTo false
         }
 }

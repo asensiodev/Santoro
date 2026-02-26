@@ -14,5 +14,6 @@ dependencies {
     implementation(projects.core.domain)
     implementation(projects.core.ui)
 
+    implementation(libs.androidx.appcompat)
     implementation(libs.bundles.coil)
 }

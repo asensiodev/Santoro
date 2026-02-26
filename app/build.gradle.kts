@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.workmanager)
     implementation(libs.workmanager.hilt)
 
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.core.splashscreen)

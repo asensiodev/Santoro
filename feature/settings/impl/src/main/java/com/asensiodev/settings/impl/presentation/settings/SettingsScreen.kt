@@ -31,6 +31,7 @@ import com.asensiodev.core.designsystem.component.loadingIndicator.LoadingIndica
 import com.asensiodev.core.designsystem.component.topbar.SantoroAppBar
 import com.asensiodev.core.designsystem.theme.AppIcons
 import com.asensiodev.core.designsystem.theme.Size
+import com.asensiodev.settings.impl.presentation.component.LanguagePickerBottomSheet
 import com.asensiodev.settings.impl.presentation.component.SettingsItem
 import com.asensiodev.settings.impl.presentation.component.ThemePickerBottomSheet
 import com.asensiodev.santoro.core.stringresources.R as SR
@@ -65,7 +66,7 @@ internal fun SettingsScreenRoute(
         SettingsScreen(
             onBackClicked = onBackClicked,
             onAppearanceClicked = { viewModel.process(SettingsIntent.OnAppearanceClicked) },
-            onLanguageClicked = { /* TODO */ },
+            onLanguageClicked = { viewModel.process(SettingsIntent.OnLanguageClicked) },
             onLogoutClicked = { viewModel.process(SettingsIntent.OnLogoutClicked) },
             isAnonymous = uiState.isAnonymous,
             versionName = versionName ?: "Unknown",
@@ -90,6 +91,14 @@ internal fun SettingsScreenRoute(
                 currentTheme = uiState.currentTheme,
                 onThemeSelected = { viewModel.process(SettingsIntent.SetTheme(it)) },
                 onDismiss = { viewModel.process(SettingsIntent.DismissThemePicker) },
+            )
+        }
+
+        if (uiState.showLanguagePicker) {
+            LanguagePickerBottomSheet(
+                currentLanguage = uiState.currentLanguage,
+                onLanguageSelected = { viewModel.process(SettingsIntent.SetLanguage(it)) },
+                onDismiss = { viewModel.process(SettingsIntent.DismissLanguagePicker) },
             )
         }
     }
