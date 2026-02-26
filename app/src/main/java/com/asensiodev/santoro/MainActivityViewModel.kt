@@ -3,7 +3,9 @@ package com.asensiodev.santoro
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asensiodev.auth.domain.usecase.ObserveAuthStateUseCase
+import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.core.domain.usecase.ObserveHasSeenGuestOnboardingUseCase
+import com.asensiodev.core.domain.usecase.ObserveThemeUseCase
 import com.asensiodev.core.domain.usecase.SetHasSeenGuestOnboardingUseCase
 import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,6 +27,7 @@ class MainActivityViewModel
     constructor(
         observeAuthStateUseCase: ObserveAuthStateUseCase,
         observeHasSeenGuestOnboardingUseCase: ObserveHasSeenGuestOnboardingUseCase,
+        observeThemeUseCase: ObserveThemeUseCase,
         private val setHasSeenGuestOnboardingUseCase: SetHasSeenGuestOnboardingUseCase,
         private val syncScheduler: WorkManagerSyncScheduler,
     ) : ViewModel() {
@@ -45,6 +48,14 @@ class MainActivityViewModel
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = MainActivityUiState.Loading,
             )
+
+        val themeOption: StateFlow<ThemeOption> =
+            observeThemeUseCase()
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(5_000),
+                    initialValue = ThemeOption.SYSTEM,
+                )
 
         init {
             uiState

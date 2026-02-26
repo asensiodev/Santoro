@@ -124,4 +124,9 @@
     <string name="browse_offline_cache_banner">You\'re offline. Showing cached results.</string>
     <string name="browse_offline_retry">Retry</string>
 
+    <string name="settings_appearance_sheet_title">Appearance</string>
+    <string name="settings_appearance_system">System default</string>
+    <string name="settings_appearance_light">Light</string>
+    <string name="settings_appearance_dark">Dark</string>
+
 </resources>

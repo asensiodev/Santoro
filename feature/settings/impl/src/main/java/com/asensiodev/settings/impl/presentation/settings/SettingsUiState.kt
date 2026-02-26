@@ -1,5 +1,6 @@
 package com.asensiodev.settings.impl.presentation.settings
 
+import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.ui.UiText
 
 internal data class SettingsUiState(
@@ -8,4 +9,6 @@ internal data class SettingsUiState(
     val error: UiText? = null,
     val isLinkAccountSuccessful: Boolean = false,
     val showAccountCollisionDialog: Boolean = false,
+    val currentTheme: ThemeOption = ThemeOption.SYSTEM,
+    val showThemePicker: Boolean = false,
 )

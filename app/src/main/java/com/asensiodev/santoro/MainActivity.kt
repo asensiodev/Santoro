@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -20,6 +21,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.asensiodev.api.navigation.LoginRoute
 import com.asensiodev.core.designsystem.theme.SantoroTheme
+import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.feature.moviedetail.impl.presentation.navigation.movieDetailRoute
 import com.asensiodev.login.impl.presentation.navigation.loginScreen
 import com.asensiodev.santoro.navigation.SantoroMainTabComponent
@@ -40,12 +42,20 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            val themeOption by viewModel.themeOption.collectAsStateWithLifecycle()
 
             splashScreen.setKeepOnScreenCondition {
                 uiState is MainActivityUiState.Loading
             }
 
-            SantoroTheme {
+            val isDark =
+                when (themeOption) {
+                    ThemeOption.LIGHT -> false
+                    ThemeOption.DARK -> true
+                    ThemeOption.SYSTEM -> isSystemInDarkTheme()
+                }
+
+            SantoroTheme(darkTheme = isDark) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     if (uiState !is MainActivityUiState.Loading) {
                         val isAuthenticated = uiState is MainActivityUiState.Authenticated

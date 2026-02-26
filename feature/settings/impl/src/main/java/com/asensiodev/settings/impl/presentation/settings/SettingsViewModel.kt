@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asensiodev.auth.domain.usecase.ObserveAuthStateUseCase
 import com.asensiodev.auth.domain.usecase.SignOutUseCase
+import com.asensiodev.core.domain.model.ThemeOption
+import com.asensiodev.core.domain.usecase.ObserveThemeUseCase
+import com.asensiodev.core.domain.usecase.SetThemeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +21,8 @@ internal class SettingsViewModel
     constructor(
         private val observeAuthStateUseCase: ObserveAuthStateUseCase,
         private val signOutUseCase: SignOutUseCase,
+        private val observeThemeUseCase: ObserveThemeUseCase,
+        private val setThemeUseCase: SetThemeUseCase,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(SettingsUiState())
         val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
@@ -25,12 +30,28 @@ internal class SettingsViewModel
         fun observeAuthState() {
             viewModelScope.launch {
                 observeAuthStateUseCase().collect { user ->
-                    _uiState.update {
-                        it.copy(
-                            isAnonymous = user?.isAnonymous == true,
-                        )
-                    }
+                    _uiState.update { it.copy(isAnonymous = user?.isAnonymous == true) }
                 }
+            }
+            viewModelScope.launch {
+                observeThemeUseCase().collect { theme ->
+                    _uiState.update { it.copy(currentTheme = theme) }
+                }
+            }
+        }
+
+        fun onAppearanceClicked() {
+            _uiState.update { it.copy(showThemePicker = true) }
+        }
+
+        fun dismissThemePicker() {
+            _uiState.update { it.copy(showThemePicker = false) }
+        }
+
+        fun setTheme(option: ThemeOption) {
+            viewModelScope.launch {
+                setThemeUseCase(option)
+                _uiState.update { it.copy(showThemePicker = false) }
             }
         }
 

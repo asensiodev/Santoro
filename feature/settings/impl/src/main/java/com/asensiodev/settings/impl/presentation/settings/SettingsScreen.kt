@@ -31,6 +31,7 @@ import com.asensiodev.core.designsystem.component.topbar.SantoroAppBar
 import com.asensiodev.core.designsystem.theme.AppIcons
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.settings.impl.presentation.component.SettingsItem
+import com.asensiodev.settings.impl.presentation.component.ThemePickerBottomSheet
 import com.asensiodev.ui.LaunchEffectOnce
 import com.asensiodev.santoro.core.stringresources.R as SR
 
@@ -59,7 +60,7 @@ internal fun SettingsScreenRoute(
     Box(modifier = Modifier.fillMaxSize()) {
         SettingsScreen(
             onBackClicked = onBackClicked,
-            onAppearanceClicked = { /* TODO */ },
+            onAppearanceClicked = viewModel::onAppearanceClicked,
             onLanguageClicked = { /* TODO */ },
             onLogoutClicked = {
                 viewModel.onLogoutClicked()
@@ -80,6 +81,14 @@ internal fun SettingsScreenRoute(
             ) {
                 LoadingIndicator()
             }
+        }
+
+        if (uiState.showThemePicker) {
+            ThemePickerBottomSheet(
+                currentTheme = uiState.currentTheme,
+                onThemeSelected = viewModel::setTheme,
+                onDismiss = viewModel::dismissThemePicker,
+            )
         }
     }
 }

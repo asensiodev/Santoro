@@ -2,7 +2,9 @@ package com.asensiodev.santoro
 
 import com.asensiodev.auth.domain.usecase.ObserveAuthStateUseCase
 import com.asensiodev.core.domain.model.SantoroUser
+import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.core.domain.usecase.ObserveHasSeenGuestOnboardingUseCase
+import com.asensiodev.core.domain.usecase.ObserveThemeUseCase
 import com.asensiodev.core.domain.usecase.SetHasSeenGuestOnboardingUseCase
 import com.asensiodev.core.testing.extension.CoroutineTestExtension
 import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
@@ -13,6 +15,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -24,6 +27,7 @@ class MainActivityViewModelTest {
 
     private val observeAuthStateUseCase: ObserveAuthStateUseCase = mockk()
     private val observeHasSeenGuestOnboardingUseCase: ObserveHasSeenGuestOnboardingUseCase = mockk()
+    private val observeThemeUseCase: ObserveThemeUseCase = mockk()
     private val setHasSeenGuestOnboardingUseCase: SetHasSeenGuestOnboardingUseCase = mockk()
     private val syncScheduler: WorkManagerSyncScheduler = mockk(relaxed = true)
 
@@ -41,6 +45,7 @@ class MainActivityViewModelTest {
     @BeforeEach
     fun setUp() {
         every { observeHasSeenGuestOnboardingUseCase() } returns flowOf(false)
+        every { observeThemeUseCase() } returns flowOf(ThemeOption.SYSTEM)
     }
 
     private fun buildViewModel() {
@@ -48,6 +53,7 @@ class MainActivityViewModelTest {
             MainActivityViewModel(
                 observeAuthStateUseCase = observeAuthStateUseCase,
                 observeHasSeenGuestOnboardingUseCase = observeHasSeenGuestOnboardingUseCase,
+                observeThemeUseCase = observeThemeUseCase,
                 setHasSeenGuestOnboardingUseCase = setHasSeenGuestOnboardingUseCase,
                 syncScheduler = syncScheduler,
             )
@@ -87,5 +93,17 @@ class MainActivityViewModelTest {
 
             verify(exactly = 1) { syncScheduler.schedulePeriodicSync() }
             verify(exactly = 1) { syncScheduler.scheduleImmediateSync() }
+        }
+
+    @Test
+    fun `GIVEN repo emits DARK WHEN themeOption collected THEN StateFlow emits DARK`() =
+        runTest {
+            every { observeAuthStateUseCase() } returns flowOf(null)
+            every { observeThemeUseCase() } returns flowOf(ThemeOption.DARK)
+
+            buildViewModel()
+            advanceUntilIdle()
+
+            sut.themeOption.value shouldBeEqualTo ThemeOption.DARK
         }
 }
