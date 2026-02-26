@@ -1,5 +1,7 @@
 # PRP — [Feature Name]
 
+<!-- Template © 2026 Ángel Asensio (@asensiodev) · Licensed under CC BY 4.0 — see docs/LICENSE -->
+
 > Copy this file and rename it to `PRP-XXX-<feature-slug>.md` (e.g. `PRP-010-pull-to-refresh.md`).
 
 | Field                  | Value                                     |

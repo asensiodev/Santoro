@@ -1,5 +1,7 @@
 # Product Requirements Document — Santoro
 
+<!-- © 2026 Ángel Asensio (@asensiodev) · Licensed under CC BY 4.0 — see docs/LICENSE -->
+
 | Field        | Value                          |
 |--------------|--------------------------------|
 | **Version**  | 1.2                            |
