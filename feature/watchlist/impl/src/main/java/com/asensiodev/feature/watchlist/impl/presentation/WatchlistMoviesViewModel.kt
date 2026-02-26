@@ -41,8 +41,18 @@ internal class WatchlistMoviesViewModel
 
         private val searchQuery = MutableStateFlow("")
 
+        fun process(intent: WatchlistIntent) {
+            when (intent) {
+                is WatchlistIntent.LoadMovies -> loadMovies()
+                is WatchlistIntent.UpdateQuery -> updateQuery(intent.query)
+                is WatchlistIntent.RequestRemove -> onRemoveMovieClicked(intent.movie)
+                is WatchlistIntent.ConfirmRemove -> onRemoveConfirmed()
+                is WatchlistIntent.DismissRemoveDialog -> onRemoveDismissed()
+            }
+        }
+
         @OptIn(FlowPreview::class)
-        fun init() {
+        private fun loadMovies() {
             fetchWatchlistMovies()
 
             searchQuery
@@ -55,20 +65,6 @@ internal class WatchlistMoviesViewModel
                         searchWatchlistMovies(query)
                     }
                 }.launchIn(viewModelScope)
-        }
-
-        init {
-            init()
-        }
-
-        fun process(intent: WatchlistIntent) {
-            when (intent) {
-                is WatchlistIntent.LoadMovies -> fetchWatchlistMovies()
-                is WatchlistIntent.UpdateQuery -> updateQuery(intent.query)
-                is WatchlistIntent.RequestRemove -> onRemoveMovieClicked(intent.movie)
-                is WatchlistIntent.ConfirmRemove -> onRemoveConfirmed()
-                is WatchlistIntent.DismissRemoveDialog -> onRemoveDismissed()
-            }
         }
 
         private fun fetchWatchlistMovies() {

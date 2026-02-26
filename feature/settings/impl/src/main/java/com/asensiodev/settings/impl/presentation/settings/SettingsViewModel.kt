@@ -34,7 +34,8 @@ internal class SettingsViewModel
 
         fun process(intent: SettingsIntent) {
             when (intent) {
-                is SettingsIntent.ObserveAuth -> observeAuthState()
+                is SettingsIntent.ObserveAuth -> observeAuth()
+                is SettingsIntent.ObserveTheme -> observeTheme()
                 is SettingsIntent.OnAppearanceClicked -> onAppearanceClicked()
                 is SettingsIntent.SetTheme -> setTheme(intent.option)
                 is SettingsIntent.DismissThemePicker -> dismissThemePicker()
@@ -42,12 +43,15 @@ internal class SettingsViewModel
             }
         }
 
-        fun observeAuthState() {
+        private fun observeAuth() {
             viewModelScope.launch {
                 observeAuthStateUseCase().collect { user ->
                     _uiState.update { it.copy(isAnonymous = user?.isAnonymous == true) }
                 }
             }
+        }
+
+        private fun observeTheme() {
             viewModelScope.launch {
                 observeThemeUseCase().collect { theme ->
                     _uiState.update { it.copy(currentTheme = theme) }
@@ -55,22 +59,22 @@ internal class SettingsViewModel
             }
         }
 
-        fun onAppearanceClicked() {
+        private fun onAppearanceClicked() {
             _uiState.update { it.copy(showThemePicker = true) }
         }
 
-        fun dismissThemePicker() {
+        private fun dismissThemePicker() {
             _uiState.update { it.copy(showThemePicker = false) }
         }
 
-        fun setTheme(option: ThemeOption) {
+        private fun setTheme(option: ThemeOption) {
             viewModelScope.launch {
                 setThemeUseCase(option)
                 _uiState.update { it.copy(showThemePicker = false) }
             }
         }
 
-        fun onLogoutClicked() {
+        private fun onLogoutClicked() {
             viewModelScope.launch {
                 signOutUseCase()
             }

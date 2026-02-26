@@ -63,10 +63,8 @@ internal fun LoginRoute(
 
     LoginScreen(
         uiState = uiState,
-        onAnonymousLoginClicked = viewModel::signInAnonymously,
-        onGoogleLoginClicked = {
-            viewModel.onSignInWithGoogleClicked(context)
-        },
+        onAnonymousLoginClicked = { viewModel.process(LoginIntent.SignInAnonymously) },
+        onGoogleLoginClicked = { viewModel.process(LoginIntent.SignInWithGoogle(context)) },
         modifier = modifier,
     )
 }

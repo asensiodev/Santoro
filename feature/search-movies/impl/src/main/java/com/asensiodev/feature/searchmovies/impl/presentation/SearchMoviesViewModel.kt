@@ -71,7 +71,7 @@ internal class SearchMoviesViewModel
         }
 
         @OptIn(FlowPreview::class)
-        fun loadInitialData() {
+        private fun loadInitialData() {
             fetchDashboardData()
 
             searchQuery
@@ -82,13 +82,13 @@ internal class SearchMoviesViewModel
                 }.launchIn(viewModelScope)
         }
 
-        fun updateQuery(query: String) {
+        private fun updateQuery(query: String) {
             _uiState.update { it.copy(query = query) }
 
             savedStateHandle[SEARCH_QUERY_KEY] = query
         }
 
-        fun onGenreSelected(genreId: Int) {
+        private fun onGenreSelected(genreId: Int) {
             searchJob?.cancel()
             _uiState.update {
                 it.copy(
@@ -101,7 +101,7 @@ internal class SearchMoviesViewModel
             performSearch(FIRST_PAGE, isInitialLoad = true)
         }
 
-        fun clearGenreSelection() {
+        private fun clearGenreSelection() {
             val currentQuery = _uiState.value.query
             _uiState.update {
                 it.copy(
@@ -122,7 +122,7 @@ internal class SearchMoviesViewModel
             }
         }
 
-        fun searchWithoutGenreFilter() {
+        private fun searchWithoutGenreFilter() {
             val currentQuery = _uiState.value.query
             _uiState.update {
                 it.copy(
@@ -263,13 +263,13 @@ internal class SearchMoviesViewModel
             }
         }
 
-        fun loadMorePopularMovies() {
+        private fun loadMorePopularMovies() {
             if (!_uiState.value.isPopularLoadingMore && !_uiState.value.isPopularEndReached) {
                 getPopularMovies()
             }
         }
 
-        fun loadMoreSearchResults() {
+        private fun loadMoreSearchResults() {
             val currentPage = _uiState.value.currentSearchPage
             val query = _uiState.value.query
             val selectedGenreId = _uiState.value.selectedGenreId

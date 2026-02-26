@@ -73,7 +73,6 @@ import com.asensiodev.feature.searchmovies.impl.presentation.component.HeroMovie
 import com.asensiodev.feature.searchmovies.impl.presentation.component.MovieCard
 import com.asensiodev.feature.searchmovies.impl.presentation.model.GenreConstants
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
-import com.asensiodev.ui.LaunchEffectOnce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.asensiodev.santoro.core.stringresources.R as SR
 
@@ -85,7 +84,7 @@ internal fun SearchMoviesRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchEffectOnce {
+    LaunchedEffect(viewModel) {
         viewModel.process(SearchMoviesIntent.LoadInitialData)
     }
 

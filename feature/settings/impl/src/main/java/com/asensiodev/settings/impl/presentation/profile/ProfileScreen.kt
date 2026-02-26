@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -44,7 +45,6 @@ import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.domain.model.SantoroUser
 import com.asensiodev.settings.impl.presentation.component.AccountLinkedSuccessBottomSheet
 import com.asensiodev.settings.impl.presentation.component.SettingsItem
-import com.asensiodev.ui.LaunchEffectOnce
 import com.asensiodev.ui.UiText
 import java.util.Locale
 import com.asensiodev.santoro.core.stringresources.R as SR
@@ -58,7 +58,7 @@ internal fun ProfileScreenRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    LaunchEffectOnce {
+    LaunchedEffect(viewModel) {
         viewModel.process(ProfileIntent.ObserveAuth)
     }
 

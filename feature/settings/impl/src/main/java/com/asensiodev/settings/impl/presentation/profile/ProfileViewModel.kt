@@ -47,7 +47,7 @@ internal class ProfileViewModel
             }
         }
 
-        fun observeAuthState() {
+        private fun observeAuthState() {
             viewModelScope.launch {
                 _uiState.update { it.copy(isLoading = true) }
                 observeAuthStateUseCase().collect { user ->
@@ -62,7 +62,7 @@ internal class ProfileViewModel
             }
         }
 
-        fun onSignInWithGoogleClicked(context: Context) {
+        private fun onSignInWithGoogleClicked(context: Context) {
             viewModelScope.launch {
                 _uiState.update { it.copy(isLoading = true) }
                 googleSignInHelper
@@ -134,16 +134,16 @@ internal class ProfileViewModel
             }
         }
 
-        fun onLinkAccountSuccessDismiss() {
+        private fun onLinkAccountSuccessDismiss() {
             _uiState.update { it.copy(isLinkAccountSuccessful = false) }
         }
 
-        fun onAccountCollisionDialogDismiss() {
+        private fun onAccountCollisionDialogDismiss() {
             pendingIdToken = null
             _uiState.update { it.copy(showAccountCollisionDialog = false) }
         }
 
-        fun onAccountCollisionDialogConfirm() {
+        private fun onAccountCollisionDialogConfirm() {
             val token = pendingIdToken
             if (token != null) {
                 viewModelScope.launch {

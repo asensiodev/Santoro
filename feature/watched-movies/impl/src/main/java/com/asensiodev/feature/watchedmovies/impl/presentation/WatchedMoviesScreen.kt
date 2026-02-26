@@ -53,7 +53,11 @@ internal fun WatchedMoviesRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(viewModel) {
+        viewModel.process(WatchedMoviesIntent.LoadMovies)
+    }
+
+    LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is WatchedMoviesEffect.NavigateToDetail -> onMovieClick(effect.movieId)

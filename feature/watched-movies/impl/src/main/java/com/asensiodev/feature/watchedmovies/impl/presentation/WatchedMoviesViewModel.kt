@@ -37,7 +37,15 @@ internal class WatchedMoviesViewModel
 
         private val searchQuery = MutableStateFlow("")
 
-        init {
+        fun process(intent: WatchedMoviesIntent) {
+            when (intent) {
+                is WatchedMoviesIntent.LoadMovies -> loadMovies()
+                is WatchedMoviesIntent.UpdateQuery -> updateQuery(intent.query)
+            }
+        }
+
+        @OptIn(FlowPreview::class)
+        private fun loadMovies() {
             fetchWatchedMovies()
 
             searchQuery
@@ -50,13 +58,6 @@ internal class WatchedMoviesViewModel
                         searchWatchedMovies(query)
                     }
                 }.launchIn(viewModelScope)
-        }
-
-        fun process(intent: WatchedMoviesIntent) {
-            when (intent) {
-                is WatchedMoviesIntent.LoadMovies -> fetchWatchedMovies()
-                is WatchedMoviesIntent.UpdateQuery -> updateQuery(intent.query)
-            }
         }
 
         private fun fetchWatchedMovies() {

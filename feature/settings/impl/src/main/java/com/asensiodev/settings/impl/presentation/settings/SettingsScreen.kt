@@ -15,6 +15,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -32,7 +33,6 @@ import com.asensiodev.core.designsystem.theme.AppIcons
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.settings.impl.presentation.component.SettingsItem
 import com.asensiodev.settings.impl.presentation.component.ThemePickerBottomSheet
-import com.asensiodev.ui.LaunchEffectOnce
 import com.asensiodev.santoro.core.stringresources.R as SR
 
 @Composable
@@ -53,8 +53,12 @@ internal fun SettingsScreenRoute(
             }
         }
 
-    LaunchEffectOnce {
+    LaunchedEffect(viewModel) {
         viewModel.process(SettingsIntent.ObserveAuth)
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.process(SettingsIntent.ObserveTheme)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {

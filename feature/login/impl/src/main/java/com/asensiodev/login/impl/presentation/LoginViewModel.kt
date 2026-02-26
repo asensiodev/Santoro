@@ -8,9 +8,11 @@ import com.asensiodev.auth.domain.usecase.SignInWithGoogleUseCase
 import com.asensiodev.auth.helper.GoogleSignInHelper
 import com.asensiodev.ui.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -27,10 +29,19 @@ internal class LoginViewModel
         private val _uiState = MutableStateFlow(LoginUiState())
         val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
-        fun onSignInWithGoogleClicked(activityContext: Context) {
+        private val _effect = Channel<LoginEffect>(Channel.BUFFERED)
+        val effect = _effect.receiveAsFlow()
+
+        fun process(intent: LoginIntent) {
+            when (intent) {
+                is LoginIntent.SignInWithGoogle -> onSignInWithGoogleClicked(intent.context)
+                is LoginIntent.SignInAnonymously -> signInAnonymously()
+            }
+        }
+
+        private fun onSignInWithGoogleClicked(activityContext: Context) {
             viewModelScope.launch {
                 _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-
                 googleSignInHelper
                     .signIn(activityContext)
                     .onSuccess { idToken ->
@@ -66,7 +77,7 @@ internal class LoginViewModel
                 }
         }
 
-        fun signInAnonymously() {
+        private fun signInAnonymously() {
             viewModelScope.launch {
                 _uiState.update { it.copy(isLoading = true, errorMessage = null) }
                 signInAnonymouslyUseCase()
