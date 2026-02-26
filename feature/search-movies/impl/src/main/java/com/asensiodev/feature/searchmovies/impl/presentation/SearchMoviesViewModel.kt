@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.getOrDefault
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.feature.searchmovies.impl.data.repository.CachingSearchMoviesRepository
+import com.asensiodev.feature.searchmovies.impl.data.repository.StaleDataException
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetMoviesByGenreUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetNowPlayingMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetPopularMoviesUseCase
@@ -24,7 +26,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
@@ -44,6 +45,7 @@ internal class SearchMoviesViewModel
         private val getTrendingMoviesUseCase: GetTrendingMoviesUseCase,
         private val getMoviesByGenreUseCase: GetMoviesByGenreUseCase,
         private val searchMoviesByQueryAndGenreUseCase: SearchMoviesByQueryAndGenreUseCase,
+        private val cachingRepository: CachingSearchMoviesRepository,
     ) : ViewModel() {
         private var searchJob: Job? = null
         private val _uiState = MutableStateFlow(SearchMoviesUiState())
@@ -208,6 +210,7 @@ internal class SearchMoviesViewModel
                         it.copy(
                             screenState = finalState,
                             isSearchLoadingMore = false,
+                            isShowingStaleData = false,
                             searchMovieResults = updatedResults,
                             currentSearchPage = page,
                             isSearchEndReached = newMovies.isEmpty(),
@@ -217,6 +220,15 @@ internal class SearchMoviesViewModel
 
                 is Result.Error -> {
                     val exception = result.exception
+                    if (exception is StaleDataException) {
+                        _uiState.update {
+                            it.copy(
+                                isShowingStaleData = true,
+                                isSearchLoadingMore = false,
+                            )
+                        }
+                        return
+                    }
                     _uiState.update {
                         it.copy(
                             screenState =
@@ -226,6 +238,7 @@ internal class SearchMoviesViewModel
                                     it.screenState
                                 },
                             isSearchLoadingMore = false,
+                            isShowingStaleData = false,
                             isSearchEndReached = true,
                         )
                     }
@@ -255,50 +268,47 @@ internal class SearchMoviesViewModel
             _uiState.update { it.copy(screenState = SearchScreenState.Loading) }
 
             viewModelScope.launch {
-                val results =
-                    DashboardResults(
-                        popular = async { getPopularMoviesUseCase(FIRST_PAGE).first() }.await(),
-                        nowPlaying =
-                            async {
-                                getNowPlayingMoviesUseCase(
-                                    FIRST_PAGE,
-                                ).first()
-                            }.await(),
-                        topRated =
-                            async {
-                                getTopRatedMoviesUseCase(
-                                    FIRST_PAGE,
-                                ).first()
-                            }.await(),
-                        upcoming =
-                            async {
-                                getUpcomingMoviesUseCase(
-                                    FIRST_PAGE,
-                                ).first()
-                            }.await(),
-                        trending =
-                            async {
-                                getTrendingMoviesUseCase(
-                                    FIRST_PAGE,
-                                ).first()
-                            }.await(),
-                    )
+                cachingRepository.clearStaleEntries()
+
+                val popularDeferred =
+                    async { collectWithStale(getPopularMoviesUseCase(FIRST_PAGE)) }
+                val nowPlayingDeferred =
+                    async { collectWithStale(getNowPlayingMoviesUseCase(FIRST_PAGE)) }
+                val topRatedDeferred =
+                    async { collectWithStale(getTopRatedMoviesUseCase(FIRST_PAGE)) }
+                val upcomingDeferred =
+                    async { collectWithStale(getUpcomingMoviesUseCase(FIRST_PAGE)) }
+                val trendingDeferred =
+                    async { collectWithStale(getTrendingMoviesUseCase(FIRST_PAGE)) }
+
+                val (popularResult, popularStale) = popularDeferred.await()
+                val (nowPlayingResult, nowPlayingStale) = nowPlayingDeferred.await()
+                val (topRatedResult, topRatedStale) = topRatedDeferred.await()
+                val (upcomingResult, upcomingStale) = upcomingDeferred.await()
+                val (trendingResult, trendingStale) = trendingDeferred.await()
+
+                val isStale =
+                    popularStale ||
+                        nowPlayingStale ||
+                        topRatedStale ||
+                        upcomingStale ||
+                        trendingStale
 
                 _uiState.update { state ->
-                    val nowPlayingList = results.nowPlaying.getOrDefault(emptyList()).toUiList()
-                    val popularList = results.popular.getOrDefault(emptyList()).toUiList()
+                    val nowPlayingList = nowPlayingResult.getOrDefault(emptyList()).toUiList()
+                    val popularList = popularResult.getOrDefault(emptyList()).toUiList()
 
                     state.copy(
                         screenState = SearchScreenState.Content,
+                        isShowingStaleData = isStale,
                         nowPlayingMovies = nowPlayingList,
                         popularMovies = popularList,
-                        topRatedMovies = results.topRated.getOrDefault(emptyList()).toUiList(),
-                        upcomingMovies = results.upcoming.getOrDefault(emptyList()).toUiList(),
-                        trendingMovies = results.trending.getOrDefault(emptyList()).toUiList(),
+                        topRatedMovies = topRatedResult.getOrDefault(emptyList()).toUiList(),
+                        upcomingMovies = upcomingResult.getOrDefault(emptyList()).toUiList(),
+                        trendingMovies = trendingResult.getOrDefault(emptyList()).toUiList(),
                         currentPopularPage =
                             if (popularList.isNotEmpty()) {
-                                FIRST_PAGE +
-                                    NEXT_PAGE
+                                FIRST_PAGE + NEXT_PAGE
                             } else {
                                 FIRST_PAGE
                             },
@@ -335,15 +345,22 @@ internal class SearchMoviesViewModel
                 }
             }
         }
-
-        private data class DashboardResults(
-            val popular: Result<List<Movie>>,
-            val nowPlaying: Result<List<Movie>>,
-            val topRated: Result<List<Movie>>,
-            val upcoming: Result<List<Movie>>,
-            val trending: Result<List<Movie>>,
-        )
     }
+
+private suspend fun collectWithStale(
+    flow: kotlinx.coroutines.flow.Flow<Result<List<Movie>>>,
+): Pair<Result<List<Movie>>, Boolean> {
+    var data: Result<List<Movie>> = Result.Error(Exception("No data"))
+    var stale = false
+    flow.collect { result ->
+        when {
+            result is Result.Success -> data = result
+            result is Result.Error && result.exception is StaleDataException -> stale = true
+            result is Result.Error -> data = result
+        }
+    }
+    return data to stale
+}
 
 private const val DELAY: Long = 500
 private const val FIRST_PAGE: Int = 1

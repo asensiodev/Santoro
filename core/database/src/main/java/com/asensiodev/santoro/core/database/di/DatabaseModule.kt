@@ -3,6 +3,7 @@ package com.asensiodev.santoro.core.database.di
 import android.content.Context
 import androidx.room.Room
 import com.asensiodev.santoro.core.database.data.SantoroRoomDatabase
+import com.asensiodev.santoro.core.database.data.dao.BrowseCacheDao
 import com.asensiodev.santoro.core.database.data.dao.MovieDao
 import com.asensiodev.santoro.core.database.data.repository.RoomDatabaseRepository
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
@@ -26,11 +27,15 @@ object DatabaseModule {
                 context,
                 SantoroRoomDatabase::class.java,
                 DATABASE_NAME,
-            ).addMigrations(SantoroRoomDatabase.MIGRATION_1_2)
+            ).addMigrations(SantoroRoomDatabase.MIGRATION_1_2, SantoroRoomDatabase.MIGRATION_2_3)
             .build()
 
     @Provides
     fun provideMovieDao(database: SantoroRoomDatabase): MovieDao = database.movieDao()
+
+    @Provides
+    fun provideBrowseCacheDao(database: SantoroRoomDatabase): BrowseCacheDao =
+        database.browseCacheDao()
 
     @Provides
     @Singleton

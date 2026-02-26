@@ -69,3 +69,21 @@ fun ProductionCountryApiModel.toDomain() =
     ProductionCountry(
         name = name,
     )
+
+fun Movie.toApiModel() =
+    MovieApiModel(
+        id = id,
+        title = title,
+        overview = overview,
+        posterPath = posterPath,
+        backdropPath = backdropPath,
+        releaseDate = releaseDate,
+        popularity = popularity,
+        voteAverage = voteAverage,
+        voteCount = voteCount,
+        genreIds = genreIds,
+        genres = null,
+        productionCountries = null,
+        runtime = null,
+        credits = null,
+    )

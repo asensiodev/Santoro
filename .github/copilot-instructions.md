@@ -58,6 +58,9 @@
     * ✅ Brief confirmation: "Done. Files updated: X, Y, Z."
     * ✅ Error messages if something failed
     * ✅ Clarifying questions BEFORE implementation
+* **Git (MANDATORY):**
+    * ❌ NEVER run `git commit` or `git push` without explicit user approval.
+    * Before committing or pushing: **always show the proposed commit message and ask for confirmation first**.
 * **Dependencies:** For new libs, provide `libs.toml` + `build.gradle.kts` snippets ONLY.
 
 **PLANNED WORK — PRD / PRP SYSTEM:**

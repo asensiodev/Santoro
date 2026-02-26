@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.feature.searchmovies.impl.data.repository.CachingSearchMoviesRepository
+import com.asensiodev.feature.searchmovies.impl.data.repository.StaleDataException
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetMoviesByGenreUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetNowPlayingMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetPopularMoviesUseCase
@@ -12,10 +14,12 @@ import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTrendingMovies
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetUpcomingMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesByQueryAndGenreUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesUseCase
+import io.mockk.coJustRun
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -38,8 +42,8 @@ class SearchMoviesViewModelTest {
     private val getUpcomingMoviesUseCase: GetUpcomingMoviesUseCase = mockk(relaxed = true)
     private val getTrendingMoviesUseCase: GetTrendingMoviesUseCase = mockk(relaxed = true)
     private val getMoviesByGenreUseCase: GetMoviesByGenreUseCase = mockk(relaxed = true)
-    private val searchMoviesByQueryAndGenreUseCase: SearchMoviesByQueryAndGenreUseCase =
-        mockk(relaxed = true)
+    private val searchMoviesByQueryAndGenreUseCase: SearchMoviesByQueryAndGenreUseCase = mockk(relaxed = true)
+    private val cachingRepository: CachingSearchMoviesRepository = mockk(relaxed = true)
 
     private lateinit var viewModel: SearchMoviesViewModel
 
@@ -66,7 +70,7 @@ class SearchMoviesViewModelTest {
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-
+        coJustRun { cachingRepository.clearStaleEntries() }
         every { getNowPlayingMoviesUseCase(any()) } returns flowOf(Result.Success(emptyList()))
         every { getPopularMoviesUseCase(any()) } returns flowOf(Result.Success(emptyList()))
         every { getTopRatedMoviesUseCase(any()) } returns flowOf(Result.Success(emptyList()))
@@ -84,6 +88,7 @@ class SearchMoviesViewModelTest {
                 getTrendingMoviesUseCase = getTrendingMoviesUseCase,
                 getMoviesByGenreUseCase = getMoviesByGenreUseCase,
                 searchMoviesByQueryAndGenreUseCase = searchMoviesByQueryAndGenreUseCase,
+                cachingRepository = cachingRepository,
             )
     }
 
@@ -95,9 +100,7 @@ class SearchMoviesViewModelTest {
     @Test
     fun `GIVEN casino search WHEN drama genre selected THEN casino movie should still appear`() =
         runTest {
-            every { searchMoviesUseCase("casino", any()) } returns
-                flowOf(Result.Success(listOf(casinoMovie)))
-
+            every { searchMoviesUseCase("casino", any()) } returns flowOf(Result.Success(listOf(casinoMovie)))
             every { searchMoviesByQueryAndGenreUseCase("casino", 18, any()) } returns
                 flowOf(Result.Success(listOf(casinoMovie)))
 
@@ -124,9 +127,7 @@ class SearchMoviesViewModelTest {
     @Test
     fun `GIVEN casino search with drama genre WHEN genre cleared THEN casino should still appear`() =
         runTest {
-            every { searchMoviesUseCase("casino", any()) } returns
-                flowOf(Result.Success(listOf(casinoMovie)))
-
+            every { searchMoviesUseCase("casino", any()) } returns flowOf(Result.Success(listOf(casinoMovie)))
             every { searchMoviesByQueryAndGenreUseCase("casino", 18, any()) } returns
                 flowOf(Result.Success(listOf(casinoMovie)))
 
@@ -147,5 +148,45 @@ class SearchMoviesViewModelTest {
             finalState.screenState shouldBeInstanceOf SearchScreenState.Content::class
             finalState.searchMovieResults.size shouldBeEqualTo 1
             finalState.searchMovieResults.first().title shouldBeEqualTo "Casino"
+        }
+
+    @Test
+    fun `GIVEN StaleDataException WHEN loadInitialData THEN isShowingStaleData true and screenState Content`() =
+        runTest {
+            every { getPopularMoviesUseCase(any()) } returns
+                flow {
+                    emit(Result.Success(listOf(casinoMovie)))
+                    emit(Result.Error(StaleDataException()))
+                }
+
+            viewModel.loadInitialData()
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            state.isShowingStaleData shouldBeEqualTo true
+            state.screenState shouldBeInstanceOf SearchScreenState.Content::class
+        }
+
+    @Test
+    fun `GIVEN fresh result WHEN loadInitialData THEN isShowingStaleData is false`() =
+        runTest {
+            every { getPopularMoviesUseCase(any()) } returns flowOf(Result.Success(listOf(casinoMovie)))
+
+            viewModel.loadInitialData()
+            advanceUntilIdle()
+
+            viewModel.uiState.value.isShowingStaleData shouldBeEqualTo false
+        }
+
+    @Test
+    fun `GIVEN network error with no cache WHEN loadInitialData THEN isShowingStaleData is false`() =
+        runTest {
+            every { getPopularMoviesUseCase(any()) } returns
+                flowOf(Result.Error(java.io.IOException("Network error")))
+
+            viewModel.loadInitialData()
+            advanceUntilIdle()
+
+            viewModel.uiState.value.isShowingStaleData shouldBeEqualTo false
         }
 }

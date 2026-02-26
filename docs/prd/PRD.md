@@ -2,9 +2,9 @@
 
 | Field        | Value                          |
 |--------------|--------------------------------|
-| **Version**  | 1.0                            |
+| **Version**  | 1.1                            |
 | **Status**   | ✅ Current                     |
-| **Date**     | 2026-02-25                     |
+| **Date**     | 2026-02-26                     |
 | **Author**   | @asensiodev                    |
 | **Platform** | Android (Native)               |
 
@@ -263,8 +263,38 @@ Modal navigation:
 
 ---
 
-## 9. Version History
+## 9. Planned Features (Backlog)
+
+Features approved for a future release. Each will get a PRP before implementation starts.
+
+### F-08 — Pull-to-Refresh (Browse & Search)
+
+| Attribute   | Detail |
+|-------------|--------|
+| **Scope**   | Search/Browse screen (`SearchMoviesScreen`) |
+| **Trigger** | User pulls down on the browse content or search results list |
+| **Behaviour** | Forces a full cache bypass for the current view — re-fetches all curated sections (or current search query) from TMDB, updates Room cache, and hides the offline banner if previously shown |
+| **Rationale** | Currently the cache expires naturally via TTL (30 min curated / 5 min search). Pull-to-refresh gives the user explicit control to get fresh data on demand |
+| **States** | Refresh indicator visible during fetch · content replaces inline · Error toast if network unavailable (stale data remains) |
+| **Notes** | Implemented via `PullToRefreshBox` (M3). Invalidates cache for current sections via `BrowseCacheLocalDataSource.clearSection()` before re-fetching |
+
+### F-09 — MVI Architecture Migration
+
+| Attribute   | Detail |
+|-------------|--------|
+| **Scope**   | All feature ViewModels across the project |
+| **Pattern** | MVI — `Intent → State → Effect` replacing the current `StateFlow + direct update` approach |
+| **Rationale** | As the app grows, the current ViewModel pattern mixes state updates with side-effect logic. MVI enforces a single unidirectional data flow, making state transitions deterministic and testable |
+| **Key changes** | Introduce `UiIntent` sealed classes per feature · ViewModels expose a single `process(intent: UiIntent)` entry point · One-time side effects (navigation, toasts) handled via a dedicated `UiEffect` channel (`Channel<UiEffect>`) · `UiState` becomes the sole source of truth |
+| **Migration strategy** | Feature-by-feature migration. Start with `search-movies` (most complex), then `movie-detail`, `watchlist`, `watched-movies`, `settings`. No big-bang rewrite |
+| **Scope of PRP** | One PRP per feature module migrated, or a single umbrella PRP with one phase per feature |
+| **Notes** | No new external library required. Pattern implemented with plain Kotlin `sealed interface` + `Channel`. Existing test patterns (GIVEN/WHEN/THEN) remain unchanged |
+
+---
+
+## 10. Version History
 
 | Version | Date       | Summary                        |
 |---------|------------|--------------------------------|
 | 1.0     | 2026-02-25 | Initial PRD — baseline feature set documented |
+| 1.1     | 2026-02-26 | Add F-08 Pull-to-Refresh and F-09 MVI Migration to planned backlog |

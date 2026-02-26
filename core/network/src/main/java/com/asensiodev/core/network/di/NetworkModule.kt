@@ -8,6 +8,7 @@ import com.asensiodev.core.network.data.CachedApiKeyProvider
 import com.asensiodev.core.network.data.auth.ApiKeyAuthenticator
 import com.asensiodev.core.network.data.interceptor.AuthorizationInterceptor
 import com.asensiodev.core.network.data.repository.ApiKeyRepository
+import com.google.gson.Gson
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -65,12 +66,19 @@ object NetworkProvidesModule {
 
     @Provides
     @Singleton
-    fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit =
+    fun provideGson(): Gson = Gson()
+
+    @Provides
+    @Singleton
+    fun provideRetrofit(
+        okHttpClient: OkHttpClient,
+        gson: Gson,
+    ): Retrofit =
         Retrofit
             .Builder()
             .baseUrl(TMDB_BASE_URL)
             .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
 }
 

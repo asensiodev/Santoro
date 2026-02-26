@@ -98,6 +98,7 @@ internal fun SearchMoviesRoute(
         onGenreSelected = viewModel::onGenreSelected,
         onClearGenreSelection = viewModel::clearGenreSelection,
         onSearchWithoutGenreFilter = viewModel::searchWithoutGenreFilter,
+        onRetry = viewModel::loadInitialData,
         modifier = modifier,
     )
 }
@@ -110,6 +111,7 @@ internal fun SearchMoviesScreen(
     onGenreSelected: (Int) -> Unit,
     onClearGenreSelection: () -> Unit,
     onSearchWithoutGenreFilter: () -> Unit,
+    onRetry: () -> Unit,
     modifier: Modifier = Modifier,
     onLoadMorePopularMovies: () -> Unit,
     onLoadMoreSearchedMovies: () -> Unit,
@@ -141,6 +143,10 @@ internal fun SearchMoviesScreen(
             onClearGenre = onClearGenreSelection,
         )
 
+        AnimatedVisibility(visible = uiState.isShowingStaleData) {
+            OfflineBanner(onRetry = onRetry)
+        }
+
         if (uiState.query.isBlank() && uiState.selectedGenreId == null) {
             DashboardContent(
                 uiState = uiState,
@@ -168,74 +174,112 @@ internal fun SearchMoviesScreen(
 }
 
 @Composable
+private fun OfflineBanner(
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    androidx.compose.material3.Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.errorContainer,
+        shape = RoundedCornerShape(Size.size8),
+    ) {
+        Row(
+            modifier =
+                Modifier.padding(
+                    horizontal = Spacings.spacing12,
+                    vertical = Spacings.spacing8,
+                ),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(SR.string.browse_offline_cache_banner),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                modifier = Modifier.weight(1f),
+            )
+            Button(onClick = onRetry) {
+                Text(text = stringResource(SR.string.browse_offline_retry))
+            }
+        }
+    }
+}
+
+@Composable
 private fun DashboardContent(
     uiState: SearchMoviesUiState,
     onMovieClick: (Int) -> Unit,
     onLoadMorePopular: () -> Unit,
 ) {
-    if (uiState.screenState is SearchScreenState.Loading) {
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            LoadingIndicator()
+    when (uiState.screenState) {
+        is SearchScreenState.Loading -> {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                LoadingIndicator()
+            }
         }
-    } else if (uiState.screenState is SearchScreenState.Error) {
-        ErrorContent(
-            message = uiState.screenState.message,
-            onRetry = {
-                // TODO: Implement retry logic for dashboard
-            },
-        )
-    } else {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(Spacings.spacing24),
-        ) {
-            if (uiState.nowPlayingMovies.isNotEmpty()) {
-                NowPlayingSection(
-                    movies = uiState.nowPlayingMovies,
-                    onMovieClick = onMovieClick,
-                )
-            }
 
-            if (uiState.trendingMovies.isNotEmpty()) {
-                MovieSection(
-                    title = stringResource(SR.string.search_movies_trending_title),
-                    movies = uiState.trendingMovies,
-                    onMovieClick = onMovieClick,
-                )
-            }
+        is SearchScreenState.Error -> {
+            ErrorContent(
+                message = uiState.screenState.message,
+                onRetry = {
+                    // TODO: Implement retry logic for dashboard
+                },
+            )
+        }
 
-            if (uiState.popularMovies.isNotEmpty()) {
-                MovieSection(
-                    title = stringResource(SR.string.search_movies_popular_movies_title),
-                    movies = uiState.popularMovies,
-                    onMovieClick = onMovieClick,
-                    onLoadMore = onLoadMorePopular,
-                    isLoading = uiState.isPopularLoadingMore,
-                )
-            }
+        else -> {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(Spacings.spacing24),
+            ) {
+                if (uiState.nowPlayingMovies.isNotEmpty()) {
+                    NowPlayingSection(
+                        movies = uiState.nowPlayingMovies,
+                        onMovieClick = onMovieClick,
+                    )
+                }
 
-            if (uiState.topRatedMovies.isNotEmpty()) {
-                MovieSection(
-                    title = stringResource(SR.string.search_movies_top_rated_title),
-                    movies = uiState.topRatedMovies,
-                    onMovieClick = onMovieClick,
-                )
-            }
+                if (uiState.trendingMovies.isNotEmpty()) {
+                    MovieSection(
+                        title = stringResource(SR.string.search_movies_trending_title),
+                        movies = uiState.trendingMovies,
+                        onMovieClick = onMovieClick,
+                    )
+                }
 
-            if (uiState.upcomingMovies.isNotEmpty()) {
-                MovieSection(
-                    title = stringResource(SR.string.search_movies_upcoming_title),
-                    movies = uiState.upcomingMovies,
-                    onMovieClick = onMovieClick,
-                )
+                if (uiState.popularMovies.isNotEmpty()) {
+                    MovieSection(
+                        title = stringResource(SR.string.search_movies_popular_movies_title),
+                        movies = uiState.popularMovies,
+                        onMovieClick = onMovieClick,
+                        onLoadMore = onLoadMorePopular,
+                        isLoading = uiState.isPopularLoadingMore,
+                    )
+                }
+
+                if (uiState.topRatedMovies.isNotEmpty()) {
+                    MovieSection(
+                        title = stringResource(SR.string.search_movies_top_rated_title),
+                        movies = uiState.topRatedMovies,
+                        onMovieClick = onMovieClick,
+                    )
+                }
+
+                if (uiState.upcomingMovies.isNotEmpty()) {
+                    MovieSection(
+                        title = stringResource(SR.string.search_movies_upcoming_title),
+                        movies = uiState.upcomingMovies,
+                        onMovieClick = onMovieClick,
+                    )
+                }
             }
         }
     }
@@ -680,6 +724,7 @@ private fun SearchMoviesScreenPreview() {
             onGenreSelected = {},
             onClearGenreSelection = {},
             onSearchWithoutGenreFilter = {},
+            onRetry = {},
         )
     }
 }

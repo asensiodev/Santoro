@@ -1,12 +1,17 @@
 package com.asensiodev.feature.searchmovies.impl.di
 
 import com.asensiodev.core.domain.dispatcher.DispatcherProvider
+import com.asensiodev.feature.searchmovies.impl.data.datasource.BrowseCacheLocalDataSource
 import com.asensiodev.feature.searchmovies.impl.data.datasource.RemoteSearchMoviesDatasource
-import com.asensiodev.feature.searchmovies.impl.data.repository.RemoteSearchMoviesRepository
+import com.asensiodev.feature.searchmovies.impl.data.datasource.RoomBrowseCacheDataSource
+import com.asensiodev.feature.searchmovies.impl.data.datasource.SearchMoviesDatasource
+import com.asensiodev.feature.searchmovies.impl.data.repository.CachingSearchMoviesRepository
 import com.asensiodev.feature.searchmovies.impl.data.service.SearchMoviesApiService
 import com.asensiodev.feature.searchmovies.impl.domain.repository.SearchMoviesRepository
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetPopularMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesUseCase
+import com.asensiodev.santoro.core.database.data.dao.BrowseCacheDao
+import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,9 +34,31 @@ internal object SearchMoviesModule {
 
     @Provides
     @Singleton
+    fun provideSearchMoviesDatasource(
+        remote: RemoteSearchMoviesDatasource,
+    ): SearchMoviesDatasource = remote
+
+    @Provides
+    @Singleton
+    fun provideBrowseCacheLocalDataSource(
+        dao: BrowseCacheDao,
+        gson: Gson,
+    ): BrowseCacheLocalDataSource = RoomBrowseCacheDataSource(dao, gson)
+
+    @Provides
+    @Singleton
     fun provideMovieRepository(
-        defaultDatasource: RemoteSearchMoviesDatasource,
-    ): SearchMoviesRepository = RemoteSearchMoviesRepository(defaultDatasource)
+        localDataSource: BrowseCacheLocalDataSource,
+        remoteDatasource: SearchMoviesDatasource,
+        dispatchers: DispatcherProvider,
+    ): CachingSearchMoviesRepository =
+        CachingSearchMoviesRepository(localDataSource, remoteDatasource, dispatchers)
+
+    @Provides
+    @Singleton
+    fun provideSearchMoviesRepository(
+        cachingRepository: CachingSearchMoviesRepository,
+    ): SearchMoviesRepository = cachingRepository
 
     @Provides
     @Singleton
