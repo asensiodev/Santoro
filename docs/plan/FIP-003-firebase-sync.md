@@ -1,10 +1,10 @@
-# PRP — Firebase Sync (Offline-First)
+# FIP — Firebase Sync (Offline-First)
 
 | Field           | Value                                                              |
 |-----------------|--------------------------------------------------------------------|
-| **PRP ID**      | PRP-003                                                            |
+| **FIP ID**      | FIP-003                                                            |
 | **Version**     | 1.0                                                                |
-| **Status**      | ✅ Completed                                                        |
+| **Status**      | ✅ Done                                                        |
 | **PRD ref**     | [PRD.md](../prd/PRD.md) — §F-13                                   |
 | **Feature**     | Cloud sync of Watched / Watchlist via Firestore (Offline-First)   |
 | **Date**        | 2026-02-25                                                         |
@@ -244,7 +244,7 @@ Use `firebase-firestore-ktx` `.await()` extensions inside `withContext(Dispatche
 - Batch write optimization for large lists
 - Sync status indicator in UI ("Last synced: 2 min ago")
 - Selective sync (user can disable cloud sync from Settings)
-- **PRP-004 — Browse cache (F-14):** Room as short-lived cache (TTL ~30 min) for popular/trending/search results, so the user doesn't re-hit the API on every navigation and the app degrades gracefully on slow networks. Independent of Firestore sync.
+- **FIP-004 — Browse cache (F-14):** Room as short-lived cache (TTL ~30 min) for popular/trending/search results, so the user doesn't re-hit the API on every navigation and the app degrades gracefully on slow networks. Independent of Firestore sync.
 
 ---
 

@@ -1,8 +1,8 @@
-# PRP — Share Movie
+# FIP — Share Movie
 
 | Field           | Value                                          |
 |-----------------|------------------------------------------------|
-| **PRP ID**      | PRP-002                                        |
+| **FIP ID**      | FIP-002                                        |
 | **Version**     | 1.0                                            |
 | **Status**      | ✅ Done                                        |
 | **PRD ref**     | [PRD.md](../prd/PRD.md) — §F-03               |
@@ -34,7 +34,7 @@ Users discover movies in Santoro and want to recommend them to friends. There is
 
 ## 3. Non-Goals
 
-- Deep links / App Links so the recipient opens the movie inside Santoro (→ PRP-003).
+- Deep links / App Links so the recipient opens the movie inside Santoro (→ FIP-003).
 - Sharing from Watchlist or Watched list cards (follow-up, out of scope here).
 - Custom share card image / rich preview (follow-up).
 
@@ -125,7 +125,7 @@ TopAppBar placement: the share icon sits in `actions` of the existing `TopAppBar
 
 ## 11. Out of Scope / Follow-ups
 
-- **PRP-003 — Deep Links:** Share a Santoro deep link so recipients with the app open the movie directly; recipients without the app are redirected to the Play Store.
+- **FIP-003 — Deep Links:** Share a Santoro deep link so recipients with the app open the movie directly; recipients without the app are redirected to the Play Store.
 - Share from Watchlist / Watched list item (no detail screen required).
 - Rich share card with poster image via `FileProvider`.
 

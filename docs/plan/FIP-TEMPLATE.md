@@ -1,12 +1,12 @@
-# PRP — [Feature Name]
+# FIP — [Feature Name]
 
 <!-- Template © 2026 Ángel Asensio (@asensiodev) · Licensed under CC BY 4.0 — see docs/LICENSE -->
 
-> Copy this file and rename it to `PRP-XXX-<feature-slug>.md` (e.g. `PRP-010-pull-to-refresh.md`).
+> Copy this file and rename it to `FIP-XXX-<feature-slug>.md` (e.g. `FIP-010-pull-to-refresh.md`).
 
 | Field                  | Value                                     |
 |------------------------|-------------------------------------------|
-| **PRP ID**             | PRP-XXX                                   |
+| **FIP ID**             | FIP-XXX                                   |
 | **Version**            | 1.0                                       |
 | **Status**             | 🟡 Draft · 🔵 In Progress · ✅ Done       |
 | **PRD ref**            | [PRD.md](../prd/PRD.md) — §F-XX _or_ [FB-XXX](../briefs/FB-XXX-slug.md) |
@@ -28,7 +28,7 @@
 
 ## 0. Prerequisites (optional)
 
-_PRPs that must be completed first, manual setup steps, or external service config. Link to companion guides in `docs/guides/` if applicable._
+_FIPs that must be completed first, manual setup steps, or external service config. Link to companion guides in `docs/guides/` if applicable._
 
 ---
 

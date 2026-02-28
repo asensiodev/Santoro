@@ -1,8 +1,8 @@
-# PRP — Theme Toggle (Light / Dark / System)
+# FIP — Theme Toggle (Light / Dark / System)
 
 | Field           | Value                                          |
 |-----------------|------------------------------------------------|
-| **PRP ID**      | PRP-005                                        |
+| **FIP ID**      | FIP-005                                        |
 | **Status**      | ✅ Done                                        |
 | **PRD ref**     | [PRD.md](../prd/PRD.md) — §F-10               |
 | **Feature**     | Let the user choose Light, Dark, or System theme |

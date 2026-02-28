@@ -4,7 +4,7 @@
 
 | Field        | Value                          |
 |--------------|--------------------------------|
-| **Version**  | 1.3                            |
+| **Version**  | 1.4                            |
 | **Status**   | ✅ Current                     |
 | **Date**     | 2026-02-28                     |
 | **Author**   | @asensiodev                    |
@@ -51,6 +51,7 @@ A minimal, polished personal movie companion — fast to browse, friction-free t
 
 | Attribute       | Detail                                                     |
 |-----------------|------------------------------------------------------------|
+| **Status**      | ✅ Shipped                                                 |
 | **Entry point** | Login screen shown on first launch                         |
 | **Options**     | Sign in with Google · Continue as Guest (anonymous)        |
 | **Persistence** | Firebase Auth session persisted across app restarts        |
@@ -69,6 +70,10 @@ A minimal, polished personal movie companion — fast to browse, friction-free t
 ---
 
 ### 3.2 Discover / Search Movies (F-02)
+
+| Attribute | Detail |
+|-----------|--------|
+| **Status** | ✅ Shipped |
 
 Entry: bottom navigation tab "Search" (Home tab).
 
@@ -101,6 +106,10 @@ Hero carousel (M3 `HorizontalMultiBrowseCarousel`) shows Now Playing movies at t
 
 ### 3.3 Movie Detail (F-03)
 
+| Attribute | Detail |
+|-----------|--------|
+| **Status** | ✅ Shipped — share action added via [FIP-002](../plan/FIP-002-share-movie.md) |
+
 Accessible by tapping any movie card from Search, Watchlist, or Watched.
 
 #### Information displayed
@@ -128,6 +137,10 @@ Both state flags are persisted in the local Room database and reflected across a
 
 ### 3.4 Watchlist (F-04)
 
+| Attribute | Detail |
+|-----------|--------|
+| **Status** | ✅ Shipped — swipe-to-remove added via [FIP-001](../plan/FIP-001-watchlist-remove.md) |
+
 Entry: bottom navigation tab "Watchlist".
 
 - Lists all movies the user has added to their watchlist.
@@ -141,6 +154,10 @@ Entry: bottom navigation tab "Watchlist".
 ---
 
 ### 3.5 Watched Movies (F-05)
+
+| Attribute | Detail |
+|-----------|--------|
+| **Status** | ✅ Shipped |
 
 Entry: bottom navigation tab "Watched".
 
@@ -156,6 +173,10 @@ Entry: bottom navigation tab "Watched".
 ---
 
 ### 3.6 Profile (F-06)
+
+| Attribute | Detail |
+|-----------|--------|
+| **Status** | ✅ Shipped |
 
 Entry: bottom navigation tab "Profile" (or Settings → Profile).
 
@@ -173,6 +194,10 @@ Entry: bottom navigation tab "Profile" (or Settings → Profile).
 ---
 
 ### 3.7 Settings (F-07)
+
+| Attribute | Detail |
+|-----------|--------|
+| **Status** | ✅ Shipped — theme toggle via [FIP-005](../plan/FIP-005-theme-toggle.md), language via [FIP-007](../plan/FIP-007-language-selector.md) |
 
 Entry: Profile → App Settings.
 
@@ -254,25 +279,26 @@ Modal navigation:
 
 ## 8. Open Items / Known Gaps (v1.0)
 
-| ID   | Item                                              | Priority |
-|------|---------------------------------------------------|----------|
-| F-04 | Remove from Watchlist (swipe or button) not wired | High     |
-| F-10 | Appearance / theme toggle not implemented         | Medium   |
-| F-11 | Language selector not implemented                 | Low      |
-| F-12 | Help / Support screen not implemented             | Low      |
-| F-13 | No cloud sync for Watched / Watchlist lists       | Medium   |
-| F-14 | No offline cache for movie browsing data          | Medium   |
+| ID   | Item                                              | Priority | Status |
+|------|---------------------------------------------------|----------|--------|
+| F-04 | Remove from Watchlist (swipe or button) not wired | High     | ✅ Shipped — [FIP-001](../plan/FIP-001-watchlist-remove.md) |
+| F-10 | Appearance / theme toggle not implemented         | Medium   | ✅ Shipped — [FIP-005](../plan/FIP-005-theme-toggle.md) |
+| F-11 | Language selector not implemented                 | Low      | ✅ Shipped — [FIP-007](../plan/FIP-007-language-selector.md) |
+| F-12 | Help / Support screen not implemented             | Low      | 📋 Planned |
+| F-13 | No cloud sync for Watched / Watchlist lists       | Medium   | ✅ Shipped — [FIP-003](../plan/FIP-003-firebase-sync.md) |
+| F-14 | No offline cache for movie browsing data          | Medium   | ✅ Shipped — [FIP-004](../plan/FIP-004-browse-cache.md) |
 
 ---
 
 ## 9. Planned Features (Backlog)
 
-Features approved for a future release. Each will get a PRP before implementation starts.
+Features approved for a future release. Each will get a FIP before implementation starts.
 
 ### F-08 — Pull-to-Refresh (Browse & Search)
 
 | Attribute   | Detail |
 |-------------|--------|
+| **Status**  | 📋 Planned |
 | **Scope**   | Search/Browse screen (`SearchMoviesScreen`) |
 | **Trigger** | User pulls down on the browse content or search results list |
 | **Behaviour** | Forces a full cache bypass for the current view — re-fetches all curated sections (or current search query) from TMDB, updates Room cache, and hides the offline banner if previously shown |
@@ -284,18 +310,20 @@ Features approved for a future release. Each will get a PRP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
+| **Status**  | ✅ Shipped — [FIP-006](../plan/FIP-006-mvi-migration.md) |
 | **Scope**   | All feature ViewModels across the project |
 | **Pattern** | MVI — `Intent → State → Effect` replacing the current `StateFlow + direct update` approach |
 | **Rationale** | As the app grows, the current ViewModel pattern mixes state updates with side-effect logic. MVI enforces a single unidirectional data flow, making state transitions deterministic and testable |
 | **Key changes** | Introduce `UiIntent` sealed classes per feature · ViewModels expose a single `process(intent: UiIntent)` entry point · One-time side effects (navigation, toasts) handled via a dedicated `UiEffect` channel (`Channel<UiEffect>`) · `UiState` becomes the sole source of truth |
 | **Migration strategy** | Feature-by-feature migration. Start with `search-movies` (most complex), then `movie-detail`, `watchlist`, `watched-movies`, `settings`. No big-bang rewrite |
-| **Scope of PRP** | One PRP per feature module migrated, or a single umbrella PRP with one phase per feature |
+| **Scope of FIP** | One FIP per feature module migrated, or a single umbrella FIP with one phase per feature |
 | **Notes** | No new external library required. Pattern implemented with plain Kotlin `sealed interface` + `Channel`. Existing test patterns (GIVEN/WHEN/THEN) remain unchanged |
 
 ### F-15 — Movie Detail: Tagline Display
 
 | Attribute   | Detail |
 |-------------|--------|
+| **Status**  | 📋 Planned |
 | **Scope**   | `MovieDetailScreen` — `MovieHeaderSection` |
 | **Current state** | The PRD spec mentions a tagline in the hero section, but the current implementation only shows title + rating. The `Movie` domain model does not yet include a `tagline` field |
 | **Behaviour** | If TMDB returns a non-empty tagline, display it below the title in the hero area in italic style (`MaterialTheme.typography.bodyMedium`, `onSurfaceVariant`). Hidden when empty |
@@ -306,6 +334,7 @@ Features approved for a future release. Each will get a PRP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
+| **Status**  | 📋 Planned |
 | **Scope**   | `MovieDetailScreen.kt` |
 | **Current state** | "Overview", "Watchlist", and "Watched" button labels are hardcoded strings in production Composables — violating the project's no-hardcoded-strings rule |
 | **Behaviour** | Move all hardcoded strings to `core/stringresources`. Keys: `movie_detail_section_overview`, `movie_detail_action_watchlist`, `movie_detail_action_watched` |
@@ -316,6 +345,7 @@ Features approved for a future release. Each will get a PRP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
+| **Status**  | 📋 Planned |
 | **Scope**   | `feature/watchlist` · `feature/watched-movies` |
 | **Current state** | The Watchlist uses a horizontal `WatchlistMovieItem` (row layout with poster + metadata), while Watched uses a plain `MovieCard` with a fixed `size128` height and no metadata visible. The two screens feel visually inconsistent |
 | **Behaviour** | Unify the movie item design: the Watched grid card should show the poster full-bleed with a bottom gradient overlay showing title + year, matching the visual quality of the Search grid `MovieCard`. Optionally extract a shared `MovieGridCard` component into the design system |
@@ -325,6 +355,7 @@ Features approved for a future release. Each will get a PRP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
+| **Status**  | 📋 Planned |
 | **Scope**   | `SearchMoviesScreen` — browse mode curated sections |
 | **Current state** | Curated sections (Trending, Popular, Top Rated, Upcoming, By Genre) are displayed without a "See All" affordance. Users cannot explore a full paginated list for a specific section |
 | **Behaviour** | Add a `See All →` text button next to each section header. Tapping navigates to a new full-screen paginated list (`MovieListRoute`) filtered to that section. The list uses infinite scroll and the same 2-column grid |
@@ -335,6 +366,7 @@ Features approved for a future release. Each will get a PRP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
+| **Status**  | 📋 Planned |
 | **Scope**   | `MovieDetailScreen` · `Movie` domain model · Room schema |
 | **Current state** | Users can only mark a movie as Watched/Watchlist. There is no way to record how much they liked it |
 | **Behaviour** | Add a 1–5 star rating widget (half-star optional) below the Watched/Watchlist action row, visible only when `isWatched = true`. Rating is stored locally (`userRating: Float?` on the `Movie` entity). The Watched screen summary card updates to show average personal rating |
@@ -345,6 +377,7 @@ Features approved for a future release. Each will get a PRP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
+| **Status**  | 📋 Planned |
 | **Scope**   | `WatchedMoviesScreen` — summary card at top |
 | **Current state** | The summary card only shows total movies watched. The Watched screen groups movies by month/year but offers no other insights |
 | **Behaviour** | Expand the summary section into a small stats dashboard with: total movies watched · total runtime (hours) · favourite genre (most frequent) · longest watched streak (weeks). Cards use M3 `ElevatedCard` in a horizontal scroll row |
@@ -355,6 +388,7 @@ Features approved for a future release. Each will get a PRP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
+| **Status**  | 📋 Planned |
 | **Scope**   | All list/grid screens: Search browse, Watchlist, Watched, Movie Detail |
 | **Current state** | All loading states show a centered `LoadingIndicator` (spinner). This is functional but feels dated compared to top-tier apps |
 | **Behaviour** | Replace loading spinners with shimmer skeleton placeholders that mirror the target layout (cards, rows, text lines). Use a shimmer animation library or implement via `Brush.linearGradient` with animated offset |
@@ -365,6 +399,7 @@ Features approved for a future release. Each will get a PRP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
+| **Status**  | 📋 Planned |
 | **Scope**   | `SearchMoviesScreen` — search field interaction |
 | **Current state** | Tapping the search field immediately shows the browse grid. There is no search history or query suggestions |
 | **Behaviour** | When the search field is focused but empty, show two sections: (1) **Recent searches** — last 5 queries, stored locally via DataStore, tappable to re-run; (2) **Trending searches** — sourced from TMDB `/trending` titles as quick-access chips. Clearing the field returns to this state |
@@ -381,3 +416,4 @@ Features approved for a future release. Each will get a PRP before implementatio
 | 1.1     | 2026-02-26 | Add F-08 Pull-to-Refresh and F-09 MVI Migration to planned backlog |
 | 1.2     | 2026-02-26 | Unify G-XX gap IDs into F-XX sequence (G-01→F-04, G-02→F-10, G-03→F-11, G-04→F-12, G-05→F-13, G-06→F-14) |
 | 1.3     | 2026-02-28 | Add F-15 through F-22 — UI improvement features identified from code review |
+| 1.4     | 2026-02-28 | Add Status field to all features. Link completed FIPs. Update §8 gaps table with Status column. Rename PRP → FIP (Feature Implementation Plan) |

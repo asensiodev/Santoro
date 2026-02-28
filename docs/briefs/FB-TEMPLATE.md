@@ -5,8 +5,8 @@
 > Lightweight alternative to a full PRD. Use this when you join an existing project
 > and need to document a single feature, sprint task, or bug — not the entire product.
 >
-> **For small tasks (< 4h):** Skip the Feature Brief and go straight to a PRP.
-> Only create a FB when the feature needs context that won't fit in the PRP's §1 (Context & Motivation).
+> **For small tasks (< 4h):** Skip the Feature Brief and go straight to a FIP.
+> Only create a FB when the feature needs context that won't fit in the FIP's §1 (Context & Motivation).
 
 | Field          | Value                                         |
 |----------------|-----------------------------------------------|
@@ -64,5 +64,5 @@ _For bugs: describe the expected correct behaviour._
 
 ---
 
-> **Next step:** Create a PRP (`docs/plan/PRP-XXX-<feature-slug>.md`) referencing this Feature Brief
+> **Next step:** Create a FIP (`docs/plan/FIP-XXX-<feature-slug>.md`) referencing this Feature Brief
 > to plan the implementation phases and tasks.

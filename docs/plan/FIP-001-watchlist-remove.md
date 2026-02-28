@@ -1,8 +1,9 @@
-# PRP — Remove from Watchlist
+
+# FIP — Remove from Watchlist
 
 | Field           | Value                                          |
 |-----------------|------------------------------------------------|
-| **PRP ID**      | PRP-001                                        |
+| **FIP ID**      | FIP-001                                        |
 | **Version**     | 1.0                                            |
 | **Status**      | ✅ Done                                        |
 | **PRD ref**     | [PRD.md](../prd/PRD.md) — §F-04               |
@@ -117,7 +118,7 @@ Why a dialog instead of direct delete: accidental taps on a list item's icon are
 
 | # | Question | Resolution |
 |---|----------|------------|
-| 1 | Should we also auto-remove from Watchlist when a movie is marked as Watched? | Out of scope for this PRP — separate decision |
+| 1 | Should we also auto-remove from Watchlist when a movie is marked as Watched? | Out of scope for this FIP — separate decision |
 
 ---
 

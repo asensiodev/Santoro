@@ -67,14 +67,15 @@
     * Before committing or pushing: **always show the proposed commit message and ask for confirmation first**.
 * **Dependencies:** For new libs, provide `libs.toml` + `build.gradle.kts` snippets ONLY.
 
-**PLANNED WORK — PRD / PRP SYSTEM:**
+**PLANNED WORK — PRD / FIP SYSTEM:**
 * All planned features live in `docs/`. Read `docs/README.md` to understand the system.
 * **Two workflows supported:**
-    * **Own project:** `PRD.md → PRP → execute`
-    * **Corporate / sprint:** `Feature Brief (FB-XXX) → PRP → execute`
-* When executing a feature: locate its PRP in `docs/plan/`, read it top to bottom before touching any code.
-* If the PRP references a Feature Brief (`FB-XXX`) — read it first for context.
-* If the PRP has a **Prerequisites** section referencing a guide in `docs/guides/` — read the guide first.
+    * **Own project:** `PRD.md → FIP → execute`
+    * **Corporate / sprint:** `Feature Brief (FB-XXX) → FIP → execute`
+* When executing a feature: locate its FIP in `docs/plan/`, read it top to bottom before touching any code.
+* If the FIP references a Feature Brief (`FB-XXX`) — read it first for context.
+* If the FIP has a **Prerequisites** section referencing a guide in `docs/guides/` — read the guide first.
 * Work **phase by phase**. Mark each checkbox `[x]` as you complete it.
 * If anything is ambiguous or contradicts the plan — **stop and ask**. Never decide unilaterally.
+* **Closing a FIP:** When all checkboxes are done, set the FIP Status to `✅ Done` **and** update the PRD (or FB) feature Status to `✅ Shipped` with a link to the FIP.
 

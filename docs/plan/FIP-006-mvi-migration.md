@@ -1,9 +1,9 @@
-# PRP — MVI Architecture Migration
+# FIP — MVI Architecture Migration
 
 | Field           | Value                                                        |
 |-----------------|--------------------------------------------------------------|
-| **PRP ID**      | PRP-006                                                      |
-| **Status**      | 🔵 In Progress                                               |
+| **FIP ID**      | FIP-006                                                      |
+| **Status**      | ✅ Done                                               |
 | **PRD ref**     | [PRD.md](../prd/PRD.md) — §F-09                             |
 | **Feature**     | Migrate all feature ViewModels to MVI (Intent → State → Effect) |
 | **Date**        | 2026-02-26                                                   |
@@ -116,29 +116,29 @@ For each feature:
 
 ### Phase 3 — Movie Detail
 
-- [ ] Create `MovieDetailIntent` sealed interface:
+- [x] Create `MovieDetailIntent` sealed interface:
   - `FetchDetails(movieId)`, `ToggleWatched`, `ToggleWatchlist`, `ShareMovie`
-- [ ] Create `MovieDetailEffect` sealed interface:
+- [x] Create `MovieDetailEffect` sealed interface:
   - `ShareMovie(text)`, `NavigateBack`
-- [ ] Refactor `MovieDetailViewModel`
-- [ ] Update `MovieDetailScreen`
-- [ ] Update `MovieDetailViewModelTest`
+- [x] Refactor `MovieDetailViewModel`
+- [x] Update `MovieDetailScreen`
+- [x] Update `MovieDetailViewModelTest`
 
 ### Phase 4 — Settings & Profile
 
-- [ ] Create `SettingsIntent`:
+- [x] Create `SettingsIntent`:
   - `ObserveAuth`, `OnAppearanceClicked`, `SetTheme(option)`, `DismissThemePicker`, `OnLogoutClicked`
-- [ ] Create `SettingsEffect`:
+- [x] Create `SettingsEffect`:
   - `NavigateBack` (post logout)
-- [ ] Refactor `SettingsViewModel`
-- [ ] Update `SettingsScreen`
-- [ ] Create `ProfileIntent`:
+- [x] Refactor `SettingsViewModel`
+- [x] Update `SettingsScreen`
+- [x] Create `ProfileIntent`:
   - `LoadProfile`, `OnLinkGoogleClicked`, `OnSettingsClicked`, `DismissBottomSheet`, `OnAccountCollision`
-- [ ] Create `ProfileEffect`:
+- [x] Create `ProfileEffect`:
   - `NavigateToSettings`, `LaunchGoogleSignIn`
-- [ ] Refactor `ProfileViewModel`
-- [ ] Update `ProfileScreen`
-- [ ] Update `SettingsViewModelTest` + `ProfileViewModelTest`
+- [x] Refactor `ProfileViewModel`
+- [x] Update `ProfileScreen`
+- [x] Update `SettingsViewModelTest` + `ProfileViewModelTest`
 
 ### Phase 5 — Search Movies
 
@@ -147,7 +147,3 @@ For each feature:
 - [x] Refactor `SearchMoviesViewModel`
 - [x] Update `SearchMoviesScreen`
 - [x] Update `SearchMoviesViewModelTest`
-
-### Phase 6 — Shared infrastructure in `core/ui`
-
-- [ ] Add `MviViewModel` base class to `core/ui` (optional, only if boilerplate is significant after all migrations)

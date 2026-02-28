@@ -3,13 +3,13 @@
 | Field       | Value                          |
 |-------------|--------------------------------|
 | **Type**    | Manual configuration guide     |
-| **PRP ref** | [PRP-003](../plan/PRP-003-firebase-sync.md) |
+| **FIP ref** | [FIP-003](../plan/FIP-003-firebase-sync.md) |
 | **Date**    | 2026-02-25                     |
 | **Author**  | @asensiodev                    |
 
 ---
 
-> **Before starting PRP-003 code execution**, complete every step in this guide and mark each checkbox.
+> **Before starting FIP-003 code execution**, complete every step in this guide and mark each checkbox.
 > All steps are done in the [Firebase Console](https://console.firebase.google.com) — no code required.
 
 ---
@@ -111,7 +111,7 @@ firebase-firestore = { module = "com.google.firebase:firebase-firestore-ktx" }
 
 > The version is managed by the Firebase BOM already declared in the project (`firebase-bom`), so no version number needed here.
 
-- [x] Save the file — the PRP-003 implementation will reference this dependency when needed
+- [x] Save the file — the FIP-003 implementation will reference this dependency when needed
 
 ---
 
@@ -134,10 +134,10 @@ No action needed. Just awareness:
 
 ---
 
-## Step 8 — Notify agent to start PRP-003
+## Step 8 — Notify agent to start FIP-003
 
 - [x] All steps above are ✅ checked
-- [x] Tell the agent: *"Firestore setup done, start PRP-003"*
+- [x] Tell the agent: *"Firestore setup done, start FIP-003"*
 
 ---
 

@@ -1,8 +1,8 @@
-# PRP — Language Selector
+# FIP — Language Selector
 
 | Field           | Value                                              |
 |-----------------|----------------------------------------------------|
-| **PRP ID**      | PRP-007                                            |
+| **FIP ID**      | FIP-007                                            |
 | **Version**     | 1.0                                                |
 | **Status**      | ✅ Done                                            |
 | **PRD ref**     | [PRD.md](../prd/PRD.md) — §3.7 Settings (F-11)    |

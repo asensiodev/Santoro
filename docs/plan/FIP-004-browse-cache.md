@@ -1,8 +1,8 @@
-# PRP — Browse Cache (Offline-First Browse)
+# FIP — Browse Cache (Offline-First Browse)
 
 | Field           | Value                                          |
 |-----------------|------------------------------------------------|
-| **PRP ID**      | PRP-004                                        |
+| **FIP ID**      | FIP-004                                        |
 | **Version**     | 1.0                                            |
 | **Status**      | ✅ Done                                        |
 | **PRD ref**     | [PRD.md](../prd/PRD.md) — §F-14               |
