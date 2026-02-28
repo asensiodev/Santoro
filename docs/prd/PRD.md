@@ -323,7 +323,7 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
-| **Status**  | 📋 Planned |
+| **Status**  | ✅ Shipped — [FIP-009](../plan/FIP-009-movie-detail-tagline.md) |
 | **Scope**   | `MovieDetailScreen` — `MovieHeaderSection` |
 | **Current state** | The PRD spec mentions a tagline in the hero section, but the current implementation only shows title + rating. The `Movie` domain model does not yet include a `tagline` field |
 | **Behaviour** | If TMDB returns a non-empty tagline, display it below the title in the hero area in italic style (`MaterialTheme.typography.bodyMedium`, `onSurfaceVariant`). Hidden when empty |

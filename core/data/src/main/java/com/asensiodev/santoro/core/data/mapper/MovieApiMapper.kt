@@ -29,6 +29,7 @@ fun MovieApiModel.toDomain() =
         cast = credits?.cast?.map { it.toDomain() } ?: emptyList(),
         crew = credits?.crew?.map { it.toDomain() } ?: emptyList(),
         runtime = runtime,
+        tagline = tagline,
         director = credits?.crew?.firstOrNull { it.job == "Director" }?.name,
         isWatched = false,
         isInWatchlist = false,
@@ -85,5 +86,6 @@ fun Movie.toApiModel() =
         genres = null,
         productionCountries = null,
         runtime = null,
+        tagline = null,
         credits = null,
     )

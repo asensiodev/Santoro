@@ -11,7 +11,7 @@ import com.asensiodev.santoro.core.database.data.model.MovieEntity
 
 @Database(
     entities = [MovieEntity::class, BrowseCacheEntity::class],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class SantoroRoomDatabase : RoomDatabase() {
@@ -38,6 +38,13 @@ abstract class SantoroRoomDatabase : RoomDatabase() {
                             "PRIMARY KEY(section, page)" +
                             ")",
                     )
+                }
+            }
+
+        val MIGRATION_3_4 =
+            object : Migration(3, 4) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE movies ADD COLUMN tagline TEXT")
                 }
             }
     }

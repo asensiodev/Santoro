@@ -27,8 +27,11 @@ object DatabaseModule {
                 context,
                 SantoroRoomDatabase::class.java,
                 DATABASE_NAME,
-            ).addMigrations(SantoroRoomDatabase.MIGRATION_1_2, SantoroRoomDatabase.MIGRATION_2_3)
-            .build()
+            ).addMigrations(
+                SantoroRoomDatabase.MIGRATION_1_2,
+                SantoroRoomDatabase.MIGRATION_2_3,
+                SantoroRoomDatabase.MIGRATION_3_4,
+            ).build()
 
     @Provides
     fun provideMovieDao(database: SantoroRoomDatabase): MovieDao = database.movieDao()

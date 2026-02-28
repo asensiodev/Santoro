@@ -14,6 +14,7 @@ data class MovieUi(
     val productionCountries: List<String>,
     val cast: List<CastMemberUi>,
     val keyCrew: List<CrewMemberUi> = emptyList(),
+    val tagline: String? = null,
     val runtime: String?,
     val director: String?,
     val isWatched: Boolean,

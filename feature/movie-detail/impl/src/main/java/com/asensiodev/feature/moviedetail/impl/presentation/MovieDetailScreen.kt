@@ -61,6 +61,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -423,6 +424,19 @@ private fun MovieHeaderSection(
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
                 )
+                if (!movie.tagline.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.height(Spacings.spacing4))
+                    Text(
+                        text = movie.tagline,
+                        style =
+                            MaterialTheme.typography.bodyMedium.copy(
+                                fontStyle = FontStyle.Italic,
+                            ),
+                        color = Color.White.copy(alpha = 0.75f),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
                 Spacer(modifier = Modifier.height(Spacings.spacing8))
                 MovieMetadataRow(movie = movie)
             }

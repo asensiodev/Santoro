@@ -15,6 +15,7 @@ data class MovieEntity(
     val voteCount: Int,
     val genres: String,
     val productionCountries: String,
+    val tagline: String? = null,
     val isWatched: Boolean = false,
     val isInWatchlist: Boolean = false,
     val watchedAt: Long? = null,
