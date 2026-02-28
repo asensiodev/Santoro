@@ -1,16 +1,84 @@
-# Santoro
+<p align="center">
+  <img src="core/design-system/src/main/ic_launcher-playstore.png" width="120" alt="Santoro icon" />
+</p>
 
-**Developed for learning purposes.**
+<h1 align="center">Santoro</h1>
 
-Santoro allows you to:
+<p align="center">
+  Your personal movie companion — discover, track, and organize your film journey.
+</p>
 
-- Search films
-- Review movie details
-- Mark films as watched
-- Add films to your watchlist
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white" />
+  <img src="https://img.shields.io/badge/Kotlin-2.1-7F52FF?logo=kotlin&logoColor=white" />
+  <img src="https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white" />
+  <img src="https://img.shields.io/badge/Architecture-Clean%20%2B%20MVI-FF6F00" />
+</p>
 
+---
 
-**Screenshots**
+## ✨ Features
 
-![Screenshot 2025-01-12 at 11 46 40](https://github.com/user-attachments/assets/645b20b3-5158-41a3-a42e-3ce7e36aa84d)
-![Screenshot 2025-01-12 at 11 46 53](https://github.com/user-attachments/assets/80f61a74-2548-41ae-ae45-28803a29efeb)
+| | Feature | Description |
+|---|---|---|
+| 🔍 | **Discover** | Browse trending, popular, top rated, upcoming, and genre-filtered movies |
+| 🎬 | **Movie Detail** | Cast, crew, tagline, ratings, runtime — all in one screen |
+| ✅ | **Watched** | Track what you've seen with stats dashboard (total, hours, streaks) |
+| 📌 | **Watchlist** | Save movies for later, swipe to remove |
+| 🔎 | **Smart Search** | Real-time search with recent queries and trending suggestions |
+| ☁️ | **Cloud Sync** | Sign in with Google to sync your lists across devices |
+| 📴 | **Offline Ready** | Browse cached data and manage lists without internet |
+| 🎨 | **Theming** | Light, dark, and system theme support |
+| 🌍 | **i18n** | English and Spanish |
+
+## 🏗️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| UI | Jetpack Compose · Material 3 |
+| Architecture | Clean Architecture · MVI · Multi-module |
+| DI | Hilt |
+| Async | Coroutines · StateFlow |
+| Network | Retrofit · OkHttp · Coil 3 |
+| Local | Room · DataStore |
+| Auth & Cloud | Firebase Auth · Firestore · Crashlytics · Analytics |
+| Build | Gradle KTS · Version Catalogs · Convention Plugins |
+| Testing | JUnit 5 · MockK · Kluent · Turbine · Paparazzi |
+
+## 📸 Screenshots
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/645b20b3-5158-41a3-a42e-3ce7e36aa84d" width="280" />
+  &nbsp;&nbsp;
+  <img src="https://github.com/user-attachments/assets/80f61a74-2548-41ae-ae45-28803a29efeb" width="280" />
+</p>
+
+## 📦 Module Structure
+
+```
+app/                    → Application entry point
+feature/                → Feature modules (api + impl per feature)
+  ├── search-movies/
+  ├── movie-detail/
+  ├── watchlist/
+  ├── watched-movies/
+  ├── settings/
+  └── login/
+core/                   → Shared modules
+  ├── design-system/    → Theme, components, icons
+  ├── domain/           → Models, Result type
+  ├── data/             → Repositories, mappers
+  ├── database/         → Room DB
+  ├── network/          → Retrofit setup
+  └── ui/               → Shared UI utilities
+```
+
+## 🔑 API
+
+Movie data provided by [TMDB](https://www.themoviedb.org/). API key is managed via Firebase Remote Config.
+
+---
+
+<p align="center">
+  Made with ❤️ by <a href="https://github.com/asensiodev">@asensiodev</a>
+</p>
