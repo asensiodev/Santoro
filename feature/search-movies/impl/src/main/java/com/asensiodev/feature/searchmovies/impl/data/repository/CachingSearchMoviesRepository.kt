@@ -135,4 +135,16 @@ internal class CachingSearchMoviesRepository
                 )
             }
         }
+
+        suspend fun clearAllSections() {
+            withContext(dispatchers.io) {
+                listOf(
+                    BrowseSectionKeys.NOW_PLAYING,
+                    BrowseSectionKeys.POPULAR,
+                    BrowseSectionKeys.TOP_RATED,
+                    BrowseSectionKeys.UPCOMING,
+                    BrowseSectionKeys.TRENDING,
+                ).forEach { section -> localDataSource.clearSection(section) }
+            }
+        }
     }

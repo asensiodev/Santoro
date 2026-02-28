@@ -40,6 +40,7 @@ internal data class SearchMoviesUiState(
     val isPopularEndReached: Boolean = false,
     val selectedGenreId: Int? = null,
     val isShowingStaleData: Boolean = false,
+    val isRefreshing: Boolean = false,
 ) {
     val hasSearchResults: Boolean get() = searchMovieResults.isNotEmpty()
 }

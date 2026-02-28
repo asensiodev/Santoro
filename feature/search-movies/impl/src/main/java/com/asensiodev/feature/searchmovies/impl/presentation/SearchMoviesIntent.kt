@@ -2,6 +2,7 @@ package com.asensiodev.feature.searchmovies.impl.presentation
 
 internal sealed interface SearchMoviesIntent {
     data object LoadInitialData : SearchMoviesIntent
+    data object Refresh : SearchMoviesIntent
     data class UpdateQuery(
         val query: String,
     ) : SearchMoviesIntent

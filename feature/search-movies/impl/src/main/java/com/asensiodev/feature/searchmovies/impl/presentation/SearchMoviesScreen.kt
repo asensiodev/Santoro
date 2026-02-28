@@ -40,6 +40,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -136,24 +137,34 @@ internal fun SearchMoviesScreen(
             OfflineBanner(onRetry = { onProcess(SearchMoviesIntent.LoadInitialData) })
         }
 
-        if (uiState.query.isBlank() && uiState.selectedGenreId == null) {
-            DashboardContent(
-                uiState = uiState,
-                onMovieClick = onMovieClick,
-                onLoadMorePopular = { onProcess(SearchMoviesIntent.LoadMorePopularMovies) },
-            )
-        } else {
-            SearchMoviesContent(
-                uiState = uiState,
-                onQueryChanged = { onProcess(SearchMoviesIntent.UpdateQuery(it)) },
-                onMovieClick = onMovieClick,
-                onLoadMore = { onProcess(SearchMoviesIntent.LoadMoreSearchResults) },
-                onSearchWithoutGenreFilter = {
-                    onProcess(
-                        SearchMoviesIntent.SearchWithoutGenreFilter,
-                    )
-                },
-            )
+        val isPullToRefreshEnabled = uiState.query.isNotBlank() || uiState.selectedGenreId == null
+
+        @OptIn(ExperimentalMaterial3Api::class)
+        PullToRefreshBox(
+            isRefreshing = uiState.isRefreshing,
+            onRefresh = { if (isPullToRefreshEnabled) onProcess(SearchMoviesIntent.Refresh) },
+            modifier = Modifier.weight(1f),
+        ) {
+            if (uiState.query.isBlank() && uiState.selectedGenreId == null) {
+                DashboardContent(
+                    uiState = uiState,
+                    onMovieClick = onMovieClick,
+                    onLoadMorePopular = { onProcess(SearchMoviesIntent.LoadMorePopularMovies) },
+                    onLoadRetry = { onProcess(SearchMoviesIntent.LoadInitialData) },
+                )
+            } else {
+                SearchMoviesContent(
+                    uiState = uiState,
+                    onQueryChanged = { onProcess(SearchMoviesIntent.UpdateQuery(it)) },
+                    onMovieClick = onMovieClick,
+                    onLoadMore = { onProcess(SearchMoviesIntent.LoadMoreSearchResults) },
+                    onSearchWithoutGenreFilter = {
+                        onProcess(
+                            SearchMoviesIntent.SearchWithoutGenreFilter,
+                        )
+                    },
+                )
+            }
         }
     }
 }
@@ -195,6 +206,7 @@ private fun DashboardContent(
     uiState: SearchMoviesUiState,
     onMovieClick: (Int) -> Unit,
     onLoadMorePopular: () -> Unit,
+    onLoadRetry: () -> Unit,
 ) {
     when (uiState.screenState) {
         is SearchScreenState.Loading -> {
@@ -211,9 +223,7 @@ private fun DashboardContent(
         is SearchScreenState.Error -> {
             ErrorContent(
                 message = uiState.screenState.message,
-                onRetry = {
-                    // TODO: Implement retry logic for dashboard
-                },
+                onRetry = { onLoadRetry() },
             )
         }
 

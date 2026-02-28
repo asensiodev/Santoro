@@ -61,6 +61,7 @@ internal class SearchMoviesViewModel
         fun process(intent: SearchMoviesIntent) {
             when (intent) {
                 is SearchMoviesIntent.LoadInitialData -> loadInitialData()
+                is SearchMoviesIntent.Refresh -> refresh()
                 is SearchMoviesIntent.UpdateQuery -> updateQuery(intent.query)
                 is SearchMoviesIntent.SelectGenre -> onGenreSelected(intent.genreId)
                 is SearchMoviesIntent.ClearGenre -> clearGenreSelection()
@@ -80,6 +81,20 @@ internal class SearchMoviesViewModel
                 .onEach { query ->
                     handleQueryChange(query)
                 }.launchIn(viewModelScope)
+        }
+
+        private fun refresh() {
+            val query = _uiState.value.query
+            val selectedGenreId = _uiState.value.selectedGenreId
+            _uiState.update { it.copy(isRefreshing = true) }
+            viewModelScope.launch {
+                cachingRepository.clearAllSections()
+                if (query.isBlank() && selectedGenreId == null) {
+                    fetchDashboardData(fromRefresh = true)
+                } else {
+                    performSearch(FIRST_PAGE, isInitialLoad = true)
+                }
+            }
         }
 
         private fun updateQuery(query: String) {
@@ -227,6 +242,7 @@ internal class SearchMoviesViewModel
                         it.copy(
                             screenState = finalState,
                             isSearchLoadingMore = false,
+                            isRefreshing = false,
                             isShowingStaleData = false,
                             searchMovieResults = updatedResults,
                             currentSearchPage = page,
@@ -242,6 +258,7 @@ internal class SearchMoviesViewModel
                             it.copy(
                                 isShowingStaleData = true,
                                 isSearchLoadingMore = false,
+                                isRefreshing = false,
                             )
                         }
                         return
@@ -255,6 +272,7 @@ internal class SearchMoviesViewModel
                                     it.screenState
                                 },
                             isSearchLoadingMore = false,
+                            isRefreshing = false,
                             isShowingStaleData = false,
                             isSearchEndReached = true,
                         )
@@ -281,11 +299,13 @@ internal class SearchMoviesViewModel
             }
         }
 
-        private fun fetchDashboardData() {
-            _uiState.update { it.copy(screenState = SearchScreenState.Loading) }
+        private fun fetchDashboardData(fromRefresh: Boolean = false) {
+            if (!fromRefresh) {
+                _uiState.update { it.copy(screenState = SearchScreenState.Loading) }
+            }
 
             viewModelScope.launch {
-                cachingRepository.clearStaleEntries()
+                if (!fromRefresh) cachingRepository.clearStaleEntries()
 
                 val popularDeferred =
                     async { collectWithStale(getPopularMoviesUseCase(FIRST_PAGE)) }
@@ -318,6 +338,7 @@ internal class SearchMoviesViewModel
                     state.copy(
                         screenState = SearchScreenState.Content,
                         isShowingStaleData = isStale,
+                        isRefreshing = false,
                         nowPlayingMovies = nowPlayingList,
                         popularMovies = popularList,
                         topRatedMovies = topRatedResult.getOrDefault(emptyList()).toUiList(),

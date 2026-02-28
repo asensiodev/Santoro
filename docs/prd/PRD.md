@@ -298,7 +298,7 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
-| **Status**  | 📋 Planned |
+| **Status**  | ✅ Shipped — [FIP-011](../plan/FIP-011-pull-to-refresh.md) |
 | **Scope**   | Search/Browse screen (`SearchMoviesScreen`) |
 | **Trigger** | User pulls down on the browse content or search results list |
 | **Behaviour** | Forces a full cache bypass for the current view — re-fetches all curated sections (or current search query) from TMDB, updates Room cache, and hides the offline banner if previously shown |
