@@ -16,6 +16,7 @@ data class MovieUi(
     val keyCrew: List<CrewMemberUi> = emptyList(),
     val tagline: String? = null,
     val runtime: String?,
+    val runtimeMinutes: Int? = null,
     val director: String?,
     val isWatched: Boolean,
     val isInWatchlist: Boolean,

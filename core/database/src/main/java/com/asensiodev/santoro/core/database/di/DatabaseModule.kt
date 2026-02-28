@@ -31,6 +31,7 @@ object DatabaseModule {
                 SantoroRoomDatabase.MIGRATION_1_2,
                 SantoroRoomDatabase.MIGRATION_2_3,
                 SantoroRoomDatabase.MIGRATION_3_4,
+                SantoroRoomDatabase.MIGRATION_4_5,
             ).build()
 
     @Provides

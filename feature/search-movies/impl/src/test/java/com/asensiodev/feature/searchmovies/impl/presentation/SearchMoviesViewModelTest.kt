@@ -104,10 +104,10 @@ class SearchMoviesViewModelTest {
             every { searchMoviesByQueryAndGenreUseCase("casino", 18, any()) } returns
                 flowOf(Result.Success(listOf(casinoMovie)))
 
-            viewModel.loadInitialData()
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
             advanceUntilIdle()
 
-            viewModel.updateQuery("casino")
+            viewModel.process(SearchMoviesIntent.UpdateQuery("casino"))
             testDispatcher.scheduler.advanceTimeBy(600)
             advanceUntilIdle()
 
@@ -115,7 +115,7 @@ class SearchMoviesViewModelTest {
             stateAfterQuery.searchMovieResults.size shouldBeEqualTo 1
             stateAfterQuery.searchMovieResults.first().title shouldBeEqualTo "Casino"
 
-            viewModel.onGenreSelected(18)
+            viewModel.process(SearchMoviesIntent.SelectGenre(18))
             advanceUntilIdle()
 
             val stateAfterGenre = viewModel.uiState.value
@@ -131,17 +131,17 @@ class SearchMoviesViewModelTest {
             every { searchMoviesByQueryAndGenreUseCase("casino", 18, any()) } returns
                 flowOf(Result.Success(listOf(casinoMovie)))
 
-            viewModel.loadInitialData()
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
             advanceUntilIdle()
 
-            viewModel.updateQuery("casino")
+            viewModel.process(SearchMoviesIntent.UpdateQuery("casino"))
             testDispatcher.scheduler.advanceTimeBy(600)
             advanceUntilIdle()
 
-            viewModel.onGenreSelected(18)
+            viewModel.process(SearchMoviesIntent.SelectGenre(18))
             advanceUntilIdle()
 
-            viewModel.clearGenreSelection()
+            viewModel.process(SearchMoviesIntent.ClearGenre)
             advanceUntilIdle()
 
             val finalState = viewModel.uiState.value
@@ -159,7 +159,7 @@ class SearchMoviesViewModelTest {
                     emit(Result.Error(StaleDataException()))
                 }
 
-            viewModel.loadInitialData()
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
             advanceUntilIdle()
 
             val state = viewModel.uiState.value
@@ -172,7 +172,7 @@ class SearchMoviesViewModelTest {
         runTest {
             every { getPopularMoviesUseCase(any()) } returns flowOf(Result.Success(listOf(casinoMovie)))
 
-            viewModel.loadInitialData()
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
             advanceUntilIdle()
 
             viewModel.uiState.value.isShowingStaleData shouldBeEqualTo false
@@ -184,7 +184,7 @@ class SearchMoviesViewModelTest {
             every { getPopularMoviesUseCase(any()) } returns
                 flowOf(Result.Error(java.io.IOException("Network error")))
 
-            viewModel.loadInitialData()
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
             advanceUntilIdle()
 
             viewModel.uiState.value.isShowingStaleData shouldBeEqualTo false

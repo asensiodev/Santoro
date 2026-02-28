@@ -56,6 +56,15 @@ o    <string name="browse_offline_cache_banner">You\'re offline. Showing cached 
     <string name="watched_movies_no_results_text">It seems like you haven\'t watched any movies yet…</string>
     <string name="watched_total_label">Total Watched</string>
     <string name="watched_total_count">%d Movies</string>
+    <string name="watched_stat_total_label">Movies Watched</string>
+    <string name="watched_stat_total_value">%d movies</string>
+    <string name="watched_stat_runtime_label">Total Runtime</string>
+    <string name="watched_stat_runtime_value">%d h</string>
+    <string name="watched_stat_runtime_unavailable">— h</string>
+    <string name="watched_stat_genre_label">Top Genre</string>
+    <string name="watched_stat_genre_unavailable">—</string>
+    <string name="watched_stat_streak_label">Best Streak</string>
+    <string name="watched_stat_streak_value">%d weeks</string>
 
     <!-- Watchlist Screen -->
     <string name="watchlist_top_bar_title">My watchlist</string>

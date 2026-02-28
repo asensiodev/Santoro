@@ -81,6 +81,7 @@ class SearchMoviesResponseApiModelMapperTest {
             genreIds = listOf(),
             productionCountries = listOf(),
             credits = null,
+            tagline = null,
             runtime = null,
         )
 

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asensiodev.core.domain.Result
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchedMoviesUseCase
+import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchedStatsUseCase
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.SearchWatchedMoviesUseCase
 import com.asensiodev.feature.watchedmovies.impl.presentation.mapper.toUiList
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,6 +28,7 @@ internal class WatchedMoviesViewModel
     @Inject
     constructor(
         private val getWatchedMoviesUseCase: GetWatchedMoviesUseCase,
+        private val getWatchedStatsUseCase: GetWatchedStatsUseCase,
         private val searchWatchedMoviesUseCase: SearchWatchedMoviesUseCase,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(WatchedMoviesUiState())
@@ -40,6 +42,7 @@ internal class WatchedMoviesViewModel
         fun process(intent: WatchedMoviesIntent) {
             when (intent) {
                 is WatchedMoviesIntent.LoadMovies -> loadMovies()
+                is WatchedMoviesIntent.LoadStats -> loadStats()
                 is WatchedMoviesIntent.UpdateQuery -> updateQuery(intent.query)
             }
         }
@@ -47,6 +50,7 @@ internal class WatchedMoviesViewModel
         @OptIn(FlowPreview::class)
         private fun loadMovies() {
             fetchWatchedMovies()
+            loadStats()
 
             searchQuery
                 .debounce(DELAY)
@@ -121,6 +125,14 @@ internal class WatchedMoviesViewModel
                             }
                         }
                     }
+                }
+            }
+        }
+
+        private fun loadStats() {
+            viewModelScope.launch {
+                getWatchedStatsUseCase().collect { stats ->
+                    _uiState.update { it.copy(stats = stats) }
                 }
             }
         }

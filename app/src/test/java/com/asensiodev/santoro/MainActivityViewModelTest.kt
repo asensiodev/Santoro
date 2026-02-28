@@ -13,6 +13,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
@@ -102,8 +103,13 @@ class MainActivityViewModelTest {
             every { observeThemeUseCase() } returns flowOf(ThemeOption.DARK)
 
             buildViewModel()
+
+            val values = mutableListOf<ThemeOption>()
+            backgroundScope.launch {
+                sut.themeOption.collect { values.add(it) }
+            }
             advanceUntilIdle()
 
-            sut.themeOption.value shouldBeEqualTo ThemeOption.DARK
+            values.last() shouldBeEqualTo ThemeOption.DARK
         }
 }

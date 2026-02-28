@@ -4,31 +4,20 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Star
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -42,7 +31,9 @@ import com.asensiodev.core.designsystem.component.noresultscontent.NoResultsCont
 import com.asensiodev.core.designsystem.component.querytextfield.QueryTextField
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
+import com.asensiodev.feature.watchedmovies.impl.domain.model.WatchedStats
 import com.asensiodev.feature.watchedmovies.impl.presentation.component.MovieCard
+import com.asensiodev.feature.watchedmovies.impl.presentation.component.WatchedStatsDashboard
 import com.asensiodev.feature.watchedmovies.impl.presentation.model.MovieUi
 import com.asensiodev.santoro.core.stringresources.R as SR
 
@@ -111,7 +102,7 @@ internal fun WatchedMoviesScreen(
             uiState.hasResults -> {
                 WatchedMovieList(
                     movies = uiState.movies,
-                    totalCount = uiState.totalWatchedMovies,
+                    stats = uiState.stats,
                     onMovieClick = onMovieClick,
                 )
             }
@@ -128,7 +119,7 @@ internal fun WatchedMoviesScreen(
 @Composable
 fun WatchedMovieList(
     movies: Map<String, List<MovieUi>>,
-    totalCount: Int,
+    stats: WatchedStats?,
     onMovieClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -139,7 +130,12 @@ fun WatchedMovieList(
         modifier = modifier.fillMaxSize(),
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
-            GamificationHeader(totalCount = totalCount)
+            if (stats != null) {
+                WatchedStatsDashboard(
+                    stats = stats,
+                    modifier = Modifier.padding(bottom = Spacings.spacing8),
+                )
+            }
         }
 
         movies.forEach { (dateHeader, movieList) ->
@@ -151,50 +147,6 @@ fun WatchedMovieList(
                     movie = movie,
                     onClick = { onMovieClick(movie.id) },
                     modifier = Modifier.aspectRatio(POSTER_RATIO),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun GamificationHeader(
-    totalCount: Int,
-    modifier: Modifier = Modifier,
-) {
-    Card(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(bottom = Spacings.spacing8),
-        shape = RoundedCornerShape(Size.size16),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-            ),
-    ) {
-        Row(
-            modifier = Modifier.padding(Spacings.spacing16),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Star,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.width(Size.size32).height(Size.size32),
-            )
-            Spacer(modifier = Modifier.width(Spacings.spacing12))
-            Column {
-                Text(
-                    text = stringResource(SR.string.watched_total_label),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
-                )
-                Text(
-                    text = stringResource(SR.string.watched_total_count, totalCount),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
         }

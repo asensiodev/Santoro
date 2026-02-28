@@ -3,6 +3,7 @@ package com.asensiodev.feature.watchedmovies.impl.di
 import com.asensiodev.core.domain.dispatcher.DispatcherProvider
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.AddWatchedMovieUseCase
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchedMoviesUseCase
+import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchedStatsUseCase
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.SearchWatchedMoviesUseCase
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import dagger.Module
@@ -34,4 +35,11 @@ internal object WatchedMoviesModule {
         repository: DatabaseRepository,
         dispatchers: DispatcherProvider,
     ): SearchWatchedMoviesUseCase = SearchWatchedMoviesUseCase(repository, dispatchers)
+
+    @Provides
+    @Singleton
+    internal fun provideGetWatchedStatsUseCase(
+        repository: DatabaseRepository,
+        dispatchers: DispatcherProvider,
+    ): GetWatchedStatsUseCase = GetWatchedStatsUseCase(repository, dispatchers)
 }

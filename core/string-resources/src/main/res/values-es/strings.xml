@@ -56,6 +56,15 @@
     <string name="watched_movies_no_results_text">Parece que aún no has visto ninguna película…</string>
     <string name="watched_total_label">Total vistas</string>
     <string name="watched_total_count">%d películas</string>
+    <string name="watched_stat_total_label">Películas vistas</string>
+    <string name="watched_stat_total_value">%d películas</string>
+    <string name="watched_stat_runtime_label">Tiempo total</string>
+    <string name="watched_stat_runtime_value">%d h</string>
+    <string name="watched_stat_runtime_unavailable">— h</string>
+    <string name="watched_stat_genre_label">Género favorito</string>
+    <string name="watched_stat_genre_unavailable">—</string>
+    <string name="watched_stat_streak_label">Mejor racha</string>
+    <string name="watched_stat_streak_value">%d semanas</string>
 
     <!-- Watchlist Screen -->
     <string name="watchlist_top_bar_title">Mi lista</string>
