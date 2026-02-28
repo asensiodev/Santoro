@@ -11,6 +11,7 @@
 | Field          | Value                                         |
 |----------------|-----------------------------------------------|
 | **Brief ID**   | FB-XXX                                        |
+| **Status**     | 🟡 Draft · 🔵 In Progress · ✅ Done           |
 | **Type**       | Feature · Bug · Refactor                      |
 | **Sprint**     | _Sprint name or number_                       |
 | **Ticket**     | _Jira / Linear / issue tracker ref_           |
