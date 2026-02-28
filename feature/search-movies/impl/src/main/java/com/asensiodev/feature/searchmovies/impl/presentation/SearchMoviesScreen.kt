@@ -75,6 +75,7 @@ import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.core.designsystem.theme.Weights
 import com.asensiodev.feature.searchmovies.impl.presentation.component.HeroMovieCard
 import com.asensiodev.feature.searchmovies.impl.presentation.component.MovieCard
+import com.asensiodev.feature.searchmovies.impl.presentation.component.SearchSuggestionsContent
 import com.asensiodev.feature.searchmovies.impl.presentation.model.GenreConstants
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -117,7 +118,9 @@ internal fun SearchMoviesRoute(
         SearchMoviesScreen(
             uiState = uiState,
             onProcess = onProcess,
-            onMovieClick = onMovieClick,
+            onMovieClick = { movieId ->
+                onProcess(SearchMoviesIntent.MovieClicked(movieId))
+            },
         )
         SnackbarHost(
             hostState = snackbarHostState,
@@ -152,55 +155,82 @@ internal fun SearchMoviesScreen(
             query = uiState.query,
             placeholder = stringResource(SR.string.search_movies_textfield_placeholder),
             onQueryChanged = { onProcess(SearchMoviesIntent.UpdateQuery(it)) },
+            onSearchTriggered = { onProcess(SearchMoviesIntent.SearchTriggered) },
+            onFocusChanged = { focused ->
+                if (focused) {
+                    onProcess(SearchMoviesIntent.FieldFocused)
+                } else {
+                    onProcess(SearchMoviesIntent.FieldCleared)
+                }
+            },
         )
 
-        GenreFilterChips(
-            selectedGenreId = uiState.selectedGenreId,
-            onGenreSelected = { onProcess(SearchMoviesIntent.SelectGenre(it)) },
-            onClearGenre = { onProcess(SearchMoviesIntent.ClearGenre) },
-        )
+        val showSuggestions =
+            uiState.isFieldFocused && uiState.query.isBlank() && uiState.selectedGenreId == null
 
-        AnimatedVisibility(visible = uiState.isShowingStaleData) {
-            OfflineBanner(onRetry = { onProcess(SearchMoviesIntent.LoadInitialData) })
-        }
-
-        val isGenreOnlyMode = uiState.query.isBlank() && uiState.selectedGenreId != null
-
-        if (isGenreOnlyMode) {
-            SearchMoviesContent(
-                uiState = uiState,
-                onQueryChanged = { onProcess(SearchMoviesIntent.UpdateQuery(it)) },
-                onMovieClick = onMovieClick,
-                onLoadMore = { onProcess(SearchMoviesIntent.LoadMoreSearchResults) },
-                onSearchWithoutGenreFilter = {
-                    onProcess(SearchMoviesIntent.SearchWithoutGenreFilter)
+        if (showSuggestions) {
+            SearchSuggestionsContent(
+                recentSearches = uiState.recentSearches,
+                trendingSuggestions = uiState.trendingSuggestions,
+                onSuggestionTap = { query ->
+                    onProcess(SearchMoviesIntent.SuggestionTapped(query))
                 },
-                modifier = Modifier.weight(1f),
+                onClearRecents = { onProcess(SearchMoviesIntent.ClearRecentSearches) },
+                modifier = Modifier.weight(Weights.W10),
             )
         } else {
-            @OptIn(ExperimentalMaterial3Api::class)
-            PullToRefreshBox(
-                isRefreshing = uiState.isRefreshing,
-                onRefresh = { onProcess(SearchMoviesIntent.Refresh) },
-                modifier = Modifier.weight(1f),
-            ) {
-                if (uiState.query.isBlank()) {
-                    DashboardContent(
-                        uiState = uiState,
-                        onMovieClick = onMovieClick,
-                        onLoadMorePopular = { onProcess(SearchMoviesIntent.LoadMorePopularMovies) },
-                        onLoadRetry = { onProcess(SearchMoviesIntent.LoadInitialData) },
-                    )
-                } else {
-                    SearchMoviesContent(
-                        uiState = uiState,
-                        onQueryChanged = { onProcess(SearchMoviesIntent.UpdateQuery(it)) },
-                        onMovieClick = onMovieClick,
-                        onLoadMore = { onProcess(SearchMoviesIntent.LoadMoreSearchResults) },
-                        onSearchWithoutGenreFilter = {
-                            onProcess(SearchMoviesIntent.SearchWithoutGenreFilter)
-                        },
-                    )
+            GenreFilterChips(
+                selectedGenreId = uiState.selectedGenreId,
+                onGenreSelected = { onProcess(SearchMoviesIntent.SelectGenre(it)) },
+                onClearGenre = { onProcess(SearchMoviesIntent.ClearGenre) },
+            )
+
+            AnimatedVisibility(visible = uiState.isShowingStaleData) {
+                OfflineBanner(onRetry = { onProcess(SearchMoviesIntent.LoadInitialData) })
+            }
+
+            val isGenreOnlyMode = uiState.query.isBlank() && uiState.selectedGenreId != null
+
+            if (isGenreOnlyMode) {
+                SearchMoviesContent(
+                    uiState = uiState,
+                    onQueryChanged = { onProcess(SearchMoviesIntent.UpdateQuery(it)) },
+                    onMovieClick = onMovieClick,
+                    onLoadMore = { onProcess(SearchMoviesIntent.LoadMoreSearchResults) },
+                    onSearchWithoutGenreFilter = {
+                        onProcess(SearchMoviesIntent.SearchWithoutGenreFilter)
+                    },
+                    modifier = Modifier.weight(Weights.W10),
+                )
+            } else {
+                @OptIn(ExperimentalMaterial3Api::class)
+                PullToRefreshBox(
+                    isRefreshing = uiState.isRefreshing,
+                    onRefresh = { onProcess(SearchMoviesIntent.Refresh) },
+                    modifier = Modifier.weight(Weights.W10),
+                ) {
+                    if (uiState.query.isBlank()) {
+                        DashboardContent(
+                            uiState = uiState,
+                            onMovieClick = onMovieClick,
+                            onLoadMorePopular = {
+                                onProcess(
+                                    SearchMoviesIntent.LoadMorePopularMovies,
+                                )
+                            },
+                            onLoadRetry = { onProcess(SearchMoviesIntent.LoadInitialData) },
+                        )
+                    } else {
+                        SearchMoviesContent(
+                            uiState = uiState,
+                            onQueryChanged = { onProcess(SearchMoviesIntent.UpdateQuery(it)) },
+                            onMovieClick = onMovieClick,
+                            onLoadMore = { onProcess(SearchMoviesIntent.LoadMoreSearchResults) },
+                            onSearchWithoutGenreFilter = {
+                                onProcess(SearchMoviesIntent.SearchWithoutGenreFilter)
+                            },
+                        )
+                    }
                 }
             }
         }

@@ -12,6 +12,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -28,8 +29,16 @@ fun QueryTextField(
     onQueryChanged: (String) -> Unit,
     modifier: Modifier = Modifier,
     onSearchTriggered: (() -> Unit)? = null,
+    onFocusChanged: ((Boolean) -> Unit)? = null,
 ) {
     val focusManager = LocalFocusManager.current
+
+    val focusModifier =
+        if (onFocusChanged != null) {
+            Modifier.onFocusChanged { state -> onFocusChanged(state.isFocused) }
+        } else {
+            Modifier
+        }
 
     TextField(
         value = query,
@@ -41,7 +50,10 @@ fun QueryTextField(
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
             )
         },
-        modifier = modifier.fillMaxWidth(),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .then(focusModifier),
         shape = CircleShape,
         maxLines = 1,
         singleLine = true,
@@ -62,7 +74,12 @@ fun QueryTextField(
         },
         trailingIcon = {
             if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChanged(EMPTY_STRING) }) {
+                IconButton(
+                    onClick = {
+                        onQueryChanged(EMPTY_STRING)
+                        focusManager.clearFocus()
+                    },
+                ) {
                     Icon(
                         imageVector = AppIcons.Clear,
                         contentDescription =

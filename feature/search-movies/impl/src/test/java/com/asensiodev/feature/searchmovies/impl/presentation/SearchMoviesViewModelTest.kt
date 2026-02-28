@@ -6,15 +6,19 @@ import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.impl.data.repository.CachingSearchMoviesRepository
 import com.asensiodev.feature.searchmovies.impl.data.repository.StaleDataException
+import com.asensiodev.feature.searchmovies.impl.domain.usecase.ClearRecentSearchesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetMoviesByGenreUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetNowPlayingMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetPopularMoviesUseCase
+import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetRecentSearchesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTopRatedMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTrendingMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetUpcomingMoviesUseCase
+import com.asensiodev.feature.searchmovies.impl.domain.usecase.SaveRecentSearchUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesByQueryAndGenreUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesUseCase
 import io.mockk.coJustRun
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +48,9 @@ class SearchMoviesViewModelTest {
     private val getMoviesByGenreUseCase: GetMoviesByGenreUseCase = mockk(relaxed = true)
     private val searchMoviesByQueryAndGenreUseCase: SearchMoviesByQueryAndGenreUseCase = mockk(relaxed = true)
     private val cachingRepository: CachingSearchMoviesRepository = mockk(relaxed = true)
+    private val getRecentSearchesUseCase: GetRecentSearchesUseCase = mockk(relaxed = true)
+    private val saveRecentSearchUseCase: SaveRecentSearchUseCase = mockk(relaxed = true)
+    private val clearRecentSearchesUseCase: ClearRecentSearchesUseCase = mockk(relaxed = true)
 
     private lateinit var viewModel: SearchMoviesViewModel
 
@@ -76,6 +83,9 @@ class SearchMoviesViewModelTest {
         every { getTopRatedMoviesUseCase(any()) } returns flowOf(Result.Success(emptyList()))
         every { getUpcomingMoviesUseCase(any()) } returns flowOf(Result.Success(emptyList()))
         every { getTrendingMoviesUseCase(any()) } returns flowOf(Result.Success(emptyList()))
+        every { getRecentSearchesUseCase() } returns flowOf(emptyList())
+        coJustRun { saveRecentSearchUseCase(any()) }
+        coJustRun { clearRecentSearchesUseCase() }
 
         viewModel =
             SearchMoviesViewModel(
@@ -89,6 +99,9 @@ class SearchMoviesViewModelTest {
                 getMoviesByGenreUseCase = getMoviesByGenreUseCase,
                 searchMoviesByQueryAndGenreUseCase = searchMoviesByQueryAndGenreUseCase,
                 cachingRepository = cachingRepository,
+                getRecentSearchesUseCase = getRecentSearchesUseCase,
+                saveRecentSearchUseCase = saveRecentSearchUseCase,
+                clearRecentSearchesUseCase = clearRecentSearchesUseCase,
             )
     }
 
@@ -188,5 +201,134 @@ class SearchMoviesViewModelTest {
             advanceUntilIdle()
 
             viewModel.uiState.value.isShowingStaleData shouldBeEqualTo false
+        }
+
+    @Test
+    fun `GIVEN field not focused WHEN FieldFocused intent THEN isFieldFocused is true`() =
+        runTest {
+            // GIVEN
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+
+            // WHEN
+            viewModel.process(SearchMoviesIntent.FieldFocused)
+            advanceUntilIdle()
+
+            // THEN
+            viewModel.uiState.value.isFieldFocused shouldBeEqualTo true
+        }
+
+    @Test
+    fun `GIVEN field focused WHEN FieldCleared intent THEN isFieldFocused is false`() =
+        runTest {
+            // GIVEN
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+            viewModel.process(SearchMoviesIntent.FieldFocused)
+
+            // WHEN
+            viewModel.process(SearchMoviesIntent.FieldCleared)
+            advanceUntilIdle()
+
+            // THEN
+            viewModel.uiState.value.isFieldFocused shouldBeEqualTo false
+        }
+
+    @Test
+    fun `GIVEN empty query WHEN SuggestionTapped with avatar THEN query becomes avatar`() =
+        runTest {
+            // GIVEN
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+
+            // WHEN
+            viewModel.process(SearchMoviesIntent.SuggestionTapped("avatar"))
+            advanceUntilIdle()
+
+            // THEN
+            viewModel.uiState.value.query shouldBeEqualTo "avatar"
+            viewModel.uiState.value.isFieldFocused shouldBeEqualTo false
+        }
+
+    @Test
+    fun `GIVEN recent searches present WHEN ClearRecentSearches intent THEN recentSearches is empty`() =
+        runTest {
+            // GIVEN
+            every { getRecentSearchesUseCase() } returns flowOf(listOf("inception", "avatar"))
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+
+            every { getRecentSearchesUseCase() } returns flowOf(emptyList())
+
+            // WHEN
+            viewModel.process(SearchMoviesIntent.ClearRecentSearches)
+            advanceUntilIdle()
+
+            // THEN
+            coVerify(exactly = 1) { clearRecentSearchesUseCase() }
+        }
+
+    @Test
+    fun `GIVEN active query WHEN SearchTriggered THEN saves query`() =
+        runTest {
+            // GIVEN
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+            viewModel.process(SearchMoviesIntent.UpdateQuery("casino"))
+            advanceUntilIdle()
+
+            // WHEN
+            viewModel.process(SearchMoviesIntent.SearchTriggered)
+            advanceUntilIdle()
+
+            // THEN
+            coVerify(exactly = 1) { saveRecentSearchUseCase("casino") }
+        }
+
+    @Test
+    fun `GIVEN blank query WHEN SearchTriggered THEN does not save`() =
+        runTest {
+            // GIVEN
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+
+            // WHEN
+            viewModel.process(SearchMoviesIntent.SearchTriggered)
+            advanceUntilIdle()
+
+            // THEN
+            coVerify(exactly = 0) { saveRecentSearchUseCase(any()) }
+        }
+
+    @Test
+    fun `GIVEN active query WHEN MovieClicked THEN saves query and emits NavigateToDetail`() =
+        runTest {
+            // GIVEN
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+            viewModel.process(SearchMoviesIntent.UpdateQuery("casino"))
+            advanceUntilIdle()
+
+            // WHEN
+            viewModel.process(SearchMoviesIntent.MovieClicked(42))
+            advanceUntilIdle()
+
+            // THEN
+            coVerify(exactly = 1) { saveRecentSearchUseCase("casino") }
+        }
+
+    @Test
+    fun `GIVEN blank query WHEN MovieClicked THEN does not save but still navigates`() =
+        runTest {
+            // GIVEN
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+
+            // WHEN
+            viewModel.process(SearchMoviesIntent.MovieClicked(42))
+            advanceUntilIdle()
+
+            // THEN
+            coVerify(exactly = 0) { saveRecentSearchUseCase(any()) }
         }
 }

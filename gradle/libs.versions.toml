@@ -7,6 +7,7 @@ minSdk = "24"
 versionCode = "1"
 versionName = "0.0.1.0"
 
+datastore = "1.1.4"
 activityCompose = "1.10.1"
 appcompat = "1.7.0"
 agp = "8.12.0"
@@ -77,6 +78,9 @@ dagger-hilt-core = { group = "com.google.dagger", name = "hilt-core", version.re
 dagger-hilt-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "dagger-hilt" }
 hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hilt" }
 hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hilt" }
+
+# DataStore
+datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 
 # Java Inject
 javax-inject = { module = "javax.inject:javax.inject", version = "1" }

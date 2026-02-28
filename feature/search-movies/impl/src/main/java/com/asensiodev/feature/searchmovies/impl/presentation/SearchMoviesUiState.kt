@@ -41,6 +41,9 @@ internal data class SearchMoviesUiState(
     val selectedGenreId: Int? = null,
     val isShowingStaleData: Boolean = false,
     val isRefreshing: Boolean = false,
+    val recentSearches: List<String> = emptyList(),
+    val trendingSuggestions: List<String> = emptyList(),
+    val isFieldFocused: Boolean = false,
 ) {
     val hasSearchResults: Boolean get() = searchMovieResults.isNotEmpty()
 }

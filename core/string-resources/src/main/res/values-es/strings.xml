@@ -140,6 +140,11 @@
     <string name="error_message_retry_button">Reintentar</string>
     <string name="error_content_button">Intentar de nuevo</string>
 
+    <!-- Search Suggestions -->
+    <string name="search_suggestions_recent_title">Búsquedas recientes</string>
+    <string name="search_suggestions_clear_all">Borrar todo</string>
+    <string name="search_suggestions_trending_title">Tendencias</string>
+
     <!-- Google Auth ID -->
     <string name="default_web_client_id" translatable="false">792126816216-49vquegl1mcdcm52655qhgrs9l9ou5cf.apps.googleusercontent.com</string>
 

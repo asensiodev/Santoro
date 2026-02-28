@@ -140,6 +140,11 @@ o    <string name="browse_offline_cache_banner">You\'re offline. Showing cached 
     <string name="error_message_retry_button">Retry</string>
     <string name="error_content_button">Try Again</string>
 
+    <!-- Search Suggestions -->
+    <string name="search_suggestions_recent_title">Recent searches</string>
+    <string name="search_suggestions_clear_all">Clear all</string>
+    <string name="search_suggestions_trending_title">Trending now</string>
+
     <!-- Google Auth ID -->
     <string name="default_web_client_id" translatable="false">792126816216-49vquegl1mcdcm52655qhgrs9l9ou5cf.apps.googleusercontent.com</string>
 

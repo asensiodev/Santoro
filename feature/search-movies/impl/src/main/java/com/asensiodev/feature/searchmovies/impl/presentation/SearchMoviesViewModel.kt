@@ -8,12 +8,15 @@ import com.asensiodev.core.domain.getOrDefault
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.impl.data.repository.CachingSearchMoviesRepository
 import com.asensiodev.feature.searchmovies.impl.data.repository.StaleDataException
+import com.asensiodev.feature.searchmovies.impl.domain.usecase.ClearRecentSearchesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetMoviesByGenreUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetNowPlayingMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetPopularMoviesUseCase
+import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetRecentSearchesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTopRatedMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTrendingMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetUpcomingMoviesUseCase
+import com.asensiodev.feature.searchmovies.impl.domain.usecase.SaveRecentSearchUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesByQueryAndGenreUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.presentation.mapper.toUiList
@@ -48,6 +51,9 @@ internal class SearchMoviesViewModel
         private val getMoviesByGenreUseCase: GetMoviesByGenreUseCase,
         private val searchMoviesByQueryAndGenreUseCase: SearchMoviesByQueryAndGenreUseCase,
         private val cachingRepository: CachingSearchMoviesRepository,
+        private val getRecentSearchesUseCase: GetRecentSearchesUseCase,
+        private val saveRecentSearchUseCase: SaveRecentSearchUseCase,
+        private val clearRecentSearchesUseCase: ClearRecentSearchesUseCase,
     ) : ViewModel() {
         private var searchJob: Job? = null
         private val _uiState = MutableStateFlow(SearchMoviesUiState())
@@ -68,12 +74,24 @@ internal class SearchMoviesViewModel
                 is SearchMoviesIntent.SearchWithoutGenreFilter -> searchWithoutGenreFilter()
                 is SearchMoviesIntent.LoadMoreSearchResults -> loadMoreSearchResults()
                 is SearchMoviesIntent.LoadMorePopularMovies -> loadMorePopularMovies()
+                is SearchMoviesIntent.SearchTriggered -> onSearchTriggered()
+                is SearchMoviesIntent.MovieClicked -> onMovieClicked(intent.movieId)
+                is SearchMoviesIntent.FieldFocused -> onFieldFocused()
+                is SearchMoviesIntent.FieldCleared -> onFieldCleared()
+                is SearchMoviesIntent.SuggestionTapped -> onSuggestionTapped(intent.query)
+                is SearchMoviesIntent.ClearRecentSearches -> onClearRecentSearches()
             }
         }
 
         @OptIn(FlowPreview::class)
         private fun loadInitialData() {
             fetchDashboardData()
+
+            viewModelScope.launch {
+                getRecentSearchesUseCase().collect { searches ->
+                    _uiState.update { it.copy(recentSearches = searches) }
+                }
+            }
 
             searchQuery
                 .debounce(DELAY)
@@ -302,6 +320,39 @@ internal class SearchMoviesViewModel
             }
         }
 
+        private fun onSearchTriggered() {
+            val query = _uiState.value.query
+            if (query.isNotBlank()) {
+                viewModelScope.launch { saveRecentSearchUseCase(query) }
+            }
+        }
+
+        private fun onMovieClicked(movieId: Int) {
+            val query = _uiState.value.query
+            if (query.isNotBlank()) {
+                viewModelScope.launch { saveRecentSearchUseCase(query) }
+            }
+            _effect.trySend(SearchMoviesEffect.NavigateToDetail(movieId))
+        }
+
+        private fun onFieldFocused() {
+            _uiState.update { it.copy(isFieldFocused = true) }
+        }
+
+        private fun onFieldCleared() {
+            _uiState.update { it.copy(isFieldFocused = false) }
+        }
+
+        private fun onSuggestionTapped(query: String) {
+            _uiState.update { it.copy(query = query, isFieldFocused = false) }
+            savedStateHandle[SEARCH_QUERY_KEY] = query
+            viewModelScope.launch { saveRecentSearchUseCase(query) }
+        }
+
+        private fun onClearRecentSearches() {
+            viewModelScope.launch { clearRecentSearchesUseCase() }
+        }
+
         private fun fetchDashboardData(fromRefresh: Boolean = false) {
             if (!fromRefresh) {
                 _uiState.update { it.copy(screenState = SearchScreenState.Loading) }
@@ -347,6 +398,11 @@ internal class SearchMoviesViewModel
                         topRatedMovies = topRatedResult.getOrDefault(emptyList()).toUiList(),
                         upcomingMovies = upcomingResult.getOrDefault(emptyList()).toUiList(),
                         trendingMovies = trendingResult.getOrDefault(emptyList()).toUiList(),
+                        trendingSuggestions =
+                            trendingResult
+                                .getOrDefault(emptyList())
+                                .mapNotNull { movie -> movie.title.takeIf { it.isNotBlank() } }
+                                .take(TRENDING_SUGGESTIONS_LIMIT),
                         currentPopularPage =
                             if (popularList.isNotEmpty()) {
                                 FIRST_PAGE + NEXT_PAGE
@@ -408,3 +464,4 @@ private const val DELAY: Long = 500
 private const val FIRST_PAGE: Int = 1
 private const val NEXT_PAGE: Int = 1
 private const val SEARCH_QUERY_KEY = "search_query"
+private const val TRENDING_SUGGESTIONS_LIMIT = 10

@@ -374,7 +374,7 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
-| **Status**  | 📋 Planned — [FIP-012](../plan/FIP-012-watched-stats-dashboard.md) |
+| **Status**  | ✅ Shipped — [FIP-012](../plan/FIP-012-watched-stats-dashboard.md) |
 | **Current state** | The summary card only shows total movies watched. The Watched screen groups movies by month/year but offers no other insights |
 | **Behaviour** | Expand the summary section into a small stats dashboard with: total movies watched · total runtime (hours) · favourite genre (most frequent) · longest watched streak (weeks). Cards use M3 `ElevatedCard` in a horizontal scroll row |
 | **Rationale** | Stats/insights are a proven engagement driver for tracking apps (Spotify Wrapped effect). Adds delight without requiring new data sources |
@@ -412,6 +412,7 @@ Features approved for a future release. Each will get a FIP before implementatio
 | 1.1     | 2026-02-26 | Add F-08 Pull-to-Refresh and F-09 MVI Migration to planned backlog |
 | 1.2     | 2026-02-26 | Unify G-XX gap IDs into F-XX sequence (G-01→F-04, G-02→F-10, G-03→F-11, G-04→F-12, G-05→F-13, G-06→F-14) |
 | 1.3     | 2026-02-28 | Add F-15 through F-22 — UI improvement features identified from code review |
+| 1.8     | 2026-02-28 | F-22 Recent & Trending Searches linked to FIP-013 and marked 🔵 In Progress |
 | 1.7     | 2026-02-28 | F-20 Watched Stats Dashboard marked as ✅ Shipped — FIP-012 |
 | 1.6     | 2026-02-28 | F-20 linked to FIP-012 |
 | 1.5     | 2026-02-28 | F-19 Personal Rating marked as 🚫 Discarded |
