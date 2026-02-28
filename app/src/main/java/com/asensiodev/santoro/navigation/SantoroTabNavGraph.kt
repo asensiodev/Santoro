@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.asensiodev.feature.moviedetail.impl.presentation.navigation.navigateToMovieDetail
@@ -27,25 +28,41 @@ fun SantoroTabNavGraph(
     ) {
         searchMoviesRoute(
             onMovieClick = { movieId ->
-                mainNavController.navigateToMovieDetail(movieId)
+                if (navController.currentBackStackEntry?.lifecycle?.currentState ==
+                    Lifecycle.State.RESUMED
+                ) {
+                    mainNavController.navigateToMovieDetail(movieId)
+                }
             },
         )
 
         watchedMoviesRoute(
             onMovieClick = { movieId ->
-                mainNavController.navigateToMovieDetail(movieId)
+                if (navController.currentBackStackEntry?.lifecycle?.currentState ==
+                    Lifecycle.State.RESUMED
+                ) {
+                    mainNavController.navigateToMovieDetail(movieId)
+                }
             },
         )
 
         watchlistRoute(
             onMovieClick = { movieId ->
-                mainNavController.navigateToMovieDetail(movieId)
+                if (navController.currentBackStackEntry?.lifecycle?.currentState ==
+                    Lifecycle.State.RESUMED
+                ) {
+                    mainNavController.navigateToMovieDetail(movieId)
+                }
             },
         )
 
         profileRoute(
             onAppSettingsClicked = {
-                mainNavController.navigate(SettingsRoute)
+                if (navController.currentBackStackEntry?.lifecycle?.currentState ==
+                    Lifecycle.State.RESUMED
+                ) {
+                    mainNavController.navigate(SettingsRoute)
+                }
             },
         )
     }

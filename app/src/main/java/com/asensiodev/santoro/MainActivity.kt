@@ -121,11 +121,23 @@ fun SantoroApp(
         }
 
         movieDetailRoute(
-            onBackClicked = { mainNavController.popBackStack() },
+            onBackClicked = {
+                if (mainNavController.currentBackStackEntry?.lifecycle?.currentState ==
+                    androidx.lifecycle.Lifecycle.State.RESUMED
+                ) {
+                    mainNavController.popBackStack()
+                }
+            },
         )
 
         settingsRoute(
-            onBackClicked = { mainNavController.popBackStack() },
+            onBackClicked = {
+                if (mainNavController.currentBackStackEntry?.lifecycle?.currentState ==
+                    androidx.lifecycle.Lifecycle.State.RESUMED
+                ) {
+                    mainNavController.popBackStack()
+                }
+            },
         )
     }
 }
