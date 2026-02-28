@@ -334,7 +334,7 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
-| **Status**  | 📋 Planned |
+| **Status**  | ✅ Shipped — [FIP-008](../plan/FIP-008-movie-detail-strings-cleanup.md) |
 | **Scope**   | `MovieDetailScreen.kt` |
 | **Current state** | "Overview", "Watchlist", and "Watched" button labels are hardcoded strings in production Composables — violating the project's no-hardcoded-strings rule |
 | **Behaviour** | Move all hardcoded strings to `core/stringresources`. Keys: `movie_detail_section_overview`, `movie_detail_action_watchlist`, `movie_detail_action_watched` |

@@ -65,6 +65,7 @@ o    <string name="browse_offline_cache_banner">You\'re offline. Showing cached 
 
     <!-- Movie Detail Screen -->
     <string name="movie_detail_top_bar_title">Movie Detail</string>
+    <string name="movie_detail_section_overview">Overview</string>
     <string name="default_no_description">No description available.</string>
     <string name="untitled_movie">Untitled.</string>
     <string name="rating">Rating: %.1f</string>

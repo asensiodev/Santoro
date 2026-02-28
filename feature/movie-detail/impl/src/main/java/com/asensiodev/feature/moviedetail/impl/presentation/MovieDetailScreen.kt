@@ -552,7 +552,7 @@ private fun MovieDetailsSection(
         )
         Column(verticalArrangement = Arrangement.spacedBy(Spacings.spacing8)) {
             Text(
-                text = "Overview",
+                text = stringResource(SR.string.movie_detail_section_overview),
                 style =
                     MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
@@ -607,9 +607,9 @@ private fun RowScope.WatchlistButton(
         Text(
             text =
                 if (movie.isInWatchlist) {
-                    "Watchlist"
+                    stringResource(SR.string.watchlist_icon_button)
                 } else {
-                    "Watchlist"
+                    stringResource(SR.string.watchlist_icon_button)
                 },
             maxLines = 1,
         )
@@ -652,9 +652,9 @@ private fun RowScope.WatchedButton(
         Text(
             text =
                 if (movie.isWatched) {
-                    "Watched"
+                    stringResource(SR.string.watched_icon_button)
                 } else {
-                    "Watched"
+                    stringResource(SR.string.watched_icon_button)
                 },
             maxLines = 1,
         )
