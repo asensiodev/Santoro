@@ -37,6 +37,9 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
@@ -84,19 +87,43 @@ internal fun SearchMoviesRoute(
     viewModel: SearchMoviesViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val refreshSuccessMessage = stringResource(SR.string.browse_refresh_success)
 
     LaunchedEffect(viewModel) {
         viewModel.process(SearchMoviesIntent.LoadInitialData)
     }
 
+    LaunchedEffect(viewModel) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is SearchMoviesEffect.ShowRefreshSuccess -> {
+                    snackbarHostState.showSnackbar(
+                        message = refreshSuccessMessage,
+                        duration = SnackbarDuration.Short,
+                    )
+                }
+
+                is SearchMoviesEffect.NavigateToDetail -> {
+                    onMovieClick(effect.movieId)
+                }
+            }
+        }
+    }
+
     val onProcess = remember(viewModel) { viewModel::process }
 
-    SearchMoviesScreen(
-        uiState = uiState,
-        onProcess = onProcess,
-        onMovieClick = onMovieClick,
-        modifier = modifier,
-    )
+    Box(modifier = modifier.fillMaxSize()) {
+        SearchMoviesScreen(
+            uiState = uiState,
+            onProcess = onProcess,
+            onMovieClick = onMovieClick,
+        )
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
+    }
 }
 
 @Composable
@@ -137,33 +164,44 @@ internal fun SearchMoviesScreen(
             OfflineBanner(onRetry = { onProcess(SearchMoviesIntent.LoadInitialData) })
         }
 
-        val isPullToRefreshEnabled = uiState.query.isNotBlank() || uiState.selectedGenreId == null
+        val isGenreOnlyMode = uiState.query.isBlank() && uiState.selectedGenreId != null
 
-        @OptIn(ExperimentalMaterial3Api::class)
-        PullToRefreshBox(
-            isRefreshing = uiState.isRefreshing,
-            onRefresh = { if (isPullToRefreshEnabled) onProcess(SearchMoviesIntent.Refresh) },
-            modifier = Modifier.weight(1f),
-        ) {
-            if (uiState.query.isBlank() && uiState.selectedGenreId == null) {
-                DashboardContent(
-                    uiState = uiState,
-                    onMovieClick = onMovieClick,
-                    onLoadMorePopular = { onProcess(SearchMoviesIntent.LoadMorePopularMovies) },
-                    onLoadRetry = { onProcess(SearchMoviesIntent.LoadInitialData) },
-                )
-            } else {
-                SearchMoviesContent(
-                    uiState = uiState,
-                    onQueryChanged = { onProcess(SearchMoviesIntent.UpdateQuery(it)) },
-                    onMovieClick = onMovieClick,
-                    onLoadMore = { onProcess(SearchMoviesIntent.LoadMoreSearchResults) },
-                    onSearchWithoutGenreFilter = {
-                        onProcess(
-                            SearchMoviesIntent.SearchWithoutGenreFilter,
-                        )
-                    },
-                )
+        if (isGenreOnlyMode) {
+            SearchMoviesContent(
+                uiState = uiState,
+                onQueryChanged = { onProcess(SearchMoviesIntent.UpdateQuery(it)) },
+                onMovieClick = onMovieClick,
+                onLoadMore = { onProcess(SearchMoviesIntent.LoadMoreSearchResults) },
+                onSearchWithoutGenreFilter = {
+                    onProcess(SearchMoviesIntent.SearchWithoutGenreFilter)
+                },
+                modifier = Modifier.weight(1f),
+            )
+        } else {
+            @OptIn(ExperimentalMaterial3Api::class)
+            PullToRefreshBox(
+                isRefreshing = uiState.isRefreshing,
+                onRefresh = { onProcess(SearchMoviesIntent.Refresh) },
+                modifier = Modifier.weight(1f),
+            ) {
+                if (uiState.query.isBlank()) {
+                    DashboardContent(
+                        uiState = uiState,
+                        onMovieClick = onMovieClick,
+                        onLoadMorePopular = { onProcess(SearchMoviesIntent.LoadMorePopularMovies) },
+                        onLoadRetry = { onProcess(SearchMoviesIntent.LoadInitialData) },
+                    )
+                } else {
+                    SearchMoviesContent(
+                        uiState = uiState,
+                        onQueryChanged = { onProcess(SearchMoviesIntent.UpdateQuery(it)) },
+                        onMovieClick = onMovieClick,
+                        onLoadMore = { onProcess(SearchMoviesIntent.LoadMoreSearchResults) },
+                        onSearchWithoutGenreFilter = {
+                            onProcess(SearchMoviesIntent.SearchWithoutGenreFilter)
+                        },
+                    )
+                }
             }
         }
     }
@@ -389,41 +427,44 @@ private fun SearchMoviesContent(
     onMovieClick: (Int) -> Unit,
     onLoadMore: () -> Unit,
     onSearchWithoutGenreFilter: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    when {
-        uiState.screenState is SearchScreenState.Loading -> {
-            LoadingIndicator()
-        }
+    Box(modifier = modifier.fillMaxSize()) {
+        when {
+            uiState.screenState is SearchScreenState.Loading -> {
+                LoadingIndicator()
+            }
 
-        uiState.screenState is SearchScreenState.Error -> {
-            ErrorContent(
-                message = stringResource(SR.string.error_message_retry),
-                onRetry = { onQueryChanged(uiState.query) },
-            )
-        }
+            uiState.screenState is SearchScreenState.Error -> {
+                ErrorContent(
+                    message = stringResource(SR.string.error_message_retry),
+                    onRetry = { onQueryChanged(uiState.query) },
+                )
+            }
 
-        uiState.screenState is SearchScreenState.Empty -> {
-            EmptySearchWithFiltersContent(
-                query = uiState.query,
-                hasGenreFilter = uiState.selectedGenreId != null,
-                onSearchWithoutGenreFilter = onSearchWithoutGenreFilter,
-            )
-        }
+            uiState.screenState is SearchScreenState.Empty -> {
+                EmptySearchWithFiltersContent(
+                    query = uiState.query,
+                    hasGenreFilter = uiState.selectedGenreId != null,
+                    onSearchWithoutGenreFilter = onSearchWithoutGenreFilter,
+                )
+            }
 
-        uiState.hasSearchResults -> {
-            MovieList(
-                movies = uiState.searchMovieResults,
-                onMovieClick = onMovieClick,
-                onLoadMore = onLoadMore,
-                isLoading = uiState.isSearchLoadingMore,
-                isEndReached = uiState.isSearchEndReached,
-            )
-        }
+            uiState.hasSearchResults -> {
+                MovieList(
+                    movies = uiState.searchMovieResults,
+                    onMovieClick = onMovieClick,
+                    onLoadMore = onLoadMore,
+                    isLoading = uiState.isSearchLoadingMore,
+                    isEndReached = uiState.isSearchEndReached,
+                )
+            }
 
-        else -> {
-            NoResultsContent(
-                text = stringResource(SR.string.search_movies_no_search_results_text),
-            )
+            else -> {
+                NoResultsContent(
+                    text = stringResource(SR.string.search_movies_no_search_results_text),
+                )
+            }
         }
     }
 }

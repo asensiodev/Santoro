@@ -48,6 +48,7 @@
     <string name="vote_average_format">%.1f</string>
     <string name="browse_offline_cache_banner">Sin conexión. Mostrando resultados en caché.</string>
     <string name="browse_offline_retry">Reintentar</string>
+    <string name="browse_refresh_success">Contenido actualizado</string>
 
     <!-- Watched Movies Screen -->
     <string name="watched_movies_top_bar_title">Películas vistas</string>

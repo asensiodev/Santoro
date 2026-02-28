@@ -92,7 +92,7 @@ internal class SearchMoviesViewModel
                 if (query.isBlank() && selectedGenreId == null) {
                     fetchDashboardData(fromRefresh = true)
                 } else {
-                    performSearch(FIRST_PAGE, isInitialLoad = true)
+                    performSearch(FIRST_PAGE, isInitialLoad = true, isFromRefresh = true)
                 }
             }
         }
@@ -170,6 +170,7 @@ internal class SearchMoviesViewModel
         private fun performSearch(
             page: Int,
             isInitialLoad: Boolean,
+            isFromRefresh: Boolean = false,
         ) {
             if (isInitialLoad) searchJob?.cancel()
 
@@ -210,7 +211,7 @@ internal class SearchMoviesViewModel
                         }
 
                     searchFlow.collect { result ->
-                        handleSearchResult(result, isInitialLoad, page)
+                        handleSearchResult(result, isInitialLoad, page, isFromRefresh)
                     }
                 }
         }
@@ -219,6 +220,7 @@ internal class SearchMoviesViewModel
             result: Result<List<Movie>>,
             isInitialLoad: Boolean,
             page: Int,
+            isFromRefresh: Boolean = false,
         ) {
             when (result) {
                 is Result.Success -> {
@@ -249,6 +251,7 @@ internal class SearchMoviesViewModel
                             isSearchEndReached = newMovies.isEmpty(),
                         )
                     }
+                    if (isFromRefresh) _effect.trySend(SearchMoviesEffect.ShowRefreshSuccess)
                 }
 
                 is Result.Error -> {
@@ -353,6 +356,7 @@ internal class SearchMoviesViewModel
                         isPopularEndReached = popularList.isEmpty(),
                     )
                 }
+                if (fromRefresh) _effect.trySend(SearchMoviesEffect.ShowRefreshSuccess)
             }
         }
 

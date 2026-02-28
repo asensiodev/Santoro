@@ -4,4 +4,5 @@ internal sealed interface SearchMoviesEffect {
     data class NavigateToDetail(
         val movieId: Int,
     ) : SearchMoviesEffect
+    data object ShowRefreshSuccess : SearchMoviesEffect
 }
