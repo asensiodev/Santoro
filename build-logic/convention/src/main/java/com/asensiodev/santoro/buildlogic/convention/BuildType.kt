@@ -4,9 +4,7 @@ import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.dsl.LibraryExtension
 import org.gradle.api.Project
 
-internal fun Project.configureAppBuildTypes(
-    commonExtension: ApplicationExtension,
-) {
+internal fun Project.configureAppBuildTypes(commonExtension: ApplicationExtension) {
     commonExtension.apply {
         buildTypes {
             getByName("debug") {
@@ -22,8 +20,8 @@ internal fun Project.configureAppBuildTypes(
 
             getByName("release") {
                 isDebuggable = false
-                isMinifyEnabled = false // TODO: Change to true
-                isShrinkResources = false // TODO: Change to true
+                isMinifyEnabled = true
+                isShrinkResources = true
                 proguardFiles(
                     getDefaultProguardFile("proguard-android-optimize.txt"),
                     "proguard-rules.pro",
@@ -33,9 +31,7 @@ internal fun Project.configureAppBuildTypes(
     }
 }
 
-fun Project.configureLibraryBuildTypes(
-    commonExtension: LibraryExtension,
-) {
+fun Project.configureLibraryBuildTypes(commonExtension: LibraryExtension) {
     commonExtension.apply {
         buildTypes {
             getByName("debug") {
@@ -46,7 +42,7 @@ fun Project.configureLibraryBuildTypes(
                 )
             }
             getByName("release") {
-                isMinifyEnabled = false // TODO: Change to true
+                isMinifyEnabled = false
                 proguardFiles(
                     getDefaultProguardFile("proguard-android-optimize.txt"),
                     "proguard-rules.pro",

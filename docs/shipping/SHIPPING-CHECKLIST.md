@@ -49,17 +49,17 @@ These items **block** store submission. The app will be rejected without them.
 
 ### 2.1 Version Bump
 
-- [ ] Update `versionName` to `"1.0.0"` in `gradle/libs.versions.toml`
-- [ ] Verify `versionCode` is `1` (first release)
+- [x] Update `versionName` to `"1.0.0"` in `gradle/libs.versions.toml`
+- [x] Verify `versionCode` is `1` (first release)
 
 ### 2.2 R8 / ProGuard (Code Shrinking)
 
-- [ ] Enable `isMinifyEnabled = true` for release in `BuildType.kt` (app)
-- [ ] Enable `isShrinkResources = true` for release in `BuildType.kt` (app)
-- [ ] Keep library release `isMinifyEnabled = false` (consumer rules handle it)
-- [ ] Verify existing `proguard-rules.pro` covers Credentials Manager
-- [ ] Add ProGuard rules for Retrofit/Gson models (prevent serialization issues)
-- [ ] Add ProGuard rules for Room entities if needed
+- [x] Enable `isMinifyEnabled = true` for release in `BuildType.kt` (app)
+- [x] Enable `isShrinkResources = true` for release in `BuildType.kt` (app)
+- [x] Keep library release `isMinifyEnabled = false` (consumer rules handle it)
+- [x] Verify existing `proguard-rules.pro` covers Credentials Manager
+- [x] Add ProGuard rules for Retrofit/Gson models (prevent serialization issues)
+- [x] Add ProGuard rules for Room entities if needed
 - [ ] Build release APK/AAB and smoke test — verify no runtime crashes from R8
 
 ### 2.3 Signing
