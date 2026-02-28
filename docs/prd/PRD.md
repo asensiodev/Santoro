@@ -345,11 +345,10 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
-| **Status**  | 📋 Planned |
-| **Scope**   | `feature/watchlist` · `feature/watched-movies` |
-| **Current state** | The Watchlist uses a horizontal `WatchlistMovieItem` (row layout with poster + metadata), while Watched uses a plain `MovieCard` with a fixed `size128` height and no metadata visible. The two screens feel visually inconsistent |
-| **Behaviour** | Unify the movie item design: the Watched grid card should show the poster full-bleed with a bottom gradient overlay showing title + year, matching the visual quality of the Search grid `MovieCard`. Optionally extract a shared `MovieGridCard` component into the design system |
-| **Rationale** | Visual consistency across list views. Top-tier apps (Letterboxd, Trakt) use consistent card styles for all movie lists |
+| **Status**  | ✅ Shipped — [FIP-010](../plan/FIP-010-watched-card-layout.md) |
+| **Current state** | Both Watchlist and Watched use the exact same `MovieCard` component (copied code): a `Card` with fixed `height(size128)`, a centered `Column`, and an image sized at `size160` — the poster does not fill the card and no metadata is visible |
+| **Behaviour** | Each screen gets a layout appropriate to its purpose: **Watchlist** → horizontal row item (poster + title + year + genre chips); **Watched** → grid card with full-bleed poster + bottom gradient overlay showing title + watched date. Both are purpose-built for their context, not shared |
+| **Rationale** | Search = browse catalogue (visual grid, no metadata needed). Watchlist = manage your queue (list rows, metadata helps identify quickly). Watched = remember what you saw (visual grid, poster evokes memory, watched date contextualises). Top-tier apps (Letterboxd, Trakt, JustWatch) use layout patterns tailored to each list's purpose |
 
 ### F-18 — Search: Section Headers with "See All" Navigation
 

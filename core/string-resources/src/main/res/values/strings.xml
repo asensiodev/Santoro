@@ -53,6 +53,8 @@ o    <string name="browse_offline_cache_banner">You\'re offline. Showing cached 
     <string name="watched_movies_top_bar_title">Watched movies</string>
     <string name="watched_movies_textfield_placeholder">Type to search watched movies</string>
     <string name="watched_movies_no_results_text">It seems like you haven\'t watched any movies yet…</string>
+    <string name="watched_total_label">Total Watched</string>
+    <string name="watched_total_count">%d Movies</string>
 
     <!-- Watchlist Screen -->
     <string name="watchlist_top_bar_title">My watchlist</string>

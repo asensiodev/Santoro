@@ -53,6 +53,8 @@
     <string name="watched_movies_top_bar_title">Películas vistas</string>
     <string name="watched_movies_textfield_placeholder">Buscar en películas vistas</string>
     <string name="watched_movies_no_results_text">Parece que aún no has visto ninguna película…</string>
+    <string name="watched_total_label">Total vistas</string>
+    <string name="watched_total_count">%d películas</string>
 
     <!-- Watchlist Screen -->
     <string name="watchlist_top_bar_title">Mi lista</string>

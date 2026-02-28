@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -149,6 +150,7 @@ fun WatchedMovieList(
                 MovieCard(
                     movie = movie,
                     onClick = { onMovieClick(movie.id) },
+                    modifier = Modifier.aspectRatio(POSTER_RATIO),
                 )
             }
         }
@@ -184,12 +186,12 @@ fun GamificationHeader(
             Spacer(modifier = Modifier.width(Spacings.spacing12))
             Column {
                 Text(
-                    text = "Total Watched",
+                    text = stringResource(SR.string.watched_total_label),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                 )
                 Text(
-                    text = "$totalCount Movies",
+                    text = stringResource(SR.string.watched_total_count, totalCount),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -221,6 +223,7 @@ fun StickyHeader(
 }
 
 private const val NUMBER_OF_MOCKED_MOVIES = 6
+private const val POSTER_RATIO = 2f / 3f
 
 @PreviewLightDark
 @Composable
