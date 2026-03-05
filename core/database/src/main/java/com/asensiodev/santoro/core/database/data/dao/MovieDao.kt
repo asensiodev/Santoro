@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MovieDao {
-    @Query("SELECT * FROM movies WHERE isWatched = 1")
+    @Query("SELECT * FROM movies WHERE isWatched = 1 ORDER BY watchedAt DESC")
     fun getWatchedMovies(): Flow<List<MovieEntity>>
 
     @Query("SELECT * FROM movies WHERE isInWatchlist = 1")
@@ -22,7 +22,8 @@ interface MovieDao {
     @Query(
         """SELECT * FROM movies
            WHERE isWatched = 1
-           AND LOWER(title) LIKE '%' || LOWER(:query) || '%'""",
+           AND LOWER(title) LIKE '%' || LOWER(:query) || '%'
+           ORDER BY watchedAt DESC""",
     )
     fun searchWatchedMoviesByTitle(query: String): Flow<List<MovieEntity>>
 
