@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -53,6 +54,7 @@ internal class WatchedMoviesViewModel
             loadStats()
 
             searchQuery
+                .drop(SKIP_INITIAL_EMISSION)
                 .debounce(DELAY)
                 .distinctUntilChanged()
                 .onEach { query ->
@@ -146,3 +148,4 @@ internal class WatchedMoviesViewModel
     }
 
 private const val DELAY: Long = 500
+private const val SKIP_INITIAL_EMISSION = 1
