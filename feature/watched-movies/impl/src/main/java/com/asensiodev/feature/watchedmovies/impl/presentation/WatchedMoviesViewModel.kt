@@ -65,7 +65,7 @@ internal class WatchedMoviesViewModel
         }
 
         private fun fetchWatchedMovies() {
-            showLoading()
+            showLoadingIfEmpty()
             viewModelScope.launch {
                 getWatchedMoviesUseCase()
                     .collect { result ->
@@ -97,10 +97,11 @@ internal class WatchedMoviesViewModel
 
         private fun updateQuery(query: String) {
             _uiState.update { it.copy(query = query) }
+            searchQuery.value = query
         }
 
         private fun searchWatchedMovies(query: String) {
-            _uiState.update { it.copy(isLoading = true) }
+            showLoadingIfEmpty()
             viewModelScope.launch {
                 searchWatchedMoviesUseCase(query).collect { result ->
                     when (result) {
@@ -137,8 +138,10 @@ internal class WatchedMoviesViewModel
             }
         }
 
-        private fun showLoading() {
-            _uiState.update { it.copy(isLoading = true) }
+        private fun showLoadingIfEmpty() {
+            _uiState.update { state ->
+                if (state.movies.isEmpty()) state.copy(isLoading = true) else state
+            }
         }
     }
 

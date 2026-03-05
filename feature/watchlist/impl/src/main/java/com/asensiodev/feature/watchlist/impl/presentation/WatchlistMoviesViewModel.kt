@@ -68,7 +68,7 @@ internal class WatchlistMoviesViewModel
         }
 
         private fun fetchWatchlistMovies() {
-            showLoading()
+            showLoadingIfEmpty()
             viewModelScope.launch {
                 getWatchlistMoviesUseCase()
                     .collect { result ->
@@ -104,7 +104,7 @@ internal class WatchlistMoviesViewModel
         }
 
         private fun searchWatchlistMovies(query: String) {
-            showLoading()
+            showLoadingIfEmpty()
             viewModelScope.launch {
                 searchWatchlistMoviesUseCase(query).collect { result ->
                     when (result) {
@@ -134,8 +134,10 @@ internal class WatchlistMoviesViewModel
             }
         }
 
-        private fun showLoading() {
-            _uiState.update { it.copy(isLoading = true) }
+        private fun showLoadingIfEmpty() {
+            _uiState.update { state ->
+                if (state.movies.isEmpty()) state.copy(isLoading = true) else state
+            }
         }
 
         private fun onRemoveMovieClicked(movie: MovieUi) {
