@@ -47,11 +47,7 @@
 
 ## 📸 Screenshots
 
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/645b20b3-5158-41a3-a42e-3ce7e36aa84d" width="280" />
-  &nbsp;&nbsp;
-  <img src="https://github.com/user-attachments/assets/80f61a74-2548-41ae-ae45-28803a29efeb" width="280" />
-</p>
+[PENDING TO UPDATE]
 
 ## 📦 Module Structure
 
