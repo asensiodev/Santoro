@@ -35,4 +35,5 @@ object Size {
     val size180 = 180.dp
     val size200 = 200.dp
     val size260 = 260.dp
+    val size280 = 280.dp
 }

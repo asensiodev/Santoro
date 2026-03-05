@@ -68,7 +68,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.datasource.LoremIpsum
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
@@ -92,8 +91,8 @@ import com.asensiodev.santoro.core.stringresources.R as SR
 private const val GOLD_COLOR = 0xFFFFC107
 private const val POSTER_RATIO = 2f / 3f
 private val POSTER_WIDTH = Size.size100
-private val HEADER_HEIGHT = 280.dp
-private val BACKDROP_HEIGHT = 250.dp
+private val HEADER_HEIGHT = Size.size280
+private val BACKDROP_HEIGHT = Size.size260
 private const val PARALLAX_FACTOR = 0.5f
 private const val MOVIE_ID = 12
 private const val WORDS = 40
@@ -333,7 +332,7 @@ private fun ParallaxBackdrop(
         modifier =
             modifier
                 .fillMaxWidth()
-                .height(BACKDROP_HEIGHT + 50.dp)
+                .height(BACKDROP_HEIGHT + Size.size50)
                 .graphicsLayer {
                     translationY = -scrollValue * PARALLAX_FACTOR
                     alpha = 1f - (scrollValue / BACKDROP_HEIGHT.toPx()).coerceIn(0f, 1f)
@@ -472,8 +471,13 @@ private fun MovieMetadataRow(
                 style =
                     MaterialTheme.typography.labelLarge.copy(
                         fontWeight = FontWeight.Bold,
+                        shadow =
+                            Shadow(
+                                color = Color.Black,
+                                blurRadius = 4f,
+                            ),
                     ),
-                color = MaterialTheme.colorScheme.onSurface,
+                color = Color.White,
             )
         }
     }
@@ -518,6 +522,7 @@ private fun WatchlistActionsRow(
             watchlistContainerColor,
             watchlistContentColor,
             movie,
+            hasBorder = !movie.isInWatchlist,
         )
 
         val watchedContainerColor by animateColorAsState(
@@ -540,7 +545,13 @@ private fun WatchlistActionsRow(
             animationSpec = tween(durationMillis = 300),
             label = "watchedContentColor",
         )
-        WatchedButton(onToggleWatched, watchedContainerColor, watchedContentColor, movie)
+        WatchedButton(
+            onToggleWatched,
+            watchedContainerColor,
+            watchedContentColor,
+            movie,
+            hasBorder = !movie.isWatched,
+        )
     }
 }
 
@@ -596,12 +607,13 @@ private fun RowScope.WatchlistButton(
     watchlistContainerColor: Color,
     watchlistContentColor: Color,
     movie: MovieUi,
+    hasBorder: Boolean,
 ) {
     BounceButton(
         onClick = onToggleWatchlist,
         containerColor = watchlistContainerColor,
         contentColor = watchlistContentColor,
-        hasBorder = false,
+        hasBorder = hasBorder,
         modifier = Modifier.weight(1f),
     ) {
         AnimatedContent(
@@ -622,7 +634,7 @@ private fun RowScope.WatchlistButton(
         Text(
             text =
                 if (movie.isInWatchlist) {
-                    stringResource(SR.string.watchlist_icon_button)
+                    stringResource(SR.string.watchlist_icon_button_added)
                 } else {
                     stringResource(SR.string.watchlist_icon_button)
                 },
@@ -637,12 +649,13 @@ private fun RowScope.WatchedButton(
     watchedContainerColor: Color,
     watchedContentColor: Color,
     movie: MovieUi,
+    hasBorder: Boolean,
 ) {
     BounceButton(
         onClick = onToggleWatched,
         containerColor = watchedContainerColor,
         contentColor = watchedContentColor,
-        hasBorder = false,
+        hasBorder = hasBorder,
         modifier = Modifier.weight(1f),
     ) {
         AnimatedContent(
@@ -667,7 +680,7 @@ private fun RowScope.WatchedButton(
         Text(
             text =
                 if (movie.isWatched) {
-                    stringResource(SR.string.watched_icon_button)
+                    stringResource(SR.string.watched_icon_button_marked)
                 } else {
                     stringResource(SR.string.watched_icon_button)
                 },

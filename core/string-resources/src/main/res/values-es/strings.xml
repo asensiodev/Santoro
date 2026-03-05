@@ -82,7 +82,9 @@
     <string name="untitled_movie">Sin título.</string>
     <string name="rating">Valoración: %.1f</string>
     <string name="watchlist_icon_button">Mi lista</string>
+    <string name="watchlist_icon_button_added">En mi lista</string>
     <string name="watched_icon_button">Vista</string>
+    <string name="watched_icon_button_marked">Vista</string>
     <string name="key_crew_title">Equipo</string>
     <string name="cast_title">Reparto</string>
     <string name="crew_role_director">Director</string>

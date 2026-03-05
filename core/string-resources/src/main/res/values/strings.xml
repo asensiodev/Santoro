@@ -82,14 +82,16 @@ o    <string name="browse_offline_cache_banner">You\'re offline. Showing cached 
     <string name="untitled_movie">Untitled.</string>
     <string name="rating">Rating: %.1f</string>
     <string name="watchlist_icon_button">Watchlist</string>
+    <string name="watchlist_icon_button_added">In Watchlist</string>
     <string name="watched_icon_button">Watched</string>
+    <string name="watched_icon_button_marked">Watched ✓</string>
     <string name="key_crew_title">Crew</string>
     <string name="cast_title">Cast</string>
     <string name="crew_role_director">Director</string>
     <string name="crew_role_writer">Writer</string>
     <string name="crew_role_cinematographer">Cinematographer</string>
     <string name="crew_role_composer">Composer</string>
-    <string name="movie_detail_share_text">🎬 %1$s (%2$s)\n⭐ %3$.1f/10\n\nCheck it out on TMDB:\nhttps://www.themoviedb.org/movie/%4$d</string>
+    <string name="movie_detail_share_text">🎬 %1$s (%2$s)\n⭐ %3$.1f/10\n\nhttps://www.themoviedb.org/movie/%4$d\n\nShared from Santoro 🎬</string>
     <string name="movie_detail_share_chooser_title">Share via</string>
     <string name="movie_detail_share_icon_description">Share movie</string>
 

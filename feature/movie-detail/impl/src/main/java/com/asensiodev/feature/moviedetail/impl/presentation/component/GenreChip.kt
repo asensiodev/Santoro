@@ -20,12 +20,12 @@ fun GenreChip(
     Text(
         text = text,
         style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant, // Lighter text color
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier =
             modifier
                 .border(
                     width = Size.size1,
-                    color = MaterialTheme.colorScheme.outlineVariant, // Outline style
+                    color = MaterialTheme.colorScheme.outlineVariant,
                     shape = RoundedCornerShape(Size.size48),
                 ).padding(horizontal = Spacings.spacing12, vertical = Spacings.spacing4),
     )
