@@ -1,5 +1,8 @@
 package com.asensiodev.santoro.navigation
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -25,6 +28,10 @@ fun SantoroTabNavGraph(
         navController = navController,
         startDestination = SearchMoviesRoute,
         modifier = Modifier.padding(paddingValues),
+        enterTransition = { fadeIn(animationSpec = tween(TAB_ANIMATION_DURATION)) },
+        exitTransition = { fadeOut(animationSpec = tween(TAB_ANIMATION_DURATION)) },
+        popEnterTransition = { fadeIn(animationSpec = tween(TAB_ANIMATION_DURATION)) },
+        popExitTransition = { fadeOut(animationSpec = tween(TAB_ANIMATION_DURATION)) },
     ) {
         searchMoviesRoute(
             onMovieClick = { movieId ->
@@ -67,3 +74,5 @@ fun SantoroTabNavGraph(
         )
     }
 }
+
+private const val TAB_ANIMATION_DURATION = 200

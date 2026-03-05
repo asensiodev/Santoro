@@ -5,6 +5,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
@@ -15,6 +19,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -113,6 +118,10 @@ fun SantoroApp(
     NavHost(
         navController = mainNavController,
         startDestination = startDestination,
+        enterTransition = { fadeIn(animationSpec = tween(NAV_ANIMATION_DURATION)) },
+        exitTransition = { fadeOut(animationSpec = tween(NAV_ANIMATION_DURATION)) },
+        popEnterTransition = { fadeIn(animationSpec = tween(NAV_ANIMATION_DURATION)) },
+        popExitTransition = { fadeOut(animationSpec = tween(NAV_ANIMATION_DURATION)) },
     ) {
         loginScreen()
 
@@ -123,21 +132,59 @@ fun SantoroApp(
         movieDetailRoute(
             onBackClicked = {
                 if (mainNavController.currentBackStackEntry?.lifecycle?.currentState ==
-                    androidx.lifecycle.Lifecycle.State.RESUMED
+                    Lifecycle.State.RESUMED
                 ) {
                     mainNavController.popBackStack()
                 }
+            },
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                    animationSpec = tween(NAV_ANIMATION_DURATION),
+                )
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(NAV_ANIMATION_DURATION))
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(NAV_ANIMATION_DURATION))
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.End,
+                    animationSpec = tween(NAV_ANIMATION_DURATION),
+                )
             },
         )
 
         settingsRoute(
             onBackClicked = {
                 if (mainNavController.currentBackStackEntry?.lifecycle?.currentState ==
-                    androidx.lifecycle.Lifecycle.State.RESUMED
+                    Lifecycle.State.RESUMED
                 ) {
                     mainNavController.popBackStack()
                 }
             },
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                    animationSpec = tween(NAV_ANIMATION_DURATION),
+                )
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(NAV_ANIMATION_DURATION))
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(NAV_ANIMATION_DURATION))
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.End,
+                    animationSpec = tween(NAV_ANIMATION_DURATION),
+                )
+            },
         )
     }
 }
+
+private const val NAV_ANIMATION_DURATION = 300
