@@ -91,7 +91,7 @@
     <string name="crew_role_writer">Guionista</string>
     <string name="crew_role_cinematographer">Director de fotografía</string>
     <string name="crew_role_composer">Compositor</string>
-    <string name="movie_detail_share_text">🎬 %1$s (%2$s)\n⭐ %3$.1f/10\n\nMírala en TMDB:\nhttps://www.themoviedb.org/movie/%4$d</string>
+    <string name="movie_detail_share_text">🎬 %1$s (%2$s)\n⭐ %3$.1f/10\n\nhttps://www.themoviedb.org/movie/%4$d\n\nCompartido desde Santoro 🎬</string>
     <string name="movie_detail_share_chooser_title">Compartir con</string>
     <string name="movie_detail_share_icon_description">Compartir película</string>
 

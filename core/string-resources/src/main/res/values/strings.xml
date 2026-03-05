@@ -46,7 +46,7 @@
     <string name="search_movies_western_title">Western</string>
     <string name="search_movies_error_button_retry">Retry</string>
     <string name="vote_average_format">%.1f</string>
-o    <string name="browse_offline_cache_banner">You\'re offline. Showing cached results.</string>
+    <string name="browse_offline_cache_banner">You\'re offline. Showing cached results.</string>
     <string name="browse_offline_retry">Retry</string>
     <string name="browse_refresh_success">Content updated</string>
 
