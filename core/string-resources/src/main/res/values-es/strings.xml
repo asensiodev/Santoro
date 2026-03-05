@@ -53,7 +53,8 @@
     <!-- Watched Movies Screen -->
     <string name="watched_movies_top_bar_title">Películas vistas</string>
     <string name="watched_movies_textfield_placeholder">Buscar en películas vistas</string>
-    <string name="watched_movies_no_results_text">Parece que aún no has visto ninguna película…</string>
+    <string name="watched_movies_no_results_text">Aún no hay películas vistas</string>
+    <string name="watched_movies_no_results_subtitle">Las películas que marques como vistas aparecerán aquí</string>
     <string name="watched_total_label">Total vistas</string>
     <string name="watched_total_count">%d películas</string>
     <string name="watched_stat_total_label">Películas vistas</string>
@@ -69,7 +70,8 @@
     <!-- Watchlist Screen -->
     <string name="watchlist_top_bar_title">Mi lista</string>
     <string name="watchlist_movies_textfield_placeholder">Buscar en tu lista</string>
-    <string name="watchlist_no_results_text">Parece que aún no has añadido ninguna película a tu lista…</string>
+    <string name="watchlist_no_results_text">Tu lista está vacía</string>
+    <string name="watchlist_no_results_subtitle">Busca películas y añádelas a tu lista</string>
     <string name="watchlist_remove_dialog_title">Eliminar de la lista</string>
     <string name="watchlist_remove_dialog_body">"%s" será eliminada de tu lista.</string>
     <string name="watchlist_remove_dialog_confirm">Eliminar</string>

@@ -36,6 +36,7 @@ import com.asensiodev.core.designsystem.component.errorContent.ErrorContent
 import com.asensiodev.core.designsystem.component.loadingIndicator.LoadingIndicator
 import com.asensiodev.core.designsystem.component.noresultscontent.NoResultsContent
 import com.asensiodev.core.designsystem.component.querytextfield.QueryTextField
+import com.asensiodev.core.designsystem.theme.AppIcons
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.feature.watchlist.impl.presentation.component.WatchlistMovieItem
@@ -114,6 +115,8 @@ internal fun WatchlistMoviesScreen(
             else -> {
                 NoResultsContent(
                     text = stringResource(SR.string.watchlist_no_results_text),
+                    subtitle = stringResource(SR.string.watchlist_no_results_subtitle),
+                    icon = AppIcons.WatchlistOutlined,
                 )
             }
         }

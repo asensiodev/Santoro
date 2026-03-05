@@ -27,6 +27,7 @@ import com.asensiodev.core.designsystem.component.errorContent.ErrorContent
 import com.asensiodev.core.designsystem.component.loadingIndicator.LoadingIndicator
 import com.asensiodev.core.designsystem.component.noresultscontent.NoResultsContent
 import com.asensiodev.core.designsystem.component.querytextfield.QueryTextField
+import com.asensiodev.core.designsystem.theme.AppIcons
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.feature.watchedmovies.impl.domain.model.WatchedStats
@@ -108,6 +109,8 @@ internal fun WatchedMoviesScreen(
             else -> {
                 NoResultsContent(
                     text = stringResource(SR.string.watched_movies_no_results_text),
+                    subtitle = stringResource(SR.string.watched_movies_no_results_subtitle),
+                    icon = AppIcons.WatchedOutlined,
                 )
             }
         }
