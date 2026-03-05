@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.AlertDialog
@@ -26,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -36,6 +36,7 @@ import com.asensiodev.core.designsystem.component.errorContent.ErrorContent
 import com.asensiodev.core.designsystem.component.loadingIndicator.LoadingIndicator
 import com.asensiodev.core.designsystem.component.noresultscontent.NoResultsContent
 import com.asensiodev.core.designsystem.component.querytextfield.QueryTextField
+import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.feature.watchlist.impl.presentation.component.WatchlistMovieItem
 import com.asensiodev.feature.watchlist.impl.presentation.model.MovieUi
@@ -112,7 +113,7 @@ internal fun WatchlistMoviesScreen(
 
             else -> {
                 NoResultsContent(
-                    text = stringResource(SR.string.search_movies_no_search_results_text),
+                    text = stringResource(SR.string.watchlist_no_results_text),
                 )
             }
         }
@@ -183,7 +184,7 @@ private fun SwipeToRemoveContainer(
                 targetValue =
                     when (dismissState.targetValue) {
                         SwipeToDismissBoxValue.Settled -> MaterialTheme.colorScheme.surfaceContainer
-                        else -> Color(SWIPE_BACKGROUND_COLOR)
+                        else -> MaterialTheme.colorScheme.error
                     },
                 label = "swipe_background_color",
             )
@@ -193,17 +194,14 @@ private fun SwipeToRemoveContainer(
                         .fillMaxSize()
                         .background(
                             color,
-                            shape =
-                                androidx.compose.foundation.shape.RoundedCornerShape(
-                                    com.asensiodev.core.designsystem.theme.Size.size16,
-                                ),
+                            shape = RoundedCornerShape(Size.size16),
                         ),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Delete,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = MaterialTheme.colorScheme.onError,
                 )
             }
         },
@@ -272,4 +270,3 @@ private fun WatchlistMoviesScreenPreview() {
 }
 
 private const val MOVIE_SAMPLE_LIST_SIZE = 5
-private const val SWIPE_BACKGROUND_COLOR = 0xFFB00020
