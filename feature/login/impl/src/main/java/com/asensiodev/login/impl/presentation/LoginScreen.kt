@@ -35,7 +35,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asensiodev.core.designsystem.PreviewContentFullSize
@@ -52,6 +51,10 @@ import com.asensiodev.santoro.core.stringresources.R as SR
 
 private const val BACKGROUND_GRADIENT_START_ALPHA = 0.6f
 private const val BACKGROUND_GRADIENT_END_ALPHA = 0.95f
+private const val ICON_BACKGROUND_ALPHA = 0.15f
+private const val SLOGAN_ALPHA = 0.8f
+private const val OUTLINE_BUTTON_BORDER_ALPHA = 0.5f
+private const val LOADING_OVERLAY_ALPHA = 0.7f
 
 @Composable
 internal fun LoginRoute(
@@ -135,11 +138,11 @@ private fun LoginContent(
                 tint = Color.White,
                 modifier =
                     Modifier
-                        .size(Size.size120)
+                        .size(Size.size160)
                         .background(
-                            color = Color.White.copy(alpha = 0.1f),
+                            color = Color.White.copy(alpha = ICON_BACKGROUND_ALPHA),
                             shape = CircleShape,
-                        ).padding(Spacings.spacing24),
+                        ).padding(Spacings.spacing16),
             )
             Spacer(modifier = Modifier.height(Spacings.spacing24))
             Text(
@@ -152,7 +155,7 @@ private fun LoginContent(
             Text(
                 text = stringResource(SR.string.login_slogan),
                 style = MaterialTheme.typography.bodyLarge,
-                color = Color.White.copy(alpha = 0.8f),
+                color = Color.White.copy(alpha = SLOGAN_ALPHA),
                 textAlign = TextAlign.Center,
             )
         }
@@ -212,7 +215,7 @@ private fun LoginButtonsSection(
                 containerColor = Color.Transparent,
                 contentColor = Color.White,
             ),
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
+        border = BorderStroke(Size.size1, Color.White.copy(alpha = OUTLINE_BUTTON_BORDER_ALPHA)),
         shape = CircleShape,
     ) {
         Icon(
@@ -238,7 +241,7 @@ private fun LoadingContent(uiState: LoginUiState) {
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.7f))
+                    .background(Color.Black.copy(alpha = LOADING_OVERLAY_ALPHA))
                     .clickable(enabled = false) {},
             contentAlignment = Alignment.Center,
         ) {

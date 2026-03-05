@@ -84,7 +84,7 @@ complexity:
     active: true
     threshold: 15
     ignoreSingleWhenExpression: false
-    ignoreSimpleWhenEntries: false
+    ignoreSimpleWhenEntries: true
     ignoreNestingFunctions: false
     nestingFunctions:
       - 'also'
@@ -153,7 +153,7 @@ complexity:
     thresholdInObjects: 13
     thresholdInEnums: 13
     ignoreDeprecated: false
-    ignorePrivate: false
+    ignorePrivate: true
     ignoreOverridden: false
     ignoreAnnotatedFunctions: ['Preview', 'Composable', 'PreviewLightDark']
 
