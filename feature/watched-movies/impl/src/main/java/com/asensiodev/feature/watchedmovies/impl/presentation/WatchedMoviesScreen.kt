@@ -1,8 +1,6 @@
 package com.asensiodev.feature.watchedmovies.impl.presentation
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -117,7 +115,7 @@ internal fun WatchedMoviesScreen(
 }
 
 @Composable
-fun WatchedMovieList(
+internal fun WatchedMovieList(
     movies: Map<String, List<MovieUi>>,
     stats: WatchedStats?,
     onMovieClick: (Int) -> Unit,
@@ -125,16 +123,13 @@ fun WatchedMovieList(
 ) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = Size.size100),
-        verticalArrangement = Arrangement.spacedBy(Spacings.spacing8),
+        verticalArrangement = Arrangement.spacedBy(Spacings.spacing12),
         horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
         modifier = modifier.fillMaxSize(),
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             if (stats != null) {
-                WatchedStatsDashboard(
-                    stats = stats,
-                    modifier = Modifier.padding(bottom = Spacings.spacing8),
-                )
+                WatchedStatsDashboard(stats = stats)
             }
         }
 
@@ -154,24 +149,20 @@ fun WatchedMovieList(
 }
 
 @Composable
-fun StickyHeader(
+private fun StickyHeader(
     title: String,
     modifier: Modifier = Modifier,
 ) {
-    Box(
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurface,
         modifier =
             modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(vertical = Spacings.spacing8),
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-        )
-    }
+                .padding(top = Spacings.spacing4),
+    )
 }
 
 private const val NUMBER_OF_MOCKED_MOVIES = 6
