@@ -32,6 +32,8 @@ internal class MovieDetailViewModel
         private val _effect = Channel<MovieDetailEffect>(Channel.BUFFERED)
         val effect = _effect.receiveAsFlow()
 
+        private var lastRequestedMovieId: Int? = null
+
         fun process(intent: MovieDetailIntent) {
             when (intent) {
                 is MovieDetailIntent.FetchDetails -> fetchMovieDetails(intent.movieId)
@@ -43,6 +45,7 @@ internal class MovieDetailViewModel
         }
 
         private fun fetchMovieDetails(movieId: Int) {
+            lastRequestedMovieId = movieId
             showLoading()
             viewModelScope.launch {
                 getMovieDetailUseCase(movieId)
@@ -71,7 +74,7 @@ internal class MovieDetailViewModel
         }
 
         private fun retryFetch() {
-            val movieId = _uiState.value.movie?.id ?: return
+            val movieId = lastRequestedMovieId ?: return
             fetchMovieDetails(movieId)
         }
 
