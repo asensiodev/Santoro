@@ -7,6 +7,7 @@ import com.asensiodev.core.network.data.ApiKeyStorageViaSecureStore
 import com.asensiodev.core.network.data.CachedApiKeyProvider
 import com.asensiodev.core.network.data.auth.ApiKeyAuthenticator
 import com.asensiodev.core.network.data.interceptor.AuthorizationInterceptor
+import com.asensiodev.core.network.data.interceptor.LanguageInterceptor
 import com.asensiodev.core.network.data.repository.ApiKeyRepository
 import com.google.gson.Gson
 import dagger.Binds
@@ -57,6 +58,7 @@ object NetworkProvidesModule {
     ): OkHttpClient {
         val builder = OkHttpClient.Builder()
         builder.addInterceptor(AuthorizationInterceptor(apiKeyProvider))
+        builder.addInterceptor(LanguageInterceptor())
         builder.authenticator(authenticator)
         if (BuildConfig.DEBUG) {
             builder.addInterceptor(logging)
