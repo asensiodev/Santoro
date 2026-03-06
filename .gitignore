@@ -33,6 +33,7 @@ google-services.json
 # Android Profiling
 *.hprof
 
-# Kotlin compiler session files
-.kotlin/sessions/
+# Kotlin compiler generated files (sessions, error logs)
+.kotlin/
+**/.kotlin/
 
