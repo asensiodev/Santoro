@@ -22,6 +22,7 @@ import androidx.compose.material.icons.rounded.Help
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.PhotoCamera
+import androidx.compose.material.icons.rounded.PrivacyTip
 import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Search
@@ -58,6 +59,7 @@ object AppIcons {
     val Settings = Icons.Rounded.Settings
     val Help = Icons.Rounded.Help
     val Share = Icons.Rounded.Share
+    val PrivacyPolicy = Icons.Rounded.PrivacyTip
 
     // Movie Detail Metadata
     val Duration = Icons.Rounded.Schedule

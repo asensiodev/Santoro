@@ -61,6 +61,7 @@ internal fun SettingsScreenRoute(
             }
         }
     val tmdbUrl = stringResource(SR.string.settings_tmdb_url)
+    val privacyPolicyUrl = stringResource(SR.string.settings_privacy_policy_url)
 
     LaunchedEffect(viewModel) {
         viewModel.process(SettingsIntent.ObserveAuth)
@@ -78,6 +79,9 @@ internal fun SettingsScreenRoute(
             onLogoutClicked = { viewModel.process(SettingsIntent.OnLogoutClicked) },
             onTmdbAttributionClicked = {
                 context.startActivity(Intent(Intent.ACTION_VIEW, tmdbUrl.toUri()))
+            },
+            onPrivacyPolicyClicked = {
+                context.startActivity(Intent(Intent.ACTION_VIEW, privacyPolicyUrl.toUri()))
             },
             isAnonymous = uiState.isAnonymous,
             versionName = versionName ?: "Unknown",
@@ -123,6 +127,7 @@ internal fun SettingsScreen(
     onLanguageClicked: () -> Unit,
     onLogoutClicked: () -> Unit,
     onTmdbAttributionClicked: () -> Unit,
+    onPrivacyPolicyClicked: () -> Unit,
     isAnonymous: Boolean,
     versionName: String,
     modifier: Modifier = Modifier,
@@ -147,6 +152,11 @@ internal fun SettingsScreen(
                 text = stringResource(SR.string.settings_language),
                 icon = AppIcons.Info,
                 onClick = onLanguageClicked,
+            )
+            SettingsItem(
+                text = stringResource(SR.string.settings_privacy_policy),
+                icon = AppIcons.PrivacyPolicy,
+                onClick = onPrivacyPolicyClicked,
             )
             if (!isAnonymous) {
                 SettingsItem(
@@ -227,6 +237,7 @@ private fun SettingsScreenPreview() {
         onLanguageClicked = {},
         onLogoutClicked = {},
         onTmdbAttributionClicked = {},
+        onPrivacyPolicyClicked = {},
         isAnonymous = true,
         versionName = "1.0.0",
     )
