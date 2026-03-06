@@ -71,7 +71,21 @@ core/                   → Shared modules
 
 ## 🔑 API
 
-Movie data provided by [TMDB](https://www.themoviedb.org/). API key is managed via Firebase Remote Config.
+This product uses the [TMDB API](https://www.themoviedb.org/) but is not endorsed or certified by TMDB.
+
+<p align="center">
+  <a href="https://www.themoviedb.org/">
+    <img src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg" width="200" alt="TMDB Logo" />
+  </a>
+</p>
+
+API key is managed via Firebase Remote Config.
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+Documentation (`docs/`) is licensed under [CC BY 4.0](docs/LICENSE).
 
 ---
 
