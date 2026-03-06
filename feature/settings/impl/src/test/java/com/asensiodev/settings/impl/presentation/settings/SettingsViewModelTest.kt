@@ -119,6 +119,15 @@ class SettingsViewModelTest {
         }
 
     @Test
+    fun `GIVEN OnLogoutClicked WHEN process THEN delegates to signOutUseCase`() =
+        runTest {
+            sut.process(SettingsIntent.OnLogoutClicked)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { signOutUseCase() }
+        }
+
+    @Test
     fun `GIVEN OnDeleteAccountClicked WHEN process THEN showDeleteAccountDialog is true`() =
         runTest {
             sut.process(SettingsIntent.OnDeleteAccountClicked)
@@ -136,7 +145,22 @@ class SettingsViewModelTest {
         }
 
     @Test
-    fun `GIVEN ConfirmDeleteAccount WHEN success THEN isLoading is false`() =
+    fun `GIVEN ConfirmDeleteAccount WHEN process THEN dialog is dismissed and loading starts`() =
+        runTest {
+            // GIVEN
+            coEvery { deleteAccountUseCase() } returns Result.success(Unit)
+            sut.process(SettingsIntent.OnDeleteAccountClicked)
+
+            // WHEN
+            sut.process(SettingsIntent.ConfirmDeleteAccount)
+
+            // THEN
+            sut.uiState.value.showDeleteAccountDialog shouldBeEqualTo false
+            sut.uiState.value.isLoading shouldBeEqualTo true
+        }
+
+    @Test
+    fun `GIVEN ConfirmDeleteAccount WHEN success THEN isLoading is false and no error`() =
         runTest {
             // GIVEN
             coEvery { deleteAccountUseCase() } returns Result.success(Unit)
@@ -147,7 +171,7 @@ class SettingsViewModelTest {
 
             // THEN
             sut.uiState.value.isLoading shouldBeEqualTo false
-            sut.uiState.value.showDeleteAccountDialog shouldBeEqualTo false
+            sut.uiState.value.error shouldBeEqualTo null
         }
 
     @Test
@@ -165,7 +189,7 @@ class SettingsViewModelTest {
         }
 
     @Test
-    fun `GIVEN ConfirmDeleteAccount WHEN failure THEN error is set`() =
+    fun `GIVEN ConfirmDeleteAccount WHEN failure THEN isLoading is false and error is set`() =
         runTest {
             // GIVEN
             coEvery { deleteAccountUseCase() } returns Result.failure(Exception("error"))
