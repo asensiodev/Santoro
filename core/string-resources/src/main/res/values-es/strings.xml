@@ -136,6 +136,7 @@
     <string name="profile_title">Perfil</string>
     <string name="profile_app_settings">Ajustes de la app</string>
     <string name="profile_help_legal">Ayuda y aviso legal</string>
+    <string name="profile_help_legal_url">https://asensiodev.github.io/Santoro/legal/PRIVACY-POLICY</string>
     <string name="profile_growth_card_title">Guarda tu colección</string>
     <string name="profile_growth_card_description">Vincula tu cuenta de Google para sincronizar tu lista y películas vistas entre dispositivos.</string>
     <string name="profile_growth_card_button">Vincular cuenta de Google</string>
