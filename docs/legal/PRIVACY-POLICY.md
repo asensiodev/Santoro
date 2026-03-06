@@ -111,7 +111,7 @@ You have the right to:
 - **Access your data:** Your movie lists are visible in the App at all times.
 - **Delete your data:** You can clear your local data by uninstalling the App or clearing app data in Android Settings. To delete your cloud data, you can delete your account from the App or contact us.
 - **Opt out of analytics:** You can limit analytics collection by disabling usage data sharing in your device settings.
-- **Request account deletion:** Contact us at the email below and we will delete your account and associated data within 30 days.
+- **Request account deletion:** You can delete your account directly from the App in Settings. This will remove your cloud data and authentication credentials. Alternatively, you can contact us at the email below and we will delete your account and associated data within 30 days.
 
 ---
 
