@@ -110,6 +110,8 @@
     <string name="settings_language_spanish">Español</string>
     <string name="settings_link_google">Vincular cuenta de Google</string>
     <string name="settings_logout">Cerrar sesión</string>
+    <string name="settings_tmdb_attribution">Powered by TMDB</string>
+    <string name="settings_tmdb_url">https://www.themoviedb.org</string>
     <string name="settings_version">Versión %s</string>
     <string name="settings_author">Creado por AsensioDev</string>
     <string name="settings_error_linking_account">¡Ups! Hubo un problema al vincular tu cuenta de Google.</string>

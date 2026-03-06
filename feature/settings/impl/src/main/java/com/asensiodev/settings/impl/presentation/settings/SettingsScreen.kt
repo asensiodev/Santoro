@@ -1,10 +1,13 @@
 package com.asensiodev.settings.impl.presentation.settings
 
+import android.content.Intent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,10 +24,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asensiodev.core.designsystem.component.loadingIndicator.LoadingIndicator
@@ -34,6 +40,7 @@ import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.settings.impl.presentation.component.LanguagePickerBottomSheet
 import com.asensiodev.settings.impl.presentation.component.SettingsItem
 import com.asensiodev.settings.impl.presentation.component.ThemePickerBottomSheet
+import com.asensiodev.santoro.core.designsystem.R as DR
 import com.asensiodev.santoro.core.stringresources.R as SR
 
 @Composable
@@ -53,6 +60,7 @@ internal fun SettingsScreenRoute(
                 "Unknown"
             }
         }
+    val tmdbUrl = stringResource(SR.string.settings_tmdb_url)
 
     LaunchedEffect(viewModel) {
         viewModel.process(SettingsIntent.ObserveAuth)
@@ -68,6 +76,9 @@ internal fun SettingsScreenRoute(
             onAppearanceClicked = { viewModel.process(SettingsIntent.OnAppearanceClicked) },
             onLanguageClicked = { viewModel.process(SettingsIntent.OnLanguageClicked) },
             onLogoutClicked = { viewModel.process(SettingsIntent.OnLogoutClicked) },
+            onTmdbAttributionClicked = {
+                context.startActivity(Intent(Intent.ACTION_VIEW, tmdbUrl.toUri()))
+            },
             isAnonymous = uiState.isAnonymous,
             versionName = versionName ?: "Unknown",
             modifier = modifier,
@@ -111,6 +122,7 @@ internal fun SettingsScreen(
     onAppearanceClicked: () -> Unit,
     onLanguageClicked: () -> Unit,
     onLogoutClicked: () -> Unit,
+    onTmdbAttributionClicked: () -> Unit,
     isAnonymous: Boolean,
     versionName: String,
     modifier: Modifier = Modifier,
@@ -145,22 +157,32 @@ internal fun SettingsScreen(
                     showChevron = false,
                 )
             }
-            Spacer(modifier = Modifier.height(Size.size32))
-            VersionSection(versionName)
+            SettingsFooter(
+                versionName = versionName,
+                onTmdbAttributionClicked = onTmdbAttributionClicked,
+            )
         }
     }
 }
 
 @Composable
-private fun VersionSection(versionName: String) {
-    Box(
+private fun SettingsFooter(
+    versionName: String,
+    onTmdbAttributionClicked: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
         modifier =
-            Modifier
+            modifier
                 .fillMaxWidth()
-                .padding(vertical = Size.size24),
-        contentAlignment = Alignment.Center,
+                .padding(top = Size.size32, bottom = Size.size24),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Size.size12),
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(Size.size4),
+        ) {
             Text(
                 text = stringResource(SR.string.settings_version, versionName),
                 style = MaterialTheme.typography.bodySmall,
@@ -173,17 +195,38 @@ private fun VersionSection(versionName: String) {
                 fontWeight = FontWeight.Bold,
             )
         }
+        Row(
+            modifier =
+                Modifier
+                    .clickable(onClick = onTmdbAttributionClicked)
+                    .padding(horizontal = Size.size16, vertical = Size.size8),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Size.size8),
+        ) {
+            Text(
+                text = stringResource(SR.string.settings_tmdb_attribution),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Image(
+                painter = painterResource(DR.drawable.img_tmdb_logo),
+                contentDescription = stringResource(SR.string.settings_tmdb_attribution),
+                modifier = Modifier.height(Size.size14),
+                contentScale = ContentScale.FillHeight,
+            )
+        }
     }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
-fun SettingsScreenPreview() {
+private fun SettingsScreenPreview() {
     SettingsScreen(
         onBackClicked = {},
         onAppearanceClicked = {},
         onLanguageClicked = {},
         onLogoutClicked = {},
+        onTmdbAttributionClicked = {},
         isAnonymous = true,
         versionName = "1.0.0",
     )

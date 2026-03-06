@@ -1,9 +1,11 @@
 package com.asensiodev.settings.impl.presentation.component
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.HorizontalDivider
@@ -17,6 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.Dp
 import com.asensiodev.core.designsystem.theme.AppIcons
 import com.asensiodev.core.designsystem.theme.Size
 
@@ -25,17 +29,18 @@ fun SettingsItem(
     text: String,
     painter: Painter,
     onClick: () -> Unit,
+    iconHeight: Dp = Size.size24,
     color: Color = MaterialTheme.colorScheme.onSurface,
     showChevron: Boolean = true,
 ) {
     SettingsItemContent(
         text = text,
         icon = {
-            Icon(
+            Image(
                 painter = painter,
                 contentDescription = null,
-                tint = Color.Unspecified,
-                modifier = Modifier.size(Size.size24),
+                modifier = Modifier.height(iconHeight),
+                contentScale = ContentScale.FillHeight,
             )
         },
         onClick = onClick,
