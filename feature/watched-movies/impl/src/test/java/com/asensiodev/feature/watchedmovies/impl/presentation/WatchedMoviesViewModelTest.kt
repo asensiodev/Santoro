@@ -1,6 +1,5 @@
 package com.asensiodev.feature.watchedmovies.impl.presentation
 
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.watchedmovies.impl.domain.model.WatchedStats
@@ -37,7 +36,7 @@ class WatchedMoviesViewModelTest {
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        every { getWatchedMoviesUseCase() } returns flowOf(Result.Success(emptyList()))
+        every { getWatchedMoviesUseCase() } returns flowOf(Result.success(emptyList()))
         every { getWatchedStatsUseCase() } returns
             flowOf(
                 WatchedStats(
@@ -85,7 +84,7 @@ class WatchedMoviesViewModelTest {
     fun `GIVEN use case returns movies WHEN LoadMovies intent THEN movies are shown`() =
         runTest {
             val movie = buildMovie(id = 1, title = "Inception")
-            every { getWatchedMoviesUseCase() } returns flowOf(Result.Success(listOf(movie)))
+            every { getWatchedMoviesUseCase() } returns flowOf(Result.success(listOf(movie)))
             viewModel =
                 WatchedMoviesViewModel(
                     getWatchedMoviesUseCase = getWatchedMoviesUseCase,

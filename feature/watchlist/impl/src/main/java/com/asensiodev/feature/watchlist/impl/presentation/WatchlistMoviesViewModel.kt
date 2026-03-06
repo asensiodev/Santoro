@@ -2,7 +2,6 @@ package com.asensiodev.feature.watchlist.impl.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.asensiodev.core.domain.Result
 import com.asensiodev.feature.watchlist.impl.domain.usecase.GetWatchlistMoviesUseCase
 import com.asensiodev.feature.watchlist.impl.domain.usecase.RemoveFromWatchlistUseCase
 import com.asensiodev.feature.watchlist.impl.domain.usecase.SearchWatchlistMoviesUseCase
@@ -74,28 +73,27 @@ internal class WatchlistMoviesViewModel
             viewModelScope.launch {
                 getWatchlistMoviesUseCase()
                     .collect { result ->
-                        when (result) {
-                            is Result.Success -> {
+                        result.fold(
+                            onSuccess = { movies ->
                                 _uiState.update {
                                     it.copy(
                                         isLoading = false,
-                                        movies = result.data.toUiList(),
-                                        hasResults = result.data.isNotEmpty(),
+                                        movies = movies.toUiList(),
+                                        hasResults = movies.isNotEmpty(),
                                         errorMessage = null,
                                     )
                                 }
-                            }
-
-                            is Result.Error -> {
+                            },
+                            onFailure = { exception ->
                                 _uiState.update {
                                     it.copy(
                                         isLoading = false,
-                                        errorMessage = result.exception.message,
+                                        errorMessage = exception.message,
                                         hasResults = false,
                                     )
                                 }
-                            }
-                        }
+                            },
+                        )
                     }
             }
         }
@@ -109,9 +107,9 @@ internal class WatchlistMoviesViewModel
             showLoadingIfEmpty()
             viewModelScope.launch {
                 searchWatchlistMoviesUseCase(query).collect { result ->
-                    when (result) {
-                        is Result.Success -> {
-                            val moviesUi = result.data.toUiList()
+                    result.fold(
+                        onSuccess = { movies ->
+                            val moviesUi = movies.toUiList()
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
@@ -120,18 +118,17 @@ internal class WatchlistMoviesViewModel
                                     errorMessage = null,
                                 )
                             }
-                        }
-
-                        is Result.Error -> {
+                        },
+                        onFailure = { exception ->
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
-                                    errorMessage = result.exception.message,
+                                    errorMessage = exception.message,
                                     hasResults = false,
                                 )
                             }
-                        }
-                    }
+                        },
+                    )
                 }
             }
         }
@@ -154,10 +151,8 @@ internal class WatchlistMoviesViewModel
             val movie = _uiState.value.movieToRemove ?: return
             _uiState.update { it.copy(movieToRemove = null) }
             viewModelScope.launch {
-                when (removeFromWatchlistUseCase(movie.id)) {
-                    is Result.Success -> syncScheduler.enqueueUpload(movie.id)
-                    is Result.Error -> Unit
-                }
+                removeFromWatchlistUseCase(movie.id)
+                    .onSuccess { syncScheduler.enqueueUpload(movie.id) }
             }
         }
     }

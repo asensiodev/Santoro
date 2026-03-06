@@ -1,7 +1,6 @@
 package com.asensiodev.feature.searchmovies.impl.data.repository
 
 import app.cash.turbine.test
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.testing.dispatcher.TestDispatcherProvider
 import com.asensiodev.feature.searchmovies.impl.data.datasource.BrowseCacheLocalDataSource
@@ -61,7 +60,7 @@ class CachingSearchMoviesRepositoryTest {
             coEvery { localDataSource.getCachedPage(BrowseSectionKeys.POPULAR, 1) } returns freshEntry
 
             repository.getPopularMovies(1).test {
-                awaitItem() shouldBeEqualTo Result.Success(sampleMovies)
+                awaitItem() shouldBeEqualTo Result.success(sampleMovies)
                 awaitComplete()
             }
 
@@ -79,10 +78,10 @@ class CachingSearchMoviesRepositoryTest {
                     cachedAt = System.currentTimeMillis() - BrowseCacheTtl.CURATED_MS - 1000L,
                 )
             coEvery { localDataSource.getCachedPage(BrowseSectionKeys.POPULAR, 1) } returns staleEntry
-            coEvery { remoteDatasource.getPopularMovies(1) } returns Result.Success(sampleMovies)
+            coEvery { remoteDatasource.getPopularMovies(1) } returns Result.success(sampleMovies)
 
             repository.getPopularMovies(1).test {
-                awaitItem() shouldBeEqualTo Result.Success(sampleMovies)
+                awaitItem() shouldBeEqualTo Result.success(sampleMovies)
                 awaitComplete()
             }
 
@@ -94,10 +93,10 @@ class CachingSearchMoviesRepositoryTest {
     fun `GIVEN no cache and network success WHEN getPopularMovies THEN saves and emits movies`() =
         runTest {
             coEvery { localDataSource.getCachedPage(BrowseSectionKeys.POPULAR, 1) } returns null
-            coEvery { remoteDatasource.getPopularMovies(1) } returns Result.Success(sampleMovies)
+            coEvery { remoteDatasource.getPopularMovies(1) } returns Result.success(sampleMovies)
 
             repository.getPopularMovies(1).test {
-                awaitItem() shouldBeEqualTo Result.Success(sampleMovies)
+                awaitItem() shouldBeEqualTo Result.success(sampleMovies)
                 awaitComplete()
             }
 
@@ -111,8 +110,8 @@ class CachingSearchMoviesRepositoryTest {
             coEvery { remoteDatasource.getPopularMovies(1) } throws IOException("Network error")
 
             repository.getPopularMovies(1).test {
-                val error = awaitItem() as Result.Error
-                error.exception shouldBeInstanceOf IOException::class
+                val error = awaitItem()
+                error.exceptionOrNull() shouldBeInstanceOf IOException::class
                 awaitComplete()
             }
         }
@@ -131,9 +130,9 @@ class CachingSearchMoviesRepositoryTest {
             coEvery { remoteDatasource.getPopularMovies(1) } throws IOException("Network error")
 
             repository.getPopularMovies(1).test {
-                awaitItem() shouldBeEqualTo Result.Success(sampleMovies)
-                val error = awaitItem() as Result.Error
-                error.exception shouldBeInstanceOf StaleDataException::class
+                awaitItem() shouldBeEqualTo Result.success(sampleMovies)
+                val error = awaitItem()
+                error.exceptionOrNull() shouldBeInstanceOf StaleDataException::class
                 awaitComplete()
             }
         }
@@ -152,7 +151,7 @@ class CachingSearchMoviesRepositoryTest {
             coEvery { localDataSource.getCachedPage(section, 1) } returns freshEntry
 
             repository.searchMovies("inception", 1).test {
-                awaitItem() shouldBeEqualTo Result.Success(sampleMovies)
+                awaitItem() shouldBeEqualTo Result.success(sampleMovies)
                 awaitComplete()
             }
 
@@ -164,10 +163,10 @@ class CachingSearchMoviesRepositoryTest {
         runTest {
             val section = BrowseSectionKeys.searchKey("inception")
             coEvery { localDataSource.getCachedPage(section, 1) } returns null
-            coEvery { remoteDatasource.searchMovies("inception", 1) } returns Result.Success(sampleMovies)
+            coEvery { remoteDatasource.searchMovies("inception", 1) } returns Result.success(sampleMovies)
 
             repository.searchMovies("inception", 1).test {
-                awaitItem() shouldBeEqualTo Result.Success(sampleMovies)
+                awaitItem() shouldBeEqualTo Result.success(sampleMovies)
                 awaitComplete()
             }
 

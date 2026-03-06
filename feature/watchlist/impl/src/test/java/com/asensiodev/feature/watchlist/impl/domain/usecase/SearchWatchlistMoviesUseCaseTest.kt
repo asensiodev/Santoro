@@ -1,6 +1,5 @@
 package com.asensiodev.feature.watchlist.impl.domain.usecase
 
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.testing.dispatcher.TestDispatcherProvider
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
@@ -45,7 +44,7 @@ class SearchWatchlistMoviesUseCaseTest {
                         isInWatchlist = true,
                     ),
                 )
-            val expectedResult = Result.Success(movies)
+            val expectedResult = Result.success(movies)
 
             every { repository.searchWatchlistMoviesByTitle(query) } returns flowOf(expectedResult)
 

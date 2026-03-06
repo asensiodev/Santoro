@@ -1,14 +1,12 @@
 package com.asensiodev.feature.moviedetail.impl.data.datasource
 
 import app.cash.turbine.test
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
-import org.amshove.kluent.shouldBeInstanceOf
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -28,10 +26,10 @@ class RoomMovieDetailDataSourceTest {
             val movieId = 1
             val movie = mockk<Movie>()
 
-            coEvery { databaseRepository.getMovieById(movieId) } returns Result.Success(movie)
+            coEvery { databaseRepository.getMovieById(movieId) } returns Result.success(movie)
 
             dataSource.getMovieDetail(movieId).test {
-                awaitItem() shouldBeEqualTo Result.Success(movie)
+                awaitItem() shouldBeEqualTo Result.success(movie)
                 awaitComplete()
             }
         }
@@ -42,11 +40,11 @@ class RoomMovieDetailDataSourceTest {
             val movieId = 1
             val exception = RuntimeException("DB error")
 
-            coEvery { databaseRepository.getMovieById(movieId) } returns Result.Error(exception)
+            coEvery { databaseRepository.getMovieById(movieId) } returns Result.failure(exception)
 
             dataSource.getMovieDetail(movieId).test {
-                val error = awaitItem() as Result.Error
-                error.exception shouldBeEqualTo exception
+                val error = awaitItem()
+                error.exceptionOrNull() shouldBeEqualTo exception
                 awaitComplete()
             }
         }
@@ -56,11 +54,11 @@ class RoomMovieDetailDataSourceTest {
         runTest {
             val movie = mockk<Movie>()
 
-            coEvery { databaseRepository.updateMovieState(movie) } returns Result.Success(true)
+            coEvery { databaseRepository.updateMovieState(movie) } returns Result.success(true)
 
             val result = dataSource.updateMovieState(movie)
 
-            result shouldBeEqualTo Result.Success(true)
+            result shouldBeEqualTo Result.success(true)
         }
 
     @Test
@@ -69,10 +67,10 @@ class RoomMovieDetailDataSourceTest {
             val movie = mockk<Movie>()
             val exception = RuntimeException("Update error")
 
-            coEvery { databaseRepository.updateMovieState(movie) } returns Result.Error(exception)
+            coEvery { databaseRepository.updateMovieState(movie) } returns Result.failure(exception)
 
             val result = dataSource.updateMovieState(movie)
 
-            result.shouldBeInstanceOf<Result.Error>()
+            result.isFailure shouldBeEqualTo true
         }
 }

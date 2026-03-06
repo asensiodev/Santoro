@@ -1,6 +1,5 @@
 package com.asensiodev.feature.watchlist.impl.presentation
 
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.testing.coVerifyOnce
 import com.asensiodev.feature.watchlist.impl.domain.usecase.GetWatchlistMoviesUseCase
 import com.asensiodev.feature.watchlist.impl.domain.usecase.RemoveFromWatchlistUseCase
@@ -49,7 +48,7 @@ class WatchlistMoviesViewModelTest {
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        every { getWatchlistMoviesUseCase() } returns flowOf(Result.Success(emptyList()))
+        every { getWatchlistMoviesUseCase() } returns flowOf(Result.success(emptyList()))
         viewModel =
             WatchlistMoviesViewModel(
                 getWatchlistMoviesUseCase = getWatchlistMoviesUseCase,
@@ -89,7 +88,7 @@ class WatchlistMoviesViewModelTest {
     @Test
     fun `GIVEN movieToRemove set WHEN ConfirmRemove intent THEN calls use case and clears movieToRemove`() =
         runTest {
-            coEvery { removeFromWatchlistUseCase(inceptionMovieUi.id) } returns Result.Success(true)
+            coEvery { removeFromWatchlistUseCase(inceptionMovieUi.id) } returns Result.success(true)
             advanceUntilIdle()
 
             viewModel.process(WatchlistIntent.RequestRemove(inceptionMovieUi))
@@ -116,7 +115,7 @@ class WatchlistMoviesViewModelTest {
     @Test
     fun `GIVEN movieToRemove set WHEN ConfirmRemove intent THEN enqueues upload for that movie`() =
         runTest {
-            coEvery { removeFromWatchlistUseCase(inceptionMovieUi.id) } returns Result.Success(true)
+            coEvery { removeFromWatchlistUseCase(inceptionMovieUi.id) } returns Result.success(true)
             advanceUntilIdle()
 
             viewModel.process(WatchlistIntent.RequestRemove(inceptionMovieUi))
@@ -131,7 +130,7 @@ class WatchlistMoviesViewModelTest {
         runTest {
             coEvery {
                 removeFromWatchlistUseCase(inceptionMovieUi.id)
-            } returns Result.Error(Exception("db error"))
+            } returns Result.failure(Exception("db error"))
             advanceUntilIdle()
 
             viewModel.process(WatchlistIntent.RequestRemove(inceptionMovieUi))

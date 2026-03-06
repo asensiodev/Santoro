@@ -1,4 +1,4 @@
-import com.asensiodev.core.domain.Result
+
 import com.asensiodev.feature.searchmovies.impl.data.datasource.RemoteSearchMoviesDatasource
 import com.asensiodev.feature.searchmovies.impl.data.model.SearchMoviesResponseApiModel
 import com.asensiodev.feature.searchmovies.impl.data.service.SearchMoviesApiService
@@ -62,7 +62,7 @@ class RemoteSearchMoviesDatasourceTest {
 
             val result = datasource.searchMovies(query, page)
 
-            (result as Result.Success).data shouldBeEqualTo expectedMovies
+            result.getOrNull() shouldBeEqualTo expectedMovies
         }
 
     @Test
@@ -75,8 +75,8 @@ class RemoteSearchMoviesDatasourceTest {
 
             val result = datasource.searchMovies(query, page)
 
-            (result as Result.Error).exception.shouldBeInstanceOf<IOException>()
-            result.exception.message shouldBeEqualTo exceptionMessage
+            result.exceptionOrNull()!!.shouldBeInstanceOf<IOException>()
+            result.exceptionOrNull()!!.message shouldBeEqualTo exceptionMessage
         }
 
     @Test
@@ -96,7 +96,7 @@ class RemoteSearchMoviesDatasourceTest {
 
             val result = datasource.searchMovies(query, page)
 
-            (result as Result.Error).exception.shouldBeInstanceOf<HttpException>()
+            result.exceptionOrNull()!!.shouldBeInstanceOf<HttpException>()
         }
 
     @Test
@@ -134,7 +134,7 @@ class RemoteSearchMoviesDatasourceTest {
 
             val result = datasource.getPopularMovies(page)
 
-            (result as Result.Success).data shouldBeEqualTo expectedMovies
+            result.getOrNull() shouldBeEqualTo expectedMovies
         }
 
     @Test
@@ -146,8 +146,8 @@ class RemoteSearchMoviesDatasourceTest {
 
             val result = datasource.getPopularMovies(page)
 
-            (result as Result.Error).exception.shouldBeInstanceOf<IOException>()
-            result.exception.message shouldBeEqualTo exceptionMessage
+            result.exceptionOrNull()!!.shouldBeInstanceOf<IOException>()
+            result.exceptionOrNull()!!.message shouldBeEqualTo exceptionMessage
         }
 
     @Test
@@ -166,6 +166,6 @@ class RemoteSearchMoviesDatasourceTest {
 
             val result = datasource.getPopularMovies(page)
 
-            (result as Result.Error).exception.shouldBeInstanceOf<HttpException>()
+            result.exceptionOrNull()!!.shouldBeInstanceOf<HttpException>()
         }
 }

@@ -1,6 +1,5 @@
 package com.asensiodev.feature.searchmovies.impl.domain.usecase
 
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.testing.dispatcher.TestDispatcherProvider
@@ -67,15 +66,15 @@ class SearchMoviesByQueryAndGenreUseCaseTest {
 
             every {
                 repository.searchMovies(query, page)
-            } returns flowOf(Result.Success(allMovies))
+            } returns flowOf(Result.success(allMovies))
 
             val result = useCase(query, genreId, page)
 
             val collectedResults = result.toList()
             collectedResults.size shouldBeEqualTo 1
             val firstResult = collectedResults.first()
-            (firstResult as Result.Success).data.size shouldBeEqualTo 1
-            firstResult.data.first().id shouldBeEqualTo 1
-            firstResult.data.first().title shouldBeEqualTo "Casino"
+            firstResult.getOrNull()!!.size shouldBeEqualTo 1
+            firstResult.getOrNull()!!.first().id shouldBeEqualTo 1
+            firstResult.getOrNull()!!.first().title shouldBeEqualTo "Casino"
         }
 }

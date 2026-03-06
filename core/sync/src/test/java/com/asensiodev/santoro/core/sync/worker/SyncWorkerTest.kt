@@ -13,7 +13,6 @@ import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import com.asensiodev.core.domain.Result as DomainResult
 
 class SyncWorkerTest {
     private val authRepository: AuthRepository = mockk()
@@ -43,7 +42,7 @@ class SyncWorkerTest {
         runTest {
             val user = SantoroUser("uid123", null, null, null, true)
             coEvery { authRepository.currentUser } returns flowOf(user)
-            coEvery { syncRepository.downloadAndMerge("uid123") } returns DomainResult.Success(Unit)
+            coEvery { syncRepository.downloadAndMerge("uid123") } returns kotlin.Result.success(Unit)
 
             val result = sut.doWork()
 
@@ -57,7 +56,7 @@ class SyncWorkerTest {
             coEvery { authRepository.currentUser } returns flowOf(user)
             coEvery {
                 syncRepository.downloadAndMerge("uid123")
-            } returns DomainResult.Error(Exception("network"))
+            } returns kotlin.Result.failure(Exception("network"))
 
             val result = sut.doWork()
 

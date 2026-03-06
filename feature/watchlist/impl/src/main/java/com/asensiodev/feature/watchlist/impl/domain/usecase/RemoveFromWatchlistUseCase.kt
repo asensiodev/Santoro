@@ -1,6 +1,5 @@
 package com.asensiodev.feature.watchlist.impl.domain.usecase
 
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.dispatcher.DispatcherProvider
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import kotlinx.coroutines.withContext

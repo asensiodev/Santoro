@@ -1,6 +1,5 @@
 package com.asensiodev.santoro.core.sync.data.repository
 
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import com.asensiodev.santoro.core.sync.data.datasource.FirestoreMovieDataSource
@@ -16,9 +15,13 @@ internal class DefaultSyncRepository
     ) : SyncRepository {
         override suspend fun uploadPendingChanges(uid: String): Result<Unit> {
             val moviesResult = databaseRepository.getMoviesForSync()
-            if (moviesResult is Result.Error) return Result.Error(moviesResult.exception)
+            if (moviesResult.isFailure) {
+                return Result.failure(
+                    moviesResult.exceptionOrNull() ?: Exception("Failed to get movies for sync"),
+                )
+            }
 
-            return uploadMovies(uid, (moviesResult as Result.Success).data)
+            return uploadMovies(uid, moviesResult.getOrThrow())
         }
 
         private suspend fun uploadMovies(
@@ -38,18 +41,18 @@ internal class DefaultSyncRepository
                     )
                 val uploadResult = firestoreDataSource.uploadMovie(uid, entity)
                 if (uploadResult.isFailure) {
-                    return Result.Error(
+                    return Result.failure(
                         uploadResult.exceptionOrNull() ?: Exception("Upload failed"),
                     )
                 }
             }
-            return Result.Success(Unit)
+            return Result.success(Unit)
         }
 
         override suspend fun downloadAndMerge(uid: String): Result<Unit> {
             val downloadResult = firestoreDataSource.downloadUserMovies(uid)
             if (downloadResult.isFailure) {
-                return Result.Error(
+                return Result.failure(
                     downloadResult.exceptionOrNull() ?: Exception("Download failed"),
                 )
             }
@@ -60,10 +63,14 @@ internal class DefaultSyncRepository
             remoteMovies: List<MovieSyncEntity>,
         ): Result<Unit> {
             val localMoviesResult = databaseRepository.getMoviesForSync()
-            if (localMoviesResult is Result.Error) return Result.Error(localMoviesResult.exception)
+            if (localMoviesResult.isFailure) {
+                return Result.failure(
+                    localMoviesResult.exceptionOrNull() ?: Exception("Failed to get local movies"),
+                )
+            }
             return mergeMovies(
                 remoteMovies = remoteMovies,
-                localMoviesById = (localMoviesResult as Result.Success).data.associateBy { it.id },
+                localMoviesById = localMoviesResult.getOrThrow().associateBy { it.id },
             )
         }
 
@@ -98,11 +105,15 @@ internal class DefaultSyncRepository
                         }
 
                         else -> {
-                            Result.Success(Unit)
+                            Result.success(Unit)
                         }
                     }
-                if (result is Result.Error) return Result.Error(result.exception)
+                if (result.isFailure) {
+                    return Result.failure(
+                        result.exceptionOrNull() ?: Exception("Merge failed"),
+                    )
+                }
             }
-            return Result.Success(Unit)
+            return Result.success(Unit)
         }
     }

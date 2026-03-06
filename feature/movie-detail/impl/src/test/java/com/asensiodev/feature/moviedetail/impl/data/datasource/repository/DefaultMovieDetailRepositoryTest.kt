@@ -1,7 +1,6 @@
 package com.asensiodev.feature.moviedetail.impl.data.datasource.repository
 
 import app.cash.turbine.test
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.moviedetail.impl.data.datasource.LocalMovieDetailDataSource
 import com.asensiodev.feature.moviedetail.impl.data.datasource.RemoteMovieDetailDataSource
@@ -73,11 +72,11 @@ class DefaultMovieDetailRepositoryTest {
                     isInWatchlist = localMovie.isInWatchlist,
                 )
 
-            every { localDataSource.getMovieDetail(movieId) } returns flowOf(Result.Success(localMovie))
-            every { remoteDataSource.getMovieDetail(movieId) } returns flowOf(Result.Success(remoteMovie))
+            every { localDataSource.getMovieDetail(movieId) } returns flowOf(Result.success(localMovie))
+            every { remoteDataSource.getMovieDetail(movieId) } returns flowOf(Result.success(remoteMovie))
 
             repository.getMovieDetail(movieId).test {
-                awaitItem() shouldBeEqualTo Result.Success(expectedMergedMovie)
+                awaitItem() shouldBeEqualTo Result.success(expectedMergedMovie)
                 awaitComplete()
             }
         }
@@ -104,11 +103,11 @@ class DefaultMovieDetailRepositoryTest {
                     isInWatchlist = true,
                 )
 
-            every { localDataSource.getMovieDetail(movieId) } returns flowOf(Result.Success(localMovie))
-            every { remoteDataSource.getMovieDetail(movieId) } returns flowOf(Result.Error(Exception()))
+            every { localDataSource.getMovieDetail(movieId) } returns flowOf(Result.success(localMovie))
+            every { remoteDataSource.getMovieDetail(movieId) } returns flowOf(Result.failure(Exception()))
 
             repository.getMovieDetail(movieId).test {
-                awaitItem() shouldBeEqualTo Result.Success(localMovie)
+                awaitItem() shouldBeEqualTo Result.success(localMovie)
                 awaitComplete()
             }
         }
@@ -118,13 +117,13 @@ class DefaultMovieDetailRepositoryTest {
         runTest {
             val movieId = 3
 
-            every { localDataSource.getMovieDetail(movieId) } returns flowOf(Result.Success(null))
-            every { remoteDataSource.getMovieDetail(movieId) } returns flowOf(Result.Success(null))
+            every { localDataSource.getMovieDetail(movieId) } returns flowOf(Result.success(null))
+            every { remoteDataSource.getMovieDetail(movieId) } returns flowOf(Result.success(null))
 
             repository.getMovieDetail(movieId).test {
                 val result = awaitItem()
-                result.shouldBeInstanceOf<Result.Error>()
-                (result as Result.Error).exception.shouldBeInstanceOf<MovieNotFoundException>()
+                result.isFailure shouldBeEqualTo true
+                result.exceptionOrNull()!!.shouldBeInstanceOf<MovieNotFoundException>()
                 awaitComplete()
             }
         }
@@ -135,13 +134,13 @@ class DefaultMovieDetailRepositoryTest {
             val movieId = 4
             val remoteException = Exception("Remote fetch error")
 
-            every { localDataSource.getMovieDetail(movieId) } returns flowOf(Result.Success(null))
-            every { remoteDataSource.getMovieDetail(movieId) } returns flowOf(Result.Error(remoteException))
+            every { localDataSource.getMovieDetail(movieId) } returns flowOf(Result.success(null))
+            every { remoteDataSource.getMovieDetail(movieId) } returns flowOf(Result.failure(remoteException))
 
             repository.getMovieDetail(movieId).test {
                 val result = awaitItem()
-                result.shouldBeInstanceOf<Result.Error>()
-                (result as Result.Error).exception shouldBeEqualTo remoteException
+                result.isFailure shouldBeEqualTo true
+                result.exceptionOrNull() shouldBeEqualTo remoteException
                 awaitComplete()
             }
         }
@@ -169,11 +168,11 @@ class DefaultMovieDetailRepositoryTest {
                 )
             val remoteException = Exception("Remote fetch error")
 
-            every { localDataSource.getMovieDetail(movieId) } returns flowOf(Result.Success(localMovie))
-            every { remoteDataSource.getMovieDetail(movieId) } returns flowOf(Result.Error(remoteException))
+            every { localDataSource.getMovieDetail(movieId) } returns flowOf(Result.success(localMovie))
+            every { remoteDataSource.getMovieDetail(movieId) } returns flowOf(Result.failure(remoteException))
 
             repository.getMovieDetail(movieId).test {
-                awaitItem() shouldBeEqualTo Result.Success(localMovie)
+                awaitItem() shouldBeEqualTo Result.success(localMovie)
                 awaitComplete()
             }
         }
@@ -199,11 +198,11 @@ class DefaultMovieDetailRepositoryTest {
                     isInWatchlist = true,
                 )
 
-            coEvery { localDataSource.updateMovieState(movie) } returns Result.Success(true)
+            coEvery { localDataSource.updateMovieState(movie) } returns Result.success(true)
 
             val result = repository.updateMovieState(movie)
 
-            result shouldBeEqualTo Result.Success(true)
+            result shouldBeEqualTo Result.success(true)
             coVerify(exactly = 1) { localDataSource.updateMovieState(movie) }
         }
 
@@ -229,11 +228,11 @@ class DefaultMovieDetailRepositoryTest {
                 )
             val updateException = Exception("Update failed")
 
-            coEvery { localDataSource.updateMovieState(movie) } returns Result.Error(updateException)
+            coEvery { localDataSource.updateMovieState(movie) } returns Result.failure(updateException)
 
             val result = repository.updateMovieState(movie)
 
-            result shouldBeEqualTo Result.Error(updateException)
+            result shouldBeEqualTo Result.failure(updateException)
             coVerify(exactly = 1) { localDataSource.updateMovieState(movie) }
         }
 
@@ -281,11 +280,11 @@ class DefaultMovieDetailRepositoryTest {
                     isInWatchlist = localMovie.isInWatchlist,
                 )
 
-            every { localDataSource.getMovieDetail(movieId) } returns flowOf(Result.Success(localMovie))
-            every { remoteDataSource.getMovieDetail(movieId) } returns flowOf(Result.Success(remoteMovie))
+            every { localDataSource.getMovieDetail(movieId) } returns flowOf(Result.success(localMovie))
+            every { remoteDataSource.getMovieDetail(movieId) } returns flowOf(Result.success(remoteMovie))
 
             repository.getMovieDetail(movieId).test {
-                awaitItem() shouldBeEqualTo Result.Success(expectedMergedMovie)
+                awaitItem() shouldBeEqualTo Result.success(expectedMergedMovie)
                 awaitComplete()
             }
         }

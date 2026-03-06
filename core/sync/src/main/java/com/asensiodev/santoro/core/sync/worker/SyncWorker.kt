@@ -9,7 +9,6 @@ import com.asensiodev.santoro.core.sync.domain.repository.SyncRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.firstOrNull
-import com.asensiodev.core.domain.Result as DomainResult
 
 @HiltWorker
 internal class SyncWorker
@@ -22,9 +21,7 @@ internal class SyncWorker
     ) : CoroutineWorker(context, params) {
         override suspend fun doWork(): Result {
             val uid = authRepository.currentUser.firstOrNull()?.uid ?: return Result.success()
-            return when (syncRepository.downloadAndMerge(uid)) {
-                is DomainResult.Success -> Result.success()
-                is DomainResult.Error -> Result.retry()
-            }
+            val syncResult = syncRepository.downloadAndMerge(uid)
+            return if (syncResult.isSuccess) Result.success() else Result.retry()
         }
     }

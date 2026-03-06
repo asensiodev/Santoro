@@ -1,6 +1,5 @@
 package com.asensiodev.feature.searchmovies.impl.data.repository
 
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.dispatcher.DispatcherProvider
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.impl.data.datasource.BrowseCacheLocalDataSource
@@ -87,43 +86,46 @@ internal class CachingSearchMoviesRepository
                 val now = System.currentTimeMillis()
 
                 if (cached != null && now - cached.cachedAt < ttlMs) {
-                    emit(Result.Success(cached.movies))
+                    emit(Result.success(cached.movies))
                     return@flow
                 }
 
                 try {
                     val result = withContext(dispatchers.io) { remoteFetch() }
-                    if (result is Result.Success) {
-                        withContext(dispatchers.io) {
-                            localDataSource.savePage(
-                                section,
-                                page,
-                                result.data,
-                                System.currentTimeMillis(),
-                            )
-                        }
-                        emit(Result.Success(result.data))
-                    } else if (result is Result.Error) {
-                        if (cached != null) {
-                            emit(Result.Success(cached.movies))
-                            emit(Result.Error(StaleDataException()))
-                        } else {
-                            emit(result)
-                        }
-                    }
+                    result.fold(
+                        onSuccess = { movies ->
+                            withContext(dispatchers.io) {
+                                localDataSource.savePage(
+                                    section,
+                                    page,
+                                    movies,
+                                    System.currentTimeMillis(),
+                                )
+                            }
+                            emit(Result.success(movies))
+                        },
+                        onFailure = {
+                            if (cached != null) {
+                                emit(Result.success(cached.movies))
+                                emit(Result.failure(StaleDataException()))
+                            } else {
+                                emit(result)
+                            }
+                        },
+                    )
                 } catch (e: IOException) {
                     if (cached != null) {
-                        emit(Result.Success(cached.movies))
-                        emit(Result.Error(StaleDataException()))
+                        emit(Result.success(cached.movies))
+                        emit(Result.failure(StaleDataException()))
                     } else {
-                        emit(Result.Error(e))
+                        emit(Result.failure(e))
                     }
                 } catch (e: HttpException) {
                     if (cached != null) {
-                        emit(Result.Success(cached.movies))
-                        emit(Result.Error(StaleDataException()))
+                        emit(Result.success(cached.movies))
+                        emit(Result.failure(StaleDataException()))
                     } else {
-                        emit(Result.Error(e))
+                        emit(Result.failure(e))
                     }
                 }
             }

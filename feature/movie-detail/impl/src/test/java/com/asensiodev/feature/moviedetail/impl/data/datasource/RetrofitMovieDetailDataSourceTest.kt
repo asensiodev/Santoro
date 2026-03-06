@@ -1,7 +1,6 @@
 package com.asensiodev.feature.moviedetail.impl.data.datasource
 
 import app.cash.turbine.test
-import com.asensiodev.core.domain.Result
 import com.asensiodev.feature.moviedetail.impl.data.service.MovieDetailApiService
 import com.asensiodev.santoro.core.data.mapper.toDomain
 import com.asensiodev.santoro.core.data.model.MovieApiModel
@@ -55,7 +54,7 @@ class RetrofitMovieDetailDataSourceTest {
             coEvery { apiService.movieDetail(movieId) } returns movieApiModel
 
             dataSource.getMovieDetail(movieId).test {
-                awaitItem() shouldBeEqualTo Result.Success(expectedDomainMovie)
+                awaitItem() shouldBeEqualTo Result.success(expectedDomainMovie)
                 awaitComplete()
             }
         }
@@ -69,9 +68,9 @@ class RetrofitMovieDetailDataSourceTest {
             coEvery { apiService.movieDetail(movieId) } throws IOException(exceptionMessage)
 
             dataSource.getMovieDetail(movieId).test {
-                val error = awaitItem() as Result.Error
-                error.exception.shouldBeInstanceOf<IOException>()
-                error.exception.message shouldBeEqualTo exceptionMessage
+                val error = awaitItem()
+                error.exceptionOrNull()!!.shouldBeInstanceOf<IOException>()
+                error.exceptionOrNull()!!.message shouldBeEqualTo exceptionMessage
                 awaitComplete()
             }
         }
@@ -92,8 +91,8 @@ class RetrofitMovieDetailDataSourceTest {
                 )
 
             dataSource.getMovieDetail(movieId).test {
-                val error = awaitItem() as Result.Error
-                error.exception.shouldBeInstanceOf<HttpException>()
+                val error = awaitItem()
+                error.exceptionOrNull()!!.shouldBeInstanceOf<HttpException>()
                 awaitComplete()
             }
         }

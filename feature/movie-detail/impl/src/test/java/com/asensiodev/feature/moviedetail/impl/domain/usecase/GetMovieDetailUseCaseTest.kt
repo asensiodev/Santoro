@@ -1,6 +1,5 @@
 package com.asensiodev.feature.moviedetail.impl.domain.usecase
 
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.testing.dispatcher.TestDispatcherProvider
 import com.asensiodev.core.testing.verifyOnce
@@ -44,7 +43,7 @@ class GetMovieDetailUseCaseTest {
                     isWatched = false,
                     isInWatchlist = false,
                 )
-            val expectedResult = Result.Success(expectedMovie)
+            val expectedResult = Result.success(expectedMovie)
 
             every { repository.getMovieDetail(movieId) } returns flowOf(expectedResult)
 

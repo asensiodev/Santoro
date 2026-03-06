@@ -1,7 +1,6 @@
 package com.asensiodev.feature.moviedetail.impl.presentation
 
 import app.cash.turbine.test
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.testing.extension.CoroutineTestExtension
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseCase
@@ -48,7 +47,7 @@ class MovieDetailViewModelTest {
         @Test
         fun `GIVEN movie id WHEN FetchDetails intent THEN returns expected movie`() =
             runTest {
-                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.Success(testMovie))
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
 
                 viewModel.uiState.test {
                     awaitItem() shouldBeEqualTo MovieDetailUiState()
@@ -69,7 +68,7 @@ class MovieDetailViewModelTest {
             runTest {
                 val errorMessage = "Error occurred"
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns
-                    flowOf(Result.Error(Exception(errorMessage)))
+                    flowOf(Result.failure(Exception(errorMessage)))
 
                 viewModel.uiState.test {
                     awaitItem() shouldBeEqualTo MovieDetailUiState()
@@ -88,7 +87,7 @@ class MovieDetailViewModelTest {
         @Test
         fun `GIVEN loading state WHEN FetchDetails intent THEN update state to loading`() =
             runTest {
-                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.Success(testMovie))
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
 
                 viewModel.uiState.test {
                     awaitItem() shouldBeEqualTo MovieDetailUiState()
@@ -104,8 +103,8 @@ class MovieDetailViewModelTest {
         @Test
         fun `GIVEN movie WHEN ToggleWatchlist intent succeeds THEN update movie watchlist state`() =
             runTest {
-                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.Success(testMovie))
-                coEvery { updateMovieStateUseCase(any()) } returns Result.Success(true)
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+                coEvery { updateMovieStateUseCase(any()) } returns Result.success(true)
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
@@ -125,8 +124,8 @@ class MovieDetailViewModelTest {
         fun `GIVEN movie WHEN ToggleWatchlist intent fails THEN update state with error`() =
             runTest {
                 val errorMessage = "Failed to update watchlist"
-                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.Success(testMovie))
-                coEvery { updateMovieStateUseCase(any()) } returns Result.Error(Exception(errorMessage))
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+                coEvery { updateMovieStateUseCase(any()) } returns Result.failure(Exception(errorMessage))
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
@@ -144,8 +143,8 @@ class MovieDetailViewModelTest {
         @Test
         fun `GIVEN movie WHEN ToggleWatchlist intent succeeds THEN enqueues upload`() =
             runTest {
-                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.Success(testMovie))
-                coEvery { updateMovieStateUseCase(any()) } returns Result.Success(true)
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+                coEvery { updateMovieStateUseCase(any()) } returns Result.success(true)
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
@@ -158,8 +157,8 @@ class MovieDetailViewModelTest {
         @Test
         fun `GIVEN movie WHEN ToggleWatchlist intent fails THEN does not enqueue upload`() =
             runTest {
-                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.Success(testMovie))
-                coEvery { updateMovieStateUseCase(any()) } returns Result.Error(Exception("error"))
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+                coEvery { updateMovieStateUseCase(any()) } returns Result.failure(Exception("error"))
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
@@ -175,8 +174,8 @@ class MovieDetailViewModelTest {
         @Test
         fun `GIVEN movie WHEN ToggleWatched intent succeeds THEN update movie watched state`() =
             runTest {
-                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.Success(testMovie))
-                coEvery { updateMovieStateUseCase(any()) } returns Result.Success(true)
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+                coEvery { updateMovieStateUseCase(any()) } returns Result.success(true)
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
@@ -205,8 +204,8 @@ class MovieDetailViewModelTest {
         fun `GIVEN movie WHEN ToggleWatched intent fails THEN update state with error`() =
             runTest {
                 val errorMessage = "Failed to update watched status"
-                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.Success(testMovie))
-                coEvery { updateMovieStateUseCase(any()) } returns Result.Error(Exception(errorMessage))
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+                coEvery { updateMovieStateUseCase(any()) } returns Result.failure(Exception(errorMessage))
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
@@ -224,8 +223,8 @@ class MovieDetailViewModelTest {
         @Test
         fun `GIVEN movie WHEN ToggleWatched intent succeeds THEN enqueues upload`() =
             runTest {
-                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.Success(testMovie))
-                coEvery { updateMovieStateUseCase(any()) } returns Result.Success(true)
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+                coEvery { updateMovieStateUseCase(any()) } returns Result.success(true)
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
@@ -238,8 +237,8 @@ class MovieDetailViewModelTest {
         @Test
         fun `GIVEN movie WHEN ToggleWatched intent fails THEN does not enqueue upload`() =
             runTest {
-                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.Success(testMovie))
-                coEvery { updateMovieStateUseCase(any()) } returns Result.Error(Exception("error"))
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+                coEvery { updateMovieStateUseCase(any()) } returns Result.failure(Exception("error"))
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()

@@ -1,7 +1,6 @@
 package com.asensiodev.santoro.core.database.data.repository
 
 import android.database.sqlite.SQLiteException
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.santoro.core.database.data.dao.MovieDao
 import com.asensiodev.santoro.core.database.data.mapper.toDomain
@@ -24,8 +23,8 @@ class RoomDatabaseRepository
                 emitAll(
                     movieDao
                         .getWatchedMovies()
-                        .map { movies -> Result.Success(movies.map { it.toDomain() }) }
-                        .catch { e -> emit(Result.Error(e)) },
+                        .map { movies -> Result.success(movies.map { it.toDomain() }) }
+                        .catch { e -> emit(Result.failure(e)) },
                 )
             }
 
@@ -34,19 +33,19 @@ class RoomDatabaseRepository
                 emitAll(
                     movieDao
                         .getWatchlistMovies()
-                        .map { movies -> Result.Success(movies.map { it.toDomain() }) }
-                        .catch { e -> emit(Result.Error(e)) },
+                        .map { movies -> Result.success(movies.map { it.toDomain() }) }
+                        .catch { e -> emit(Result.failure(e)) },
                 )
             }
 
         override suspend fun getMovieById(movieId: Int): Result<Movie?> =
             try {
                 val movie = movieDao.getMovieById(movieId)?.toDomain()
-                Result.Success(movie)
+                Result.success(movie)
             } catch (e: SQLiteException) {
-                Result.Error(e)
+                Result.failure(e)
             } catch (e: Exception) {
-                Result.Error(e)
+                Result.failure(e)
             }
 
         override fun searchWatchedMoviesByTitle(query: String): Flow<Result<List<Movie>>> =
@@ -55,8 +54,8 @@ class RoomDatabaseRepository
                     movieDao
                         .searchWatchedMoviesByTitle(query)
                         .map { entities ->
-                            Result.Success(entities.map { it.toDomain() })
-                        }.catch { e -> emit(Result.Error(e)) },
+                            Result.success(entities.map { it.toDomain() })
+                        }.catch { e -> emit(Result.failure(e)) },
                 )
             }
 
@@ -66,38 +65,38 @@ class RoomDatabaseRepository
                     movieDao
                         .searchWatchlistMoviesByTitle(query)
                         .map { entities ->
-                            Result.Success(entities.map { it.toDomain() })
-                        }.catch { e -> emit(Result.Error(e)) },
+                            Result.success(entities.map { it.toDomain() })
+                        }.catch { e -> emit(Result.failure(e)) },
                 )
             }
 
         override suspend fun updateMovieState(movie: Movie): Result<Boolean> =
             try {
                 movieDao.insertOrUpdateMovie(movie.toEntity())
-                Result.Success(true)
+                Result.success(true)
             } catch (e: SQLiteException) {
-                Result.Error(e)
+                Result.failure(e)
             } catch (e: Exception) {
-                Result.Error(e)
+                Result.failure(e)
             }
 
         override suspend fun removeFromWatchlist(movieId: Int): Result<Boolean> =
             try {
                 movieDao.removeFromWatchlist(movieId)
-                Result.Success(true)
+                Result.success(true)
             } catch (e: SQLiteException) {
-                Result.Error(e)
+                Result.failure(e)
             } catch (e: Exception) {
-                Result.Error(e)
+                Result.failure(e)
             }
 
         override suspend fun getMoviesForSync(): Result<List<Movie>> =
             try {
-                Result.Success(movieDao.getMoviesForSync().map { it.toDomain() })
+                Result.success(movieDao.getMoviesForSync().map { it.toDomain() })
             } catch (e: SQLiteException) {
-                Result.Error(e)
+                Result.failure(e)
             } catch (e: Exception) {
-                Result.Error(e)
+                Result.failure(e)
             }
 
         override suspend fun upsertMovieFromSync(
@@ -119,11 +118,11 @@ class RoomDatabaseRepository
                     watchedAt,
                     updatedAt,
                 )
-                Result.Success(Unit)
+                Result.success(Unit)
             } catch (e: SQLiteException) {
-                Result.Error(e)
+                Result.failure(e)
             } catch (e: Exception) {
-                Result.Error(e)
+                Result.failure(e)
             }
 
         override suspend fun updateMovieSyncState(
@@ -141,20 +140,20 @@ class RoomDatabaseRepository
                     watchedAt,
                     updatedAt,
                 )
-                Result.Success(Unit)
+                Result.success(Unit)
             } catch (e: SQLiteException) {
-                Result.Error(e)
+                Result.failure(e)
             } catch (e: Exception) {
-                Result.Error(e)
+                Result.failure(e)
             }
 
         override suspend fun clearAllUserData(): Result<Unit> =
             try {
                 movieDao.clearAllUserData()
-                Result.Success(Unit)
+                Result.success(Unit)
             } catch (e: SQLiteException) {
-                Result.Error(e)
+                Result.failure(e)
             } catch (e: Exception) {
-                Result.Error(e)
+                Result.failure(e)
             }
     }

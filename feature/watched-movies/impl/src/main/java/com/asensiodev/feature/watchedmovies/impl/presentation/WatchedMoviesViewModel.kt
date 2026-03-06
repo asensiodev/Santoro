@@ -2,7 +2,6 @@ package com.asensiodev.feature.watchedmovies.impl.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.asensiodev.core.domain.Result
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchedMoviesUseCase
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchedStatsUseCase
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.SearchWatchedMoviesUseCase
@@ -71,10 +70,14 @@ internal class WatchedMoviesViewModel
             viewModelScope.launch {
                 getWatchedMoviesUseCase()
                     .collect { result ->
-                        when (result) {
-                            is Result.Success -> {
-                                val movies = result.data.toUiList()
-                                val groupedMovies = movies.groupBy { it.watchedDate ?: "Unknown" }
+                        result.fold(
+                            onSuccess = { moviesList ->
+                                val movies = moviesList.toUiList()
+                                val groupedMovies =
+                                    movies.groupBy { movie ->
+                                        movie.watchedDate
+                                            ?: "Unknown"
+                                    }
                                 _uiState.update {
                                     it.copy(
                                         isLoading = false,
@@ -82,17 +85,16 @@ internal class WatchedMoviesViewModel
                                         errorMessage = null,
                                     )
                                 }
-                            }
-
-                            is Result.Error -> {
+                            },
+                            onFailure = { exception ->
                                 _uiState.update {
                                     it.copy(
                                         isLoading = false,
-                                        errorMessage = result.exception.message,
+                                        errorMessage = exception.message,
                                     )
                                 }
-                            }
-                        }
+                            },
+                        )
                     }
             }
         }
@@ -106,10 +108,14 @@ internal class WatchedMoviesViewModel
             showLoadingIfEmpty()
             viewModelScope.launch {
                 searchWatchedMoviesUseCase(query).collect { result ->
-                    when (result) {
-                        is Result.Success -> {
-                            val moviesUi = result.data.toUiList()
-                            val groupedMovies = moviesUi.groupBy { it.watchedDate ?: "Unknown" }
+                    result.fold(
+                        onSuccess = { moviesList ->
+                            val moviesUi = moviesList.toUiList()
+                            val groupedMovies =
+                                moviesUi.groupBy { movie ->
+                                    movie.watchedDate
+                                        ?: "Unknown"
+                                }
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
@@ -117,17 +123,16 @@ internal class WatchedMoviesViewModel
                                     errorMessage = null,
                                 )
                             }
-                        }
-
-                        is Result.Error -> {
+                        },
+                        onFailure = { exception ->
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
-                                    errorMessage = result.exception.message,
+                                    errorMessage = exception.message,
                                 )
                             }
-                        }
-                    }
+                        },
+                    )
                 }
             }
         }

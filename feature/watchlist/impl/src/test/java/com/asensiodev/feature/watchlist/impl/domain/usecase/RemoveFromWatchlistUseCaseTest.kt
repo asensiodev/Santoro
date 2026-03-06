@@ -1,6 +1,5 @@
 package com.asensiodev.feature.watchlist.impl.domain.usecase
 
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.testing.coVerifyOnce
 import com.asensiodev.core.testing.dispatcher.TestDispatcherProvider
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
@@ -9,7 +8,6 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldBeInstanceOf
-import org.amshove.kluent.shouldNotBeNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -29,7 +27,7 @@ class RemoveFromWatchlistUseCaseTest {
         runTest {
             val movieId = 1
 
-            coEvery { repository.removeFromWatchlist(movieId) } returns Result.Success(true)
+            coEvery { repository.removeFromWatchlist(movieId) } returns Result.success(true)
 
             useCase(movieId)
 
@@ -41,11 +39,11 @@ class RemoveFromWatchlistUseCaseTest {
         runTest {
             val movieId = 1
 
-            coEvery { repository.removeFromWatchlist(movieId) } returns Result.Success(true)
+            coEvery { repository.removeFromWatchlist(movieId) } returns Result.success(true)
 
             val result = useCase(movieId)
 
-            result shouldBeEqualTo Result.Success(true)
+            result shouldBeEqualTo Result.success(true)
         }
 
     @Test
@@ -53,12 +51,11 @@ class RemoveFromWatchlistUseCaseTest {
         runTest {
             val movieId = 1
 
-            coEvery { repository.removeFromWatchlist(movieId) } returns Result.Error(RuntimeException("DB error"))
+            coEvery { repository.removeFromWatchlist(movieId) } returns Result.failure(RuntimeException("DB error"))
 
             val result = useCase(movieId)
 
-            val error = result as? Result.Error
-            error.shouldNotBeNull()
-            error.exception.shouldBeInstanceOf<RuntimeException>()
+            result.isFailure shouldBeEqualTo true
+            result.exceptionOrNull().shouldBeInstanceOf<RuntimeException>()
         }
 }

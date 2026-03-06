@@ -1,6 +1,5 @@
 package com.asensiodev.santoro.core.database.domain
 
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.model.Movie
 import kotlinx.coroutines.flow.Flow
 

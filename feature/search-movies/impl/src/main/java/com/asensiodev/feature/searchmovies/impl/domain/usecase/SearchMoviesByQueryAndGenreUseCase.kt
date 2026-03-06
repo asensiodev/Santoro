@@ -1,6 +1,5 @@
 package com.asensiodev.feature.searchmovies.impl.domain.usecase
 
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.dispatcher.DispatcherProvider
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.impl.domain.repository.SearchMoviesRepository
@@ -23,18 +22,10 @@ internal class SearchMoviesByQueryAndGenreUseCase
             repository
                 .searchMovies(query, page)
                 .map { result ->
-                    when (result) {
-                        is Result.Success -> {
-                            val filteredMovies =
-                                result.data.filter { movie ->
-                                    movie.genreIds.contains(genreId) ||
-                                        movie.genres.any { it.id == genreId }
-                                }
-                            Result.Success(filteredMovies)
-                        }
-
-                        is Result.Error -> {
-                            result
+                    result.map { movies ->
+                        movies.filter { movie ->
+                            movie.genreIds.contains(genreId) ||
+                                movie.genres.any { genre -> genre.id == genreId }
                         }
                     }
                 }.flowOn(dispatchers.io)

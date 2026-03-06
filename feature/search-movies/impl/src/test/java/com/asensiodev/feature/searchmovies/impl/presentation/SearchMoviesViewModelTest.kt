@@ -1,7 +1,6 @@
 package com.asensiodev.feature.searchmovies.impl.presentation
 
 import androidx.lifecycle.SavedStateHandle
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.impl.data.repository.CachingSearchMoviesRepository
@@ -78,11 +77,11 @@ class SearchMoviesViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         coJustRun { cachingRepository.clearStaleEntries() }
-        every { getNowPlayingMoviesUseCase(any()) } returns flowOf(Result.Success(emptyList()))
-        every { getPopularMoviesUseCase(any()) } returns flowOf(Result.Success(emptyList()))
-        every { getTopRatedMoviesUseCase(any()) } returns flowOf(Result.Success(emptyList()))
-        every { getUpcomingMoviesUseCase(any()) } returns flowOf(Result.Success(emptyList()))
-        every { getTrendingMoviesUseCase(any()) } returns flowOf(Result.Success(emptyList()))
+        every { getNowPlayingMoviesUseCase(any()) } returns flowOf(Result.success(emptyList()))
+        every { getPopularMoviesUseCase(any()) } returns flowOf(Result.success(emptyList()))
+        every { getTopRatedMoviesUseCase(any()) } returns flowOf(Result.success(emptyList()))
+        every { getUpcomingMoviesUseCase(any()) } returns flowOf(Result.success(emptyList()))
+        every { getTrendingMoviesUseCase(any()) } returns flowOf(Result.success(emptyList()))
         every { getRecentSearchesUseCase() } returns flowOf(emptyList())
         coJustRun { saveRecentSearchUseCase(any()) }
         coJustRun { clearRecentSearchesUseCase() }
@@ -113,9 +112,9 @@ class SearchMoviesViewModelTest {
     @Test
     fun `GIVEN casino search WHEN drama genre selected THEN casino movie should still appear`() =
         runTest {
-            every { searchMoviesUseCase("casino", any()) } returns flowOf(Result.Success(listOf(casinoMovie)))
+            every { searchMoviesUseCase("casino", any()) } returns flowOf(Result.success(listOf(casinoMovie)))
             every { searchMoviesByQueryAndGenreUseCase("casino", 18, any()) } returns
-                flowOf(Result.Success(listOf(casinoMovie)))
+                flowOf(Result.success(listOf(casinoMovie)))
 
             viewModel.process(SearchMoviesIntent.LoadInitialData)
             advanceUntilIdle()
@@ -140,9 +139,9 @@ class SearchMoviesViewModelTest {
     @Test
     fun `GIVEN casino search with drama genre WHEN genre cleared THEN casino should still appear`() =
         runTest {
-            every { searchMoviesUseCase("casino", any()) } returns flowOf(Result.Success(listOf(casinoMovie)))
+            every { searchMoviesUseCase("casino", any()) } returns flowOf(Result.success(listOf(casinoMovie)))
             every { searchMoviesByQueryAndGenreUseCase("casino", 18, any()) } returns
-                flowOf(Result.Success(listOf(casinoMovie)))
+                flowOf(Result.success(listOf(casinoMovie)))
 
             viewModel.process(SearchMoviesIntent.LoadInitialData)
             advanceUntilIdle()
@@ -168,8 +167,8 @@ class SearchMoviesViewModelTest {
         runTest {
             every { getPopularMoviesUseCase(any()) } returns
                 flow {
-                    emit(Result.Success(listOf(casinoMovie)))
-                    emit(Result.Error(StaleDataException()))
+                    emit(Result.success(listOf(casinoMovie)))
+                    emit(Result.failure(StaleDataException()))
                 }
 
             viewModel.process(SearchMoviesIntent.LoadInitialData)
@@ -183,7 +182,7 @@ class SearchMoviesViewModelTest {
     @Test
     fun `GIVEN fresh result WHEN loadInitialData THEN isShowingStaleData is false`() =
         runTest {
-            every { getPopularMoviesUseCase(any()) } returns flowOf(Result.Success(listOf(casinoMovie)))
+            every { getPopularMoviesUseCase(any()) } returns flowOf(Result.success(listOf(casinoMovie)))
 
             viewModel.process(SearchMoviesIntent.LoadInitialData)
             advanceUntilIdle()
@@ -195,7 +194,7 @@ class SearchMoviesViewModelTest {
     fun `GIVEN network error with no cache WHEN loadInitialData THEN isShowingStaleData is false`() =
         runTest {
             every { getPopularMoviesUseCase(any()) } returns
-                flowOf(Result.Error(java.io.IOException("Network error")))
+                flowOf(Result.failure(java.io.IOException("Network error")))
 
             viewModel.process(SearchMoviesIntent.LoadInitialData)
             advanceUntilIdle()

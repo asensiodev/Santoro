@@ -1,6 +1,5 @@
 package com.asensiodev.feature.moviedetail.impl.data.datasource
 
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.moviedetail.impl.data.service.MovieDetailApiService
 import com.asensiodev.santoro.core.data.mapper.toDomain
@@ -19,11 +18,11 @@ internal class RetrofitMovieDetailDataSource
             flow {
                 try {
                     val movie = apiService.movieDetail(id).toDomain()
-                    emit(Result.Success(movie))
+                    emit(Result.success(movie))
                 } catch (e: IOException) {
-                    emit(Result.Error(e))
+                    emit(Result.failure(e))
                 } catch (e: HttpException) {
-                    emit(Result.Error(e))
+                    emit(Result.failure(e))
                 }
             }
     }

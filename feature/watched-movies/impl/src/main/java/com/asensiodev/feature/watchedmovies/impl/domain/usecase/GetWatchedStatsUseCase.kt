@@ -1,6 +1,5 @@
 package com.asensiodev.feature.watchedmovies.impl.domain.usecase
 
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.dispatcher.DispatcherProvider
 import com.asensiodev.feature.watchedmovies.impl.domain.model.WatchedStats
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
@@ -23,22 +22,21 @@ internal class GetWatchedStatsUseCase
             repository
                 .getWatchedMovies()
                 .map { result ->
-                    when (result) {
-                        is Result.Success -> {
-                            val movies = result.data
+                    result.fold(
+                        onSuccess = { movies ->
                             val totalWatched = movies.size
-                            val totalRuntimeMinutes = movies.sumOf { it.runtime ?: 0 }
+                            val totalRuntimeMinutes = movies.sumOf { movie -> movie.runtime ?: 0 }
                             val totalRuntimeHours = totalRuntimeMinutes / MINUTES_PER_HOUR
                             val favouriteGenre =
                                 movies
-                                    .flatMap { it.genres }
-                                    .groupingBy { it.name }
+                                    .flatMap { movie -> movie.genres }
+                                    .groupingBy { genre -> genre.name }
                                     .eachCount()
-                                    .maxByOrNull { it.value }
+                                    .maxByOrNull { entry -> entry.value }
                                     ?.key
                             val longestStreakWeeks =
                                 computeLongestStreakWeeks(
-                                    movies.mapNotNull { it.watchedAt },
+                                    movies.mapNotNull { movie -> movie.watchedAt },
                                 )
                             WatchedStats(
                                 totalWatched = totalWatched,
@@ -46,17 +44,16 @@ internal class GetWatchedStatsUseCase
                                 favouriteGenre = favouriteGenre,
                                 longestStreakWeeks = longestStreakWeeks,
                             )
-                        }
-
-                        is Result.Error -> {
+                        },
+                        onFailure = {
                             WatchedStats(
                                 totalWatched = 0,
                                 totalRuntimeHours = 0,
                                 favouriteGenre = null,
                                 longestStreakWeeks = 0,
                             )
-                        }
-                    }
+                        },
+                    )
                 }.flowOn(dispatchers.io)
 
         private fun computeLongestStreakWeeks(timestamps: List<Long>): Int {

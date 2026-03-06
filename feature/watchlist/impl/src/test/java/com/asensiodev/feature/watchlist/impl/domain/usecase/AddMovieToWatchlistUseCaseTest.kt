@@ -1,6 +1,5 @@
 package com.asensiodev.feature.watchlist.impl.domain.usecase
 
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.testing.coVerifyOnce
 import com.asensiodev.core.testing.dispatcher.TestDispatcherProvider
@@ -42,7 +41,7 @@ class AddMovieToWatchlistUseCaseTest {
                     isInWatchlist = true,
                 )
 
-            coEvery { repository.updateMovieState(movie) } returns Result.Success(true)
+            coEvery { repository.updateMovieState(movie) } returns Result.success(true)
 
             useCase(movie)
 

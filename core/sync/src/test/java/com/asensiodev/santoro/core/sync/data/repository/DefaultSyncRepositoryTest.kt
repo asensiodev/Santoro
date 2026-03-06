@@ -1,6 +1,5 @@
 package com.asensiodev.santoro.core.sync.data.repository
 
-import com.asensiodev.core.domain.Result
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import com.asensiodev.santoro.core.sync.SyncMockUtils
 import com.asensiodev.santoro.core.sync.data.datasource.FirestoreMovieDataSource
@@ -8,7 +7,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.amshove.kluent.shouldBeInstanceOf
+import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -31,34 +30,34 @@ class DefaultSyncRepositoryTest {
                     SyncMockUtils.createMovie(id = 1, isWatched = true),
                     SyncMockUtils.createMovie(id = 2, isInWatchlist = true),
                 )
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.Success(movies)
-            coEvery { firestoreDataSource.uploadMovie(any(), any()) } returns kotlin.Result.success(Unit)
+            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(movies)
+            coEvery { firestoreDataSource.uploadMovie(any(), any()) } returns Result.success(Unit)
 
             val result = sut.uploadPendingChanges(uid = "uid123")
 
-            result shouldBeInstanceOf Result.Success::class
+            result.isSuccess shouldBeEqualTo true
             coVerify(exactly = 2) { firestoreDataSource.uploadMovie(any(), any()) }
         }
 
     @Test
     fun `GIVEN getMoviesForSync fails WHEN uploadPendingChanges THEN returns error without uploading`() =
         runTest {
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.Error(Exception("db error"))
+            coEvery { databaseRepository.getMoviesForSync() } returns Result.failure(Exception("db error"))
 
             val result = sut.uploadPendingChanges(uid = "uid123")
 
-            result shouldBeInstanceOf Result.Error::class
+            result.isFailure shouldBeEqualTo true
             coVerify(exactly = 0) { firestoreDataSource.uploadMovie(any(), any()) }
         }
 
     @Test
     fun `GIVEN no movies in Room WHEN uploadPendingChanges THEN uploads nothing and returns success`() =
         runTest {
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.Success(emptyList())
+            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(emptyList())
 
             val result = sut.uploadPendingChanges(uid = "uid123")
 
-            result shouldBeInstanceOf Result.Success::class
+            result.isSuccess shouldBeEqualTo true
             coVerify(exactly = 0) { firestoreDataSource.uploadMovie(any(), any()) }
         }
 
@@ -66,8 +65,8 @@ class DefaultSyncRepositoryTest {
     fun `GIVEN movie WHEN uploadPendingChanges THEN uploads with correct movieId`() =
         runTest {
             val movie = SyncMockUtils.createMovie(id = 42, isWatched = true)
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.Success(listOf(movie))
-            coEvery { firestoreDataSource.uploadMovie(any(), any()) } returns kotlin.Result.success(Unit)
+            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(listOf(movie))
+            coEvery { firestoreDataSource.uploadMovie(any(), any()) } returns Result.success(Unit)
 
             sut.uploadPendingChanges(uid = "uid123")
 
@@ -84,17 +83,17 @@ class DefaultSyncRepositoryTest {
                     SyncMockUtils.createMovie(id = 1, isWatched = true),
                     SyncMockUtils.createMovie(id = 2, isWatched = true),
                 )
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.Success(movies)
+            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(movies)
             coEvery {
                 firestoreDataSource.uploadMovie("uid123", match { it.movieId == 1 })
-            } returns kotlin.Result.failure(Exception("network"))
+            } returns Result.failure(Exception("network"))
             coEvery {
                 firestoreDataSource.uploadMovie("uid123", match { it.movieId == 2 })
-            } returns kotlin.Result.success(Unit)
+            } returns Result.success(Unit)
 
             val result = sut.uploadPendingChanges(uid = "uid123")
 
-            result shouldBeInstanceOf Result.Error::class
+            result.isFailure shouldBeEqualTo true
             coVerify(exactly = 0) {
                 firestoreDataSource.uploadMovie("uid123", match { it.movieId == 2 })
             }
@@ -108,15 +107,15 @@ class DefaultSyncRepositoryTest {
 
             coEvery {
                 firestoreDataSource.downloadUserMovies(any())
-            } returns kotlin.Result.success(listOf(remoteEntity))
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.Success(listOf(localMovie))
+            } returns Result.success(listOf(remoteEntity))
+            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(listOf(localMovie))
             coEvery {
                 databaseRepository.updateMovieSyncState(any(), any(), any(), any(), any())
-            } returns Result.Success(Unit)
+            } returns Result.success(Unit)
 
             val result = sut.downloadAndMerge(uid = "uid123")
 
-            result shouldBeInstanceOf Result.Success::class
+            result.isSuccess shouldBeEqualTo true
             coVerify(exactly = 1) {
                 databaseRepository.updateMovieSyncState(1, any(), any(), any(), 2000L)
             }
@@ -130,12 +129,12 @@ class DefaultSyncRepositoryTest {
 
             coEvery {
                 firestoreDataSource.downloadUserMovies(any())
-            } returns kotlin.Result.success(listOf(remoteEntity))
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.Success(listOf(localMovie))
+            } returns Result.success(listOf(remoteEntity))
+            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(listOf(localMovie))
 
             val result = sut.downloadAndMerge(uid = "uid123")
 
-            result shouldBeInstanceOf Result.Success::class
+            result.isSuccess shouldBeEqualTo true
             coVerify(exactly = 0) {
                 databaseRepository.updateMovieSyncState(any(), any(), any(), any(), any())
             }
@@ -148,15 +147,15 @@ class DefaultSyncRepositoryTest {
 
             coEvery {
                 firestoreDataSource.downloadUserMovies(any())
-            } returns kotlin.Result.success(listOf(remoteEntity))
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.Success(emptyList())
+            } returns Result.success(listOf(remoteEntity))
+            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(emptyList())
             coEvery {
                 databaseRepository.upsertMovieFromSync(any(), any(), any(), any(), any(), any(), any())
-            } returns Result.Success(Unit)
+            } returns Result.success(Unit)
 
             val result = sut.downloadAndMerge(uid = "uid123")
 
-            result shouldBeInstanceOf Result.Success::class
+            result.isSuccess shouldBeEqualTo true
             coVerify(exactly = 1) {
                 databaseRepository.upsertMovieFromSync(99, "Test Movie", null, false, false, null, 5000L)
             }
@@ -170,11 +169,11 @@ class DefaultSyncRepositoryTest {
         runTest {
             coEvery {
                 firestoreDataSource.downloadUserMovies(any())
-            } returns kotlin.Result.failure(Exception("network error"))
+            } returns Result.failure(Exception("network error"))
 
             val result = sut.downloadAndMerge(uid = "uid123")
 
-            result shouldBeInstanceOf Result.Error::class
+            result.isFailure shouldBeEqualTo true
         }
 
     @Test
@@ -182,12 +181,12 @@ class DefaultSyncRepositoryTest {
         runTest {
             coEvery {
                 firestoreDataSource.downloadUserMovies(any())
-            } returns kotlin.Result.success(emptyList())
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.Error(Exception("db error"))
+            } returns Result.success(emptyList())
+            coEvery { databaseRepository.getMoviesForSync() } returns Result.failure(Exception("db error"))
 
             val result = sut.downloadAndMerge(uid = "uid123")
 
-            result shouldBeInstanceOf Result.Error::class
+            result.isFailure shouldBeEqualTo true
         }
 
     @Test
@@ -198,14 +197,14 @@ class DefaultSyncRepositoryTest {
 
             coEvery {
                 firestoreDataSource.downloadUserMovies(any())
-            } returns kotlin.Result.success(listOf(remoteEntity))
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.Success(listOf(localMovie))
+            } returns Result.success(listOf(remoteEntity))
+            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(listOf(localMovie))
             coEvery {
                 databaseRepository.updateMovieSyncState(any(), any(), any(), any(), any())
-            } returns Result.Error(Exception("db error"))
+            } returns Result.failure(Exception("db error"))
 
             val result = sut.downloadAndMerge(uid = "uid123")
 
-            result shouldBeInstanceOf Result.Error::class
+            result.isFailure shouldBeEqualTo true
         }
 }

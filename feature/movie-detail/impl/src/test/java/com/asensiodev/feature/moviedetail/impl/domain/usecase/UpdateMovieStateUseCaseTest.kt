@@ -1,6 +1,5 @@
 package com.asensiodev.feature.moviedetail.impl.domain.usecase
 
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.testing.coVerifyOnce
 import com.asensiodev.core.testing.dispatcher.TestDispatcherProvider
@@ -42,7 +41,7 @@ class UpdateMovieStateUseCaseTest {
                     isWatched = true,
                     isInWatchlist = false,
                 )
-            val expectedResult = Result.Success(true)
+            val expectedResult = Result.success(true)
 
             coEvery { repository.updateMovieState(movie) } returns expectedResult
 

@@ -1,6 +1,5 @@
 package com.asensiodev.feature.moviedetail.impl.data.repository
 
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.moviedetail.impl.data.datasource.LocalMovieDetailDataSource
 import com.asensiodev.feature.moviedetail.impl.data.datasource.RemoteMovieDetailDataSource
@@ -24,34 +23,29 @@ internal class DefaultMovieDetailRepository
             val remoteFlow = remoteDataSource.getMovieDetail(id)
 
             return combine(localFlow, remoteFlow) { localResult, remoteResult ->
-                when (remoteResult) {
-                    is Result.Success -> {
-                        val remoteMovie = remoteResult.data
+                remoteResult.fold(
+                    onSuccess = { remoteMovie ->
                         if (remoteMovie != null) {
-                            Result.Success(
+                            Result.success(
                                 remoteMovie.copy(
-                                    isWatched =
-                                        (localResult as? Result.Success)?.data?.isWatched
-                                            ?: false,
-                                    isInWatchlist =
-                                        (localResult as? Result.Success)?.data?.isInWatchlist
-                                            ?: false,
+                                    isWatched = localResult.getOrNull()?.isWatched ?: false,
+                                    isInWatchlist = localResult.getOrNull()?.isInWatchlist ?: false,
                                 ),
                             )
                         } else {
-                            Result.Error(MovieNotFoundException())
+                            Result.failure(MovieNotFoundException())
                         }
-                    }
-
-                    is Result.Error -> {
-                        if (localResult is Result.Success && localResult.data != null) {
-                            Result.Success(localResult.data)
+                    },
+                    onFailure = { exception ->
+                        val localMovie = localResult.getOrNull()
+                        if (localMovie != null) {
+                            Result.success(localMovie)
                         } else {
-                            Result.Error(remoteResult.exception)
+                            Result.failure(exception)
                         }
-                    }
-                }
-            }.catch { emit(Result.Error(UnexpectedErrorException())) }
+                    },
+                )
+            }.catch { emit(Result.failure(UnexpectedErrorException())) }
         }
 
         override suspend fun updateMovieState(movie: Movie): Result<Boolean> =

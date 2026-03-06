@@ -1,6 +1,5 @@
 package com.asensiodev.feature.watchedmovies.impl.domain.usecase
 
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.testing.dispatcher.TestDispatcherProvider
@@ -32,7 +31,7 @@ class GetWatchedStatsUseCaseTest {
     fun `GIVEN empty list WHEN invoke THEN returns zero stats`() =
         runTest {
             // GIVEN
-            every { repository.getWatchedMovies() } returns flowOf(Result.Success(emptyList()))
+            every { repository.getWatchedMovies() } returns flowOf(Result.success(emptyList()))
 
             // WHEN
             val result = useCase().toList().first()
@@ -53,7 +52,7 @@ class GetWatchedStatsUseCaseTest {
                     buildMovie(id = 1, runtime = 120),
                     buildMovie(id = 2, runtime = 90),
                 )
-            every { repository.getWatchedMovies() } returns flowOf(Result.Success(movies))
+            every { repository.getWatchedMovies() } returns flowOf(Result.success(movies))
 
             // WHEN
             val result = useCase().toList().first()
@@ -71,7 +70,7 @@ class GetWatchedStatsUseCaseTest {
                     buildMovie(id = 1, runtime = null),
                     buildMovie(id = 2, runtime = null),
                 )
-            every { repository.getWatchedMovies() } returns flowOf(Result.Success(movies))
+            every { repository.getWatchedMovies() } returns flowOf(Result.success(movies))
 
             // WHEN
             val result = useCase().toList().first()
@@ -92,7 +91,7 @@ class GetWatchedStatsUseCaseTest {
                     buildMovie(id = 2, genres = listOf(action)),
                     buildMovie(id = 3, genres = listOf(drama)),
                 )
-            every { repository.getWatchedMovies() } returns flowOf(Result.Success(movies))
+            every { repository.getWatchedMovies() } returns flowOf(Result.success(movies))
 
             // WHEN
             val result = useCase().toList().first()
@@ -110,7 +109,7 @@ class GetWatchedStatsUseCaseTest {
                     buildMovie(id = 1, genres = emptyList()),
                     buildMovie(id = 2, genres = emptyList()),
                 )
-            every { repository.getWatchedMovies() } returns flowOf(Result.Success(movies))
+            every { repository.getWatchedMovies() } returns flowOf(Result.success(movies))
 
             // WHEN
             val result = useCase().toList().first()
@@ -132,7 +131,7 @@ class GetWatchedStatsUseCaseTest {
                     buildMovie(id = 2, watchedAt = week2),
                     buildMovie(id = 3, watchedAt = week3),
                 )
-            every { repository.getWatchedMovies() } returns flowOf(Result.Success(movies))
+            every { repository.getWatchedMovies() } returns flowOf(Result.success(movies))
 
             // WHEN
             val result = useCase().toList().first()
@@ -154,7 +153,7 @@ class GetWatchedStatsUseCaseTest {
                     buildMovie(id = 2, watchedAt = week3),
                     buildMovie(id = 3, watchedAt = week4),
                 )
-            every { repository.getWatchedMovies() } returns flowOf(Result.Success(movies))
+            every { repository.getWatchedMovies() } returns flowOf(Result.success(movies))
 
             // WHEN
             val result = useCase().toList().first()
@@ -169,7 +168,7 @@ class GetWatchedStatsUseCaseTest {
             // GIVEN
             every { repository.getWatchedMovies() } returns
                 flowOf(
-                    Result.Error(RuntimeException("DB error")),
+                    Result.failure(RuntimeException("DB error")),
                 )
 
             // WHEN

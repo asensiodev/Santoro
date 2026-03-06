@@ -1,6 +1,5 @@
 package com.asensiodev.feature.searchmovies.impl.data.datasource
 
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.impl.data.mapper.toDomain
 import com.asensiodev.feature.searchmovies.impl.data.model.SearchMoviesResponseApiModel
@@ -26,66 +25,66 @@ internal class RemoteSearchMoviesDatasource
                             page,
                         )
                 val movies = response.toDomain()
-                Result.Success(movies)
+                Result.success(movies)
             } catch (e: IOException) {
-                Result.Error(e)
+                Result.failure(e)
             } catch (e: HttpException) {
-                Result.Error(e)
+                Result.failure(e)
             }
 
         override suspend fun getNowPlayingMovies(page: Int): Result<List<Movie>> =
             try {
                 val response: SearchMoviesResponseApiModel = apiService.getNowPlayingMovies(page)
                 val movies = response.toDomain()
-                Result.Success(movies)
+                Result.success(movies)
             } catch (e: IOException) {
-                Result.Error(e)
+                Result.failure(e)
             } catch (e: HttpException) {
-                Result.Error(e)
+                Result.failure(e)
             }
 
         override suspend fun getPopularMovies(page: Int): Result<List<Movie>> =
             try {
                 val response: SearchMoviesResponseApiModel = apiService.getPopularMovies(page)
                 val movies = response.toDomain()
-                Result.Success(movies)
+                Result.success(movies)
             } catch (e: IOException) {
-                Result.Error(e)
+                Result.failure(e)
             } catch (e: HttpException) {
-                Result.Error(e)
+                Result.failure(e)
             }
 
         override suspend fun getTopRatedMovies(page: Int): Result<List<Movie>> =
             try {
                 val response: SearchMoviesResponseApiModel = apiService.getTopRatedMovies(page)
                 val movies = response.toDomain()
-                Result.Success(movies)
+                Result.success(movies)
             } catch (e: IOException) {
-                Result.Error(e)
+                Result.failure(e)
             } catch (e: HttpException) {
-                Result.Error(e)
+                Result.failure(e)
             }
 
         override suspend fun getUpcomingMovies(page: Int): Result<List<Movie>> =
             try {
                 val response: SearchMoviesResponseApiModel = apiService.getUpcomingMovies(page)
                 val movies = response.toDomain()
-                Result.Success(movies)
+                Result.success(movies)
             } catch (e: IOException) {
-                Result.Error(e)
+                Result.failure(e)
             } catch (e: HttpException) {
-                Result.Error(e)
+                Result.failure(e)
             }
 
         override suspend fun getTrendingMovies(page: Int): Result<List<Movie>> =
             try {
                 val response: SearchMoviesResponseApiModel = apiService.getTrendingMovies(page)
                 val movies = response.toDomain()
-                Result.Success(movies)
+                Result.success(movies)
             } catch (e: IOException) {
-                Result.Error(e)
+                Result.failure(e)
             } catch (e: HttpException) {
-                Result.Error(e)
+                Result.failure(e)
             }
 
         override suspend fun getMoviesByGenre(
@@ -99,10 +98,10 @@ internal class RemoteSearchMoviesDatasource
                         page,
                     )
                 val movies = response.toDomain()
-                Result.Success(movies)
+                Result.success(movies)
             } catch (e: IOException) {
-                Result.Error(e)
+                Result.failure(e)
             } catch (e: HttpException) {
-                Result.Error(e)
+                Result.failure(e)
             }
     }

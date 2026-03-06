@@ -1,6 +1,5 @@
 package com.asensiodev.santoro.core.sync
 
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.santoro.core.sync.data.model.MovieSyncEntity
 
@@ -47,6 +46,6 @@ internal object SyncMockUtils {
         updatedAt = updatedAt,
     )
 
-    fun <T> successOf(data: T) = Result.Success(data)
-    fun errorOf(e: Exception = Exception("error")) = Result.Error(e)
+    fun <T> successOf(data: T): kotlin.Result<T> = Result.success(data)
+    fun errorOf(e: Exception = Exception("error")): kotlin.Result<Nothing> = Result.failure(e)
 }

@@ -2,7 +2,6 @@ package com.asensiodev.feature.moviedetail.impl.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.asensiodev.core.domain.Result
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseCase
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.UpdateMovieStateUseCase
 import com.asensiodev.feature.moviedetail.impl.presentation.mapper.toDomain
@@ -50,25 +49,25 @@ internal class MovieDetailViewModel
             viewModelScope.launch {
                 getMovieDetailUseCase(movieId)
                     .collect { result ->
-                        when (result) {
-                            is Result.Success -> {
+                        result.fold(
+                            onSuccess = { movie ->
                                 _uiState.update {
                                     it.copy(
                                         isLoading = false,
-                                        movie = result.data?.toUi(),
+                                        movie = movie?.toUi(),
                                         errorMessage = null,
                                     )
                                 }
-                            }
-                            is Result.Error -> {
+                            },
+                            onFailure = { exception ->
                                 _uiState.update {
                                     it.copy(
                                         isLoading = false,
-                                        errorMessage = result.exception.message,
+                                        errorMessage = exception.message,
                                     )
                                 }
-                            }
-                        }
+                            },
+                        )
                     }
             }
         }
@@ -89,15 +88,13 @@ internal class MovieDetailViewModel
             val movie = uiState.value.movie ?: return
             val updatedMovie = movie.copy(isInWatchlist = !movie.isInWatchlist)
             viewModelScope.launch {
-                when (val result = updateMovieStateUseCase(updatedMovie.toDomain())) {
-                    is Result.Success -> {
+                updateMovieStateUseCase(updatedMovie.toDomain())
+                    .onSuccess {
                         _uiState.update { it.copy(movie = updatedMovie) }
                         syncScheduler.enqueueUpload(movie.id)
+                    }.onFailure { exception ->
+                        _uiState.update { it.copy(errorMessage = exception.message) }
                     }
-                    is Result.Error -> {
-                        _uiState.update { it.copy(errorMessage = result.exception.message) }
-                    }
-                }
             }
         }
 
@@ -110,15 +107,13 @@ internal class MovieDetailViewModel
                     watchedAt = if (isNowWatched) System.currentTimeMillis() else null,
                 )
             viewModelScope.launch {
-                when (val result = updateMovieStateUseCase(updatedMovie.toDomain())) {
-                    is Result.Success -> {
+                updateMovieStateUseCase(updatedMovie.toDomain())
+                    .onSuccess {
                         _uiState.update { it.copy(movie = updatedMovie) }
                         syncScheduler.enqueueUpload(movie.id)
+                    }.onFailure { exception ->
+                        _uiState.update { it.copy(errorMessage = exception.message) }
                     }
-                    is Result.Error -> {
-                        _uiState.update { it.copy(errorMessage = result.exception.message) }
-                    }
-                }
             }
         }
 

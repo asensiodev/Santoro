@@ -3,8 +3,6 @@ package com.asensiodev.feature.searchmovies.impl.presentation
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.asensiodev.core.domain.Result
-import com.asensiodev.core.domain.getOrDefault
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.impl.data.repository.CachingSearchMoviesRepository
 import com.asensiodev.feature.searchmovies.impl.data.repository.StaleDataException
@@ -240,9 +238,9 @@ internal class SearchMoviesViewModel
             page: Int,
             isFromRefresh: Boolean = false,
         ) {
-            when (result) {
-                is Result.Success -> {
-                    val newMovies = result.data.toUiList()
+            result.fold(
+                onSuccess = { movies ->
+                    val newMovies = movies.toUiList()
 
                     val updatedResults =
                         if (isInitialLoad) {
@@ -270,10 +268,8 @@ internal class SearchMoviesViewModel
                         )
                     }
                     if (isFromRefresh) _effect.trySend(SearchMoviesEffect.ShowRefreshSuccess)
-                }
-
-                is Result.Error -> {
-                    val exception = result.exception
+                },
+                onFailure = { exception ->
                     if (exception is StaleDataException) {
                         _uiState.update {
                             it.copy(
@@ -282,7 +278,7 @@ internal class SearchMoviesViewModel
                                 isRefreshing = false,
                             )
                         }
-                        return
+                        return@fold
                     }
                     _uiState.update {
                         it.copy(
@@ -298,8 +294,8 @@ internal class SearchMoviesViewModel
                             isSearchEndReached = true,
                         )
                     }
-                }
-            }
+                },
+            )
         }
 
         private fun loadMorePopularMovies() {
@@ -421,9 +417,9 @@ internal class SearchMoviesViewModel
 
             viewModelScope.launch {
                 getPopularMoviesUseCase(_uiState.value.currentPopularPage).collect { result ->
-                    when (result) {
-                        is Result.Success -> {
-                            val newMovies = result.data.toUiList()
+                    result.fold(
+                        onSuccess = { movies ->
+                            val newMovies = movies.toUiList()
                             _uiState.update {
                                 it.copy(
                                     isPopularLoadingMore = false,
@@ -432,14 +428,13 @@ internal class SearchMoviesViewModel
                                     isPopularEndReached = newMovies.isEmpty(),
                                 )
                             }
-                        }
-
-                        is Result.Error -> {
+                        },
+                        onFailure = {
                             _uiState.update {
                                 it.copy(isPopularLoadingMore = false, isPopularEndReached = true)
                             }
-                        }
-                    }
+                        },
+                    )
                 }
             }
         }
@@ -448,13 +443,13 @@ internal class SearchMoviesViewModel
 private suspend fun collectWithStale(
     flow: kotlinx.coroutines.flow.Flow<Result<List<Movie>>>,
 ): Pair<Result<List<Movie>>, Boolean> {
-    var data: Result<List<Movie>> = Result.Error(Exception("No data"))
+    var data: Result<List<Movie>> = Result.failure(Exception("No data"))
     var stale = false
     flow.collect { result ->
         when {
-            result is Result.Success -> data = result
-            result is Result.Error && result.exception is StaleDataException -> stale = true
-            result is Result.Error -> data = result
+            result.isSuccess -> data = result
+            result.isFailure && result.exceptionOrNull() is StaleDataException -> stale = true
+            result.isFailure -> data = result
         }
     }
     return data to stale

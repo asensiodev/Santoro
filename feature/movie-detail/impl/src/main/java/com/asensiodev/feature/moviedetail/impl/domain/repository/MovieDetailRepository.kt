@@ -1,6 +1,5 @@
 package com.asensiodev.feature.moviedetail.impl.domain.repository
 
-import com.asensiodev.core.domain.Result
 import com.asensiodev.core.domain.model.Movie
 import kotlinx.coroutines.flow.Flow
 
