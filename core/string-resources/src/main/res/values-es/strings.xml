@@ -110,6 +110,12 @@
     <string name="settings_language_spanish">Español</string>
     <string name="settings_link_google">Vincular cuenta de Google</string>
     <string name="settings_logout">Cerrar sesión</string>
+    <string name="settings_delete_account">Eliminar cuenta</string>
+    <string name="settings_delete_account_title">¿Eliminar cuenta?</string>
+    <string name="settings_delete_account_message">Se eliminarán permanentemente tu cuenta, películas vistas y tu lista. Esta acción no se puede deshacer.</string>
+    <string name="settings_delete_account_confirm">Eliminar</string>
+    <string name="settings_delete_account_cancel">Cancelar</string>
+    <string name="settings_delete_account_error">Hubo un problema al eliminar tu cuenta. Por favor, inténtalo de nuevo.</string>
     <string name="settings_tmdb_attribution">Powered by TMDB</string>
     <string name="settings_tmdb_url">https://www.themoviedb.org</string>
     <string name="settings_privacy_policy">Política de privacidad</string>

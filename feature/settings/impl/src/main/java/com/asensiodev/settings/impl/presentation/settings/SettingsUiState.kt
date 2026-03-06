@@ -13,5 +13,6 @@ internal data class SettingsUiState(
     val currentTheme: ThemeOption = ThemeOption.SYSTEM,
     val showThemePicker: Boolean = false,
     val showLanguagePicker: Boolean = false,
+    val showDeleteAccountDialog: Boolean = false,
     val currentLanguage: AppLanguage = AppLanguage.ENGLISH,
 )

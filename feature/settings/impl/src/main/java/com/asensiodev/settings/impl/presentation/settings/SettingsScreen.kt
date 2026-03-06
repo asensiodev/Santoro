@@ -14,9 +14,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -83,6 +85,9 @@ internal fun SettingsScreenRoute(
             onPrivacyPolicyClicked = {
                 context.startActivity(Intent(Intent.ACTION_VIEW, privacyPolicyUrl.toUri()))
             },
+            onDeleteAccountClicked = {
+                viewModel.process(SettingsIntent.OnDeleteAccountClicked)
+            },
             isAnonymous = uiState.isAnonymous,
             versionName = versionName ?: "Unknown",
             modifier = modifier,
@@ -116,6 +121,13 @@ internal fun SettingsScreenRoute(
                 onDismiss = { viewModel.process(SettingsIntent.DismissLanguagePicker) },
             )
         }
+
+        if (uiState.showDeleteAccountDialog) {
+            DeleteAccountConfirmationDialog(
+                onConfirm = { viewModel.process(SettingsIntent.ConfirmDeleteAccount) },
+                onDismiss = { viewModel.process(SettingsIntent.DismissDeleteAccountDialog) },
+            )
+        }
     }
 }
 
@@ -128,6 +140,7 @@ internal fun SettingsScreen(
     onLogoutClicked: () -> Unit,
     onTmdbAttributionClicked: () -> Unit,
     onPrivacyPolicyClicked: () -> Unit,
+    onDeleteAccountClicked: () -> Unit,
     isAnonymous: Boolean,
     versionName: String,
     modifier: Modifier = Modifier,
@@ -163,6 +176,13 @@ internal fun SettingsScreen(
                     text = stringResource(SR.string.settings_logout),
                     icon = AppIcons.ExitToApp,
                     onClick = onLogoutClicked,
+                    color = MaterialTheme.colorScheme.error,
+                    showChevron = false,
+                )
+                SettingsItem(
+                    text = stringResource(SR.string.settings_delete_account),
+                    icon = AppIcons.DeleteAccount,
+                    onClick = onDeleteAccountClicked,
                     color = MaterialTheme.colorScheme.error,
                     showChevron = false,
                 )
@@ -228,6 +248,35 @@ private fun SettingsFooter(
     }
 }
 
+@Composable
+private fun DeleteAccountConfirmationDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(text = stringResource(SR.string.settings_delete_account_title))
+        },
+        text = {
+            Text(text = stringResource(SR.string.settings_delete_account_message))
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(
+                    text = stringResource(SR.string.settings_delete_account_confirm),
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(SR.string.settings_delete_account_cancel))
+            }
+        },
+    )
+}
+
 @PreviewLightDark
 @Composable
 private fun SettingsScreenPreview() {
@@ -238,7 +287,8 @@ private fun SettingsScreenPreview() {
         onLogoutClicked = {},
         onTmdbAttributionClicked = {},
         onPrivacyPolicyClicked = {},
-        isAnonymous = true,
+        onDeleteAccountClicked = {},
+        isAnonymous = false,
         versionName = "1.0.0",
     )
 }

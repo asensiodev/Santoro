@@ -17,4 +17,7 @@ internal sealed interface SettingsIntent {
     ) : SettingsIntent
     data object DismissLanguagePicker : SettingsIntent
     data object OnLogoutClicked : SettingsIntent
+    data object OnDeleteAccountClicked : SettingsIntent
+    data object ConfirmDeleteAccount : SettingsIntent
+    data object DismissDeleteAccountDialog : SettingsIntent
 }

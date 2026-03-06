@@ -10,6 +10,8 @@ import com.asensiodev.core.domain.model.AppLanguage
 import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.core.domain.usecase.ObserveThemeUseCase
 import com.asensiodev.core.domain.usecase.SetThemeUseCase
+import com.asensiodev.settings.impl.domain.usecase.DeleteAccountUseCase
+import com.asensiodev.ui.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +21,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.asensiodev.santoro.core.stringresources.R as SR
 
 @HiltViewModel
 internal class SettingsViewModel
@@ -26,6 +29,7 @@ internal class SettingsViewModel
     constructor(
         private val observeAuthStateUseCase: ObserveAuthStateUseCase,
         private val signOutUseCase: SignOutUseCase,
+        private val deleteAccountUseCase: DeleteAccountUseCase,
         private val observeThemeUseCase: ObserveThemeUseCase,
         private val setThemeUseCase: SetThemeUseCase,
     ) : ViewModel() {
@@ -46,6 +50,9 @@ internal class SettingsViewModel
                 is SettingsIntent.SetLanguage -> setLanguage(intent.language)
                 is SettingsIntent.DismissLanguagePicker -> dismissLanguagePicker()
                 is SettingsIntent.OnLogoutClicked -> onLogoutClicked()
+                is SettingsIntent.OnDeleteAccountClicked -> onDeleteAccountClicked()
+                is SettingsIntent.ConfirmDeleteAccount -> confirmDeleteAccount()
+                is SettingsIntent.DismissDeleteAccountDialog -> dismissDeleteAccountDialog()
             }
         }
 
@@ -100,6 +107,34 @@ internal class SettingsViewModel
         private fun onLogoutClicked() {
             viewModelScope.launch {
                 signOutUseCase()
+            }
+        }
+
+        private fun onDeleteAccountClicked() {
+            _uiState.update { it.copy(showDeleteAccountDialog = true) }
+        }
+
+        private fun dismissDeleteAccountDialog() {
+            _uiState.update { it.copy(showDeleteAccountDialog = false) }
+        }
+
+        private fun confirmDeleteAccount() {
+            _uiState.update { it.copy(showDeleteAccountDialog = false, isLoading = true) }
+            viewModelScope.launch {
+                deleteAccountUseCase()
+                    .onSuccess {
+                        _uiState.update { it.copy(isLoading = false) }
+                    }.onFailure {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                error =
+                                    UiText.StringResource(
+                                        SR.string.settings_delete_account_error,
+                                    ),
+                            )
+                        }
+                    }
             }
         }
     }

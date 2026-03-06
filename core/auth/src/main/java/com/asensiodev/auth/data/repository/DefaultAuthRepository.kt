@@ -23,4 +23,6 @@ internal class DefaultAuthRepository
             dataSource.linkWithGoogle(idToken)
 
         override suspend fun signOut() = dataSource.signOut()
+
+        override suspend fun deleteAccount(): Result<Unit> = dataSource.deleteAccount()
     }

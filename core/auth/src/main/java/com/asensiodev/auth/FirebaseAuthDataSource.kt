@@ -71,4 +71,13 @@ internal class FirebaseAuthDataSource
         override suspend fun signOut() {
             firebaseAuth.signOut()
         }
+
+        override suspend fun deleteAccount(): Result<Unit> =
+            try {
+                val user = firebaseAuth.currentUser ?: error("No user logged in")
+                user.delete().await()
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
     }

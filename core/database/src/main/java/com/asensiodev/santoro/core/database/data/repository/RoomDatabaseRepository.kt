@@ -147,4 +147,14 @@ class RoomDatabaseRepository
             } catch (e: Exception) {
                 Result.Error(e)
             }
+
+        override suspend fun clearAllUserData(): Result<Unit> =
+            try {
+                movieDao.clearAllUserData()
+                Result.Success(Unit)
+            } catch (e: SQLiteException) {
+                Result.Error(e)
+            } catch (e: Exception) {
+                Result.Error(e)
+            }
     }

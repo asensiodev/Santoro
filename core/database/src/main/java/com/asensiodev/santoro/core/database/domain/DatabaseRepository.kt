@@ -29,4 +29,5 @@ interface DatabaseRepository {
         watchedAt: Long?,
         updatedAt: Long,
     ): Result<Unit>
+    suspend fun clearAllUserData(): Result<Unit>
 }

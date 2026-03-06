@@ -6,6 +6,8 @@ import com.asensiodev.core.domain.model.AppLanguage
 import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.core.domain.usecase.ObserveThemeUseCase
 import com.asensiodev.core.domain.usecase.SetThemeUseCase
+import com.asensiodev.settings.impl.domain.usecase.DeleteAccountUseCase
+import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -18,6 +20,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.amshove.kluent.shouldBeEqualTo
+import org.amshove.kluent.shouldNotBeNull
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -26,6 +29,7 @@ import org.junit.jupiter.api.Test
 class SettingsViewModelTest {
     private val observeAuthStateUseCase: ObserveAuthStateUseCase = mockk(relaxed = true)
     private val signOutUseCase: SignOutUseCase = mockk(relaxed = true)
+    private val deleteAccountUseCase: DeleteAccountUseCase = mockk(relaxed = true)
     private val observeThemeUseCase: ObserveThemeUseCase = mockk()
     private val setThemeUseCase: SetThemeUseCase = mockk(relaxed = true)
 
@@ -41,6 +45,7 @@ class SettingsViewModelTest {
             SettingsViewModel(
                 observeAuthStateUseCase = observeAuthStateUseCase,
                 signOutUseCase = signOutUseCase,
+                deleteAccountUseCase = deleteAccountUseCase,
                 observeThemeUseCase = observeThemeUseCase,
                 setThemeUseCase = setThemeUseCase,
             )
@@ -111,5 +116,67 @@ class SettingsViewModelTest {
             sut.process(SettingsIntent.DismissLanguagePicker)
 
             sut.uiState.value.showLanguagePicker shouldBeEqualTo false
+        }
+
+    @Test
+    fun `GIVEN OnDeleteAccountClicked WHEN process THEN showDeleteAccountDialog is true`() =
+        runTest {
+            sut.process(SettingsIntent.OnDeleteAccountClicked)
+
+            sut.uiState.value.showDeleteAccountDialog shouldBeEqualTo true
+        }
+
+    @Test
+    fun `GIVEN DismissDeleteAccountDialog WHEN process THEN showDeleteAccountDialog is false`() =
+        runTest {
+            sut.process(SettingsIntent.OnDeleteAccountClicked)
+            sut.process(SettingsIntent.DismissDeleteAccountDialog)
+
+            sut.uiState.value.showDeleteAccountDialog shouldBeEqualTo false
+        }
+
+    @Test
+    fun `GIVEN ConfirmDeleteAccount WHEN success THEN isLoading is false`() =
+        runTest {
+            // GIVEN
+            coEvery { deleteAccountUseCase() } returns Result.success(Unit)
+
+            // WHEN
+            sut.process(SettingsIntent.ConfirmDeleteAccount)
+            advanceUntilIdle()
+
+            // THEN
+            sut.uiState.value.isLoading shouldBeEqualTo false
+            sut.uiState.value.showDeleteAccountDialog shouldBeEqualTo false
+        }
+
+    @Test
+    fun `GIVEN ConfirmDeleteAccount WHEN success THEN delegates to use case`() =
+        runTest {
+            // GIVEN
+            coEvery { deleteAccountUseCase() } returns Result.success(Unit)
+
+            // WHEN
+            sut.process(SettingsIntent.ConfirmDeleteAccount)
+            advanceUntilIdle()
+
+            // THEN
+            coVerify(exactly = 1) { deleteAccountUseCase() }
+        }
+
+    @Test
+    fun `GIVEN ConfirmDeleteAccount WHEN failure THEN error is set`() =
+        runTest {
+            // GIVEN
+            coEvery { deleteAccountUseCase() } returns Result.failure(Exception("error"))
+
+            // WHEN
+            sut.process(SettingsIntent.ConfirmDeleteAccount)
+            advanceUntilIdle()
+
+            // THEN
+            sut.uiState.value.isLoading shouldBeEqualTo false
+            sut.uiState.value.error
+                .shouldNotBeNull()
         }
 }

@@ -80,4 +80,7 @@ interface MovieDao {
         watchedAt: Long?,
         updatedAt: Long,
     )
+
+    @Query("DELETE FROM movies")
+    suspend fun clearAllUserData()
 }

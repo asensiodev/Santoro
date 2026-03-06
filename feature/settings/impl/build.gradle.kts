@@ -11,6 +11,7 @@ dependencies {
     implementation(projects.feature.settings.api)
 
     implementation(projects.core.auth)
+    implementation(projects.core.database)
     implementation(projects.core.domain)
     implementation(projects.core.ui)
 

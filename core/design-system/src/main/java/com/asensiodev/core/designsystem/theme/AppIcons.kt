@@ -17,6 +17,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.CalendarToday
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Help
 import androidx.compose.material.icons.rounded.Home
@@ -60,6 +61,7 @@ object AppIcons {
     val Help = Icons.Rounded.Help
     val Share = Icons.Rounded.Share
     val PrivacyPolicy = Icons.Rounded.PrivacyTip
+    val DeleteAccount = Icons.Rounded.DeleteForever
 
     // Movie Detail Metadata
     val Duration = Icons.Rounded.Schedule
