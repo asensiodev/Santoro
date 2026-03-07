@@ -27,6 +27,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -165,12 +167,14 @@ private fun SwipeToRemoveContainer(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
+    val haptic = LocalHapticFeedback.current
     val dismissState =
         rememberSwipeToDismissBoxState(
             confirmValueChange = { value ->
                 if (value == SwipeToDismissBoxValue.StartToEnd ||
                     value == SwipeToDismissBoxValue.EndToStart
                 ) {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onSwiped()
                     false
                 } else {
@@ -218,6 +222,7 @@ private fun ConfirmRemoveDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val haptic = LocalHapticFeedback.current
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -227,7 +232,10 @@ private fun ConfirmRemoveDialog(
             Text(text = stringResource(SR.string.watchlist_remove_dialog_body, movieTitle))
         },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
+            TextButton(onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onConfirm()
+            }) {
                 Text(
                     text = stringResource(SR.string.watchlist_remove_dialog_confirm),
                     color = MaterialTheme.colorScheme.error,

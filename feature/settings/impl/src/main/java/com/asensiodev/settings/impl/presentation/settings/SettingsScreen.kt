@@ -26,8 +26,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -253,6 +255,7 @@ private fun DeleteAccountConfirmationDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val haptic = LocalHapticFeedback.current
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -262,7 +265,10 @@ private fun DeleteAccountConfirmationDialog(
             Text(text = stringResource(SR.string.settings_delete_account_message))
         },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
+            TextButton(onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onConfirm()
+            }) {
                 Text(
                     text = stringResource(SR.string.settings_delete_account_confirm),
                     color = MaterialTheme.colorScheme.error,

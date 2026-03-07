@@ -58,8 +58,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
@@ -212,6 +214,7 @@ private fun CollapsibleTopAppBar(
     onShareClicked: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = LocalHapticFeedback.current
     val backgroundColor by animateColorAsState(
         targetValue = MaterialTheme.colorScheme.surface.copy(alpha = backgroundAlpha),
         animationSpec = tween(durationMillis = 150),
@@ -260,7 +263,10 @@ private fun CollapsibleTopAppBar(
             }
         },
         actions = {
-            IconButton(onClick = onShareClicked) {
+            IconButton(onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onShareClicked()
+            }) {
                 Icon(
                     imageVector = AppIcons.Share,
                     contentDescription =
@@ -951,13 +957,17 @@ fun BounceButton(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
+    val haptic = LocalHapticFeedback.current
 
     val scale by animateFloatAsState(
         targetValue = if (isPressed) 0.95f else 1f,
         label = "buttonScale",
     )
     Button(
-        onClick = onClick,
+        onClick = {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            onClick()
+        },
         modifier =
             modifier
                 .height(Size.size48)
