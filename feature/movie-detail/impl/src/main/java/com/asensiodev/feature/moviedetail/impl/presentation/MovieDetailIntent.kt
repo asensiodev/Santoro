@@ -8,4 +8,5 @@ internal sealed interface MovieDetailIntent {
     data object ToggleWatchlist : MovieDetailIntent
     data object ShareMovie : MovieDetailIntent
     data object Retry : MovieDetailIntent
+    data object DismissTooltip : MovieDetailIntent
 }

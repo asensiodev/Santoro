@@ -9,8 +9,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -42,13 +44,16 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -60,7 +65,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -108,6 +116,8 @@ private const val GENRE_ACTION_ID = 1
 private const val GENRE_ADVENTURE_ID = 2
 private const val GENRE_DRAMA_ID = 3
 private const val GENRE_COMEDY_ID = 4
+private const val TOOLTIP_OVERLAY_ALPHA = 0.95f
+private const val TOOLTIP_SCRIM_ALPHA = 0.55f
 
 @Composable
 internal fun MovieDetailRoute(
@@ -142,6 +152,7 @@ internal fun MovieDetailRoute(
         onRetry = { onProcess(MovieDetailIntent.Retry) },
         onBackClicked = onBackClicked,
         onShareClicked = { onProcess(MovieDetailIntent.ShareMovie) },
+        onDismissTooltip = { onProcess(MovieDetailIntent.DismissTooltip) },
         modifier = modifier,
     )
 }
@@ -155,6 +166,7 @@ internal fun MovieDetailScreen(
     onRetry: () -> Unit,
     onBackClicked: () -> Unit,
     onShareClicked: () -> Unit,
+    onDismissTooltip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
@@ -191,6 +203,7 @@ internal fun MovieDetailScreen(
                         uiState = uiState,
                         onToggleWatchlist = onToggleWatchlist,
                         onToggleWatched = onToggleWatched,
+                        onDismissTooltip = onDismissTooltip,
                         scrollState = scrollState,
                     )
                 }
@@ -294,10 +307,13 @@ internal fun MovieDetailContent(
     uiState: MovieDetailUiState,
     onToggleWatchlist: () -> Unit,
     onToggleWatched: () -> Unit,
+    onDismissTooltip: () -> Unit,
     modifier: Modifier = Modifier,
     scrollState: ScrollState,
 ) {
     val movie = uiState.movie!!
+    val density = LocalDensity.current
+    var actionsRowBottom by remember { mutableFloatStateOf(0f) }
 
     Box(modifier = modifier.fillMaxSize()) {
         ParallaxBackdrop(
@@ -323,9 +339,43 @@ internal fun MovieDetailContent(
                     movie = movie,
                     onToggleWatchlist = onToggleWatchlist,
                     onToggleWatched = onToggleWatched,
+                    modifier =
+                        Modifier.onGloballyPositioned { coordinates ->
+                            val positionInRoot = coordinates.positionInRoot()
+                            actionsRowBottom = positionInRoot.y + coordinates.size.height
+                        },
                 )
                 Spacer(modifier = Modifier.height(Spacings.spacing8))
                 MovieDetailsSection(movie = movie)
+            }
+        }
+
+        if (uiState.showTooltip && actionsRowBottom > 0f) {
+            val tooltipOffsetDp = with(density) { actionsRowBottom.toDp() }
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = TOOLTIP_SCRIM_ALPHA))
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() },
+                            onClick = {},
+                        ),
+            )
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = tooltipOffsetDp),
+            ) {
+                OnboardingTooltip(
+                    onDismiss = onDismissTooltip,
+                    modifier =
+                        Modifier.graphicsLayer {
+                            alpha = TOOLTIP_OVERLAY_ALPHA
+                        },
+                )
             }
         }
     }
@@ -998,6 +1048,81 @@ fun BounceButton(
     )
 }
 
+@Composable
+private fun OnboardingTooltip(
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val tooltipColor = MaterialTheme.colorScheme.inverseSurface
+    val contentColor = MaterialTheme.colorScheme.inverseOnSurface
+
+    Column(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = Spacings.spacing32),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Canvas(
+            modifier = Modifier.size(Size.size12),
+        ) {
+            val path =
+                androidx.compose.ui.graphics.Path().apply {
+                    moveTo(size.width / 2f, 0f)
+                    lineTo(size.width, size.height)
+                    lineTo(0f, size.height)
+                    close()
+                }
+            drawPath(path, color = tooltipColor)
+        }
+        Surface(
+            shape = MaterialTheme.shapes.medium,
+            color = tooltipColor,
+            shadowElevation = Size.size4,
+        ) {
+            Column(
+                modifier =
+                    Modifier.padding(
+                        horizontal = Spacings.spacing16,
+                        vertical = Spacings.spacing12,
+                    ),
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(Spacings.spacing8),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
+                ) {
+                    Icon(
+                        imageVector = AppIcons.Info,
+                        contentDescription = null,
+                        modifier = Modifier.size(Size.size18),
+                        tint = contentColor,
+                    )
+                    Text(
+                        text = stringResource(SR.string.onboarding_detail_tooltip),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = contentColor,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                Text(
+                    text = stringResource(SR.string.onboarding_got_it),
+                    style =
+                        MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                        ),
+                    color = MaterialTheme.colorScheme.inversePrimary,
+                    modifier =
+                        Modifier
+                            .clickable(onClick = onDismiss)
+                            .padding(Spacings.spacing4),
+                )
+            }
+        }
+    }
+}
+
 @PreviewLightDark
 @Composable
 private fun MovieDetailScreenPreview() {
@@ -1050,6 +1175,7 @@ private fun MovieDetailScreenPreview() {
             onRetry = {},
             onBackClicked = {},
             onShareClicked = {},
+            onDismissTooltip = {},
         )
     }
 }

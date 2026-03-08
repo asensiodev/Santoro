@@ -2,6 +2,8 @@ package com.asensiodev.feature.moviedetail.impl.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.asensiodev.core.domain.usecase.ObserveHasSeenDetailTooltipUseCase
+import com.asensiodev.core.domain.usecase.SetDetailTooltipSeenUseCase
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseCase
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.UpdateMovieStateUseCase
 import com.asensiodev.feature.moviedetail.impl.presentation.mapper.toDomain
@@ -12,6 +14,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -24,6 +27,8 @@ internal class MovieDetailViewModel
         private val getMovieDetailUseCase: GetMovieDetailUseCase,
         private val updateMovieStateUseCase: UpdateMovieStateUseCase,
         private val syncScheduler: WorkManagerSyncScheduler,
+        private val observeHasSeenDetailTooltipUseCase: ObserveHasSeenDetailTooltipUseCase,
+        private val setDetailTooltipSeenUseCase: SetDetailTooltipSeenUseCase,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(MovieDetailUiState())
         val uiState: StateFlow<MovieDetailUiState> = _uiState.asStateFlow()
@@ -40,6 +45,7 @@ internal class MovieDetailViewModel
                 is MovieDetailIntent.ToggleWatchlist -> toggleWatchlist()
                 is MovieDetailIntent.ShareMovie -> emitShareEffect()
                 is MovieDetailIntent.Retry -> retryFetch()
+                is MovieDetailIntent.DismissTooltip -> dismissTooltip()
             }
         }
 
@@ -57,6 +63,7 @@ internal class MovieDetailViewModel
                                         movie = movie?.toUi(),
                                     )
                                 }
+                                checkTooltip()
                             },
                             onFailure = { exception ->
                                 _uiState.update {
@@ -115,6 +122,22 @@ internal class MovieDetailViewModel
                     }.onFailure { exception ->
                         _effect.trySend(MovieDetailEffect.ShowError(exception.message.orEmpty()))
                     }
+            }
+        }
+
+        private fun checkTooltip() {
+            viewModelScope.launch {
+                val hasSeen = observeHasSeenDetailTooltipUseCase().first()
+                if (!hasSeen) {
+                    _uiState.update { it.copy(showTooltip = true) }
+                }
+            }
+        }
+
+        private fun dismissTooltip() {
+            _uiState.update { it.copy(showTooltip = false) }
+            viewModelScope.launch {
+                setDetailTooltipSeenUseCase()
             }
         }
     }

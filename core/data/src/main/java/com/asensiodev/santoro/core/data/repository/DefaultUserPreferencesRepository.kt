@@ -19,12 +19,20 @@ class DefaultUserPreferencesRepository
         private val _hasSeenGuestOnboarding = MutableStateFlow(getInitialOnboardingValue())
         override val hasSeenGuestOnboarding: Flow<Boolean> = _hasSeenGuestOnboarding.asStateFlow()
 
+        private val _hasSeenDetailTooltip = MutableStateFlow(getInitialDetailTooltipValue())
+        override val hasSeenDetailTooltip: Flow<Boolean> = _hasSeenDetailTooltip.asStateFlow()
+
         private val _theme = MutableStateFlow(getInitialThemeValue())
         override val theme: Flow<ThemeOption> = _theme.asStateFlow()
 
         override suspend fun setHasSeenGuestOnboarding(hasSeen: Boolean) {
             secureKeyValueStore.writeString(KEY_HAS_SEEN_ONBOARDING, hasSeen.toString())
             _hasSeenGuestOnboarding.value = hasSeen
+        }
+
+        override suspend fun setHasSeenDetailTooltip(hasSeen: Boolean) {
+            secureKeyValueStore.writeString(KEY_HAS_SEEN_DETAIL_TOOLTIP, hasSeen.toString())
+            _hasSeenDetailTooltip.value = hasSeen
         }
 
         override suspend fun setTheme(option: ThemeOption) {
@@ -37,6 +45,11 @@ class DefaultUserPreferencesRepository
             return value?.toBoolean() ?: false
         }
 
+        private fun getInitialDetailTooltipValue(): Boolean {
+            val value = secureKeyValueStore.readString(KEY_HAS_SEEN_DETAIL_TOOLTIP)
+            return value?.toBoolean() ?: false
+        }
+
         private fun getInitialThemeValue(): ThemeOption {
             val value = secureKeyValueStore.readString(KEY_THEME_OPTION)
             return value?.let { runCatching { ThemeOption.valueOf(it) }.getOrNull() }
@@ -45,6 +58,7 @@ class DefaultUserPreferencesRepository
 
         companion object {
             private const val KEY_HAS_SEEN_ONBOARDING = "has_seen_guest_onboarding"
+            private const val KEY_HAS_SEEN_DETAIL_TOOLTIP = "has_seen_detail_tooltip"
             private const val KEY_THEME_OPTION = "theme_option"
         }
     }

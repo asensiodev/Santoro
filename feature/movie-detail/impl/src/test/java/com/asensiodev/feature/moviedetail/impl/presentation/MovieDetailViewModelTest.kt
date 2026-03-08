@@ -2,6 +2,8 @@ package com.asensiodev.feature.moviedetail.impl.presentation
 
 import app.cash.turbine.test
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.core.domain.usecase.ObserveHasSeenDetailTooltipUseCase
+import com.asensiodev.core.domain.usecase.SetDetailTooltipSeenUseCase
 import com.asensiodev.core.testing.extension.CoroutineTestExtension
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseCase
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.UpdateMovieStateUseCase
@@ -9,6 +11,7 @@ import com.asensiodev.feature.moviedetail.impl.presentation.mapper.toUi
 import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -28,17 +31,22 @@ class MovieDetailViewModelTest {
     private val getMovieDetailUseCase: GetMovieDetailUseCase = mockk()
     private val updateMovieStateUseCase: UpdateMovieStateUseCase = mockk()
     private val syncScheduler: WorkManagerSyncScheduler = mockk(relaxed = true)
+    private val observeHasSeenDetailTooltipUseCase: ObserveHasSeenDetailTooltipUseCase = mockk()
+    private val setDetailTooltipSeenUseCase: SetDetailTooltipSeenUseCase = mockk(relaxed = true)
     private val testMovie = createTestMovie()
 
     private lateinit var viewModel: MovieDetailViewModel
 
     @BeforeEach
     fun setUp() {
+        every { observeHasSeenDetailTooltipUseCase() } returns flowOf(true)
         viewModel =
             MovieDetailViewModel(
                 getMovieDetailUseCase = getMovieDetailUseCase,
                 updateMovieStateUseCase = updateMovieStateUseCase,
                 syncScheduler = syncScheduler,
+                observeHasSeenDetailTooltipUseCase = observeHasSeenDetailTooltipUseCase,
+                setDetailTooltipSeenUseCase = setDetailTooltipSeenUseCase,
             )
     }
 
@@ -235,6 +243,50 @@ class MovieDetailViewModelTest {
                 advanceUntilIdle()
 
                 coVerify(exactly = 0) { syncScheduler.enqueueUpload(any()) }
+            }
+    }
+
+    @Nested
+    inner class Tooltip {
+        @Test
+        fun `GIVEN tooltip not seen WHEN FetchDetails succeeds THEN showTooltip is true`() =
+            runTest {
+                every { observeHasSeenDetailTooltipUseCase() } returns flowOf(false)
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+
+                viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
+                advanceUntilIdle()
+
+                viewModel.uiState.value.showTooltip shouldBeEqualTo true
+            }
+
+        @Test
+        fun `GIVEN tooltip already seen WHEN FetchDetails succeeds THEN showTooltip is false`() =
+            runTest {
+                every { observeHasSeenDetailTooltipUseCase() } returns flowOf(true)
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+
+                viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
+                advanceUntilIdle()
+
+                viewModel.uiState.value.showTooltip shouldBeEqualTo false
+            }
+
+        @Test
+        fun `GIVEN tooltip shown WHEN DismissTooltip THEN hides tooltip and calls setDetailTooltipSeen`() =
+            runTest {
+                every { observeHasSeenDetailTooltipUseCase() } returns flowOf(false)
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+
+                viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
+                advanceUntilIdle()
+                viewModel.uiState.value.showTooltip shouldBeEqualTo true
+
+                viewModel.process(MovieDetailIntent.DismissTooltip)
+                advanceUntilIdle()
+
+                viewModel.uiState.value.showTooltip shouldBeEqualTo false
+                coVerify(exactly = 1) { setDetailTooltipSeenUseCase() }
             }
     }
 

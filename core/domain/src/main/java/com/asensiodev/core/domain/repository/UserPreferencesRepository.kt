@@ -5,7 +5,9 @@ import kotlinx.coroutines.flow.Flow
 
 interface UserPreferencesRepository {
     val hasSeenGuestOnboarding: Flow<Boolean>
+    val hasSeenDetailTooltip: Flow<Boolean>
     val theme: Flow<ThemeOption>
     suspend fun setHasSeenGuestOnboarding(hasSeen: Boolean)
+    suspend fun setHasSeenDetailTooltip(hasSeen: Boolean)
     suspend fun setTheme(option: ThemeOption)
 }

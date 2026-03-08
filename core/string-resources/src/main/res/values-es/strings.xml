@@ -161,6 +161,10 @@
     <string name="search_suggestions_clear_all">Borrar todo</string>
     <string name="search_suggestions_trending_title">Tendencias</string>
 
+    <!-- Onboarding -->
+    <string name="onboarding_detail_tooltip">Toca para guardar películas en tus listas</string>
+    <string name="onboarding_got_it">Entendido</string>
+
     <!-- Google Auth ID -->
     <string name="default_web_client_id" translatable="false">792126816216-49vquegl1mcdcm52655qhgrs9l9ou5cf.apps.googleusercontent.com</string>
 
