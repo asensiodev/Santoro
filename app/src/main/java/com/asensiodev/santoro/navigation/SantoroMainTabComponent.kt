@@ -3,6 +3,7 @@ package com.asensiodev.santoro.navigation
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -19,15 +20,12 @@ fun SantoroMainTabComponent(mainNavController: NavHostController) {
             BottomNavigationBar(
                 items =
                     SantoroTabs.map { tab ->
-                        val routeName = tab.route::class.qualifiedName.orEmpty()
-
                         BottomNavItem(
                             selectedIcon = tab.selectedIcon,
                             unselectedIcon = tab.unselectedIcon,
                             labelRes = tab.labelRes,
                             isSelected =
-                                currentDestination?.destination?.route?.startsWith(routeName) ==
-                                    true,
+                                currentDestination?.destination?.hasRoute(tab.route::class) == true,
                             onClick = {
                                 if (tab.isRootDestination) {
                                     mainNavController.navigate(tab.route)
