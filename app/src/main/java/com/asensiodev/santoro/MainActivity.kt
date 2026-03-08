@@ -1,5 +1,6 @@
 package com.asensiodev.santoro
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -15,7 +16,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -28,7 +31,9 @@ import com.asensiodev.api.navigation.LoginRoute
 import com.asensiodev.core.designsystem.theme.SantoroTheme
 import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.feature.moviedetail.impl.presentation.navigation.movieDetailRoute
+import com.asensiodev.feature.moviedetail.impl.presentation.navigation.navigateToMovieDetail
 import com.asensiodev.login.impl.presentation.navigation.loginScreen
+import com.asensiodev.santoro.navigation.DeepLinkHandler
 import com.asensiodev.santoro.navigation.SantoroMainTabComponent
 import com.asensiodev.santoro.navigation.TabHost
 import com.asensiodev.santoro.presentation.onboarding.GuestOnboardingBottomSheet
@@ -39,11 +44,18 @@ import kotlinx.coroutines.flow.drop
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private val viewModel: MainActivityViewModel by viewModels()
+    private var pendingDeepLinkMovieId by mutableStateOf(
+        DeepLinkHandler.parseMovieIdFromIntent(null),
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val splashScreen = installSplashScreen()
         enableEdgeToEdge()
+
+        if (savedInstanceState == null) {
+            pendingDeepLinkMovieId = DeepLinkHandler.parseMovieIdFromIntent(intent)
+        }
 
         setContent {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -74,6 +86,8 @@ class MainActivity : AppCompatActivity() {
                         SantoroApp(
                             startDestination = startDestination,
                             isAuthenticated = isAuthenticated,
+                            deepLinkMovieId = if (isAuthenticated) pendingDeepLinkMovieId else null,
+                            onDeepLinkConsumed = { pendingDeepLinkMovieId = null },
                         )
 
                         if (uiState is MainActivityUiState.Authenticated &&
@@ -88,6 +102,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        pendingDeepLinkMovieId = DeepLinkHandler.parseMovieIdFromIntent(intent)
+    }
 }
 
 @Composable
@@ -95,6 +114,8 @@ class MainActivity : AppCompatActivity() {
 fun SantoroApp(
     startDestination: Any,
     isAuthenticated: Boolean,
+    deepLinkMovieId: Int? = null,
+    onDeepLinkConsumed: () -> Unit = {},
 ) {
     val mainNavController = rememberNavController()
     val currentIsAuthenticated by rememberUpdatedState(isAuthenticated)
@@ -113,6 +134,13 @@ fun SantoroApp(
                     }
                 }
             }
+    }
+
+    LaunchedEffect(deepLinkMovieId) {
+        if (deepLinkMovieId != null) {
+            mainNavController.navigateToMovieDetail(deepLinkMovieId)
+            onDeepLinkConsumed()
+        }
     }
 
     NavHost(
