@@ -18,10 +18,10 @@ These items **block** store submission. The app will be rejected without them.
 ### 1.1 Privacy Policy
 
 - [x] Write a Privacy Policy covering: data collected (Firebase Auth UID, email, display name), analytics (Firebase Analytics), crash reporting (Crashlytics), third-party API (TMDB), local storage (Room, DataStore) → `docs/legal/PRIVACY-POLICY.md`
-- [ ] Host the Privacy Policy at a public URL (GitHub Pages, Notion, or static site)
-- [ ] Add a "Privacy Policy" item in `SettingsScreen` that opens the URL in a browser
-- [ ] Add the Privacy Policy URL string resource (EN + ES)
-- [ ] Enter the Privacy Policy URL in Google Play Console → App content → Privacy policy
+- [x] Host the Privacy Policy at a public URL (GitHub Pages, Notion, or static site)
+- [x] Add a "Privacy Policy" item in `SettingsScreen` that opens the URL in a browser
+- [x] Add the Privacy Policy URL string resource (EN + ES)
+- [x] Enter the Privacy Policy URL in Google Play Console → App content → Privacy policy
 
 ### 1.2 Data Safety Form- [ ] Complete the Data Safety form in Google Play Console → App content → Data safety
 - [ ] Declare: email + name collected via Firebase Auth (account management)
@@ -62,9 +62,9 @@ These items **block** store submission. The app will be rejected without them.
 
 ### 2.3 Signing
 
-- [ ] Verify release signing config works (`signingConfigs.release` in `app/build.gradle.kts`)
+- [x] Verify release signing config works (`signingConfigs.release` in `app/build.gradle.kts`)
 - [ ] Upload signing key to Google Play App Signing (or use Play App Signing)
-- [ ] Generate signed AAB: `./gradlew bundleRelease`
+- [x] Generate signed AAB: `./gradlew bundleRelease`
 
 ---
 
