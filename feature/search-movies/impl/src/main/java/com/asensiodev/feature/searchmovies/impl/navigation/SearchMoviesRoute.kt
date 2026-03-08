@@ -5,8 +5,14 @@ import androidx.navigation.compose.composable
 import com.asensiodev.feature.searchmovies.api.navigation.SearchMoviesRoute
 import com.asensiodev.feature.searchmovies.impl.presentation.SearchMoviesRoute
 
-fun NavGraphBuilder.searchMoviesRoute(onMovieClick: (Int) -> Unit) {
+fun NavGraphBuilder.searchMoviesRoute(
+    onMovieClick: (Int) -> Unit,
+    onSeeAllClick: (String) -> Unit,
+) {
     composable<SearchMoviesRoute> {
-        SearchMoviesRoute(onMovieClick = onMovieClick)
+        SearchMoviesRoute(
+            onMovieClick = onMovieClick,
+            onSeeAllClick = onSeeAllClick,
+        )
     }
 }

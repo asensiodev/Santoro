@@ -18,6 +18,7 @@ import com.asensiodev.feature.searchmovies.impl.domain.usecase.SaveRecentSearchU
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesByQueryAndGenreUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.presentation.mapper.toUiList
+import com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -78,6 +79,7 @@ internal class SearchMoviesViewModel
                 is SearchMoviesIntent.FieldCleared -> onFieldCleared()
                 is SearchMoviesIntent.SuggestionTapped -> onSuggestionTapped(intent.query)
                 is SearchMoviesIntent.ClearRecentSearches -> onClearRecentSearches()
+                is SearchMoviesIntent.SeeAllClicked -> onSeeAllClicked(intent.sectionType)
             }
         }
 
@@ -347,6 +349,10 @@ internal class SearchMoviesViewModel
 
         private fun onClearRecentSearches() {
             viewModelScope.launch { clearRecentSearchesUseCase() }
+        }
+
+        private fun onSeeAllClicked(sectionType: SectionType) {
+            _effect.trySend(SearchMoviesEffect.NavigateToSeeAll(sectionType))
         }
 
         private fun fetchDashboardData(fromRefresh: Boolean = false) {

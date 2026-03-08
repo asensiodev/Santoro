@@ -1,5 +1,7 @@
 package com.asensiodev.feature.searchmovies.impl.presentation
 
+import com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType
+
 internal sealed interface SearchMoviesIntent {
     data object LoadInitialData : SearchMoviesIntent
     data object Refresh : SearchMoviesIntent
@@ -23,4 +25,7 @@ internal sealed interface SearchMoviesIntent {
         val query: String,
     ) : SearchMoviesIntent
     data object ClearRecentSearches : SearchMoviesIntent
+    data class SeeAllClicked(
+        val sectionType: SectionType,
+    ) : SearchMoviesIntent
 }

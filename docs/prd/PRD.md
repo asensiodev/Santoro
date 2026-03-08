@@ -360,7 +360,7 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
-| **Status**  | 📋 Planned |
+| **Status**  | ✅ Shipped — [FIP-015](../plan/FIP-015-see-all-navigation.md) |
 | **Scope**   | `SearchMoviesScreen` — browse mode curated sections |
 | **Current state** | Curated sections (Trending, Popular, Top Rated, Upcoming, By Genre) are displayed without a "See All" affordance. Users cannot explore a full paginated list for a specific section |
 | **Behaviour** | Add a `See All →` text button next to each section header. Tapping navigates to a new full-screen paginated list (`MovieListRoute`) filtered to that section. The list uses infinite scroll and the same 2-column grid |
@@ -436,3 +436,4 @@ Features approved for a future release. Each will get a FIP before implementatio
 | 1.9     | 2026-03-06 | F-12 Help & Legal marked ✅ Shipped. F-06 and F-07 *(Planned)* items updated to reflect shipped state |
 | 2.0     | 2026-03-08 | F-22 Recent & Trending Searches marked ✅ Shipped — FIP-013. PRD cleanup: removed stale §3.4 planned item, updated §3.5 stats description, added `tagline` to §5 data model, fixed F-19 broken FIP link, renamed §8 to Resolved Gaps, updated §3.7 Settings with delete account + TMDB attribution, updated F-22 current state |
 | 2.1     | 2026-03-08 | F-23 Deep Link added and marked ✅ Shipped — FIP-014 |
+| 2.2     | 2026-03-08 | F-18 See All Navigation marked ✅ Shipped — FIP-015 |

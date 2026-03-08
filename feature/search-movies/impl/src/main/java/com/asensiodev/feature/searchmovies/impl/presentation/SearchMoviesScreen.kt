@@ -6,6 +6,7 @@ import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -78,12 +79,14 @@ import com.asensiodev.feature.searchmovies.impl.presentation.component.MovieCard
 import com.asensiodev.feature.searchmovies.impl.presentation.component.SearchSuggestionsContent
 import com.asensiodev.feature.searchmovies.impl.presentation.model.GenreConstants
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
+import com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.asensiodev.santoro.core.stringresources.R as SR
 
 @Composable
 internal fun SearchMoviesRoute(
     onMovieClick: (Int) -> Unit,
+    onSeeAllClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SearchMoviesViewModel = hiltViewModel(),
 ) {
@@ -107,6 +110,10 @@ internal fun SearchMoviesRoute(
 
                 is SearchMoviesEffect.NavigateToDetail -> {
                     onMovieClick(effect.movieId)
+                }
+
+                is SearchMoviesEffect.NavigateToSeeAll -> {
+                    onSeeAllClick(effect.sectionType.key)
                 }
             }
         }
@@ -219,6 +226,9 @@ internal fun SearchMoviesScreen(
                                 )
                             },
                             onLoadRetry = { onProcess(SearchMoviesIntent.LoadInitialData) },
+                            onSeeAllClick = { sectionType ->
+                                onProcess(SearchMoviesIntent.SeeAllClicked(sectionType))
+                            },
                         )
                     } else {
                         SearchMoviesContent(
@@ -275,6 +285,7 @@ private fun DashboardContent(
     onMovieClick: (Int) -> Unit,
     onLoadMorePopular: () -> Unit,
     onLoadRetry: () -> Unit,
+    onSeeAllClick: (SectionType) -> Unit,
 ) {
     when (uiState.screenState) {
         is SearchScreenState.Loading -> {
@@ -315,6 +326,7 @@ private fun DashboardContent(
                         title = stringResource(SR.string.search_movies_trending_title),
                         movies = uiState.trendingMovies,
                         onMovieClick = onMovieClick,
+                        onSeeAllClick = { onSeeAllClick(SectionType.TRENDING) },
                     )
                 }
 
@@ -325,6 +337,7 @@ private fun DashboardContent(
                         onMovieClick = onMovieClick,
                         onLoadMore = onLoadMorePopular,
                         isLoading = uiState.isPopularLoadingMore,
+                        onSeeAllClick = { onSeeAllClick(SectionType.POPULAR) },
                     )
                 }
 
@@ -333,6 +346,7 @@ private fun DashboardContent(
                         title = stringResource(SR.string.search_movies_top_rated_title),
                         movies = uiState.topRatedMovies,
                         onMovieClick = onMovieClick,
+                        onSeeAllClick = { onSeeAllClick(SectionType.TOP_RATED) },
                     )
                 }
 
@@ -341,6 +355,7 @@ private fun DashboardContent(
                         title = stringResource(SR.string.search_movies_upcoming_title),
                         movies = uiState.upcomingMovies,
                         onMovieClick = onMovieClick,
+                        onSeeAllClick = { onSeeAllClick(SectionType.UPCOMING) },
                     )
                 }
             }
@@ -397,15 +412,33 @@ private fun MovieSection(
     onMovieClick: (Int) -> Unit,
     onLoadMore: (() -> Unit)? = null,
     isLoading: Boolean = false,
+    onSeeAllClick: (() -> Unit)? = null,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(Spacings.spacing12),
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            if (onSeeAllClick != null) {
+                Text(
+                    text = stringResource(SR.string.browse_see_all),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier =
+                        Modifier
+                            .clickable(onClick = onSeeAllClick)
+                            .padding(Spacings.spacing12),
+                )
+            }
+        }
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
             contentPadding =

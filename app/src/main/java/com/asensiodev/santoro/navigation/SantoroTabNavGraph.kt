@@ -12,6 +12,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.asensiodev.feature.moviedetail.impl.presentation.navigation.navigateToMovieDetail
 import com.asensiodev.feature.searchmovies.api.navigation.SearchMoviesRoute
+import com.asensiodev.feature.searchmovies.impl.navigation.navigateToSeeAllMovies
 import com.asensiodev.feature.searchmovies.impl.navigation.searchMoviesRoute
 import com.asensiodev.feature.watchedmovies.impl.navigation.watchedMoviesRoute
 import com.asensiodev.feature.watchlist.impl.navigation.watchlistRoute
@@ -39,6 +40,13 @@ fun SantoroTabNavGraph(
                     Lifecycle.State.RESUMED
                 ) {
                     mainNavController.navigateToMovieDetail(movieId)
+                }
+            },
+            onSeeAllClick = { sectionType ->
+                if (navController.currentBackStackEntry?.lifecycle?.currentState ==
+                    Lifecycle.State.RESUMED
+                ) {
+                    mainNavController.navigateToSeeAllMovies(sectionType)
                 }
             },
         )

@@ -49,6 +49,7 @@
     <string name="browse_offline_cache_banner">You\'re offline. Showing cached results.</string>
     <string name="browse_offline_retry">Retry</string>
     <string name="browse_refresh_success">Content updated</string>
+    <string name="browse_see_all">See All</string>
 
     <!-- Watched Movies Screen -->
     <string name="watched_movies_top_bar_title">Watched movies</string>

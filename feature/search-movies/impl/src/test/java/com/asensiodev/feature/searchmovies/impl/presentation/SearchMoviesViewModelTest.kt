@@ -1,6 +1,7 @@
 package com.asensiodev.feature.searchmovies.impl.presentation
 
 import androidx.lifecycle.SavedStateHandle
+import app.cash.turbine.test
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.impl.data.repository.CachingSearchMoviesRepository
@@ -329,5 +330,25 @@ class SearchMoviesViewModelTest {
 
             // THEN
             coVerify(exactly = 0) { saveRecentSearchUseCase(any()) }
+        }
+
+    @Test
+    fun `GIVEN browse screen WHEN SeeAllClicked POPULAR THEN emits NavigateToSeeAll POPULAR effect`() =
+        runTest {
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+
+            viewModel.effect.test {
+                viewModel.process(
+                    SearchMoviesIntent.SeeAllClicked(
+                        com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType.POPULAR,
+                    ),
+                )
+
+                val effect = awaitItem()
+                effect shouldBeInstanceOf SearchMoviesEffect.NavigateToSeeAll::class
+                (effect as SearchMoviesEffect.NavigateToSeeAll).sectionType shouldBeEqualTo
+                    com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType.POPULAR
+            }
         }
 }

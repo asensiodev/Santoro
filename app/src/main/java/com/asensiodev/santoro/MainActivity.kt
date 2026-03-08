@@ -32,6 +32,7 @@ import com.asensiodev.core.designsystem.theme.SantoroTheme
 import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.feature.moviedetail.impl.presentation.navigation.movieDetailRoute
 import com.asensiodev.feature.moviedetail.impl.presentation.navigation.navigateToMovieDetail
+import com.asensiodev.feature.searchmovies.impl.navigation.seeAllMoviesRoute
 import com.asensiodev.login.impl.presentation.navigation.loginScreen
 import com.asensiodev.santoro.navigation.DeepLinkHandler
 import com.asensiodev.santoro.navigation.SantoroMainTabComponent
@@ -187,6 +188,41 @@ fun SantoroApp(
 
         settingsRoute(
             onBackClicked = {
+                if (mainNavController.currentBackStackEntry?.lifecycle?.currentState ==
+                    Lifecycle.State.RESUMED
+                ) {
+                    mainNavController.popBackStack()
+                }
+            },
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                    animationSpec = tween(NAV_ANIMATION_DURATION),
+                )
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(NAV_ANIMATION_DURATION))
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(NAV_ANIMATION_DURATION))
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.End,
+                    animationSpec = tween(NAV_ANIMATION_DURATION),
+                )
+            },
+        )
+
+        seeAllMoviesRoute(
+            onMovieClick = { movieId ->
+                if (mainNavController.currentBackStackEntry?.lifecycle?.currentState ==
+                    Lifecycle.State.RESUMED
+                ) {
+                    mainNavController.navigateToMovieDetail(movieId)
+                }
+            },
+            onBackClick = {
                 if (mainNavController.currentBackStackEntry?.lifecycle?.currentState ==
                     Lifecycle.State.RESUMED
                 ) {
