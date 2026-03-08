@@ -1,5 +1,6 @@
 package com.asensiodev.settings.impl.presentation.profile
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +36,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
@@ -57,6 +59,7 @@ internal fun ProfileScreenRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val privacyPolicyUrl = stringResource(SR.string.settings_privacy_policy_url)
 
     LaunchedEffect(viewModel) {
         viewModel.process(ProfileIntent.ObserveAuth)
@@ -65,6 +68,9 @@ internal fun ProfileScreenRoute(
     Box(modifier = modifier.fillMaxSize()) {
         ProfileScreen(
             onAppSettingsClicked = onAppSettingsClicked,
+            onPrivacyPolicyClicked = {
+                context.startActivity(Intent(Intent.ACTION_VIEW, privacyPolicyUrl.toUri()))
+            },
             onLinkGoogleAccountClicked = {
                 viewModel.process(ProfileIntent.OnLinkGoogleClicked(context))
             },
@@ -101,6 +107,7 @@ internal fun ProfileScreenRoute(
 @Composable
 internal fun ProfileScreen(
     onAppSettingsClicked: () -> Unit,
+    onPrivacyPolicyClicked: () -> Unit,
     onLinkGoogleAccountClicked: () -> Unit,
     onRetryError: () -> Unit,
     onLinkAccountSuccessDismiss: () -> Unit,
@@ -153,6 +160,11 @@ internal fun ProfileScreen(
             text = stringResource(SR.string.profile_app_settings),
             icon = AppIcons.Settings,
             onClick = onAppSettingsClicked,
+        )
+        SettingsItem(
+            text = stringResource(SR.string.settings_privacy_policy),
+            icon = AppIcons.PrivacyPolicy,
+            onClick = onPrivacyPolicyClicked,
         )
     }
 }
