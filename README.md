@@ -22,14 +22,18 @@
 | | Feature | Description |
 |---|---|---|
 | 🔍 | **Discover** | Browse trending, popular, top rated, upcoming, and genre-filtered movies |
+| 📄 | **See All** | Full-screen paginated grids with infinite scroll for each browse section |
 | 🎬 | **Movie Detail** | Cast, crew, tagline, ratings, runtime — all in one screen |
 | ✅ | **Watched** | Track what you've seen with stats dashboard (total, hours, streaks) |
 | 📌 | **Watchlist** | Save movies for later, swipe to remove |
 | 🔎 | **Smart Search** | Real-time search with recent queries and trending suggestions |
+| 🔗 | **Deep Links** | Open TMDB movie URLs directly in the app |
 | ☁️ | **Cloud Sync** | Sign in with Google to sync your lists across devices |
 | 📴 | **Offline Ready** | Browse cached data and manage lists without internet |
+| 🔄 | **Pull to Refresh** | Swipe down to refresh any screen |
 | 🎨 | **Theming** | Light, dark, and system theme support |
 | 🌍 | **i18n** | English and Spanish |
+| 📳 | **Haptic Feedback** | Tactile response on key actions |
 
 ## 🏗️ Tech Stack
 
@@ -47,7 +51,17 @@
 
 ## 📸 Screenshots
 
-[PENDING TO UPDATE]
+<p align="center">
+  <img src="docs/screenshots/browse.png" width="180" alt="Browse" />
+  <img src="docs/screenshots/movie-detail.png" width="180" alt="Movie Detail" />
+  <img src="docs/screenshots/watchlist.png" width="180" alt="Watchlist" />
+  <img src="docs/screenshots/watched-stats.png" width="180" alt="Watched Stats" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/search.png" width="180" alt="Search" />
+  <img src="docs/screenshots/settings.png" width="180" alt="Settings" />
+</p>
 
 ## 📦 Module Structure
 
@@ -64,9 +78,17 @@ core/                   → Shared modules
   ├── design-system/    → Theme, components, icons
   ├── domain/           → Models, Result type
   ├── data/             → Repositories, mappers
-  ├── database/         → Room DB
-  ├── network/          → Retrofit setup
-  └── ui/               → Shared UI utilities
+  ├── database/         → Room DB, schemas
+  ├── network/          → Retrofit setup, interceptors
+  ├── ui/               → Shared UI utilities
+  ├── auth/             → Firebase Auth wrapper
+  ├── sync/             → Firestore sync logic
+  ├── build-config/     → Build-time constants
+  └── string-resources/ → Centralized i18n strings
+library/                → Reusable library modules
+  ├── remote-config/    → Firebase Remote Config
+  └── secure-storage/   → Encrypted key-value store
+build-logic/            → Convention plugins (Gradle)
 ```
 
 ## 🔑 API
@@ -90,5 +112,5 @@ Documentation (`docs/`) is licensed under [CC BY 4.0](docs/LICENSE).
 ---
 
 <p align="center">
-  Made with ❤️ by <a href="https://github.com/asensiodev">@asensiodev</a>
+  Made with 🖤 by <a href="https://github.com/asensiodev">@asensiodev</a>
 </p>
