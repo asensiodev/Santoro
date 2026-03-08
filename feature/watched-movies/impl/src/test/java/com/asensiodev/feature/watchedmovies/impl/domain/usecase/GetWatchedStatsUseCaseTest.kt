@@ -121,7 +121,6 @@ class GetWatchedStatsUseCaseTest {
     @Test
     fun `GIVEN movies watched on consecutive weeks WHEN invoke THEN longestStreakWeeks is correct`() =
         runTest {
-            // GIVEN — 3 consecutive ISO weeks
             val week1 = localDateToMillis(LocalDate.of(2024, 1, 1))
             val week2 = localDateToMillis(LocalDate.of(2024, 1, 8))
             val week3 = localDateToMillis(LocalDate.of(2024, 1, 15))
@@ -133,11 +132,26 @@ class GetWatchedStatsUseCaseTest {
                 )
             every { repository.getWatchedMovies() } returns flowOf(Result.success(movies))
 
-            // WHEN
             val result = useCase().toList().first()
 
-            // THEN
             result.longestStreakWeeks shouldBeEqualTo 3
+        }
+
+    @Test
+    fun `GIVEN movies watched in a single week WHEN invoke THEN longestStreakWeeks is 0`() =
+        runTest {
+            val sameWeekDay1 = localDateToMillis(LocalDate.of(2024, 1, 1))
+            val sameWeekDay2 = localDateToMillis(LocalDate.of(2024, 1, 3))
+            val movies =
+                listOf(
+                    buildMovie(id = 1, watchedAt = sameWeekDay1),
+                    buildMovie(id = 2, watchedAt = sameWeekDay2),
+                )
+            every { repository.getWatchedMovies() } returns flowOf(Result.success(movies))
+
+            val result = useCase().toList().first()
+
+            result.longestStreakWeeks shouldBeEqualTo 0
         }
 
     @Test

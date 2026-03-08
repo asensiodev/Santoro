@@ -57,7 +57,6 @@ internal class GetWatchedStatsUseCase
                 }.flowOn(dispatchers.io)
 
         private fun computeLongestStreakWeeks(timestamps: List<Long>): Int {
-            if (timestamps.isEmpty()) return 0
             val isoWeekFields = WeekFields.of(Locale.getDefault())
             val weeks =
                 timestamps
@@ -72,6 +71,8 @@ internal class GetWatchedStatsUseCase
                         val weekOfYear = date.get(isoWeekFields.weekOfWeekBasedYear())
                         weekYear * WEEKS_PER_YEAR + weekOfYear
                     }.toSortedSet()
+
+            if (weeks.size < MIN_STREAK_WEEKS) return 0
 
             var longest = 1
             var current = 1
@@ -88,9 +89,10 @@ internal class GetWatchedStatsUseCase
                 }
                 previous = next
             }
-            return longest
+            return if (longest >= MIN_STREAK_WEEKS) longest else 0
         }
     }
 
 private const val MINUTES_PER_HOUR = 60
 private const val WEEKS_PER_YEAR = 53
+private const val MIN_STREAK_WEEKS = 2

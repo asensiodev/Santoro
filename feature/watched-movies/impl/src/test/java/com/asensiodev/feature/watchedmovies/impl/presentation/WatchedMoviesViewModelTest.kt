@@ -106,7 +106,7 @@ class WatchedMoviesViewModelTest {
                     totalWatched = 2,
                     totalRuntimeHours = 3,
                     favouriteGenre = "Action",
-                    longestStreakWeeks = 1,
+                    longestStreakWeeks = 2,
                 )
             every { getWatchedStatsUseCase() } returns flowOf(expectedStats)
             viewModel =
