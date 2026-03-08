@@ -94,19 +94,19 @@ internal fun WatchlistMoviesScreen(
             placeholder = stringResource(SR.string.watchlist_movies_textfield_placeholder),
             onQueryChanged = { onProcess(WatchlistIntent.UpdateQuery(it)) },
         )
-        when {
-            uiState.isLoading -> {
+        when (uiState.screenState) {
+            is WatchlistScreenState.Loading -> {
                 LoadingIndicator()
             }
 
-            uiState.errorMessage != null -> {
+            is WatchlistScreenState.Error -> {
                 ErrorContent(
                     message = stringResource(SR.string.error_message_retry),
                     onRetry = { onProcess(WatchlistIntent.LoadMovies) },
                 )
             }
 
-            uiState.hasResults -> {
+            is WatchlistScreenState.Content -> {
                 MovieList(
                     movies = uiState.movies,
                     onMovieClick = onMovieClick,
@@ -114,7 +114,7 @@ internal fun WatchlistMoviesScreen(
                 )
             }
 
-            else -> {
+            is WatchlistScreenState.Empty -> {
                 NoResultsContent(
                     text = stringResource(SR.string.watchlist_no_results_text),
                     subtitle = stringResource(SR.string.watchlist_no_results_subtitle),
@@ -269,10 +269,8 @@ private fun WatchlistMoviesScreenPreview() {
         WatchlistMoviesScreen(
             uiState =
                 WatchlistMoviesUiState(
+                    screenState = WatchlistScreenState.Content,
                     movies = sampleMovies,
-                    isLoading = false,
-                    errorMessage = null,
-                    hasResults = true,
                 ),
             onProcess = {},
             onMovieClick = {},

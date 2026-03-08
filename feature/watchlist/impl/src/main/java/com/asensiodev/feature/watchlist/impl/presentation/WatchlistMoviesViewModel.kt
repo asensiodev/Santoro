@@ -75,21 +75,26 @@ internal class WatchlistMoviesViewModel
                     .collect { result ->
                         result.fold(
                             onSuccess = { movies ->
+                                val moviesUi = movies.toUiList()
                                 _uiState.update {
                                     it.copy(
-                                        isLoading = false,
-                                        movies = movies.toUiList(),
-                                        hasResults = movies.isNotEmpty(),
-                                        errorMessage = null,
+                                        screenState =
+                                            if (moviesUi.isEmpty()) {
+                                                WatchlistScreenState.Empty
+                                            } else {
+                                                WatchlistScreenState.Content
+                                            },
+                                        movies = moviesUi,
                                     )
                                 }
                             },
                             onFailure = { exception ->
                                 _uiState.update {
                                     it.copy(
-                                        isLoading = false,
-                                        errorMessage = exception.message,
-                                        hasResults = false,
+                                        screenState =
+                                            WatchlistScreenState.Error(
+                                                exception.message.orEmpty(),
+                                            ),
                                     )
                                 }
                             },
@@ -112,19 +117,23 @@ internal class WatchlistMoviesViewModel
                             val moviesUi = movies.toUiList()
                             _uiState.update {
                                 it.copy(
-                                    isLoading = false,
+                                    screenState =
+                                        if (moviesUi.isEmpty()) {
+                                            WatchlistScreenState.Empty
+                                        } else {
+                                            WatchlistScreenState.Content
+                                        },
                                     movies = moviesUi,
-                                    hasResults = moviesUi.isNotEmpty(),
-                                    errorMessage = null,
                                 )
                             }
                         },
                         onFailure = { exception ->
                             _uiState.update {
                                 it.copy(
-                                    isLoading = false,
-                                    errorMessage = exception.message,
-                                    hasResults = false,
+                                    screenState =
+                                        WatchlistScreenState.Error(
+                                            exception.message.orEmpty(),
+                                        ),
                                 )
                             }
                         },
@@ -135,7 +144,11 @@ internal class WatchlistMoviesViewModel
 
         private fun showLoadingIfEmpty() {
             _uiState.update { state ->
-                if (state.movies.isEmpty()) state.copy(isLoading = true) else state
+                if (state.movies.isEmpty()) {
+                    state.copy(screenState = WatchlistScreenState.Loading)
+                } else {
+                    state
+                }
             }
         }
 

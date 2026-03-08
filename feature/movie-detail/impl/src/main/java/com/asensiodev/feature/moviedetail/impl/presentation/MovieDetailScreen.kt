@@ -128,6 +128,7 @@ internal fun MovieDetailRoute(
             when (effect) {
                 is MovieDetailEffect.ShareMovie -> ShareMovieHelper.share(context, effect.movie)
                 is MovieDetailEffect.NavigateBack -> onBackClicked()
+                is MovieDetailEffect.ShowError -> Unit
             }
         }
     }
@@ -170,27 +171,29 @@ internal fun MovieDetailScreen(
     val appBarTitleAlpha = ((scrollProgress - APP_BAR_TITLE_ALPHA_OFFSET) * 2f).coerceIn(0f, 1f)
 
     Box(modifier = modifier.fillMaxSize()) {
-        when {
-            uiState.isLoading -> {
+        when (uiState.screenState) {
+            is MovieDetailScreenState.Loading -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     LoadingIndicator()
                 }
             }
 
-            uiState.errorMessage != null -> {
+            is MovieDetailScreenState.Error -> {
                 ErrorContent(
                     message = stringResource(SR.string.error_message_retry),
                     onRetry = { onRetry() },
                 )
             }
 
-            uiState.movie != null -> {
-                MovieDetailContent(
-                    uiState = uiState,
-                    onToggleWatchlist = onToggleWatchlist,
-                    onToggleWatched = onToggleWatched,
-                    scrollState = scrollState,
-                )
+            is MovieDetailScreenState.Content -> {
+                if (uiState.movie != null) {
+                    MovieDetailContent(
+                        uiState = uiState,
+                        onToggleWatchlist = onToggleWatchlist,
+                        onToggleWatched = onToggleWatched,
+                        scrollState = scrollState,
+                    )
+                }
             }
         }
 
@@ -1002,7 +1005,7 @@ private fun MovieDetailScreenPreview() {
         MovieDetailScreen(
             uiState =
                 MovieDetailUiState(
-                    isLoading = false,
+                    screenState = MovieDetailScreenState.Content,
                     movie =
                         MovieUi(
                             id = MOVIE_ID,
@@ -1041,8 +1044,6 @@ private fun MovieDetailScreenPreview() {
                             isWatched = false,
                             isInWatchlist = false,
                         ),
-                    errorMessage = null,
-                    hasResults = false,
                 ),
             onToggleWatchlist = {},
             onToggleWatched = {},

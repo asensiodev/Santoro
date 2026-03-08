@@ -86,19 +86,19 @@ internal fun WatchedMoviesScreen(
             placeholder = stringResource(SR.string.watched_movies_textfield_placeholder),
             onQueryChanged = { onProcess(WatchedMoviesIntent.UpdateQuery(it)) },
         )
-        when {
-            uiState.isLoading -> {
+        when (uiState.screenState) {
+            is WatchedScreenState.Loading -> {
                 LoadingIndicator()
             }
 
-            uiState.errorMessage != null -> {
+            is WatchedScreenState.Error -> {
                 ErrorContent(
                     message = stringResource(SR.string.error_message_retry),
                     onRetry = { onProcess(WatchedMoviesIntent.LoadMovies) },
                 )
             }
 
-            uiState.hasResults -> {
+            is WatchedScreenState.Content -> {
                 WatchedMovieList(
                     movies = uiState.movies,
                     stats = uiState.stats,
@@ -106,7 +106,7 @@ internal fun WatchedMoviesScreen(
                 )
             }
 
-            else -> {
+            is WatchedScreenState.Empty -> {
                 NoResultsContent(
                     text = stringResource(SR.string.watched_movies_no_results_text),
                     subtitle = stringResource(SR.string.watched_movies_no_results_subtitle),
@@ -189,9 +189,8 @@ private fun WatchedMoviesScreenPreview() {
         WatchedMoviesScreen(
             uiState =
                 WatchedMoviesUiState(
+                    screenState = WatchedScreenState.Content,
                     movies = grouped,
-                    isLoading = false,
-                    errorMessage = null,
                 ),
             onProcess = {},
             onMovieClick = {},

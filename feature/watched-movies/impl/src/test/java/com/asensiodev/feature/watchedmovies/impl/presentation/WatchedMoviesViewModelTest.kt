@@ -17,7 +17,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.amshove.kluent.shouldBeEqualTo
-import org.amshove.kluent.shouldBeNull
 import org.amshove.kluent.shouldNotBeNull
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -60,14 +59,14 @@ class WatchedMoviesViewModelTest {
     }
 
     @Test
-    fun `GIVEN LoadMovies intent WHEN processed THEN isLoading becomes false after fetch`() =
+    fun `GIVEN LoadMovies intent WHEN processed THEN screenState becomes Empty after fetch`() =
         runTest {
             advanceUntilIdle()
 
             viewModel.process(WatchedMoviesIntent.LoadMovies)
             advanceUntilIdle()
 
-            viewModel.uiState.value.isLoading shouldBeEqualTo false
+            viewModel.uiState.value.screenState shouldBeEqualTo WatchedScreenState.Empty
         }
 
     @Test
@@ -145,8 +144,7 @@ class WatchedMoviesViewModelTest {
 
             viewModel.uiState.value.stats
                 .shouldNotBeNull()
-            viewModel.uiState.value.errorMessage
-                .shouldBeNull()
+            viewModel.uiState.value.screenState shouldBeEqualTo WatchedScreenState.Empty
         }
 
     private fun buildMovie(

@@ -45,7 +45,7 @@ internal class MovieDetailViewModel
 
         private fun fetchMovieDetails(movieId: Int) {
             lastRequestedMovieId = movieId
-            showLoading()
+            _uiState.update { it.copy(screenState = MovieDetailScreenState.Loading) }
             viewModelScope.launch {
                 getMovieDetailUseCase(movieId)
                     .collect { result ->
@@ -53,17 +53,18 @@ internal class MovieDetailViewModel
                             onSuccess = { movie ->
                                 _uiState.update {
                                     it.copy(
-                                        isLoading = false,
+                                        screenState = MovieDetailScreenState.Content,
                                         movie = movie?.toUi(),
-                                        errorMessage = null,
                                     )
                                 }
                             },
                             onFailure = { exception ->
                                 _uiState.update {
                                     it.copy(
-                                        isLoading = false,
-                                        errorMessage = exception.message,
+                                        screenState =
+                                            MovieDetailScreenState.Error(
+                                                exception.message.orEmpty(),
+                                            ),
                                     )
                                 }
                             },
@@ -93,7 +94,7 @@ internal class MovieDetailViewModel
                         _uiState.update { it.copy(movie = updatedMovie) }
                         syncScheduler.enqueueUpload(movie.id)
                     }.onFailure { exception ->
-                        _uiState.update { it.copy(errorMessage = exception.message) }
+                        _effect.trySend(MovieDetailEffect.ShowError(exception.message.orEmpty()))
                     }
             }
         }
@@ -112,12 +113,8 @@ internal class MovieDetailViewModel
                         _uiState.update { it.copy(movie = updatedMovie) }
                         syncScheduler.enqueueUpload(movie.id)
                     }.onFailure { exception ->
-                        _uiState.update { it.copy(errorMessage = exception.message) }
+                        _effect.trySend(MovieDetailEffect.ShowError(exception.message.orEmpty()))
                     }
             }
-        }
-
-        private fun showLoading() {
-            _uiState.update { it.copy(isLoading = true) }
         }
     }

@@ -52,12 +52,10 @@ class MovieDetailViewModelTest {
                 viewModel.uiState.test {
                     awaitItem() shouldBeEqualTo MovieDetailUiState()
                     viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
-                    awaitItem() shouldBeEqualTo MovieDetailUiState(isLoading = true)
                     awaitItem() shouldBeEqualTo
                         MovieDetailUiState(
-                            isLoading = false,
+                            screenState = MovieDetailScreenState.Content,
                             movie = testMovie.toUi(),
-                            errorMessage = null,
                         )
                     cancelAndConsumeRemainingEvents()
                 }
@@ -73,12 +71,10 @@ class MovieDetailViewModelTest {
                 viewModel.uiState.test {
                     awaitItem() shouldBeEqualTo MovieDetailUiState()
                     viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
-                    awaitItem() shouldBeEqualTo MovieDetailUiState(isLoading = true)
                     awaitItem() shouldBeEqualTo
                         MovieDetailUiState(
-                            isLoading = false,
+                            screenState = MovieDetailScreenState.Error(errorMessage),
                             movie = null,
-                            errorMessage = errorMessage,
                         )
                     cancelAndConsumeRemainingEvents()
                 }
@@ -92,7 +88,6 @@ class MovieDetailViewModelTest {
                 viewModel.uiState.test {
                     awaitItem() shouldBeEqualTo MovieDetailUiState()
                     viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
-                    awaitItem() shouldBeEqualTo MovieDetailUiState(isLoading = true)
                     cancelAndConsumeRemainingEvents()
                 }
             }
@@ -121,7 +116,7 @@ class MovieDetailViewModelTest {
             }
 
         @Test
-        fun `GIVEN movie WHEN ToggleWatchlist intent fails THEN update state with error`() =
+        fun `GIVEN movie WHEN ToggleWatchlist intent fails THEN emits ShowError effect`() =
             runTest {
                 val errorMessage = "Failed to update watchlist"
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
@@ -130,13 +125,10 @@ class MovieDetailViewModelTest {
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
 
-                viewModel.process(MovieDetailIntent.ToggleWatchlist)
-
-                viewModel.uiState.test {
-                    val state = awaitItem()
-                    state.errorMessage shouldBeEqualTo errorMessage
-                    state.movie shouldBeEqualTo testMovie.toUi()
-                    cancelAndConsumeRemainingEvents()
+                viewModel.effect.test {
+                    viewModel.process(MovieDetailIntent.ToggleWatchlist)
+                    val effect = awaitItem()
+                    effect shouldBeEqualTo MovieDetailEffect.ShowError(errorMessage)
                 }
             }
 
@@ -201,7 +193,7 @@ class MovieDetailViewModelTest {
             }
 
         @Test
-        fun `GIVEN movie WHEN ToggleWatched intent fails THEN update state with error`() =
+        fun `GIVEN movie WHEN ToggleWatched intent fails THEN emits ShowError effect`() =
             runTest {
                 val errorMessage = "Failed to update watched status"
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
@@ -210,13 +202,10 @@ class MovieDetailViewModelTest {
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
 
-                viewModel.process(MovieDetailIntent.ToggleWatched)
-
-                viewModel.uiState.test {
-                    val state = awaitItem()
-                    state.errorMessage shouldBeEqualTo errorMessage
-                    state.movie shouldBeEqualTo testMovie.toUi()
-                    cancelAndConsumeRemainingEvents()
+                viewModel.effect.test {
+                    viewModel.process(MovieDetailIntent.ToggleWatched)
+                    val effect = awaitItem()
+                    effect shouldBeEqualTo MovieDetailEffect.ShowError(errorMessage)
                 }
             }
 

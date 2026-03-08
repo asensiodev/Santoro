@@ -80,17 +80,23 @@ internal class WatchedMoviesViewModel
                                     }
                                 _uiState.update {
                                     it.copy(
-                                        isLoading = false,
+                                        screenState =
+                                            if (groupedMovies.isEmpty()) {
+                                                WatchedScreenState.Empty
+                                            } else {
+                                                WatchedScreenState.Content
+                                            },
                                         movies = groupedMovies,
-                                        errorMessage = null,
                                     )
                                 }
                             },
                             onFailure = { exception ->
                                 _uiState.update {
                                     it.copy(
-                                        isLoading = false,
-                                        errorMessage = exception.message,
+                                        screenState =
+                                            WatchedScreenState.Error(
+                                                exception.message.orEmpty(),
+                                            ),
                                     )
                                 }
                             },
@@ -118,17 +124,23 @@ internal class WatchedMoviesViewModel
                                 }
                             _uiState.update {
                                 it.copy(
-                                    isLoading = false,
+                                    screenState =
+                                        if (groupedMovies.isEmpty()) {
+                                            WatchedScreenState.Empty
+                                        } else {
+                                            WatchedScreenState.Content
+                                        },
                                     movies = groupedMovies,
-                                    errorMessage = null,
                                 )
                             }
                         },
                         onFailure = { exception ->
                             _uiState.update {
                                 it.copy(
-                                    isLoading = false,
-                                    errorMessage = exception.message,
+                                    screenState =
+                                        WatchedScreenState.Error(
+                                            exception.message.orEmpty(),
+                                        ),
                                 )
                             }
                         },
@@ -147,7 +159,11 @@ internal class WatchedMoviesViewModel
 
         private fun showLoadingIfEmpty() {
             _uiState.update { state ->
-                if (state.movies.isEmpty()) state.copy(isLoading = true) else state
+                if (state.movies.isEmpty()) {
+                    state.copy(screenState = WatchedScreenState.Loading)
+                } else {
+                    state
+                }
             }
         }
     }
