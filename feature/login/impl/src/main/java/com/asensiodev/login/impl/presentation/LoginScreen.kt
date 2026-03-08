@@ -51,7 +51,6 @@ import com.asensiodev.santoro.core.stringresources.R as SR
 
 private const val BACKGROUND_GRADIENT_START_ALPHA = 0.6f
 private const val BACKGROUND_GRADIENT_END_ALPHA = 0.95f
-private const val ICON_BACKGROUND_ALPHA = 0.15f
 private const val SLOGAN_ALPHA = 0.8f
 private const val OUTLINE_BUTTON_BORDER_ALPHA = 0.5f
 private const val LOADING_OVERLAY_ALPHA = 0.7f
@@ -127,38 +126,21 @@ private fun LoginContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Bottom,
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.weight(1f),
-        ) {
-            Icon(
-                painter = painterResource(id = DR.drawable.ic_launcher_foreground),
-                contentDescription = stringResource(SR.string.app_name),
-                tint = Color.White,
-                modifier =
-                    Modifier
-                        .size(Size.size160)
-                        .background(
-                            color = Color.White.copy(alpha = ICON_BACKGROUND_ALPHA),
-                            shape = CircleShape,
-                        ).padding(Spacings.spacing16),
-            )
-            Spacer(modifier = Modifier.height(Spacings.spacing24))
-            Text(
-                text = stringResource(SR.string.app_name),
-                style = MaterialTheme.typography.displayMedium,
-                fontFamily = displayFontFamily,
-                color = Color.White,
-            )
-            Spacer(modifier = Modifier.height(Spacings.spacing8))
-            Text(
-                text = stringResource(SR.string.login_slogan),
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color.White.copy(alpha = SLOGAN_ALPHA),
-                textAlign = TextAlign.Center,
-            )
-        }
+        Spacer(modifier = Modifier.weight(1f))
+        Text(
+            text = stringResource(SR.string.app_name),
+            style = MaterialTheme.typography.displayMedium,
+            fontFamily = displayFontFamily,
+            color = Color.White,
+        )
+        Spacer(modifier = Modifier.height(Spacings.spacing8))
+        Text(
+            text = stringResource(SR.string.login_slogan),
+            style = MaterialTheme.typography.bodyLarge,
+            color = Color.White.copy(alpha = SLOGAN_ALPHA),
+            textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(Spacings.spacing32))
         if (uiState.errorMessage != null) {
             Banner(
                 message = uiState.errorMessage.asString(),
