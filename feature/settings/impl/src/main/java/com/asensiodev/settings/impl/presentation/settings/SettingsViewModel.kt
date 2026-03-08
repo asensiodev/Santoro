@@ -10,6 +10,7 @@ import com.asensiodev.core.domain.model.AppLanguage
 import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.core.domain.usecase.ObserveThemeUseCase
 import com.asensiodev.core.domain.usecase.SetThemeUseCase
+import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import com.asensiodev.settings.impl.domain.usecase.DeleteAccountUseCase
 import com.asensiodev.ui.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -32,6 +33,7 @@ internal class SettingsViewModel
         private val deleteAccountUseCase: DeleteAccountUseCase,
         private val observeThemeUseCase: ObserveThemeUseCase,
         private val setThemeUseCase: SetThemeUseCase,
+        private val databaseRepository: DatabaseRepository,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(SettingsUiState())
         val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
@@ -106,6 +108,7 @@ internal class SettingsViewModel
 
         private fun onLogoutClicked() {
             viewModelScope.launch {
+                databaseRepository.clearAllUserData()
                 signOutUseCase()
             }
         }

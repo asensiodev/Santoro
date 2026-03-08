@@ -6,6 +6,7 @@ import com.asensiodev.core.domain.model.AppLanguage
 import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.core.domain.usecase.ObserveThemeUseCase
 import com.asensiodev.core.domain.usecase.SetThemeUseCase
+import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import com.asensiodev.settings.impl.domain.usecase.DeleteAccountUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -32,6 +33,7 @@ class SettingsViewModelTest {
     private val deleteAccountUseCase: DeleteAccountUseCase = mockk(relaxed = true)
     private val observeThemeUseCase: ObserveThemeUseCase = mockk()
     private val setThemeUseCase: SetThemeUseCase = mockk(relaxed = true)
+    private val databaseRepository: DatabaseRepository = mockk(relaxed = true)
 
     private lateinit var sut: SettingsViewModel
 
@@ -48,6 +50,7 @@ class SettingsViewModelTest {
                 deleteAccountUseCase = deleteAccountUseCase,
                 observeThemeUseCase = observeThemeUseCase,
                 setThemeUseCase = setThemeUseCase,
+                databaseRepository = databaseRepository,
             )
     }
 
@@ -119,11 +122,12 @@ class SettingsViewModelTest {
         }
 
     @Test
-    fun `GIVEN OnLogoutClicked WHEN process THEN delegates to signOutUseCase`() =
+    fun `GIVEN OnLogoutClicked WHEN process THEN clears data and signs out`() =
         runTest {
             sut.process(SettingsIntent.OnLogoutClicked)
             advanceUntilIdle()
 
+            coVerify(exactly = 1) { databaseRepository.clearAllUserData() }
             coVerify(exactly = 1) { signOutUseCase() }
         }
 
