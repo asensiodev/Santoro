@@ -556,34 +556,6 @@ private fun WatchlistActionsRow(
                 .padding(horizontal = Spacings.spacing16, vertical = Spacings.spacing12),
         horizontalArrangement = Arrangement.spacedBy(Spacings.spacing12),
     ) {
-        val watchlistContainerColor by animateColorAsState(
-            targetValue =
-                if (movie.isInWatchlist) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.surfaceVariant
-                },
-            animationSpec = tween(durationMillis = 300),
-            label = "watchlistColor",
-        )
-        val watchlistContentColor by animateColorAsState(
-            targetValue =
-                if (movie.isInWatchlist) {
-                    MaterialTheme.colorScheme.onPrimary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-            animationSpec = tween(durationMillis = 300),
-            label = "watchlistContentColor",
-        )
-        WatchlistButton(
-            onToggleWatchlist,
-            watchlistContainerColor,
-            watchlistContentColor,
-            movie,
-            hasBorder = !movie.isInWatchlist,
-        )
-
         val watchedContainerColor by animateColorAsState(
             targetValue =
                 if (movie.isWatched) {
@@ -610,6 +582,34 @@ private fun WatchlistActionsRow(
             watchedContentColor,
             movie,
             hasBorder = !movie.isWatched,
+        )
+
+        val watchlistContainerColor by animateColorAsState(
+            targetValue =
+                if (movie.isInWatchlist) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant
+                },
+            animationSpec = tween(durationMillis = 300),
+            label = "watchlistColor",
+        )
+        val watchlistContentColor by animateColorAsState(
+            targetValue =
+                if (movie.isInWatchlist) {
+                    MaterialTheme.colorScheme.onPrimary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+            animationSpec = tween(durationMillis = 300),
+            label = "watchlistContentColor",
+        )
+        WatchlistButton(
+            onToggleWatchlist,
+            watchlistContainerColor,
+            watchlistContentColor,
+            movie,
+            hasBorder = !movie.isInWatchlist,
         )
     }
 }
