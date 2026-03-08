@@ -12,12 +12,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -31,9 +33,11 @@ class MainActivityViewModel
         private val setHasSeenGuestOnboardingUseCase: SetHasSeenGuestOnboardingUseCase,
         private val syncScheduler: WorkManagerSyncScheduler,
     ) : ViewModel() {
+        private val authFlow = observeAuthStateUseCase()
+
         val uiState: StateFlow<MainActivityUiState> =
             combine(
-                observeAuthStateUseCase(),
+                authFlow,
                 observeHasSeenGuestOnboardingUseCase(),
             ) { user, hasSeenGuestOnboarding ->
                 if (user != null) {
@@ -58,10 +62,18 @@ class MainActivityViewModel
                 )
 
         init {
-            uiState
+            authFlow
+                .mapNotNull { user -> user?.uid }
+                .distinctUntilChanged()
                 .drop(1)
-                .distinctUntilChangedBy { it is MainActivityUiState.Authenticated }
-                .filter { it is MainActivityUiState.Authenticated }
+                .onEach {
+                    syncScheduler.schedulePeriodicSync()
+                    syncScheduler.scheduleImmediateSync()
+                }.launchIn(viewModelScope)
+
+            authFlow
+                .filter { user -> user != null }
+                .take(1)
                 .onEach {
                     syncScheduler.schedulePeriodicSync()
                     syncScheduler.scheduleImmediateSync()

@@ -28,13 +28,15 @@ fun MovieEntity.toDomain(): Movie =
     )
 
 fun String.toGenres(): List<Genre> {
+    if (isBlank()) return emptyList()
     val gson = Gson()
-    return gson.fromJson(this, Array<Genre>::class.java).toList()
+    return gson.fromJson(this, Array<Genre>::class.java)?.toList().orEmpty()
 }
 
 fun String.toProductionCountries(): List<ProductionCountry> {
+    if (isBlank()) return emptyList()
     val gson = Gson()
-    return gson.fromJson(this, Array<ProductionCountry>::class.java).toList()
+    return gson.fromJson(this, Array<ProductionCountry>::class.java)?.toList().orEmpty()
 }
 
 fun Movie.toEntity(): MovieEntity {

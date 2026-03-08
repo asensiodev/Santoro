@@ -5,6 +5,7 @@ import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import com.asensiodev.santoro.core.sync.data.datasource.FirestoreMovieDataSource
 import com.asensiodev.santoro.core.sync.data.model.MovieSyncEntity
 import com.asensiodev.santoro.core.sync.domain.repository.SyncRepository
+import com.google.gson.Gson
 import javax.inject.Inject
 
 internal class DefaultSyncRepository
@@ -13,6 +14,8 @@ internal class DefaultSyncRepository
         private val firestoreDataSource: FirestoreMovieDataSource,
         private val databaseRepository: DatabaseRepository,
     ) : SyncRepository {
+        private val gson = Gson()
+
         override suspend fun uploadPendingChanges(uid: String): Result<Unit> {
             val moviesResult = databaseRepository.getMoviesForSync()
             if (moviesResult.isFailure) {
@@ -34,6 +37,8 @@ internal class DefaultSyncRepository
                         movieId = movie.id,
                         title = movie.title,
                         posterPath = movie.posterPath,
+                        genres = gson.toJson(movie.genres),
+                        runtime = movie.runtime,
                         isWatched = movie.isWatched,
                         isInWatchlist = movie.isInWatchlist,
                         watchedAt = movie.watchedAt,
@@ -87,6 +92,8 @@ internal class DefaultSyncRepository
                                 movieId = remote.movieId,
                                 title = remote.title,
                                 posterPath = remote.posterPath,
+                                genres = remote.genres,
+                                runtime = remote.runtime,
                                 isWatched = remote.isWatched,
                                 isInWatchlist = remote.isInWatchlist,
                                 watchedAt = remote.watchedAt,

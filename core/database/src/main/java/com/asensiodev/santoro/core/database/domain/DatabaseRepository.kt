@@ -16,6 +16,8 @@ interface DatabaseRepository {
         movieId: Int,
         title: String,
         posterPath: String?,
+        genres: String,
+        runtime: Int?,
         isWatched: Boolean,
         isInWatchlist: Boolean,
         watchedAt: Long?,

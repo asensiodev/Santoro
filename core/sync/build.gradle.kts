@@ -14,6 +14,7 @@ dependencies {
 
     implementation(libs.firebase.firestore)
     implementation(libs.kotlinx.coroutines.play.services)
+    implementation(libs.gson)
 
     implementation(libs.kotlinx.coroutines.core)
 

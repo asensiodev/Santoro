@@ -50,15 +50,17 @@ interface MovieDao {
         """INSERT OR REPLACE INTO movies
            (id, title, overview, posterPath, releaseDate,
             popularity, voteAverage, voteCount, genres, productionCountries,
-            isWatched, isInWatchlist, watchedAt, updatedAt)
+            runtime, isWatched, isInWatchlist, watchedAt, updatedAt)
            VALUES (:movieId, :title, '', :posterPath, NULL,
-            0.0, 0.0, 0, '', '',
-            :isWatched, :isInWatchlist, :watchedAt, :updatedAt)""",
+            0.0, 0.0, 0, :genres, '',
+            :runtime, :isWatched, :isInWatchlist, :watchedAt, :updatedAt)""",
     )
     suspend fun upsertMovieFromSync(
         movieId: Int,
         title: String,
         posterPath: String?,
+        genres: String,
+        runtime: Int?,
         isWatched: Boolean,
         isInWatchlist: Boolean,
         watchedAt: Long?,

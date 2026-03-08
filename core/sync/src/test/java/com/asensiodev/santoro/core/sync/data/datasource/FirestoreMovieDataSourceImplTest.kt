@@ -69,6 +69,8 @@ class FirestoreMovieDataSourceImplTest {
             every { doc.getLong("movieId") } returns 42L
             every { doc.getString("title") } returns "Movie Title"
             every { doc.getString("posterPath") } returns null
+            every { doc.getString("genres") } returns ""
+            every { doc.getLong("runtime") } returns null
             every { doc.getBoolean("isWatched") } returns true
             every { doc.getBoolean("isInWatchlist") } returns false
             every { doc.getLong("watchedAt") } returns 999L

@@ -4,6 +4,8 @@ data class MovieSyncEntity(
     val movieId: Int,
     val title: String,
     val posterPath: String?,
+    val genres: String,
+    val runtime: Int?,
     val isWatched: Boolean,
     val isInWatchlist: Boolean,
     val watchedAt: Long?,

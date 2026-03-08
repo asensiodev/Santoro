@@ -32,6 +32,8 @@ internal object SyncMockUtils {
     fun createSyncEntity(
         movieId: Int = 1,
         title: String = "Test Movie",
+        genres: String = "",
+        runtime: Int? = null,
         isWatched: Boolean = false,
         isInWatchlist: Boolean = false,
         watchedAt: Long? = null,
@@ -40,6 +42,8 @@ internal object SyncMockUtils {
         movieId = movieId,
         title = title,
         posterPath = null,
+        genres = genres,
+        runtime = runtime,
         isWatched = isWatched,
         isInWatchlist = isInWatchlist,
         watchedAt = watchedAt,

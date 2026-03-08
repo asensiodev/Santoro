@@ -43,6 +43,15 @@ class MainActivityViewModelTest {
             isAnonymous = true,
         )
 
+    private val googleUser =
+        SantoroUser(
+            uid = "google456",
+            email = "test@gmail.com",
+            displayName = "Test",
+            photoUrl = null,
+            isAnonymous = false,
+        )
+
     @BeforeEach
     fun setUp() {
         every { observeHasSeenGuestOnboardingUseCase() } returns flowOf(false)
@@ -63,7 +72,7 @@ class MainActivityViewModelTest {
     @Test
     fun `GIVEN user becomes authenticated WHEN uiState emits Authenticated THEN schedules sync`() =
         runTest {
-            every { observeAuthStateUseCase() } returns flowOf(null, anonymousUser)
+            every { observeAuthStateUseCase() } returns flowOf(anonymousUser)
 
             buildViewModel()
             advanceUntilIdle()
@@ -85,7 +94,7 @@ class MainActivityViewModelTest {
         }
 
     @Test
-    fun `GIVEN already authenticated WHEN auth state re-emits same type THEN schedules sync only once`() =
+    fun `GIVEN already authenticated WHEN auth state re-emits same UID THEN schedules sync only once`() =
         runTest {
             every { observeAuthStateUseCase() } returns flowOf(anonymousUser, anonymousUser)
 
@@ -94,6 +103,18 @@ class MainActivityViewModelTest {
 
             verify(exactly = 1) { syncScheduler.schedulePeriodicSync() }
             verify(exactly = 1) { syncScheduler.scheduleImmediateSync() }
+        }
+
+    @Test
+    fun `GIVEN anonymous user WHEN UID changes to Google user THEN schedules sync again`() =
+        runTest {
+            every { observeAuthStateUseCase() } returns flowOf(anonymousUser, googleUser)
+
+            buildViewModel()
+            advanceUntilIdle()
+
+            verify(exactly = 2) { syncScheduler.schedulePeriodicSync() }
+            verify(exactly = 2) { syncScheduler.scheduleImmediateSync() }
         }
 
     @Test

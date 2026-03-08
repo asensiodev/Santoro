@@ -150,14 +150,14 @@ class DefaultSyncRepositoryTest {
             } returns Result.success(listOf(remoteEntity))
             coEvery { databaseRepository.getMoviesForSync() } returns Result.success(emptyList())
             coEvery {
-                databaseRepository.upsertMovieFromSync(any(), any(), any(), any(), any(), any(), any())
+                databaseRepository.upsertMovieFromSync(any(), any(), any(), any(), any(), any(), any(), any(), any())
             } returns Result.success(Unit)
 
             val result = sut.downloadAndMerge(uid = "uid123")
 
             result.isSuccess shouldBeEqualTo true
             coVerify(exactly = 1) {
-                databaseRepository.upsertMovieFromSync(99, "Test Movie", null, false, false, null, 5000L)
+                databaseRepository.upsertMovieFromSync(99, "Test Movie", null, "", null, false, false, null, 5000L)
             }
             coVerify(exactly = 0) {
                 databaseRepository.updateMovieSyncState(any(), any(), any(), any(), any())
