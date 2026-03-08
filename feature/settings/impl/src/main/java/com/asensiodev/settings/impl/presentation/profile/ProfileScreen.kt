@@ -1,6 +1,5 @@
 package com.asensiodev.settings.impl.presentation.profile
 
-import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,7 +35,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
@@ -59,7 +57,6 @@ internal fun ProfileScreenRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val helpLegalUrl = stringResource(SR.string.profile_help_legal_url)
 
     LaunchedEffect(viewModel) {
         viewModel.process(ProfileIntent.ObserveAuth)
@@ -68,9 +65,6 @@ internal fun ProfileScreenRoute(
     Box(modifier = modifier.fillMaxSize()) {
         ProfileScreen(
             onAppSettingsClicked = onAppSettingsClicked,
-            onHelpClicked = {
-                context.startActivity(Intent(Intent.ACTION_VIEW, helpLegalUrl.toUri()))
-            },
             onLinkGoogleAccountClicked = {
                 viewModel.process(ProfileIntent.OnLinkGoogleClicked(context))
             },
@@ -107,7 +101,6 @@ internal fun ProfileScreenRoute(
 @Composable
 internal fun ProfileScreen(
     onAppSettingsClicked: () -> Unit,
-    onHelpClicked: () -> Unit,
     onLinkGoogleAccountClicked: () -> Unit,
     onRetryError: () -> Unit,
     onLinkAccountSuccessDismiss: () -> Unit,
@@ -160,11 +153,6 @@ internal fun ProfileScreen(
             text = stringResource(SR.string.profile_app_settings),
             icon = AppIcons.Settings,
             onClick = onAppSettingsClicked,
-        )
-        SettingsItem(
-            text = stringResource(SR.string.profile_help_legal),
-            icon = AppIcons.Help,
-            onClick = onHelpClicked,
         )
     }
 }

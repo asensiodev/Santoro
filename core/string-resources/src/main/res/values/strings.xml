@@ -136,8 +136,6 @@
     <!-- Profile Screen -->
     <string name="profile_title">Profile</string>
     <string name="profile_app_settings">App Settings</string>
-    <string name="profile_help_legal">Help &amp; Legal</string>
-    <string name="profile_help_legal_url">https://asensiodev.github.io/Santoro/legal/PRIVACY-POLICY</string>
     <string name="profile_growth_card_title">Save your collection</string>
     <string name="profile_growth_card_description">Link your Google account to sync your watchlist and watched movies across devices.</string>
     <string name="profile_growth_card_button">Link Google Account</string>
