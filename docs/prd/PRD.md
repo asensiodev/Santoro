@@ -408,6 +408,16 @@ Features approved for a future release. Each will get a FIP before implementatio
 | **Rationale** | Reduces re-search friction. Standard UX in all search-heavy apps (YouTube, Spotify, Letterboxd) |
 | **Notes** | Recent searches stored in DataStore (not Room — ephemeral, no sync needed). Max 5 entries. Clear-all option available |
 
+### F-23 — Deep Link: Open TMDB Movie URLs in Santoro
+
+| Attribute   | Detail |
+|-------------|--------|
+| **Status**  | ✅ Shipped — [FIP-014](../plan/FIP-014-deep-link-movie-detail.md) |
+| **Scope**   | `app` module — `AndroidManifest.xml`, `MainActivity`, `DeepLinkHandler` |
+| **Behaviour** | Tapping a `https://www.themoviedb.org/movie/{id}` link shows the Android disambiguation dialog. If the user picks Santoro, the app opens directly on Movie Detail for that movie. Handles both `http`/`https` and `www`/non-`www` hosts. Unauthenticated users see the login screen (deep link discarded for MVP) |
+| **Rationale** | Completes the viral loop started by FIP-002 (Share Movie): Share → Tap link → Open in Santoro. Standard approach used by Letterboxd, JustWatch |
+| **Notes** | Standard deep link (no `autoVerify` — we don't control `themoviedb.org`). `DeepLinkHandler` is a pure object, fully unit-tested |
+
 ---
 
 ## 10. Version History
@@ -425,3 +435,4 @@ Features approved for a future release. Each will get a FIP before implementatio
 | 1.8     | 2026-02-28 | F-22 Recent & Trending Searches linked to FIP-013 and marked 🔵 In Progress |
 | 1.9     | 2026-03-06 | F-12 Help & Legal marked ✅ Shipped. F-06 and F-07 *(Planned)* items updated to reflect shipped state |
 | 2.0     | 2026-03-08 | F-22 Recent & Trending Searches marked ✅ Shipped — FIP-013. PRD cleanup: removed stale §3.4 planned item, updated §3.5 stats description, added `tagline` to §5 data model, fixed F-19 broken FIP link, renamed §8 to Resolved Gaps, updated §3.7 Settings with delete account + TMDB attribution, updated F-22 current state |
+| 2.1     | 2026-03-08 | F-23 Deep Link added and marked ✅ Shipped — FIP-014 |

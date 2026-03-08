@@ -6,7 +6,7 @@
 |------------------------|--------------------------------------------------------------------|
 | **FIP ID**             | FIP-014                                                            |
 | **Version**            | 1.0                                                                |
-| **Status**             | 🟡 Draft                                                          |
+| **Status**             | ✅ Done                                                            |
 | **PRD ref**            | [PRD.md](../prd/PRD.md) — MVP Feature Suggestions §9              |
 | **Feature**            | Deep Link: Open TMDB Movie URLs in Santoro                        |
 | **Date**               | 2026-03-08                                                         |
@@ -134,7 +134,7 @@ No changes to feature modules, core modules, or domain layer.
 
 ### Phase 1 — Intent Filter (Manifest)
 
-- [ ] Add `<intent-filter>` to `MainActivity` in `app/src/main/AndroidManifest.xml`:
+- [x] Add `<intent-filter>` to `MainActivity` in `app/src/main/AndroidManifest.xml`:
   ```xml
   <intent-filter>
       <action android:name="android.intent.action.VIEW" />
@@ -150,35 +150,35 @@ No changes to feature modules, core modules, or domain layer.
           android:pathPrefix="/movie/" />
   </intent-filter>
   ```
-- [ ] Verify no `android:autoVerify="true"` is set (we don't control the domain)
+- [x] Verify no `android:autoVerify="true"` is set (we don't control the domain)
 
 ### Phase 2 — Intent Parsing & Navigation
 
-- [ ] Create `DeepLinkHandler` object in `app/.../navigation/` with a pure function:
+- [x] Create `DeepLinkHandler` object in `app/.../navigation/` with a pure function:
   ```
   fun parseMovieIdFromIntent(intent: Intent?): Int?
   ```
   - Extracts `intent?.data?.pathSegments` → expects `["movie", "{id}"]`
   - Parses the second segment as `Int` via `toIntOrNull()`
   - Returns `null` for any malformed or missing data
-- [ ] In `MainActivity.onCreate`, after determining `isAuthenticated = true`, check for a deep link movie ID:
+- [x] In `MainActivity.onCreate`, after determining `isAuthenticated = true`, check for a deep link movie ID:
   - Call `DeepLinkHandler.parseMovieIdFromIntent(intent)`
   - If non-null, store in a `var pendingDeepLinkMovieId: Int?` (local state or ViewModel)
-- [ ] In `SantoroApp` composable, accept an optional `deepLinkMovieId: Int?` parameter
+- [x] In `SantoroApp` composable, accept an optional `deepLinkMovieId: Int?` parameter
   - Use a `LaunchedEffect(deepLinkMovieId)` to navigate to `MovieDetailRoute` after the NavHost is composed
   - Clear the pending ID after navigation to prevent re-navigation on recomposition
-- [ ] Override `onNewIntent` in `MainActivity` to handle links when the app is already open:
+- [x] Override `onNewIntent` in `MainActivity` to handle links when the app is already open:
   - Parse the movie ID from the new intent
   - Trigger navigation to Movie Detail via the same mechanism
 
 ### Phase 3 — Tests
 
-- [ ] Unit: `DeepLinkHandler.parseMovieIdFromIntent` — valid TMDB URL → returns correct movie ID
-- [ ] Unit: `DeepLinkHandler.parseMovieIdFromIntent` — URL without movie segment → returns null
-- [ ] Unit: `DeepLinkHandler.parseMovieIdFromIntent` — URL with non-numeric ID → returns null
-- [ ] Unit: `DeepLinkHandler.parseMovieIdFromIntent` — null intent → returns null
-- [ ] Unit: `DeepLinkHandler.parseMovieIdFromIntent` — intent without data → returns null
-- [ ] Unit: `DeepLinkHandler.parseMovieIdFromIntent` — `http` scheme works same as `https`
+- [x] Unit: `DeepLinkHandler.parseMovieIdFromIntent` — valid TMDB URL → returns correct movie ID
+- [x] Unit: `DeepLinkHandler.parseMovieIdFromIntent` — URL without movie segment → returns null
+- [x] Unit: `DeepLinkHandler.parseMovieIdFromIntent` — URL with non-numeric ID → returns null
+- [x] Unit: `DeepLinkHandler.parseMovieIdFromIntent` — null intent → returns null
+- [x] Unit: `DeepLinkHandler.parseMovieIdFromIntent` — intent without data → returns null
+- [x] Unit: `DeepLinkHandler.parseMovieIdFromIntent` — `http` scheme works same as `https`
 
 ---
 
