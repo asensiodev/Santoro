@@ -6,7 +6,7 @@
 |------------------------|--------------------------------------------------------------------|
 | **FIP ID**             | FIP-013                                                            |
 | **Version**            | 1.0                                                                |
-| **Status**             | 🔵 In Progress                                                     |
+| **Status**             | ✅ Done                                                             |
 | **PRD ref**            | [PRD.md](../prd/PRD.md) — §F-22                                   |
 | **Feature**            | Search: Recent & Trending Searches                                 |
 | **Date**               | 2026-02-28                                                         |
@@ -141,61 +141,61 @@ data object ClearRecentSearches : SearchMoviesIntent
 
 ### Phase 1 — Dependencies
 
-- [ ] Add `androidx-datastore-preferences` to `libs.versions.toml` (version `1.1.4`)
-- [ ] Add `datastore-preferences` to `feature/search-movies/impl/build.gradle.kts`
+- [x] Add `androidx-datastore-preferences` to `libs.versions.toml` (version `1.1.4`)
+- [x] Add `datastore-preferences` to `feature/search-movies/impl/build.gradle.kts`
 
 ### Phase 2 — Domain
 
-- [ ] Create `RecentSearchesRepository` interface in `feature/search-movies/impl/.../domain/repository/`
+- [x] Create `RecentSearchesRepository` interface in `feature/search-movies/impl/.../domain/repository/`
   - `fun getRecentSearches(): Flow<List<String>>`
   - `suspend fun saveSearch(query: String)`
   - `suspend fun clearAll()`
-- [ ] Create `GetRecentSearchesUseCase` — collects `RecentSearchesRepository.getRecentSearches()`
-- [ ] Create `SaveRecentSearchUseCase` — calls `repo.saveSearch(query)` (trims + deduplicates + enforces max 5)
-- [ ] Create `ClearRecentSearchesUseCase` — calls `repo.clearAll()`
+- [x] Create `GetRecentSearchesUseCase` — collects `RecentSearchesRepository.getRecentSearches()`
+- [x] Create `SaveRecentSearchUseCase` — calls `repo.saveSearch(query)` (trims + deduplicates + enforces max 5)
+- [x] Create `ClearRecentSearchesUseCase` — calls `repo.clearAll()`
 
 ### Phase 3 — Data
 
-- [ ] Create `DataStoreRecentSearchesDataSource` implementing `RecentSearchesRepository`
+- [x] Create `DataStoreRecentSearchesDataSource` implementing `RecentSearchesRepository`
   - Inject `DataStore<Preferences>` via Hilt
   - Serialize/deserialize using `Gson` (already in dependencies) as JSON array of strings
   - `saveSearch`: prepend new query, deduplicate, keep max 5, persist
   - `clearAll`: write empty list
-- [ ] Provide `DataStore<Preferences>` in `SearchMoviesModule` via `@Provides @Singleton`
+- [x] Provide `DataStore<Preferences>` in `SearchMoviesModule` via `@Provides @Singleton`
   - Use `preferencesDataStore(name = "recent_searches")` extension (top-level property on Application context)
-- [ ] Bind `DataStoreRecentSearchesDataSource` to `RecentSearchesRepository` in `SearchMoviesModule`
+- [x] Bind `DataStoreRecentSearchesDataSource` to `RecentSearchesRepository` in `SearchMoviesModule`
 
 ### Phase 4 — Presentation
 
-- [ ] Add `recentSearches`, `trendingSuggestions`, `isFieldFocused` to `SearchMoviesUiState`
-- [ ] Add `FieldFocused`, `FieldCleared`, `SuggestionTapped`, `ClearRecentSearches` to `SearchMoviesIntent`
-- [ ] Inject `GetRecentSearchesUseCase`, `SaveRecentSearchUseCase`, `ClearRecentSearchesUseCase` into `SearchMoviesViewModel`
-- [ ] In `process(LoadInitialData)`: launch parallel coroutine collecting `getRecentSearchesUseCase()` into `uiState.recentSearches`
-- [ ] In `process(UpdateQuery)`: when query becomes non-blank, call `saveRecentSearchUseCase(query)` (debounced — save only when search is actually triggered, not on every keystroke)
-- [ ] In `process(SuggestionTapped)`: fill query + trigger search immediately
-- [ ] In `process(ClearRecentSearches)`: call `clearRecentSearchesUseCase()`
-- [ ] In `process(FieldFocused)` / `process(FieldCleared)`: toggle `uiState.isFieldFocused`
-- [ ] In `SearchMoviesScreen`: pass `onFocusChanged` to the search bar; when `isFieldFocused && query.isBlank()`, show `SearchSuggestionsContent` instead of browse/results grid
+- [x] Add `recentSearches`, `trendingSuggestions`, `isFieldFocused` to `SearchMoviesUiState`
+- [x] Add `FieldFocused`, `FieldCleared`, `SuggestionTapped`, `ClearRecentSearches` to `SearchMoviesIntent`
+- [x] Inject `GetRecentSearchesUseCase`, `SaveRecentSearchUseCase`, `ClearRecentSearchesUseCase` into `SearchMoviesViewModel`
+- [x] In `process(LoadInitialData)`: launch parallel coroutine collecting `getRecentSearchesUseCase()` into `uiState.recentSearches`
+- [x] In `process(UpdateQuery)`: when query becomes non-blank, call `saveRecentSearchUseCase(query)` (debounced — save only when search is actually triggered, not on every keystroke)
+- [x] In `process(SuggestionTapped)`: fill query + trigger search immediately
+- [x] In `process(ClearRecentSearches)`: call `clearRecentSearchesUseCase()`
+- [x] In `process(FieldFocused)` / `process(FieldCleared)`: toggle `uiState.isFieldFocused`
+- [x] In `SearchMoviesScreen`: pass `onFocusChanged` to the search bar; when `isFieldFocused && query.isBlank()`, show `SearchSuggestionsContent` instead of browse/results grid
 
 ### Phase 5 — UI
 
-- [ ] Create `SearchSuggestionsContent` composable in `.../presentation/component/`
+- [x] Create `SearchSuggestionsContent` composable in `.../presentation/component/`
   - Parameters: `recentSearches: List<String>`, `trendingSuggestions: List<String>`, `onSuggestionTap: (String) -> Unit`, `onClearRecents: () -> Unit`, `modifier: Modifier = Modifier`
   - Layout: `LazyColumn` with two sticky-header-style sections
   - Recent section: header Row with label + `TextButton("Clear all")` (hidden when `recentSearches.isEmpty()`); `FlowRow` of `SuggestionChip`
   - Trending section: header Text; `LazyRow` of `SuggestionChip`
   - All strings via `stringResource`
-- [ ] Wire `SearchSuggestionsContent` into `SearchMoviesScreen` — shown when `uiState.isFieldFocused && uiState.query.isBlank()`
+- [x] Wire `SearchSuggestionsContent` into `SearchMoviesScreen` — shown when `uiState.isFieldFocused && uiState.query.isBlank()`
 
 ### Phase 6 — String resources
 
-- [ ] Add to `core/string-resources/src/main/res/values/strings.xml` (EN):
+- [x] Add to `core/string-resources/src/main/res/values/strings.xml` (EN):
   ```xml
   <string name="search_suggestions_recent_title">Recent searches</string>
   <string name="search_suggestions_clear_all">Clear all</string>
   <string name="search_suggestions_trending_title">Trending now</string>
   ```
-- [ ] Add equivalents to `core/string-resources/src/main/res/values-es/strings.xml` (ES):
+- [x] Add equivalents to `core/string-resources/src/main/res/values-es/strings.xml` (ES):
   ```xml
   <string name="search_suggestions_recent_title">Búsquedas recientes</string>
   <string name="search_suggestions_clear_all">Borrar todo</string>
@@ -204,15 +204,15 @@ data object ClearRecentSearches : SearchMoviesIntent
 
 ### Phase 7 — Tests
 
-- [ ] `SaveRecentSearchUseCaseTest`
+- [x] `SaveRecentSearchUseCaseTest`
   - GIVEN empty history WHEN save "inception" THEN history is ["inception"]
   - GIVEN 5 entries WHEN save new query THEN oldest removed, new query at front
   - GIVEN duplicate "inception" WHEN save "inception" THEN no duplicate, moved to front
-- [ ] `GetRecentSearchesUseCaseTest`
+- [x] `GetRecentSearchesUseCaseTest`
   - GIVEN history ["inception", "avatar"] WHEN invoke THEN emits same list
-- [ ] `ClearRecentSearchesUseCaseTest`
+- [x] `ClearRecentSearchesUseCaseTest`
   - GIVEN non-empty history WHEN clearAll THEN history emits empty list
-- [ ] `SearchMoviesViewModelTest` — add cases:
+- [x] `SearchMoviesViewModelTest` — add cases:
   - GIVEN field focused with empty query WHEN FieldFocused intent THEN `isFieldFocused = true`
   - GIVEN suggestion tapped WHEN SuggestionTapped("avatar") THEN query = "avatar" and search triggered
   - GIVEN recent searches present WHEN ClearRecentSearches THEN `recentSearches` is empty

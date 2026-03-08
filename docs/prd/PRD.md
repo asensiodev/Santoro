@@ -4,9 +4,9 @@
 
 | Field        | Value                          |
 |--------------|--------------------------------|
-| **Version**  | 1.7                            |
+| **Version**  | 2.0                            |
 | **Status**   | ✅ Current                     |
-| **Date**     | 2026-02-28                     |
+| **Date**     | 2026-03-08                     |
 | **Author**   | @asensiodev                    |
 | **Platform** | Android (Native)               |
 
@@ -147,7 +147,7 @@ Entry: bottom navigation tab "Watchlist".
 - **Search** bar filters locally by title.
 - Each item shows: poster thumbnail · title · release year · rating.
 - Tap navigates to Movie Detail.
-- *(Planned)* Swipe-to-remove / explicit remove action.
+- **Swipe-to-remove** gesture with confirmation dialog.
 
 **States handled:** Loading · Content · Error (retry) · Empty.
 
@@ -163,7 +163,7 @@ Entry: bottom navigation tab "Watched".
 
 - Lists all movies the user has marked as watched.
 - Grouped by **month/year** of the `watchedAt` timestamp.
-- **Summary card** at the top: total number of movies watched.
+- **Stats dashboard** at the top: total movies watched · total runtime (hours) · favourite genre · longest watched streak. Cards in horizontal scroll row (`ElevatedCard`).
 - **Search** bar filters locally by title.
 - Grid layout (2 columns per group section).
 - Tap navigates to Movie Detail.
@@ -187,7 +187,7 @@ Entry: bottom navigation tab "Profile" (or Settings → Profile).
 - Success triggers a **bottom sheet** confirmation.
 - Account collision (email already linked to another UID) triggers an **alert dialog** with merge/cancel option.
 - Links to App Settings screen.
-- *(Planned)* Help / Support.
+- **Help & Legal** opens the privacy policy / legal page in the browser.
 
 **States handled:** Loading · Content · Error (retry banner) · Anonymous mode.
 
@@ -203,8 +203,11 @@ Entry: Profile → App Settings.
 
 - App version displayed at the bottom.
 - **Sign out** action (with loading overlay).
-- *(Planned)* Appearance (theme toggle — Light/Dark/System).
-- *(Planned)* Language selection.
+- **Appearance** (theme toggle — Light/Dark/System) via [FIP-005](../plan/FIP-005-theme-toggle.md).
+- **Language selection** via [FIP-007](../plan/FIP-007-language-selector.md).
+- **Privacy Policy** link opens in the browser.
+- **Delete Account** with confirmation dialog — clears local Room DB + deletes Firebase Auth user.
+- **TMDB Attribution** — "Powered by TMDB" logo + link in footer.
 
 ---
 
@@ -239,6 +242,7 @@ Movie
   cast: List<CastMember>
   crew: List<CrewMember>
   runtime: Int?
+  tagline: String?
   director: String?
   isWatched: Boolean
   isInWatchlist: Boolean
@@ -277,14 +281,16 @@ Modal navigation:
 
 ---
 
-## 8. Open Items / Known Gaps (v1.0)
+## 8. Resolved Gaps (v1.0)
+
+All items originally tracked as open gaps have been shipped.
 
 | ID   | Item                                              | Priority | Status |
 |------|---------------------------------------------------|----------|--------|
 | F-04 | Remove from Watchlist (swipe or button) not wired | High     | ✅ Shipped — [FIP-001](../plan/FIP-001-watchlist-remove.md) |
 | F-10 | Appearance / theme toggle not implemented         | Medium   | ✅ Shipped — [FIP-005](../plan/FIP-005-theme-toggle.md) |
 | F-11 | Language selector not implemented                 | Low      | ✅ Shipped — [FIP-007](../plan/FIP-007-language-selector.md) |
-| F-12 | Help / Support screen not implemented             | Low      | 📋 Planned |
+| F-12 | Help / Support screen not implemented             | Low      | ✅ Shipped — Help & Legal opens privacy policy URL from Profile |
 | F-13 | No cloud sync for Watched / Watchlist lists       | Medium   | ✅ Shipped — [FIP-003](../plan/FIP-003-firebase-sync.md) |
 | F-14 | No offline cache for movie browsing data          | Medium   | ✅ Shipped — [FIP-004](../plan/FIP-004-browse-cache.md) |
 
@@ -365,7 +371,7 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
-| **Status**  | 🚫 Discarded — [FIP-013](../plan/FIP-013-personal-rating.md) |
+| **Status**  | 🚫 Discarded |
 | **Behaviour** | Add a 1–5 star rating widget (half-star optional) below the Watched/Watchlist action row, visible only when `isWatched = true`. Rating is stored locally (`userRating: Float?` on the `Movie` entity). The Watched screen summary card updates to show average personal rating |
 | **Rationale** | Personal ratings are the #1 most-requested feature in movie-tracking apps. Enables future features like sorting/filtering by rating |
 | **Notes** | Rating is strictly local for v1. Cloud sync (F-13) will include it when implemented. No public review text in scope |
@@ -395,9 +401,9 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
-| **Status**  | 📋 Planned |
+| **Status**  | ✅ Shipped — [FIP-013](../plan/FIP-013-recent-trending-searches.md) |
 | **Scope**   | `SearchMoviesScreen` — search field interaction |
-| **Current state** | Tapping the search field immediately shows the browse grid. There is no search history or query suggestions |
+| **Current state** | When the search field is focused and empty, the screen shows Recent Searches (last 5 queries, DataStore) + Trending Searches (TMDB `/trending` titles as chips). Clear-all action available |
 | **Behaviour** | When the search field is focused but empty, show two sections: (1) **Recent searches** — last 5 queries, stored locally via DataStore, tappable to re-run; (2) **Trending searches** — sourced from TMDB `/trending` titles as quick-access chips. Clearing the field returns to this state |
 | **Rationale** | Reduces re-search friction. Standard UX in all search-heavy apps (YouTube, Spotify, Letterboxd) |
 | **Notes** | Recent searches stored in DataStore (not Room — ephemeral, no sync needed). Max 5 entries. Clear-all option available |
@@ -412,8 +418,10 @@ Features approved for a future release. Each will get a FIP before implementatio
 | 1.1     | 2026-02-26 | Add F-08 Pull-to-Refresh and F-09 MVI Migration to planned backlog |
 | 1.2     | 2026-02-26 | Unify G-XX gap IDs into F-XX sequence (G-01→F-04, G-02→F-10, G-03→F-11, G-04→F-12, G-05→F-13, G-06→F-14) |
 | 1.3     | 2026-02-28 | Add F-15 through F-22 — UI improvement features identified from code review |
-| 1.8     | 2026-02-28 | F-22 Recent & Trending Searches linked to FIP-013 and marked 🔵 In Progress |
-| 1.7     | 2026-02-28 | F-20 Watched Stats Dashboard marked as ✅ Shipped — FIP-012 |
-| 1.6     | 2026-02-28 | F-20 linked to FIP-012 |
-| 1.5     | 2026-02-28 | F-19 Personal Rating marked as 🚫 Discarded |
 | 1.4     | 2026-02-28 | Add Status field to all features. Link completed FIPs. Update §8 gaps table with Status column. Rename PRP → FIP (Feature Implementation Plan) |
+| 1.5     | 2026-02-28 | F-19 Personal Rating marked as 🚫 Discarded |
+| 1.6     | 2026-02-28 | F-20 linked to FIP-012 |
+| 1.7     | 2026-02-28 | F-20 Watched Stats Dashboard marked as ✅ Shipped — FIP-012 |
+| 1.8     | 2026-02-28 | F-22 Recent & Trending Searches linked to FIP-013 and marked 🔵 In Progress |
+| 1.9     | 2026-03-06 | F-12 Help & Legal marked ✅ Shipped. F-06 and F-07 *(Planned)* items updated to reflect shipped state |
+| 2.0     | 2026-03-08 | F-22 Recent & Trending Searches marked ✅ Shipped — FIP-013. PRD cleanup: removed stale §3.4 planned item, updated §3.5 stats description, added `tagline` to §5 data model, fixed F-19 broken FIP link, renamed §8 to Resolved Gaps, updated §3.7 Settings with delete account + TMDB attribution, updated F-22 current state |
