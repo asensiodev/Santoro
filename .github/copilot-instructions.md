@@ -14,15 +14,15 @@
 * DI: Hilt or Koin · Async: Coroutines + StateFlow.
 
 **CODING RULES (NO EXCEPTIONS):**
-* **STRICTLY NO COMMENTS** in implementation code.
+* **STRICTLY NO COMMENTS** in code (implementation AND tests).
 * **Strings:** ALWAYS `stringResource(R.string.x)`. NO hardcoded strings. Exceptions: `@Preview`, tests, debug logs. If the resource doesn't exist — CREATE IT.
 * **Lambdas:** Use `it` ONLY in short single-line lambdas. Explicit names in nested/multi-line blocks.
 * **Dimensions:** NO raw `.dp`/`.sp`. Use project tokens: `Dimens.*`, `Size.*`, `Spacings.*`, `Weights.*`, or `MaterialTheme.typography`.
 * Immutability (`val`). No `!!`. `modifier: Modifier = Modifier` as 1st optional param.
 
 **TESTING:**
-* GIVEN / WHEN / THEN comments are allowed in tests (exception to no-comments rule).
-* Use custom helpers from `:core:testing`: `verifyOnce`, `verifyNever`, `coVerifyOnce`, `coVerifyNever`, `relaxedMockk()`.
+* **Assertions:** Kluent (`shouldBeEqualTo`). **Flows:** Turbine.
+* Custom helpers from `:core:testing`: `verifyOnce`, `verifyNever`, `coVerifyOnce`, `coVerifyNever`, `relaxedMockk()`, `TestDispatcherProvider`, `CoroutineTestExtension`.
 * SUT in `@BeforeEach`. Backtick test names: `` `GIVEN x WHEN y THEN z` ``.
 
 **OUTPUT:**
