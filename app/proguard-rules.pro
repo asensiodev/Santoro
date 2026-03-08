@@ -3,6 +3,12 @@
 -keep class androidx.credentials.playservices.** {
     *;
 }
+-keep class androidx.credentials.** { *; }
+-dontwarn androidx.credentials.**
+
+# Keep Google Identity / Google ID token classes
+-keep class com.google.android.libraries.identity.googleid.** { *; }
+-dontwarn com.google.android.libraries.identity.googleid.**
 
 # Gson — keep @SerializedName annotated fields
 -keepattributes Signature
