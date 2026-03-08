@@ -20,6 +20,11 @@
 * **Dimensions:** NO raw `.dp`/`.sp`. Use project tokens: `Dimens.*`, `Size.*`, `Spacings.*`, `Weights.*`, or `MaterialTheme.typography`.
 * Immutability (`val`). No `!!`. `modifier: Modifier = Modifier` as 1st optional param.
 
+**TESTING:**
+* GIVEN / WHEN / THEN comments are allowed in tests (exception to no-comments rule).
+* Use custom helpers from `:core:testing`: `verifyOnce`, `verifyNever`, `coVerifyOnce`, `coVerifyNever`, `relaxedMockk()`.
+* SUT in `@BeforeEach`. Backtick test names: `` `GIVEN x WHEN y THEN z` ``.
+
 **OUTPUT:**
 * Direct implementation ONLY. No explanations, summaries, or reports unless asked.
 * Allowed: brief confirmation, errors, clarifying questions.
