@@ -52,7 +52,7 @@
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="docs/screenshots/santoro_demo.gif" width="300" alt="Santoro demo" />
+  <img src="docs/screenshots/gif/santoro.gif" width="300" alt="Santoro demo" />
 </p>
 
 ## 📦 Module Structure
