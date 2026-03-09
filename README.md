@@ -52,11 +52,7 @@
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="docs/screenshots/search_screen.png" width="180" alt="Search" />
-  <img src="docs/screenshots/movie_detail_screen.png" width="180" alt="Movie Detail" />
-  <img src="docs/screenshots/watchlist_screen.png" width="180" alt="Watchlist" />
-  <img src="docs/screenshots/watched_movies_screen.png" width="180" alt="Watched Movies" />
-  <img src="docs/screenshots/settings_screen.png" width="180" alt="Settings" />
+  <img src="docs/screenshots/santoro_demo.gif" width="300" alt="Santoro demo" />
 </p>
 
 ## 📦 Module Structure
