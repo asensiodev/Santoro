@@ -1,5 +1,7 @@
 package com.asensiodev.settings.impl.presentation.settings
 
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import com.asensiodev.auth.domain.usecase.ObserveAuthStateUseCase
 import com.asensiodev.auth.domain.usecase.SignOutUseCase
 import com.asensiodev.core.domain.model.AppLanguage
@@ -12,6 +14,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -24,7 +28,9 @@ import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldNotBeNull
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.util.Locale
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
@@ -207,4 +213,81 @@ class SettingsViewModelTest {
             sut.uiState.value.error
                 .shouldNotBeNull()
         }
+
+    @Nested
+    inner class ResolveCurrentLanguageTest {
+        @AfterEach
+        fun tearDownStatic() {
+            unmockkStatic(AppCompatDelegate::class)
+        }
+
+        @Test
+        fun `GIVEN per-app locale is es WHEN resolveCurrentLanguage THEN returns SPANISH`() {
+            mockkStatic(AppCompatDelegate::class)
+            every {
+                AppCompatDelegate.getApplicationLocales()
+            } returns LocaleListCompat.forLanguageTags("es")
+
+            val result = SettingsViewModel.resolveCurrentLanguage()
+
+            result shouldBeEqualTo AppLanguage.SPANISH
+        }
+
+        @Test
+        fun `GIVEN per-app locale is en WHEN resolveCurrentLanguage THEN returns ENGLISH`() {
+            mockkStatic(AppCompatDelegate::class)
+            every {
+                AppCompatDelegate.getApplicationLocales()
+            } returns LocaleListCompat.forLanguageTags("en")
+
+            val result = SettingsViewModel.resolveCurrentLanguage()
+
+            result shouldBeEqualTo AppLanguage.ENGLISH
+        }
+
+        @Test
+        fun `GIVEN no per-app locale and device is es WHEN resolveCurrentLanguage THEN returns SPANISH`() {
+            mockkStatic(AppCompatDelegate::class)
+            every {
+                AppCompatDelegate.getApplicationLocales()
+            } returns LocaleListCompat.getEmptyLocaleList()
+            val original = Locale.getDefault()
+            Locale.setDefault(Locale("es"))
+
+            val result = SettingsViewModel.resolveCurrentLanguage()
+
+            result shouldBeEqualTo AppLanguage.SPANISH
+            Locale.setDefault(original)
+        }
+
+        @Test
+        fun `GIVEN no per-app locale and device is fr WHEN resolveCurrentLanguage THEN returns ENGLISH`() {
+            mockkStatic(AppCompatDelegate::class)
+            every {
+                AppCompatDelegate.getApplicationLocales()
+            } returns LocaleListCompat.getEmptyLocaleList()
+            val original = Locale.getDefault()
+            Locale.setDefault(Locale.FRENCH)
+
+            val result = SettingsViewModel.resolveCurrentLanguage()
+
+            result shouldBeEqualTo AppLanguage.ENGLISH
+            Locale.setDefault(original)
+        }
+
+        @Test
+        fun `GIVEN no per-app locale and device is en WHEN resolveCurrentLanguage THEN returns ENGLISH`() {
+            mockkStatic(AppCompatDelegate::class)
+            every {
+                AppCompatDelegate.getApplicationLocales()
+            } returns LocaleListCompat.getEmptyLocaleList()
+            val original = Locale.getDefault()
+            Locale.setDefault(Locale.ENGLISH)
+
+            val result = SettingsViewModel.resolveCurrentLanguage()
+
+            result shouldBeEqualTo AppLanguage.ENGLISH
+            Locale.setDefault(original)
+        }
+    }
 }

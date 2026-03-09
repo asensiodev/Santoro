@@ -35,7 +35,8 @@ internal class SettingsViewModel
         private val setThemeUseCase: SetThemeUseCase,
         private val databaseRepository: DatabaseRepository,
     ) : ViewModel() {
-        private val _uiState = MutableStateFlow(SettingsUiState())
+        private val _uiState =
+            MutableStateFlow(SettingsUiState(currentLanguage = resolveCurrentLanguage()))
         val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
         private val _effect = Channel<SettingsEffect>(Channel.BUFFERED)
@@ -90,11 +91,12 @@ internal class SettingsViewModel
         }
 
         private fun onLanguageClicked() {
-            val locales = AppCompatDelegate.getApplicationLocales()
-            val currentTag = if (locales.isEmpty) AppLanguage.ENGLISH.tag else locales[0]?.language
-            val current =
-                AppLanguage.entries.firstOrNull { it.tag == currentTag } ?: AppLanguage.ENGLISH
-            _uiState.update { it.copy(showLanguagePicker = true, currentLanguage = current) }
+            _uiState.update {
+                it.copy(
+                    showLanguagePicker = true,
+                    currentLanguage = resolveCurrentLanguage(),
+                )
+            }
         }
 
         private fun setLanguage(language: AppLanguage) {
@@ -138,6 +140,25 @@ internal class SettingsViewModel
                             )
                         }
                     }
+            }
+        }
+
+        companion object {
+            fun resolveCurrentLanguage(): AppLanguage {
+                val locales = AppCompatDelegate.getApplicationLocales()
+                val currentTag =
+                    if (locales.isEmpty) {
+                        java.util.Locale
+                            .getDefault()
+                            .language
+                    } else {
+                        locales[0]?.language
+                    }
+                return if (currentTag == AppLanguage.SPANISH.tag) {
+                    AppLanguage.SPANISH
+                } else {
+                    AppLanguage.ENGLISH
+                }
             }
         }
     }
