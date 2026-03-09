@@ -49,7 +49,7 @@
 | Build | Gradle KTS · Version Catalogs · Convention Plugins |
 | Testing | JUnit 5 · MockK · Kluent · Turbine · Paparazzi |
 
-## 📸 Screenshots
+## 🎬 Demo
 
 <p align="center">
   <img src="docs/screenshots/gif/santoro.gif" width="300" alt="Santoro demo" />
@@ -76,7 +76,9 @@ core/                   → Shared modules
   ├── auth/             → Firebase Auth wrapper
   ├── sync/             → Firestore sync logic
   ├── build-config/     → Build-time constants
-  └── string-resources/ → Centralized i18n strings
+  ├── string-resources/ → Centralized i18n strings
+  ├── testing/          → Unit test helpers
+  └── android-testing/  → Instrumented test helpers
 library/                → Reusable library modules
   ├── remote-config/    → Firebase Remote Config
   └── secure-storage/   → Encrypted key-value store
