@@ -52,15 +52,11 @@
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="docs/screenshots/browse.png" width="180" alt="Browse" />
-  <img src="docs/screenshots/movie-detail.png" width="180" alt="Movie Detail" />
-  <img src="docs/screenshots/watchlist.png" width="180" alt="Watchlist" />
-  <img src="docs/screenshots/watched-stats.png" width="180" alt="Watched Stats" />
-</p>
-
-<p align="center">
-  <img src="docs/screenshots/search.png" width="180" alt="Search" />
-  <img src="docs/screenshots/settings.png" width="180" alt="Settings" />
+  <img src="docs/screenshots/search_screen.png" width="180" alt="Search" />
+  <img src="docs/screenshots/movie_detail_screen.png" width="180" alt="Movie Detail" />
+  <img src="docs/screenshots/watchlist_screen.png" width="180" alt="Watchlist" />
+  <img src="docs/screenshots/watched_movies_screen.png" width="180" alt="Watched Movies" />
+  <img src="docs/screenshots/settings_screen.png" width="180" alt="Settings" />
 </p>
 
 ## 📦 Module Structure
