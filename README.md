@@ -77,7 +77,8 @@ feature/                → Feature modules (api + impl per feature)
 core/                   → Shared modules
   ├── design-system/    → Theme, components, icons
   ├── domain/           → Models, Result type
-  ├── data/             → Repositories, mappers  ├── database/         → Room DB, schemas
+  ├── data/             → Repositories, mappers
+  ├── database/         → Room DB, schemas
   ├── network/          → Retrofit setup, interceptors
   ├── ui/               → Shared UI utilities
   ├── auth/             → Firebase Auth wrapper
