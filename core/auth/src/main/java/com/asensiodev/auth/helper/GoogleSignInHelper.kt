@@ -1,6 +1,7 @@
 package com.asensiodev.auth.helper
 
 import android.content.Context
+import android.util.Log
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
@@ -25,7 +26,7 @@ class GoogleSignInHelper
                     .Builder()
                     .setFilterByAuthorizedAccounts(false)
                     .setServerClientId(context.getString(R.string.default_web_client_id))
-                    .setAutoSelectEnabled(true)
+                    .setAutoSelectEnabled(false)
                     .build()
 
             val request =
@@ -42,8 +43,10 @@ class GoogleSignInHelper
                     )
                 Result.success(googleIdTokenCredential.idToken)
             } catch (e: GetCredentialException) {
+                Log.e("GoogleSignInHelper", "GetCredentialException: ${e.type} - ${e.message}", e)
                 Result.failure(e)
             } catch (e: Exception) {
+                Log.e("GoogleSignInHelper", "Unexpected error: ${e.message}", e)
                 Result.failure(e)
             }
         }
