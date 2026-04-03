@@ -75,8 +75,7 @@ internal class WatchedMoviesViewModel
                                 val movies = moviesList.toUiList()
                                 val groupedMovies =
                                     movies.groupBy { movie ->
-                                        movie.watchedDate
-                                            ?: "Unknown"
+                                        movie.watchedDate.orEmpty()
                                     }
                                 _uiState.update {
                                     it.copy(
@@ -119,8 +118,7 @@ internal class WatchedMoviesViewModel
                             val moviesUi = moviesList.toUiList()
                             val groupedMovies =
                                 moviesUi.groupBy { movie ->
-                                    movie.watchedDate
-                                        ?: "Unknown"
+                                    movie.watchedDate.orEmpty()
                                 }
                             _uiState.update {
                                 it.copy(

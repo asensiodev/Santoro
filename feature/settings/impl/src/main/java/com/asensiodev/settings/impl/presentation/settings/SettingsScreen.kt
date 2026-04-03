@@ -17,6 +17,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -55,13 +57,14 @@ internal fun SettingsScreenRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val unknownFallback = stringResource(SR.string.unknown_value)
     val versionName =
         remember(context) {
             try {
                 val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
                 packageInfo.versionName
             } catch (_: Exception) {
-                "Unknown"
+                null
             }
         }
     val tmdbUrl = stringResource(SR.string.settings_tmdb_url)
@@ -72,6 +75,15 @@ internal fun SettingsScreenRoute(
 
     LaunchedEffect(viewModel) {
         viewModel.process(SettingsIntent.ObserveTheme)
+    }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    uiState.error?.let { error ->
+        val errorMessage = error.asString()
+        LaunchedEffect(errorMessage) {
+            snackbarHostState.showSnackbar(message = errorMessage)
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -87,7 +99,7 @@ internal fun SettingsScreenRoute(
                 viewModel.process(SettingsIntent.OnDeleteAccountClicked)
             },
             isAnonymous = uiState.isAnonymous,
-            versionName = versionName ?: "Unknown",
+            versionName = versionName ?: unknownFallback,
             modifier = modifier,
         )
 
@@ -126,6 +138,11 @@ internal fun SettingsScreenRoute(
                 onDismiss = { viewModel.process(SettingsIntent.DismissDeleteAccountDialog) },
             )
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
     }
 }
 

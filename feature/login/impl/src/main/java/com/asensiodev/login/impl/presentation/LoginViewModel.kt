@@ -8,11 +8,9 @@ import com.asensiodev.auth.domain.usecase.SignInWithGoogleUseCase
 import com.asensiodev.auth.helper.GoogleSignInHelper
 import com.asensiodev.ui.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -28,9 +26,6 @@ internal class LoginViewModel
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(LoginUiState())
         val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
-
-        private val _effect = Channel<LoginEffect>(Channel.BUFFERED)
-        val effect = _effect.receiveAsFlow()
 
         fun process(intent: LoginIntent) {
             when (intent) {

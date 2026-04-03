@@ -55,6 +55,7 @@ internal class SearchMoviesViewModel
         private val clearRecentSearchesUseCase: ClearRecentSearchesUseCase,
     ) : ViewModel() {
         private var searchJob: Job? = null
+        private var observersSetUp = false
         private val _uiState = MutableStateFlow(SearchMoviesUiState())
         val uiState: StateFlow<SearchMoviesUiState> = _uiState.asStateFlow()
 
@@ -83,9 +84,15 @@ internal class SearchMoviesViewModel
             }
         }
 
-        @OptIn(FlowPreview::class)
         private fun loadInitialData() {
+            setupObservers()
             fetchDashboardData()
+        }
+
+        @OptIn(FlowPreview::class)
+        private fun setupObservers() {
+            if (observersSetUp) return
+            observersSetUp = true
 
             viewModelScope.launch {
                 getRecentSearchesUseCase().collect { searches ->

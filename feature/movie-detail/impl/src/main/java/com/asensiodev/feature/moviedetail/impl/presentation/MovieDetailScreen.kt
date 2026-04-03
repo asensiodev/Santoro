@@ -311,7 +311,7 @@ internal fun MovieDetailContent(
     modifier: Modifier = Modifier,
     scrollState: ScrollState,
 ) {
-    val movie = uiState.movie!!
+    val movie = uiState.movie ?: return
     val density = LocalDensity.current
     var actionsRowBottom by remember { mutableFloatStateOf(0f) }
 
@@ -750,7 +750,7 @@ private fun RowScope.WatchedButton(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun MovieGenresChipsSection(
+private fun MovieGenresChipsSection(
     genres: List<GenreUi>,
     modifier: Modifier = Modifier,
 ) {
@@ -765,10 +765,11 @@ fun MovieGenresChipsSection(
     }
 }
 
-fun getYearFromDate(date: String?): String? = date?.split(DATE_DELIMITER)?.getOrNull(YEAR_INDEX)
+private fun getYearFromDate(date: String?): String? =
+    date?.split(DATE_DELIMITER)?.getOrNull(YEAR_INDEX)
 
 @Composable
-fun InfoRow(
+private fun InfoRow(
     year: String,
     country: String,
     duration: String,
@@ -803,7 +804,7 @@ fun InfoRow(
 }
 
 @Composable
-fun VerticalDivider() {
+private fun VerticalDivider() {
     Box(
         modifier =
             Modifier
@@ -815,7 +816,7 @@ fun VerticalDivider() {
 }
 
 @Composable
-fun InfoItem(
+private fun InfoItem(
     icon: ImageVector,
     label: String,
     modifier: Modifier = Modifier,
@@ -843,7 +844,7 @@ fun InfoItem(
 }
 
 @Composable
-fun CrewGridSection(
+private fun CrewGridSection(
     crew: List<CrewMemberUi>,
     modifier: Modifier = Modifier,
 ) {
@@ -882,7 +883,7 @@ fun CrewGridSection(
 }
 
 @Composable
-fun CrewMemberItem(
+private fun CrewMemberItem(
     member: CrewMemberUi,
     modifier: Modifier = Modifier,
 ) {
@@ -940,7 +941,7 @@ fun CrewMemberItem(
 }
 
 @Composable
-fun CastSection(cast: List<CastMemberUi>) {
+private fun CastSection(cast: List<CastMemberUi>) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacings.spacing12)) {
         Text(
             text = stringResource(SR.string.cast_title),
@@ -953,7 +954,7 @@ fun CastSection(cast: List<CastMemberUi>) {
             horizontalArrangement = Arrangement.spacedBy(Spacings.spacing16),
             contentPadding = PaddingValues(horizontal = Spacings.spacing16),
         ) {
-            items(cast) { actor ->
+            items(cast, key = { actor -> actor.id }) { actor ->
                 CastMemberItem(actor)
             }
         }
@@ -961,7 +962,7 @@ fun CastSection(cast: List<CastMemberUi>) {
 }
 
 @Composable
-fun CastMemberItem(actor: CastMemberUi) {
+private fun CastMemberItem(actor: CastMemberUi) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.width(Size.size80),
@@ -1000,7 +1001,7 @@ fun CastMemberItem(actor: CastMemberUi) {
 }
 
 @Composable
-fun BounceButton(
+private fun BounceButton(
     onClick: () -> Unit,
     containerColor: Color,
     contentColor: Color,

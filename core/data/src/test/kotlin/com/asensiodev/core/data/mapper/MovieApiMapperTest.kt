@@ -30,7 +30,10 @@ class MovieApiMapperTest {
                 voteAverage = 8.8,
                 voteCount = 10000,
                 genres = genreApiModels,
+                genreIds = null,
                 productionCountries = productionCountryApiModels,
+                runtime = 148,
+                tagline = "Your mind is the scene of the crime.",
                 backdropPath = null,
                 credits = null,
             )
@@ -46,13 +49,17 @@ class MovieApiMapperTest {
                 popularity = 99.9,
                 voteAverage = 8.8,
                 voteCount = 10000,
-                genres = listOf(Genre("Action"), Genre("Drama")),
+                genres = listOf(Genre(id = 1, name = "Action"), Genre(id = 2, name = "Drama")),
+                genreIds = listOf(1, 2),
                 productionCountries =
                     listOf(
                         ProductionCountry("USA"),
                         ProductionCountry("UK"),
                     ),
                 cast = emptyList(),
+                crew = emptyList(),
+                runtime = 148,
+                tagline = "Your mind is the scene of the crime.",
                 isWatched = false,
                 isInWatchlist = false,
             )
@@ -75,7 +82,10 @@ class MovieApiMapperTest {
                 voteAverage = null,
                 voteCount = null,
                 genres = null,
+                genreIds = null,
                 productionCountries = null,
+                runtime = null,
+                tagline = null,
                 backdropPath = null,
                 credits = null,
             )
@@ -92,8 +102,12 @@ class MovieApiMapperTest {
                 voteAverage = 0.0,
                 voteCount = 0,
                 genres = emptyList(),
+                genreIds = emptyList(),
                 productionCountries = emptyList(),
                 cast = emptyList(),
+                crew = emptyList(),
+                runtime = null,
+                tagline = null,
                 isWatched = false,
                 isInWatchlist = false,
             )
@@ -107,7 +121,7 @@ class MovieApiMapperTest {
     fun `GIVEN a GenreApiModel WHEN toDomain THEN returns expected Genre`() {
         val genreApiModel = GenreApiModel(3, name = "Comedy")
 
-        val expectedGenre = Genre(name = "Comedy")
+        val expectedGenre = Genre(id = 3, name = "Comedy")
 
         val result = genreApiModel.toDomain()
 

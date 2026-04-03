@@ -130,17 +130,32 @@ internal fun WatchedMovieList(
         horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
         modifier = modifier.fillMaxSize(),
     ) {
-        item(span = { GridItemSpan(maxLineSpan) }) {
+        item(
+            span = { GridItemSpan(maxLineSpan) },
+            contentType = CONTENT_TYPE_STATS,
+        ) {
             if (stats != null) {
                 WatchedStatsDashboard(stats = stats)
             }
         }
 
         movies.forEach { (dateHeader, movieList) ->
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                StickyHeader(title = dateHeader)
+            item(
+                span = { GridItemSpan(maxLineSpan) },
+                contentType = CONTENT_TYPE_HEADER,
+            ) {
+                StickyHeader(
+                    title =
+                        dateHeader.ifBlank {
+                            stringResource(SR.string.unknown_value)
+                        },
+                )
             }
-            items(items = movieList, key = { it.id }) { movie ->
+            items(
+                items = movieList,
+                key = { it.id },
+                contentType = { CONTENT_TYPE_MOVIE },
+            ) { movie ->
                 MovieCard(
                     movie = movie,
                     onClick = { onMovieClick(movie.id) },
@@ -170,6 +185,9 @@ private fun StickyHeader(
 
 private const val NUMBER_OF_MOCKED_MOVIES = 6
 private const val POSTER_RATIO = 2f / 3f
+private const val CONTENT_TYPE_STATS = "stats"
+private const val CONTENT_TYPE_HEADER = "header"
+private const val CONTENT_TYPE_MOVIE = "movie"
 
 @PreviewLightDark
 @Composable

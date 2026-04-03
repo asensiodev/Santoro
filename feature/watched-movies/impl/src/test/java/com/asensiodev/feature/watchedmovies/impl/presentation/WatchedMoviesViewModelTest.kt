@@ -147,6 +147,47 @@ class WatchedMoviesViewModelTest {
             viewModel.uiState.value.screenState shouldBeEqualTo WatchedScreenState.Empty
         }
 
+    @Test
+    fun `GIVEN movie with null watchedAt WHEN LoadMovies THEN groups under blank key not hardcoded Unknown`() =
+        runTest {
+            val movie = buildMovie(id = 1).copy(watchedAt = null)
+            every { getWatchedMoviesUseCase() } returns flowOf(Result.success(listOf(movie)))
+            viewModel =
+                WatchedMoviesViewModel(
+                    getWatchedMoviesUseCase = getWatchedMoviesUseCase,
+                    getWatchedStatsUseCase = getWatchedStatsUseCase,
+                    searchWatchedMoviesUseCase = searchWatchedMoviesUseCase,
+                )
+
+            viewModel.process(WatchedMoviesIntent.LoadMovies)
+            advanceUntilIdle()
+
+            val keys = viewModel.uiState.value.movies.keys
+            keys.none { it == "Unknown" } shouldBeEqualTo true
+        }
+
+    @Test
+    fun `GIVEN search movie with null watchedAt WHEN searching THEN groups under blank key`() =
+        runTest {
+            val movie = buildMovie(id = 1).copy(watchedAt = null)
+            every { getWatchedMoviesUseCase() } returns flowOf(Result.success(emptyList()))
+            every { searchWatchedMoviesUseCase("test") } returns flowOf(Result.success(listOf(movie)))
+            viewModel =
+                WatchedMoviesViewModel(
+                    getWatchedMoviesUseCase = getWatchedMoviesUseCase,
+                    getWatchedStatsUseCase = getWatchedStatsUseCase,
+                    searchWatchedMoviesUseCase = searchWatchedMoviesUseCase,
+                )
+
+            viewModel.process(WatchedMoviesIntent.LoadMovies)
+            advanceUntilIdle()
+            viewModel.process(WatchedMoviesIntent.UpdateQuery("test"))
+            advanceUntilIdle()
+
+            val keys = viewModel.uiState.value.movies.keys
+            keys.none { it == "Unknown" } shouldBeEqualTo true
+        }
+
     private fun buildMovie(
         id: Int,
         title: String = "Movie $id",

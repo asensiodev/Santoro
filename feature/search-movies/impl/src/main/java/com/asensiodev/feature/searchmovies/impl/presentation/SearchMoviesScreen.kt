@@ -80,6 +80,7 @@ import com.asensiodev.feature.searchmovies.impl.presentation.component.SearchSug
 import com.asensiodev.feature.searchmovies.impl.presentation.model.GenreConstants
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 import com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType
+import com.asensiodev.ui.LaunchedEffectOnce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.asensiodev.santoro.core.stringresources.R as SR
 
@@ -94,7 +95,7 @@ internal fun SearchMoviesRoute(
     val snackbarHostState = remember { SnackbarHostState() }
     val refreshSuccessMessage = stringResource(SR.string.browse_refresh_success)
 
-    LaunchedEffect(viewModel) {
+    LaunchedEffectOnce {
         viewModel.process(SearchMoviesIntent.LoadInitialData)
     }
 
@@ -306,7 +307,9 @@ private fun DashboardContent(
             )
         }
 
-        else -> {
+        is SearchScreenState.Content,
+        is SearchScreenState.Empty,
+        -> {
             Column(
                 modifier =
                     Modifier
