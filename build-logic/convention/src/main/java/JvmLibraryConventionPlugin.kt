@@ -1,5 +1,5 @@
-import com.asensiodev.buildlogic.convention.logic.configureKotlinJvm
-import com.asensiodev.buildlogic.convention.logic.libs
+import com.asensiodev.santoro.buildlogic.convention.configureKotlinJvm
+import com.asensiodev.santoro.buildlogic.convention.libs
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.dependencies

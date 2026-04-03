@@ -1,8 +1,8 @@
 import com.android.build.api.dsl.LibraryExtension
+import com.asensiodev.santoro.buildlogic.convention.configureAndroidCompose
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
-import com.asensiodev.buildlogic.convention.logic.configureAndroidCompose
 
 class AndroidLibraryComposeConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {

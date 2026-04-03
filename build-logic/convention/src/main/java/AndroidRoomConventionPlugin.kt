@@ -1,5 +1,5 @@
 import androidx.room.gradle.RoomExtension
-import com.asensiodev.buildlogic.convention.logic.libs
+import com.asensiodev.santoro.buildlogic.convention.libs
 import com.google.devtools.ksp.gradle.KspExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project

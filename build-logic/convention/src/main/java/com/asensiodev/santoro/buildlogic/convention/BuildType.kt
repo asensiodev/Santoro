@@ -1,4 +1,4 @@
-package com.asensiodev.buildlogic.convention.logic
+package com.asensiodev.santoro.buildlogic.convention
 
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.dsl.LibraryExtension

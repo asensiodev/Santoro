@@ -1,4 +1,4 @@
-package com.asensiodev.buildlogic.convention.logic
+package com.asensiodev.santoro.buildlogic.convention
 
 import com.android.build.api.dsl.CommonExtension
 import org.gradle.api.Project

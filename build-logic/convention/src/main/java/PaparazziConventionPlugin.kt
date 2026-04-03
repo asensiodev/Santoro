@@ -1,7 +1,7 @@
+import com.asensiodev.santoro.buildlogic.convention.libs
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.dependencies
-import com.asensiodev.buildlogic.convention.logic.libs
 
 class PaparazziConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {

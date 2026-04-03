@@ -1,14 +1,14 @@
 @file:Suppress("UnstableApiUsage")
 
 import com.android.build.api.dsl.LibraryExtension
+import com.asensiodev.santoro.buildlogic.convention.configureKotlinAndroid
+import com.asensiodev.santoro.buildlogic.convention.configureLibraryBuildTypes
+import com.asensiodev.santoro.buildlogic.convention.getTargetSdk
+import com.asensiodev.santoro.buildlogic.convention.libs
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
-import com.asensiodev.buildlogic.convention.logic.configureKotlinAndroid
-import com.asensiodev.buildlogic.convention.logic.configureLibraryBuildTypes
-import com.asensiodev.buildlogic.convention.logic.getTargetSdk
-import com.asensiodev.buildlogic.convention.logic.libs
 
 class AndroidLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
