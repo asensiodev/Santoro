@@ -22,7 +22,7 @@ internal fun Project.configureAppBuildTypes(commonExtension: ApplicationExtensio
                 isDebuggable = false
                 isMinifyEnabled = true
                 isShrinkResources = true
-                ndk.debugSymbolLevel = "SYMBOL_TABLE"
+                ndk.debugSymbolLevel = "FULL"
                 proguardFiles(
                     getDefaultProguardFile("proguard-android-optimize.txt"),
                     "proguard-rules.pro",
