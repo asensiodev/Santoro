@@ -76,6 +76,24 @@ Feature work is tracked in `docs/plan/FIP-XXX-*.md`. Before coding a feature:
 2. Work phase by phase. Mark `[x]` checkboxes as you complete tasks.
 3. If anything is ambiguous — **stop and ask**, never decide unilaterally.
 
+### FIP Constraint Enforcement
+
+Each phase in a FIP may declare **Data sources** and **Side effects** blocks:
+- **Data sources:** Where each required datum comes from (navigation params, local state, service response). Only use the listed sources.
+- **Side effects — ✅ Allowed:** Only the explicitly listed operations are permitted.
+- **Side effects — ❌ Forbidden:** Do not perform these under any circumstance.
+
+If a phase has no Data sources / Side effects blocks, fall back to the general rule: implement only what the FIP describes. Do not invent service calls, use cases, or data sources not in the plan.
+
+### Agent Roles
+
+| Agent | Responsibility | Boundary |
+|---|---|---|
+| **planner** | Creates/updates Feature Briefs (`FB-XXX`) and FIPs (`FIP-XXX`) in `docs/` | Does NOT write production code or tests |
+| **executor** | Implements code following a FIP | Does NOT create or modify planning documents |
+
+Both agents must read `AGENTS.md` before starting any work.
+
 ## Key Directories
 
 - `build-logic/convention/` — Gradle convention plugins (start here to understand build setup)

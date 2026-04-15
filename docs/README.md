@@ -97,6 +97,28 @@ When a FIP transitions to **✅ Done**:
 
 ---
 
+## Agent Workflow
+
+This project uses two specialised agents. Both must read `AGENTS.md` before any work.
+
+| Agent | What it does | What it does NOT do |
+|---|---|---|
+| **planner** | Creates/updates FBs and FIPs in `docs/` | Write production code or tests |
+| **executor** | Implements code following a FIP | Create or modify planning documents |
+
+### Planner rules
+1. Read `docs/README.md` + the relevant template (`FB-TEMPLATE.md` or `FIP-TEMPLATE.md`) + `AGENTS.md` before writing.
+2. For each phase, specify **Data sources** and **Side effects** (✅ Allowed / ❌ Forbidden) when the phase touches data or external services.
+3. If required information is missing or ambiguous — **stop and ask**.
+
+### Executor rules
+1. Read `AGENTS.md` + the full FIP before writing any code.
+2. The FIP is the **single source of truth**. Respect Data sources and Side effects constraints per phase.
+3. Do NOT invent service calls, use cases, or data sources not in the plan.
+4. If the plan is ambiguous or incomplete — **stop and ask**, do not guess.
+
+---
+
 ## Document Reference
 
 ### When to use what

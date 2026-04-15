@@ -16,4 +16,10 @@
 * **Git:** NEVER `commit`/`push` without explicit user approval.
 * **Dependencies:** `libs.toml` + `build.gradle.kts` snippets only.
 
+**FIP EXECUTION:**
+* The FIP is the **single source of truth** for any feature work.
+* Respect **Data sources** and **Side effects** constraints declared per phase.
+* Do NOT invent service calls, use cases, or data sources not in the plan.
+* If the plan is ambiguous or incomplete — **stop and ask**, do not guess.
+
 

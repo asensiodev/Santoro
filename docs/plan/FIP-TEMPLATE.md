@@ -111,6 +111,16 @@ _Include new modules to create and existing modules to modify. Mention DI / nav 
 
 ### Phase 1 — [Name]
 
+**Data sources** _(if applicable)_
+- _Explicitly list where each required datum comes from_
+    - e.g. navigation params, local state, service response
+
+**Side effects** _(if applicable)_
+- ✅ Allowed:
+    - _e.g. Call ExistingUseCaseX_
+- ❌ Forbidden:
+    - _e.g. New services, extra network calls_
+
 - [ ] Task 1
 - [ ] Task 2
 - [ ] Task 3
