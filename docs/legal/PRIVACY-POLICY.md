@@ -111,7 +111,23 @@ You have the right to:
 - **Access your data:** Your movie lists are visible in the App at all times.
 - **Delete your data:** You can clear your local data by uninstalling the App or clearing app data in Android Settings. To delete your cloud data, you can delete your account from the App or contact us.
 - **Opt out of analytics:** You can limit analytics collection by disabling usage data sharing in your device settings.
-- **Request account deletion:** You can delete your account directly from the App in Settings. This will remove your cloud data and authentication credentials. Alternatively, you can contact us at the email below and we will delete your account and associated data within 30 days.
+- **Request account deletion:** You can delete your account and all associated data by following these steps:
+  1. Open the Santoro app
+  2. Go to **Settings**
+  3. Tap **Delete Account**
+  4. Confirm the deletion
+
+  Alternatively, you can request deletion by emailing us at asensiodev@gmail.com. We will process your request within 30 days.
+
+  **Data deleted immediately upon account deletion:**
+  - Your email address, display name, and profile photo URL (Firebase Authentication)
+  - Your Watched movies list (Firebase Firestore)
+  - Your Watchlist (Firebase Firestore)
+  - Local data on the device (Room database)
+
+  **Data retained after account deletion:**
+  - Anonymous analytics data (Firebase Analytics) — retained for 14 months per Google's policy. This data is aggregated and cannot identify you.
+  - Crash reports (Firebase Crashlytics) — retained for 90 days. These do not contain personal information.
 
 ---
 
