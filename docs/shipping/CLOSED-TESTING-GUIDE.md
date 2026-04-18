@@ -68,7 +68,7 @@ Estos formularios se completan en **Play Console → App content**:
 2. Público objetivo: **18 y más** (no dirigida a niños)
 3. ¿Contiene anuncios? **No**
 
-- [ ] Target audience configurado
+- [x] Target audience configurado
 
 **Data safety:**
 1. Play Console → **App content → Data safety**
@@ -91,21 +91,21 @@ Datos recogidos:
 
 > Marca: datos NO vendidos, NO usados para publicidad.
 
-- [ ] Data safety completado
+- [x] Data safety completado
 
 **User-generated content (Contenido generado por usuarios):**
 1. Play Console → **App content → User-generated content**
 2. ¿Tu app permite que los usuarios generen o compartan contenido visible para otros? **No**
    - (Los usuarios solo guardan películas en listas privadas, no publican ni comparten contenido con otros usuarios)
 
-- [ ] User-generated content completado
+- [x] User-generated content completado
 
 **Contenido en línea (Online content):**
 1. Play Console → **App content → Contenido en línea**
 2. ¿La aplicación incluye contenido que no forma parte de la descarga inicial pero al que se puede acceder desde la app? → **Sí**
    - (Santoro carga datos de películas, posters, sinopsis, reparto, etc. desde la API de TMDB en tiempo real)
 
-- [ ] Contenido en línea completado
+- [x] Contenido en línea completado
 
 ---
 
@@ -120,10 +120,10 @@ Datos recogidos:
 | **Full description** (≤4000 chars) | Ver textos en §Apéndice A |
 | **Category** | Entertainment |
 
-- [ ] App name configurado
-- [ ] Short description (EN + ES)
-- [ ] Full description (EN + ES)
-- [ ] Categoría seleccionada
+- [x] App name configurado
+- [x] Short description (EN + ES)
+- [x] Full description (EN + ES)
+- [x] Categoría seleccionada
 
 ### 2.2 Gráficos
 
@@ -133,9 +133,9 @@ Datos recogidos:
 | **Feature graphic** | 1024×500 PNG — haz uno en Figma/Canva con el logo + nombre + fondo oscuro |
 | **Screenshots** | Mínimo 2 para teléfono. Capturas de: Browse, Movie Detail, Watchlist, Watched Stats |
 
-- [ ] App icon subido (512×512)
-- [ ] Feature graphic creado y subido (1024×500)
-- [ ] Screenshots de teléfono subidos (mínimo 2)
+- [x] App icon subido (512×512)
+- [x] Feature graphic creado y subido (1024×500)
+- [x] Screenshots de teléfono subidos (mínimo 2)
 
 ---
 
