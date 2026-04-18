@@ -4,7 +4,7 @@ javaVersion = "21"
 compileSdk = "35"
 targetSdk = "35"
 minSdk = "26"
-versionCode = "20"
+versionCode = "21"
 versionName = "1.0.15"
 
 datastore = "1.1.4"
