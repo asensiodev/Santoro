@@ -5,7 +5,7 @@ compileSdk = "35"
 targetSdk = "35"
 minSdk = "26"
 versionCode = "20"
-versionName = "1.0.14"
+versionName = "1.0.15"
 
 datastore = "1.1.4"
 activityCompose = "1.10.1"

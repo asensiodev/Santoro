@@ -6,7 +6,7 @@
 |------------|----------------------------------------------------|
 | **Fecha**  | 2026-04-18                                         |
 | **AAB**    | `app/build/outputs/bundle/release/app-release.aab` |
-| **Versión**| 1.0.14 (versionCode 19)                             |
+| **Versión**| 1.0.15 (versionCode 20)                             |
 
 ---
 
@@ -146,7 +146,7 @@ Datos recogidos:
 1. Play Console → **Testing → Closed testing**
 2. Pulsa **Create track** (si no existe) → nombre: "Beta"
 3. **Create new release** → sube el AAB
-4. **Release name:** `1.0.14 (19)`
+4. **Release name:** `1.0.15 (20)`
 5. **Release notes:**
 
 **English:**
