@@ -22,7 +22,7 @@
 
     <!-- Search Movies Screen -->
     <string name="search_movies_top_bar_title">Buscar películas</string>
-    <string name="search_movies_textfield_placeholder">Escribe para buscar películas</string>
+    <string name="search_movies_textfield_placeholder">Buscar películas</string>
     <string name="search_movies_no_search_results_text">¡Ups! No se encontraron películas</string>
     <string name="search_movies_no_results_with_filters_message">No encontramos películas que coincidan con \"%1$s\" con el género seleccionado</string>
     <string name="search_movies_remove_genre_filter_button">Buscar sin filtro de género</string>
@@ -77,6 +77,19 @@
     <string name="watchlist_no_results_subtitle">Busca películas y añádelas a tu lista</string>
     <string name="watchlist_search_no_results_text">No se encontraron películas en tu lista</string>
     <string name="watchlist_search_no_results_subtitle">Prueba con otro título o borra la búsqueda</string>
+    <string name="watchlist_count_summary">%1$s · %2$s</string>
+    <plurals name="watchlist_saved_count">
+        <item quantity="one">guardada</item>
+        <item quantity="other">guardadas</item>
+    </plurals>
+    <plurals name="watchlist_search_results_count">
+        <item quantity="one">%d resultado</item>
+        <item quantity="other">%d resultados</item>
+    </plurals>
+    <plurals name="watchlist_movies_to_watch_count">
+        <item quantity="one">%d película para ver</item>
+        <item quantity="other">%d películas para ver</item>
+    </plurals>
     <string name="watchlist_remove_dialog_title">Eliminar de la lista</string>
     <string name="watchlist_remove_dialog_body">"%s" será eliminada de tu lista.</string>
     <string name="watchlist_remove_dialog_confirm">Eliminar</string>

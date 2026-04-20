@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -29,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -112,6 +114,7 @@ internal fun WatchlistMoviesScreen(
 
             is WatchlistScreenState.Content -> {
                 MovieList(
+                    listHeader = uiState.listHeader,
                     movies = uiState.movies,
                     onMovieClick = onMovieClick,
                     onRemoveMovie = { onProcess(WatchlistIntent.RequestRemove(it)) },
@@ -145,7 +148,41 @@ internal fun WatchlistMoviesScreen(
 }
 
 @Composable
+private fun WatchlistListHeader(
+    listHeader: WatchlistListHeaderUi,
+    modifier: Modifier = Modifier,
+) {
+    val title =
+        when (listHeader) {
+            is WatchlistListHeaderUi.MoviesToWatch -> {
+                pluralStringResource(
+                    SR.plurals.watchlist_movies_to_watch_count,
+                    listHeader.count,
+                    listHeader.count,
+                )
+            }
+
+            is WatchlistListHeaderUi.SearchResults -> {
+                pluralStringResource(
+                    SR.plurals.watchlist_search_results_count,
+                    listHeader.count,
+                    listHeader.count,
+                )
+            }
+        }
+
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier = modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
 private fun MovieList(
+    listHeader: WatchlistListHeaderUi?,
     movies: List<MovieUi>,
     onMovieClick: (Int) -> Unit,
     onRemoveMovie: (MovieUi) -> Unit,
@@ -155,9 +192,18 @@ private fun MovieList(
         verticalArrangement = Arrangement.spacedBy(Spacings.spacing8),
         modifier = modifier,
     ) {
+        if (listHeader != null) {
+            item(
+                key = WATCHLIST_LIST_HEADER_KEY,
+                contentType = CONTENT_TYPE_HEADER,
+            ) {
+                WatchlistListHeader(listHeader = listHeader)
+            }
+        }
         items(
             items = movies,
             key = { it.id },
+            contentType = { CONTENT_TYPE_MOVIE },
         ) { movie ->
             SwipeToRemoveContainer(
                 onSwiped = { onRemoveMovie(movie) },
@@ -308,7 +354,9 @@ private fun WatchlistMoviesScreenPreview() {
             uiState =
                 WatchlistMoviesUiState(
                     screenState = WatchlistScreenState.Content,
+                    listHeader = WatchlistListHeaderUi.MoviesToWatch(sampleMovies.size),
                     movies = sampleMovies,
+                    totalMoviesCount = sampleMovies.size,
                 ),
             onProcess = {},
             onMovieClick = {},
@@ -317,5 +365,8 @@ private fun WatchlistMoviesScreenPreview() {
 }
 
 private const val MOVIE_SAMPLE_LIST_SIZE = 5
+private const val CONTENT_TYPE_HEADER = "header"
+private const val CONTENT_TYPE_MOVIE = "movie"
+private const val WATCHLIST_LIST_HEADER_KEY = "watchlist_list_header"
 
 private val WATCHLIST_REMOVE_DIALOG_TITLE_PLACEHOLDER = Regex("%(\\d+\\$)?s")

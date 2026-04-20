@@ -184,6 +184,29 @@ class WatchlistMoviesViewModelTest {
             advanceUntilIdle()
 
             viewModel.uiState.value.screenState shouldBeEqualTo WatchlistScreenState.Empty
+            viewModel.uiState.value.listHeader
+                .shouldBeNull()
+            viewModel.uiState.value.totalMoviesCount shouldBeEqualTo 0
+        }
+
+    @Test
+    fun `GIVEN watchlist has movies WHEN LoadMovies intent THEN totalMoviesCount matches full list`() =
+        runTest {
+            val movies = listOf(buildMovie(id = 1), buildMovie(id = 2), buildMovie(id = 3))
+            every { getWatchlistMoviesUseCase() } returns flowOf(Result.success(movies))
+            viewModel =
+                WatchlistMoviesViewModel(
+                    getWatchlistMoviesUseCase = getWatchlistMoviesUseCase,
+                    searchWatchlistMoviesUseCase = searchWatchlistMoviesUseCase,
+                    removeFromWatchlistUseCase = removeFromWatchlistUseCase,
+                    syncScheduler = syncScheduler,
+                )
+
+            viewModel.process(WatchlistIntent.LoadMovies)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.listHeader shouldBeEqualTo WatchlistListHeaderUi.MoviesToWatch(3)
+            viewModel.uiState.value.totalMoviesCount shouldBeEqualTo 3
         }
 
     @Test
@@ -206,7 +229,39 @@ class WatchlistMoviesViewModelTest {
             advanceTimeBy(500)
             advanceUntilIdle()
 
+            viewModel.uiState.value.listHeader
+                .shouldBeNull()
             viewModel.uiState.value.screenState shouldBeEqualTo WatchlistScreenState.NoResults
+            viewModel.uiState.value.totalMoviesCount shouldBeEqualTo 1
+        }
+
+    @Test
+    fun `GIVEN watchlist has movies WHEN search returns matches THEN header shows search results count`() =
+        runTest {
+            val inception = buildMovie(id = 1, title = "Inception")
+            val interstellar = buildMovie(id = 2, title = "Interstellar")
+            every {
+                getWatchlistMoviesUseCase()
+            } returns flowOf(Result.success(listOf(inception, interstellar)))
+            every {
+                searchWatchlistMoviesUseCase("in")
+            } returns flowOf(Result.success(listOf(inception)))
+            viewModel =
+                WatchlistMoviesViewModel(
+                    getWatchlistMoviesUseCase = getWatchlistMoviesUseCase,
+                    searchWatchlistMoviesUseCase = searchWatchlistMoviesUseCase,
+                    removeFromWatchlistUseCase = removeFromWatchlistUseCase,
+                    syncScheduler = syncScheduler,
+                )
+
+            viewModel.process(WatchlistIntent.LoadMovies)
+            advanceUntilIdle()
+            viewModel.process(WatchlistIntent.UpdateQuery("in"))
+            advanceTimeBy(500)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.screenState shouldBeEqualTo WatchlistScreenState.Content
+            viewModel.uiState.value.listHeader shouldBeEqualTo WatchlistListHeaderUi.SearchResults(1)
         }
 
     private fun buildMovie(

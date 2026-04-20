@@ -22,7 +22,7 @@
 
     <!-- Search Movies Screen -->
     <string name="search_movies_top_bar_title">Search movies</string>
-    <string name="search_movies_textfield_placeholder">Type to search movies</string>
+    <string name="search_movies_textfield_placeholder">Search movies</string>
     <string name="search_movies_no_search_results_text">Ups! No movies found</string>
     <string name="search_movies_no_results_with_filters_message">We couldn\'t find any movies matching \"%1$s\" with the selected genre</string>
     <string name="search_movies_remove_genre_filter_button">Search without genre filter</string>
@@ -53,7 +53,7 @@
 
     <!-- Watched Movies Screen -->
     <string name="watched_movies_top_bar_title">Watched movies</string>
-    <string name="watched_movies_textfield_placeholder">Type to search watched movies</string>
+    <string name="watched_movies_textfield_placeholder">Search watched movies</string>
     <string name="watched_movies_no_results_text">No watched movies yet</string>
     <string name="watched_movies_no_results_subtitle">Movies you mark as watched will appear here</string>
     <string name="watched_movies_search_no_results_text">No watched movies found</string>
@@ -72,11 +72,24 @@
 
     <!-- Watchlist Screen -->
     <string name="watchlist_top_bar_title">My watchlist</string>
-    <string name="watchlist_movies_textfield_placeholder">Type to search in your watchlist</string>
+    <string name="watchlist_movies_textfield_placeholder">Search your watchlist</string>
     <string name="watchlist_no_results_text">Your watchlist is empty</string>
     <string name="watchlist_no_results_subtitle">Search for movies and add them to your watchlist</string>
     <string name="watchlist_search_no_results_text">No movies found in your watchlist</string>
     <string name="watchlist_search_no_results_subtitle">Try a different title or clear your search</string>
+    <string name="watchlist_count_summary">%1$s · %2$s</string>
+    <plurals name="watchlist_saved_count">
+        <item quantity="one">saved</item>
+        <item quantity="other">saved</item>
+    </plurals>
+    <plurals name="watchlist_search_results_count">
+        <item quantity="one">%d result</item>
+        <item quantity="other">%d results</item>
+    </plurals>
+    <plurals name="watchlist_movies_to_watch_count">
+        <item quantity="one">%d movie to watch</item>
+        <item quantity="other">%d movies to watch</item>
+    </plurals>
     <string name="watchlist_remove_dialog_title">Remove from Watchlist</string>
     <string name="watchlist_remove_dialog_body">"%s" will be removed from your Watchlist.</string>
     <string name="watchlist_remove_dialog_confirm">Remove</string>

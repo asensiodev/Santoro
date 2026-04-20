@@ -76,15 +76,24 @@ internal class WatchlistMoviesViewModel
                         result.fold(
                             onSuccess = { movies ->
                                 val moviesUi = movies.toUiList()
+                                val totalMoviesCount = moviesUi.size
                                 _uiState.update {
+                                    val screenState =
+                                        if (moviesUi.isEmpty()) {
+                                            WatchlistScreenState.Empty
+                                        } else {
+                                            WatchlistScreenState.Content
+                                        }
                                     it.copy(
-                                        screenState =
-                                            if (moviesUi.isEmpty()) {
-                                                WatchlistScreenState.Empty
-                                            } else {
-                                                WatchlistScreenState.Content
-                                            },
-                                        hasMovies = moviesUi.isNotEmpty(),
+                                        screenState = screenState,
+                                        totalMoviesCount = totalMoviesCount,
+                                        hasMovies = totalMoviesCount > 0,
+                                        listHeader =
+                                            createListHeader(
+                                                query = it.query,
+                                                screenState = screenState,
+                                                visibleMoviesCount = moviesUi.size,
+                                            ),
                                         movies = moviesUi,
                                     )
                                 }
@@ -96,6 +105,7 @@ internal class WatchlistMoviesViewModel
                                             WatchlistScreenState.Error(
                                                 exception.message.orEmpty(),
                                             ),
+                                        listHeader = null,
                                     )
                                 }
                             },
@@ -129,6 +139,12 @@ internal class WatchlistMoviesViewModel
                                     }
                                 it.copy(
                                     screenState = screenState,
+                                    listHeader =
+                                        createListHeader(
+                                            query = query,
+                                            screenState = screenState,
+                                            visibleMoviesCount = moviesUi.size,
+                                        ),
                                     movies = moviesUi,
                                 )
                             }
@@ -140,6 +156,7 @@ internal class WatchlistMoviesViewModel
                                         WatchlistScreenState.Error(
                                             exception.message.orEmpty(),
                                         ),
+                                    listHeader = null,
                                 )
                             }
                         },
@@ -172,6 +189,22 @@ internal class WatchlistMoviesViewModel
             viewModelScope.launch {
                 removeFromWatchlistUseCase(movie.id)
                     .onSuccess { syncScheduler.enqueueUpload(movie.id) }
+            }
+        }
+
+        private fun createListHeader(
+            query: String,
+            screenState: WatchlistScreenState,
+            visibleMoviesCount: Int,
+        ): WatchlistListHeaderUi? {
+            if (screenState !is WatchlistScreenState.Content || visibleMoviesCount == 0) {
+                return null
+            }
+
+            return if (query.isBlank()) {
+                WatchlistListHeaderUi.MoviesToWatch(count = visibleMoviesCount)
+            } else {
+                WatchlistListHeaderUi.SearchResults(count = visibleMoviesCount)
             }
         }
     }
