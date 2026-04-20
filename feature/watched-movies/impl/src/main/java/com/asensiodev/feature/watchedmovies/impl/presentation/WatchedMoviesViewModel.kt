@@ -85,6 +85,7 @@ internal class WatchedMoviesViewModel
                                             } else {
                                                 WatchedScreenState.Content
                                             },
+                                        hasMovies = groupedMovies.isNotEmpty(),
                                         movies = groupedMovies,
                                     )
                                 }
@@ -121,13 +122,18 @@ internal class WatchedMoviesViewModel
                                     movie.watchedDate.orEmpty()
                                 }
                             _uiState.update {
-                                it.copy(
-                                    screenState =
-                                        if (groupedMovies.isEmpty()) {
+                                val screenState =
+                                    if (groupedMovies.isEmpty()) {
+                                        if (it.hasMovies == false) {
                                             WatchedScreenState.Empty
                                         } else {
-                                            WatchedScreenState.Content
-                                        },
+                                            WatchedScreenState.NoResults
+                                        }
+                                    } else {
+                                        WatchedScreenState.Content
+                                    }
+                                it.copy(
+                                    screenState = screenState,
                                     movies = groupedMovies,
                                 )
                             }

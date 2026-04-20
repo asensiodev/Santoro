@@ -84,6 +84,7 @@ internal class WatchlistMoviesViewModel
                                             } else {
                                                 WatchlistScreenState.Content
                                             },
+                                        hasMovies = moviesUi.isNotEmpty(),
                                         movies = moviesUi,
                                     )
                                 }
@@ -116,13 +117,18 @@ internal class WatchlistMoviesViewModel
                         onSuccess = { movies ->
                             val moviesUi = movies.toUiList()
                             _uiState.update {
-                                it.copy(
-                                    screenState =
-                                        if (moviesUi.isEmpty()) {
+                                val screenState =
+                                    if (moviesUi.isEmpty()) {
+                                        if (it.hasMovies == false) {
                                             WatchlistScreenState.Empty
                                         } else {
-                                            WatchlistScreenState.Content
-                                        },
+                                            WatchlistScreenState.NoResults
+                                        }
+                                    } else {
+                                        WatchlistScreenState.Content
+                                    }
+                                it.copy(
+                                    screenState = screenState,
                                     movies = moviesUi,
                                 )
                             }

@@ -56,6 +56,8 @@
     <string name="watched_movies_textfield_placeholder">Type to search watched movies</string>
     <string name="watched_movies_no_results_text">No watched movies yet</string>
     <string name="watched_movies_no_results_subtitle">Movies you mark as watched will appear here</string>
+    <string name="watched_movies_search_no_results_text">No watched movies found</string>
+    <string name="watched_movies_search_no_results_subtitle">Try a different title or clear your search</string>
     <string name="watched_total_label">Total Watched</string>
     <string name="watched_total_count">%d Movies</string>
     <string name="watched_stat_total_label">Movies Watched</string>
@@ -73,6 +75,8 @@
     <string name="watchlist_movies_textfield_placeholder">Type to search in your watchlist</string>
     <string name="watchlist_no_results_text">Your watchlist is empty</string>
     <string name="watchlist_no_results_subtitle">Search for movies and add them to your watchlist</string>
+    <string name="watchlist_search_no_results_text">No movies found in your watchlist</string>
+    <string name="watchlist_search_no_results_subtitle">Try a different title or clear your search</string>
     <string name="watchlist_remove_dialog_title">Remove from Watchlist</string>
     <string name="watchlist_remove_dialog_body">"%s" will be removed from your Watchlist.</string>
     <string name="watchlist_remove_dialog_confirm">Remove</string>

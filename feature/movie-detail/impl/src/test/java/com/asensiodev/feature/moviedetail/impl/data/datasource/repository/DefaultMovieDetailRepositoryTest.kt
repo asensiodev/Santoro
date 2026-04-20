@@ -32,6 +32,7 @@ class DefaultMovieDetailRepositoryTest {
     fun `GIVEN local and remote success WHEN getMovieDetail THEN returns merged movie`() =
         runTest {
             val movieId = 1
+            val watchedAt = 1_712_345_678_000L
             val localMovie =
                 Movie(
                     id = movieId,
@@ -48,6 +49,7 @@ class DefaultMovieDetailRepositoryTest {
                     cast = listOf(),
                     isWatched = true,
                     isInWatchlist = false,
+                    watchedAt = watchedAt,
                 )
             val remoteMovie =
                 Movie(
@@ -70,6 +72,7 @@ class DefaultMovieDetailRepositoryTest {
                 remoteMovie.copy(
                     isWatched = localMovie.isWatched,
                     isInWatchlist = localMovie.isInWatchlist,
+                    watchedAt = localMovie.watchedAt,
                 )
 
             every { localDataSource.getMovieDetail(movieId) } returns flowOf(Result.success(localMovie))
@@ -240,6 +243,7 @@ class DefaultMovieDetailRepositoryTest {
     fun `GIVEN remote and local data WHEN getMovieDetail THEN returns only one merged result`() =
         runTest {
             val movieId = 10
+            val watchedAt = 1_712_345_678_000L
             val localMovie =
                 Movie(
                     id = movieId,
@@ -256,6 +260,7 @@ class DefaultMovieDetailRepositoryTest {
                     cast = listOf(),
                     isWatched = true,
                     isInWatchlist = true,
+                    watchedAt = watchedAt,
                 )
             val remoteMovie =
                 Movie(
@@ -278,6 +283,7 @@ class DefaultMovieDetailRepositoryTest {
                 remoteMovie.copy(
                     isWatched = localMovie.isWatched,
                     isInWatchlist = localMovie.isInWatchlist,
+                    watchedAt = localMovie.watchedAt,
                 )
 
             every { localDataSource.getMovieDetail(movieId) } returns flowOf(Result.success(localMovie))

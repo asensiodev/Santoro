@@ -6,6 +6,7 @@ import com.asensiodev.feature.watchedmovies.impl.presentation.model.MovieUi
 internal sealed interface WatchedScreenState {
     data object Loading : WatchedScreenState
     data object Content : WatchedScreenState
+    data object NoResults : WatchedScreenState
     data class Error(
         val message: String,
     ) : WatchedScreenState
@@ -17,4 +18,5 @@ internal data class WatchedMoviesUiState(
     val movies: Map<String, List<MovieUi>> = emptyMap(),
     val query: String = "",
     val stats: WatchedStats? = null,
+    val hasMovies: Boolean? = null,
 )

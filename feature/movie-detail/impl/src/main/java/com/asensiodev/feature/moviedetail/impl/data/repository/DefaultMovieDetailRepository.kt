@@ -23,13 +23,15 @@ internal class DefaultMovieDetailRepository
             val remoteFlow = remoteDataSource.getMovieDetail(id)
 
             return combine(localFlow, remoteFlow) { localResult, remoteResult ->
+                val localMovie = localResult.getOrNull()
                 remoteResult.fold(
                     onSuccess = { remoteMovie ->
                         if (remoteMovie != null) {
                             Result.success(
                                 remoteMovie.copy(
-                                    isWatched = localResult.getOrNull()?.isWatched ?: false,
-                                    isInWatchlist = localResult.getOrNull()?.isInWatchlist ?: false,
+                                    isWatched = localMovie?.isWatched ?: false,
+                                    isInWatchlist = localMovie?.isInWatchlist ?: false,
+                                    watchedAt = localMovie?.watchedAt,
                                 ),
                             )
                         } else {
@@ -37,7 +39,6 @@ internal class DefaultMovieDetailRepository
                         }
                     },
                     onFailure = { exception ->
-                        val localMovie = localResult.getOrNull()
                         if (localMovie != null) {
                             Result.success(localMovie)
                         } else {

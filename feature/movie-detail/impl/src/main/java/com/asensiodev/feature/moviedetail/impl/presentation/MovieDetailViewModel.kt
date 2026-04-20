@@ -94,7 +94,13 @@ internal class MovieDetailViewModel
 
         private fun toggleWatchlist() {
             val movie = uiState.value.movie ?: return
-            val updatedMovie = movie.copy(isInWatchlist = !movie.isInWatchlist)
+            val isNowInWatchlist = !movie.isInWatchlist
+            val updatedMovie =
+                movie.copy(
+                    isInWatchlist = isNowInWatchlist,
+                    isWatched = !isNowInWatchlist && movie.isWatched,
+                    watchedAt = if (isNowInWatchlist) null else movie.watchedAt,
+                )
             viewModelScope.launch {
                 updateMovieStateUseCase(updatedMovie.toDomain())
                     .onSuccess {
@@ -112,6 +118,7 @@ internal class MovieDetailViewModel
             val updatedMovie =
                 movie.copy(
                     isWatched = isNowWatched,
+                    isInWatchlist = !isNowWatched && movie.isInWatchlist,
                     watchedAt = if (isNowWatched) System.currentTimeMillis() else null,
                 )
             viewModelScope.launch {

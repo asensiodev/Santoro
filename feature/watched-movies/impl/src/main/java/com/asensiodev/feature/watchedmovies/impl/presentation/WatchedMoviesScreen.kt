@@ -106,6 +106,13 @@ internal fun WatchedMoviesScreen(
                 )
             }
 
+            is WatchedScreenState.NoResults -> {
+                NoResultsContent(
+                    text = stringResource(SR.string.watched_movies_search_no_results_text),
+                    subtitle = stringResource(SR.string.watched_movies_search_no_results_subtitle),
+                )
+            }
+
             is WatchedScreenState.Empty -> {
                 NoResultsContent(
                     text = stringResource(SR.string.watched_movies_no_results_text),

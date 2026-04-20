@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -186,6 +187,28 @@ class WatchedMoviesViewModelTest {
 
             val keys = viewModel.uiState.value.movies.keys
             keys.none { it == "Unknown" } shouldBeEqualTo true
+        }
+
+    @Test
+    fun `GIVEN watched movies exist WHEN search returns empty THEN screenState becomes NoResults`() =
+        runTest {
+            val movie = buildMovie(id = 1, title = "Inception")
+            every { getWatchedMoviesUseCase() } returns flowOf(Result.success(listOf(movie)))
+            every { searchWatchedMoviesUseCase("matrix") } returns flowOf(Result.success(emptyList()))
+            viewModel =
+                WatchedMoviesViewModel(
+                    getWatchedMoviesUseCase = getWatchedMoviesUseCase,
+                    getWatchedStatsUseCase = getWatchedStatsUseCase,
+                    searchWatchedMoviesUseCase = searchWatchedMoviesUseCase,
+                )
+
+            viewModel.process(WatchedMoviesIntent.LoadMovies)
+            advanceUntilIdle()
+            viewModel.process(WatchedMoviesIntent.UpdateQuery("matrix"))
+            advanceTimeBy(500)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.screenState shouldBeEqualTo WatchedScreenState.NoResults
         }
 
     private fun buildMovie(

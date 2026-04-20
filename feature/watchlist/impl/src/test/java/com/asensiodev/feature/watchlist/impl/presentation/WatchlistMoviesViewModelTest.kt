@@ -1,5 +1,7 @@
 package com.asensiodev.feature.watchlist.impl.presentation
 
+import com.asensiodev.core.domain.model.Genre
+import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.testing.coVerifyOnce
 import com.asensiodev.feature.watchlist.impl.domain.usecase.GetWatchlistMoviesUseCase
 import com.asensiodev.feature.watchlist.impl.domain.usecase.RemoveFromWatchlistUseCase
@@ -14,6 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -150,4 +153,60 @@ class WatchlistMoviesViewModelTest {
 
             coVerify(exactly = 0) { syncScheduler.enqueueUpload(any()) }
         }
+
+    @Test
+    fun `GIVEN empty watchlist WHEN LoadMovies intent THEN screenState becomes Empty`() =
+        runTest {
+            viewModel.process(WatchlistIntent.LoadMovies)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.screenState shouldBeEqualTo WatchlistScreenState.Empty
+        }
+
+    @Test
+    fun `GIVEN watchlist has movies WHEN search returns empty THEN screenState becomes NoResults`() =
+        runTest {
+            val movie = buildMovie(id = 1, title = "Inception")
+            every { getWatchlistMoviesUseCase() } returns flowOf(Result.success(listOf(movie)))
+            every { searchWatchlistMoviesUseCase("matrix") } returns flowOf(Result.success(emptyList()))
+            viewModel =
+                WatchlistMoviesViewModel(
+                    getWatchlistMoviesUseCase = getWatchlistMoviesUseCase,
+                    searchWatchlistMoviesUseCase = searchWatchlistMoviesUseCase,
+                    removeFromWatchlistUseCase = removeFromWatchlistUseCase,
+                    syncScheduler = syncScheduler,
+                )
+
+            viewModel.process(WatchlistIntent.LoadMovies)
+            advanceUntilIdle()
+            viewModel.process(WatchlistIntent.UpdateQuery("matrix"))
+            advanceTimeBy(500)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.screenState shouldBeEqualTo WatchlistScreenState.NoResults
+        }
+
+    private fun buildMovie(
+        id: Int,
+        title: String = "Movie $id",
+        genres: List<Genre> = emptyList(),
+    ): Movie =
+        Movie(
+            id = id,
+            title = title,
+            overview = "",
+            posterPath = null,
+            backdropPath = null,
+            releaseDate = null,
+            popularity = 0.0,
+            voteAverage = 0.0,
+            voteCount = 0,
+            genres = genres,
+            productionCountries = emptyList(),
+            runtime = null,
+            director = null,
+            isWatched = false,
+            isInWatchlist = true,
+            watchedAt = null,
+        )
 }

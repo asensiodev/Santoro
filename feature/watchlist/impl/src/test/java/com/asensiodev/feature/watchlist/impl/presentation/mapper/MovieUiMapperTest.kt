@@ -1,5 +1,6 @@
 package com.asensiodev.feature.watchlist.impl.presentation.mapper
 
+import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.watchlist.impl.presentation.model.MovieUi
 import org.amshove.kluent.shouldBeEqualTo
@@ -32,7 +33,7 @@ class MovieUiMapperTest {
                 title = "Inception",
                 posterPath = "https://image.tmdb.org/t/p/w500/inception.jpg",
                 releaseYear = "2010",
-                genres = "",
+                genres = null,
                 rating = 8.8,
             )
 
@@ -86,7 +87,7 @@ class MovieUiMapperTest {
                     title = "Inception",
                     posterPath = "https://image.tmdb.org/t/p/w500/inception.jpg",
                     releaseYear = "2010",
-                    genres = "",
+                    genres = null,
                     rating = 8.8,
                 ),
                 MovieUi(
@@ -94,7 +95,7 @@ class MovieUiMapperTest {
                     title = "The Dark Knight",
                     posterPath = "https://image.tmdb.org/t/p/w500/dark_knight.jpg",
                     releaseYear = "2008",
-                    genres = "",
+                    genres = null,
                     rating = 9.1,
                 ),
             )
@@ -102,5 +103,30 @@ class MovieUiMapperTest {
         val result = movies.toUiList()
 
         result shouldBeEqualTo expectedMoviesUi
+    }
+
+    @Test
+    fun `GIVEN movie with invalid genre names WHEN toUi THEN filters invalid genres`() {
+        val movie =
+            Movie(
+                id = 1,
+                title = "Inception",
+                posterPath = "/inception.jpg",
+                backdropPath = null,
+                overview = "A thief who steals corporate secrets.",
+                releaseDate = "2010-07-16",
+                popularity = 8.3,
+                voteAverage = 8.8,
+                voteCount = 32000,
+                genres = listOf(Genre(id = 1, name = "null"), Genre(id = 2, name = "Action"), Genre(id = 3, name = "")),
+                productionCountries = listOf(),
+                cast = emptyList(),
+                isWatched = false,
+                isInWatchlist = true,
+            )
+
+        val result = movie.toUi()
+
+        result.genres shouldBeEqualTo "Action"
     }
 }

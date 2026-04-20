@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.usecase.ObserveHasSeenDetailTooltipUseCase
 import com.asensiodev.core.domain.usecase.SetDetailTooltipSeenUseCase
+import com.asensiodev.core.testing.coVerifyOnce
 import com.asensiodev.core.testing.extension.CoroutineTestExtension
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseCase
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.UpdateMovieStateUseCase
@@ -124,6 +125,38 @@ class MovieDetailViewModelTest {
             }
 
         @Test
+        fun `GIVEN watched movie WHEN ToggleWatchlist intent succeeds THEN moves movie to watchlist`() =
+            runTest {
+                val watchedAt = 1_712_345_678_000L
+                val watchedMovie = testMovie.copy(isWatched = true, watchedAt = watchedAt)
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(watchedMovie))
+                coEvery { updateMovieStateUseCase(any()) } returns Result.success(true)
+
+                viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
+                advanceUntilIdle()
+
+                viewModel.process(MovieDetailIntent.ToggleWatchlist)
+                advanceUntilIdle()
+
+                viewModel.uiState.value.movie shouldBeEqualTo
+                    watchedMovie.toUi().copy(
+                        isWatched = false,
+                        isInWatchlist = true,
+                        watchedAt = null,
+                    )
+                coVerifyOnce {
+                    updateMovieStateUseCase(
+                        match { updatedMovie ->
+                            updatedMovie.id == watchedMovie.id &&
+                                updatedMovie.isWatched == false &&
+                                updatedMovie.isInWatchlist == true &&
+                                updatedMovie.watchedAt == null
+                        },
+                    )
+                }
+            }
+
+        @Test
         fun `GIVEN movie WHEN ToggleWatchlist intent fails THEN emits ShowError effect`() =
             runTest {
                 val errorMessage = "Failed to update watchlist"
@@ -198,6 +231,37 @@ class MovieDetailViewModelTest {
                 }
 
                 coVerify { updateMovieStateUseCase(any()) }
+            }
+
+        @Test
+        fun `GIVEN watchlist movie WHEN ToggleWatched intent succeeds THEN moves movie to watched`() =
+            runTest {
+                val watchlistMovie = testMovie.copy(isInWatchlist = true)
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(watchlistMovie))
+                coEvery { updateMovieStateUseCase(any()) } returns Result.success(true)
+
+                viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
+                advanceUntilIdle()
+
+                viewModel.process(MovieDetailIntent.ToggleWatched)
+                advanceUntilIdle()
+
+                val actualMovie = viewModel.uiState.value.movie
+                actualMovie?.isWatched shouldBeEqualTo true
+                actualMovie?.isInWatchlist shouldBeEqualTo false
+                if (actualMovie?.watchedAt == null) {
+                    throw AssertionError("watchedAt should not be null when moved to watched")
+                }
+                coVerifyOnce {
+                    updateMovieStateUseCase(
+                        match { updatedMovie ->
+                            updatedMovie.id == watchlistMovie.id &&
+                                updatedMovie.isWatched &&
+                                !updatedMovie.isInWatchlist &&
+                                updatedMovie.watchedAt != null
+                        },
+                    )
+                }
             }
 
         @Test

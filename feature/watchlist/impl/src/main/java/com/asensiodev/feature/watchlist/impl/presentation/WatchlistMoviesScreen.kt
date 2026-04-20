@@ -30,6 +30,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -111,6 +115,13 @@ internal fun WatchlistMoviesScreen(
                     movies = uiState.movies,
                     onMovieClick = onMovieClick,
                     onRemoveMovie = { onProcess(WatchlistIntent.RequestRemove(it)) },
+                )
+            }
+
+            is WatchlistScreenState.NoResults -> {
+                NoResultsContent(
+                    text = stringResource(SR.string.watchlist_search_no_results_text),
+                    subtitle = stringResource(SR.string.watchlist_search_no_results_subtitle),
                 )
             }
 
@@ -223,13 +234,22 @@ private fun ConfirmRemoveDialog(
     onDismiss: () -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
+    val bodyTemplate = stringResource(SR.string.watchlist_remove_dialog_body)
+    val bodyText = stringResource(SR.string.watchlist_remove_dialog_body, movieTitle)
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(text = stringResource(SR.string.watchlist_remove_dialog_title))
         },
         text = {
-            Text(text = stringResource(SR.string.watchlist_remove_dialog_body, movieTitle))
+            Text(
+                text =
+                    buildWatchlistRemoveDialogBody(
+                        template = bodyTemplate,
+                        formattedText = bodyText,
+                        movieTitle = movieTitle,
+                    ),
+            )
         },
         confirmButton = {
             TextButton(onClick = {
@@ -248,6 +268,24 @@ private fun ConfirmRemoveDialog(
             }
         },
     )
+}
+
+private fun buildWatchlistRemoveDialogBody(
+    template: String,
+    formattedText: String,
+    movieTitle: String,
+) = buildAnnotatedString {
+    val placeholderMatch = WATCHLIST_REMOVE_DIALOG_TITLE_PLACEHOLDER.find(template)
+    if (placeholderMatch == null) {
+        append(formattedText)
+        return@buildAnnotatedString
+    }
+
+    append(template.substring(startIndex = 0, endIndex = placeholderMatch.range.first))
+    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+        append(movieTitle)
+    }
+    append(template.substring(startIndex = placeholderMatch.range.last + 1))
 }
 
 @PreviewLightDark
@@ -279,3 +317,5 @@ private fun WatchlistMoviesScreenPreview() {
 }
 
 private const val MOVIE_SAMPLE_LIST_SIZE = 5
+
+private val WATCHLIST_REMOVE_DIALOG_TITLE_PLACEHOLDER = Regex("%(\\d+\\$)?s")

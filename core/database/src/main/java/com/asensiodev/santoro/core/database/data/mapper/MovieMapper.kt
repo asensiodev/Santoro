@@ -30,7 +30,10 @@ fun MovieEntity.toDomain(): Movie =
 fun String.toGenres(): List<Genre> {
     if (isBlank()) return emptyList()
     val gson = Gson()
-    return gson.fromJson(this, Array<Genre>::class.java)?.toList().orEmpty()
+    return gson
+        .fromJson(this, Array<StoredGenre>::class.java)
+        ?.mapNotNull { storedGenre -> storedGenre.toDomain() }
+        .orEmpty()
 }
 
 fun String.toProductionCountries(): List<ProductionCountry> {
@@ -50,7 +53,7 @@ fun Movie.toEntity(): MovieEntity {
         popularity = popularity,
         voteAverage = voteAverage,
         voteCount = voteCount,
-        genres = gson.toJson(genres),
+        genres = gson.toJson(genres.mapNotNull { genre -> genre.toStoredGenre() }),
         productionCountries = gson.toJson(productionCountries),
         tagline = tagline,
         runtime = runtime,
@@ -60,3 +63,27 @@ fun Movie.toEntity(): MovieEntity {
         updatedAt = System.currentTimeMillis(),
     )
 }
+
+private data class StoredGenre(
+    val id: Int?,
+    val name: String?,
+)
+
+private fun StoredGenre.toDomain(): Genre? =
+    id?.let { safeId ->
+        name.toValidGenreName()?.let { safeName ->
+            Genre(id = safeId, name = safeName)
+        }
+    }
+
+private fun Genre.toStoredGenre(): StoredGenre? {
+    val safeName = runCatching { name }.getOrNull().toValidGenreName() ?: return null
+    return StoredGenre(id = id, name = safeName)
+}
+
+private fun String?.toValidGenreName(): String? =
+    this?.takeUnless { genreName ->
+        genreName.isBlank() || genreName.equals(NULL_LITERAL, ignoreCase = true)
+    }
+
+private const val NULL_LITERAL = "null"
