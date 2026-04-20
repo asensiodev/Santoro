@@ -144,7 +144,30 @@ class WatchlistMoviesViewModelTest {
         }
 
     @Test
-    fun `GIVEN no movieToRemove WHEN ConfirmRemove intent THEN never enqueues upload`() =
+    fun `GIVEN multiple movies WHEN ConfirmRemove intent THEN removes exactly one movie with correct id`() =
+        runTest {
+            val otherMovie =
+                MovieUi(
+                    id = 99,
+                    title = "Other Movie",
+                    posterPath = null,
+                    releaseYear = "2020",
+                    genres = null,
+                    rating = 7.0,
+                )
+            coEvery { removeFromWatchlistUseCase(inceptionMovieUi.id) } returns Result.success(true)
+            advanceUntilIdle()
+
+            viewModel.process(WatchlistIntent.RequestRemove(inceptionMovieUi))
+            viewModel.process(WatchlistIntent.ConfirmRemove)
+            advanceUntilIdle()
+
+            coVerifyOnce { removeFromWatchlistUseCase(inceptionMovieUi.id) }
+            coVerify(exactly = 0) { removeFromWatchlistUseCase(otherMovie.id) }
+        }
+
+    @Test
+    fun `GIVEN no pending remove WHEN ConfirmRemove intent THEN use case is never called`() =
         runTest {
             advanceUntilIdle()
 

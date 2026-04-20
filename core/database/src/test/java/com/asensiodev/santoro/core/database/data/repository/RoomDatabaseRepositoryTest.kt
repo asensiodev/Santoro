@@ -198,7 +198,7 @@ class RoomDatabaseRepositoryTest {
     @Test
     fun `GIVEN a movie id WHEN removeFromWatchlist THEN delegates to dao and returns success`() =
         runTest {
-            coEvery { movieDao.removeFromWatchlist(1) } just runs
+            coEvery { movieDao.removeFromWatchlist(any(), any()) } just runs
 
             val result = repository.removeFromWatchlist(1)
 
@@ -206,9 +206,23 @@ class RoomDatabaseRepositoryTest {
         }
 
     @Test
+    fun `GIVEN a movie id WHEN removeFromWatchlist THEN passes non-zero updatedAt to dao`() =
+        runTest {
+            var capturedUpdatedAt: Long? = null
+            coEvery { movieDao.removeFromWatchlist(any(), any()) } answers {
+                capturedUpdatedAt = secondArg()
+            }
+
+            repository.removeFromWatchlist(42)
+
+            val captured = capturedUpdatedAt ?: throw AssertionError("updatedAt was not passed to DAO")
+            (captured > 0L) shouldBeEqualTo true
+        }
+
+    @Test
     fun `GIVEN dao throws exception WHEN removeFromWatchlist THEN returns error`() =
         runTest {
-            coEvery { movieDao.removeFromWatchlist(any()) } throws RuntimeException("DB error")
+            coEvery { movieDao.removeFromWatchlist(any(), any()) } throws RuntimeException("DB error")
 
             val result = repository.removeFromWatchlist(1)
 

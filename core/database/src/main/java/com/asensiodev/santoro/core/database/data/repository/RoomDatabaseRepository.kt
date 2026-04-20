@@ -82,7 +82,7 @@ class RoomDatabaseRepository
 
         override suspend fun removeFromWatchlist(movieId: Int): Result<Boolean> =
             try {
-                movieDao.removeFromWatchlist(movieId)
+                movieDao.removeFromWatchlist(movieId, System.currentTimeMillis())
                 Result.success(true)
             } catch (e: SQLiteException) {
                 Result.failure(e)

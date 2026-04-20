@@ -149,6 +149,7 @@ class DefaultSyncRepositoryTest {
                 firestoreDataSource.downloadUserMovies(any())
             } returns Result.success(listOf(remoteEntity))
             coEvery { databaseRepository.getMoviesForSync() } returns Result.success(emptyList())
+            coEvery { databaseRepository.getMovieById(99) } returns Result.success(null)
             coEvery {
                 databaseRepository.upsertMovieFromSync(any(), any(), any(), any(), any(), any(), any(), any(), any())
             } returns Result.success(Unit)
@@ -190,6 +191,28 @@ class DefaultSyncRepositoryTest {
         }
 
     @Test
+    fun `GIVEN getMovieById fails WHEN movie missing from sync list THEN returns error`() =
+        runTest {
+            val remoteEntity = SyncMockUtils.createSyncEntity(movieId = 99, updatedAt = 5000L)
+
+            coEvery {
+                firestoreDataSource.downloadUserMovies(any())
+            } returns Result.success(listOf(remoteEntity))
+            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(emptyList())
+            coEvery { databaseRepository.getMovieById(99) } returns Result.failure(Exception("db error"))
+
+            val result = sut.downloadAndMerge(uid = "uid123")
+
+            result.isFailure shouldBeEqualTo true
+            coVerify(exactly = 0) {
+                databaseRepository.upsertMovieFromSync(any(), any(), any(), any(), any(), any(), any(), any(), any())
+            }
+            coVerify(exactly = 0) {
+                databaseRepository.updateMovieSyncState(any(), any(), any(), any(), any())
+            }
+        }
+
+    @Test
     fun `GIVEN upsert fails WHEN downloadAndMerge THEN returns error`() =
         runTest {
             val remoteEntity = SyncMockUtils.createSyncEntity(movieId = 1, updatedAt = 2000L)
@@ -206,5 +229,123 @@ class DefaultSyncRepositoryTest {
             val result = sut.downloadAndMerge(uid = "uid123")
 
             result.isFailure shouldBeEqualTo true
+        }
+
+    @Test
+    fun `GIVEN remote in watchlist AND removed locally newer WHEN downloadAndMerge THEN does NOT restore movie`() =
+        runTest {
+            val remoteEntity =
+                SyncMockUtils.createSyncEntity(movieId = 10, isInWatchlist = true, updatedAt = 500L)
+            val localRemovedMovie =
+                SyncMockUtils.createMovie(
+                    id = 10,
+                    isInWatchlist = false,
+                    isWatched = false,
+                    updatedAt = 1000L,
+                )
+
+            coEvery {
+                firestoreDataSource.downloadUserMovies(any())
+            } returns Result.success(listOf(remoteEntity))
+            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(emptyList())
+            coEvery { databaseRepository.getMovieById(10) } returns Result.success(localRemovedMovie)
+
+            val result = sut.downloadAndMerge(uid = "uid123")
+
+            result.isSuccess shouldBeEqualTo true
+            coVerify(exactly = 0) {
+                databaseRepository.upsertMovieFromSync(
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                )
+            }
+            coVerify(exactly = 0) {
+                databaseRepository.updateMovieSyncState(any(), any(), any(), any(), any())
+            }
+        }
+
+    @Test
+    fun `GIVEN remote in watchlist AND removed locally older WHEN downloadAndMerge THEN applies remote state`() =
+        runTest {
+            val remoteEntity =
+                SyncMockUtils.createSyncEntity(movieId = 10, isInWatchlist = true, updatedAt = 2000L)
+            val localRemovedMovie =
+                SyncMockUtils.createMovie(
+                    id = 10,
+                    isInWatchlist = false,
+                    isWatched = false,
+                    updatedAt = 500L,
+                )
+
+            coEvery {
+                firestoreDataSource.downloadUserMovies(any())
+            } returns Result.success(listOf(remoteEntity))
+            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(emptyList())
+            coEvery { databaseRepository.getMovieById(10) } returns Result.success(localRemovedMovie)
+            coEvery {
+                databaseRepository.updateMovieSyncState(any(), any(), any(), any(), any())
+            } returns Result.success(Unit)
+
+            val result = sut.downloadAndMerge(uid = "uid123")
+
+            result.isSuccess shouldBeEqualTo true
+            coVerify(exactly = 1) {
+                databaseRepository.updateMovieSyncState(10, false, true, null, 2000L)
+            }
+        }
+
+    @Test
+    fun `GIVEN remote has movie AND movie does not exist locally WHEN downloadAndMerge THEN upserts from Firestore`() =
+        runTest {
+            val remoteEntity =
+                SyncMockUtils.createSyncEntity(movieId = 77, isInWatchlist = true, updatedAt = 3000L)
+
+            coEvery {
+                firestoreDataSource.downloadUserMovies(any())
+            } returns Result.success(listOf(remoteEntity))
+            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(emptyList())
+            coEvery { databaseRepository.getMovieById(77) } returns Result.success(null)
+            coEvery {
+                databaseRepository.upsertMovieFromSync(any(), any(), any(), any(), any(), any(), any(), any(), any())
+            } returns Result.success(Unit)
+
+            val result = sut.downloadAndMerge(uid = "uid123")
+
+            result.isSuccess shouldBeEqualTo true
+            coVerify(exactly = 1) {
+                databaseRepository.upsertMovieFromSync(77, any(), any(), any(), any(), any(), true, any(), 3000L)
+            }
+        }
+
+    @Test
+    fun `GIVEN movie in watchlist on both devices AND same updatedAt WHEN downloadAndMerge THEN does not update`() =
+        runTest {
+            val sameTimestamp = 1000L
+            val remoteEntity =
+                SyncMockUtils.createSyncEntity(movieId = 5, isInWatchlist = true, updatedAt = sameTimestamp)
+            val localMovie =
+                SyncMockUtils.createMovie(id = 5, isInWatchlist = true, updatedAt = sameTimestamp)
+
+            coEvery {
+                firestoreDataSource.downloadUserMovies(any())
+            } returns Result.success(listOf(remoteEntity))
+            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(listOf(localMovie))
+
+            val result = sut.downloadAndMerge(uid = "uid123")
+
+            result.isSuccess shouldBeEqualTo true
+            coVerify(exactly = 0) {
+                databaseRepository.updateMovieSyncState(any(), any(), any(), any(), any())
+            }
+            coVerify(exactly = 0) {
+                databaseRepository.upsertMovieFromSync(any(), any(), any(), any(), any(), any(), any(), any(), any())
+            }
         }
 }

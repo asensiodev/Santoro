@@ -87,21 +87,7 @@ internal class DefaultSyncRepository
                 val localMovie = localMoviesById[remote.movieId]
                 val result =
                     when {
-                        localMovie == null -> {
-                            databaseRepository.upsertMovieFromSync(
-                                movieId = remote.movieId,
-                                title = remote.title,
-                                posterPath = remote.posterPath,
-                                genres = remote.genres,
-                                runtime = remote.runtime,
-                                isWatched = remote.isWatched,
-                                isInWatchlist = remote.isInWatchlist,
-                                watchedAt = remote.watchedAt,
-                                updatedAt = remote.updatedAt,
-                            )
-                        }
-
-                        remote.updatedAt > localMovie.updatedAt -> {
+                        localMovie != null && remote.updatedAt > localMovie.updatedAt -> {
                             databaseRepository.updateMovieSyncState(
                                 movieId = remote.movieId,
                                 isWatched = remote.isWatched,
@@ -111,8 +97,12 @@ internal class DefaultSyncRepository
                             )
                         }
 
-                        else -> {
+                        localMovie != null -> {
                             Result.success(Unit)
+                        }
+
+                        else -> {
+                            mergeMissingFromSyncLocalMovie(remote)
                         }
                     }
                 if (result.isFailure) {
@@ -122,5 +112,41 @@ internal class DefaultSyncRepository
                 }
             }
             return Result.success(Unit)
+        }
+
+        private suspend fun mergeMissingFromSyncLocalMovie(remote: MovieSyncEntity): Result<Unit> {
+            val savedLocallyResult = databaseRepository.getMovieById(remote.movieId)
+            if (savedLocallyResult.isFailure) {
+                return Result.failure(
+                    savedLocallyResult.exceptionOrNull() ?: Exception("Failed to get local movie"),
+                )
+            }
+
+            val savedLocally = savedLocallyResult.getOrNull()
+            return when {
+                savedLocally == null ->
+                    databaseRepository.upsertMovieFromSync(
+                        movieId = remote.movieId,
+                        title = remote.title,
+                        posterPath = remote.posterPath,
+                        genres = remote.genres,
+                        runtime = remote.runtime,
+                        isWatched = remote.isWatched,
+                        isInWatchlist = remote.isInWatchlist,
+                        watchedAt = remote.watchedAt,
+                        updatedAt = remote.updatedAt,
+                    )
+
+                remote.updatedAt > savedLocally.updatedAt ->
+                    databaseRepository.updateMovieSyncState(
+                        movieId = remote.movieId,
+                        isWatched = remote.isWatched,
+                        isInWatchlist = remote.isInWatchlist,
+                        watchedAt = remote.watchedAt,
+                        updatedAt = remote.updatedAt,
+                    )
+
+                else -> Result.success(Unit)
+            }
         }
     }
