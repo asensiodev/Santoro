@@ -5,6 +5,7 @@ import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.ProductionCountry
 import com.asensiodev.santoro.core.database.data.model.MovieEntity
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 
 fun MovieEntity.toDomain(): Movie =
     Movie(
@@ -28,12 +29,28 @@ fun MovieEntity.toDomain(): Movie =
     )
 
 fun String.toGenres(): List<Genre> {
-    if (isBlank()) return emptyList()
     val gson = Gson()
-    return gson
-        .fromJson(this, Array<StoredGenre>::class.java)
-        ?.mapNotNull { storedGenre -> storedGenre.toDomain() }
-        .orEmpty()
+    val parseAsStored =
+        if (isBlank()) {
+            emptyList()
+        } else {
+            runCatching {
+                gson
+                    .fromJson(this, Array<StoredGenre>::class.java)
+                    ?.mapNotNull { storedGenre -> storedGenre.toDomain() }
+                    .orEmpty()
+            }.getOrDefault(emptyList())
+        }
+
+    val parseAsLegacy =
+        runCatching {
+            gson
+                .fromJson(this, Array<Genre>::class.java)
+                ?.mapNotNull { genre -> genre.toStoredGenre()?.toDomain() }
+                .orEmpty()
+        }.getOrDefault(emptyList())
+
+    return parseAsStored.ifEmpty { parseAsLegacy }
 }
 
 fun String.toProductionCountries(): List<ProductionCountry> {
@@ -65,8 +82,8 @@ fun Movie.toEntity(): MovieEntity {
 }
 
 private data class StoredGenre(
-    val id: Int?,
-    val name: String?,
+    @SerializedName("id") val id: Int?,
+    @SerializedName("name") val name: String?,
 )
 
 private fun StoredGenre.toDomain(): Genre? =

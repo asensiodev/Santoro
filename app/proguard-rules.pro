@@ -41,6 +41,9 @@
 -keep class com.asensiodev.santoro.core.database.data.model.** { *; }
 -keep class com.asensiodev.santoro.core.sync.data.model.** { *; }
 
+# Keep DB mapper helper models used by Gson in release
+-keep class com.asensiodev.santoro.core.database.data.mapper.** { *; }
+
 # Kotlin Serialization
 -keepattributes *Annotation*, InnerClasses
 -dontnote kotlinx.serialization.AnnotationsKt
