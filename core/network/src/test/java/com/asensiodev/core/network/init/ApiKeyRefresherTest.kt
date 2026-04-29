@@ -27,6 +27,7 @@ class ApiKeyRefresherTest {
     @Test
     fun `GIVEN remote key is blank WHEN ensureKeyUpToDate is called THEN do nothing`() =
         runTest {
+            coEvery { remoteConfig.initialize() } just runs
             coEvery { repository.getSyncOrNull() } returns null
             coEvery {
                 remoteConfig.getStringParameter(RemoteConfigName.TMDB_SANTORO_API_KEY)
@@ -34,12 +35,14 @@ class ApiKeyRefresherTest {
 
             refresher.ensureKeyUpToDate()
 
+            coVerifyOnce { remoteConfig.initialize() }
             coVerifyNever { repository.refreshFromRemote(any()) }
         }
 
     @Test
     fun `GIVEN local key is null AND remote key is valid WHEN ensureKeyUpToDate THEN update repository`() =
         runTest {
+            coEvery { remoteConfig.initialize() } just runs
             coEvery { repository.getSyncOrNull() } returns null
             coEvery {
                 remoteConfig.getStringParameter(RemoteConfigName.TMDB_SANTORO_API_KEY)
@@ -48,12 +51,14 @@ class ApiKeyRefresherTest {
 
             refresher.ensureKeyUpToDate()
 
+            coVerifyOnce { remoteConfig.initialize() }
             coVerifyOnce { repository.refreshFromRemote(any()) }
         }
 
     @Test
     fun `GIVEN local key is same as remote WHEN ensureKeyUpToDate THEN do nothing`() =
         runTest {
+            coEvery { remoteConfig.initialize() } just runs
             coEvery { repository.getSyncOrNull() } returns "same-key"
             coEvery {
                 remoteConfig.getStringParameter(RemoteConfigName.TMDB_SANTORO_API_KEY)
@@ -61,12 +66,14 @@ class ApiKeyRefresherTest {
 
             refresher.ensureKeyUpToDate()
 
+            coVerifyOnce { remoteConfig.initialize() }
             coVerifyNever { repository.refreshFromRemote(any()) }
         }
 
     @Test
     fun `GIVEN local key differs from remote WHEN ensureKeyUpToDate THEN update repository`() =
         runTest {
+            coEvery { remoteConfig.initialize() } just runs
             coEvery { repository.getSyncOrNull() } returns "old-key"
             coEvery {
                 remoteConfig.getStringParameter(RemoteConfigName.TMDB_SANTORO_API_KEY)
@@ -75,6 +82,7 @@ class ApiKeyRefresherTest {
 
             refresher.ensureKeyUpToDate()
 
+            coVerifyOnce { remoteConfig.initialize() }
             coVerifyOnce { repository.refreshFromRemote(any()) }
         }
 }

@@ -4,6 +4,7 @@ import com.asensiodev.library.remoteconfig.api.RemoteConfigName
 import com.asensiodev.library.remoteconfig.api.RemoteConfigProvider
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.remoteConfigSettings
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -19,7 +20,10 @@ class FirebaseRemoteConfigProvider
                     minimumFetchIntervalInSeconds = MINIMUM_FETCH_INTERVAL_IN_SECONDS
                 }
             firebaseRemoteConfig.setConfigSettingsAsync(remoteConfigSettings)
-            firebaseRemoteConfig.fetchAndActivate()
+        }
+
+        override suspend fun initialize() {
+            firebaseRemoteConfig.fetchAndActivate().await()
         }
 
         override fun getStringParameter(remoteConfigName: RemoteConfigName): String =

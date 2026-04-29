@@ -18,12 +18,14 @@ import com.asensiodev.feature.searchmovies.impl.domain.usecase.SaveRecentSearchU
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesByQueryAndGenreUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.presentation.mapper.toUiList
+import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 import com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -366,10 +368,69 @@ internal class SearchMoviesViewModel
             if (!fromRefresh) {
                 _uiState.update { it.copy(screenState = SearchScreenState.Loading) }
             }
+            viewModelScope.launch { loadDashboardData(fromRefresh) }
+        }
 
-            viewModelScope.launch {
-                if (!fromRefresh) cachingRepository.clearStaleEntries()
+        private suspend fun loadDashboardData(fromRefresh: Boolean) {
+            if (!fromRefresh) cachingRepository.clearStaleEntries()
 
+            val (results, isStale) = fetchDashboardResults()
+            val nowPlayingResult = results.nowPlaying
+            val popularResult = results.popular
+            val topRatedResult = results.topRated
+            val upcomingResult = results.upcoming
+            val trendingResult = results.trending
+
+            _uiState.update { state ->
+                val nowPlayingList = nowPlayingResult.getOrDefault(emptyList()).toUiList()
+                val popularList = popularResult.getOrDefault(emptyList()).toUiList()
+                val topRatedList = topRatedResult.getOrDefault(emptyList()).toUiList()
+                val upcomingList = upcomingResult.getOrDefault(emptyList()).toUiList()
+                val trendingList = trendingResult.getOrDefault(emptyList()).toUiList()
+                val finalScreenState =
+                    resolveDashboardScreenState(
+                        listOf(
+                            nowPlayingList,
+                            popularList,
+                            topRatedList,
+                            upcomingList,
+                            trendingList,
+                        ),
+                        listOf(
+                            nowPlayingResult,
+                            popularResult,
+                            topRatedResult,
+                            upcomingResult,
+                            trendingResult,
+                        ),
+                    )
+
+                state.copy(
+                    screenState = finalScreenState,
+                    isShowingStaleData = isStale,
+                    isRefreshing = false,
+                    nowPlayingMovies = nowPlayingList,
+                    popularMovies = popularList,
+                    topRatedMovies = topRatedList,
+                    upcomingMovies = upcomingList,
+                    trendingMovies = trendingList,
+                    trendingSuggestions =
+                        trendingList
+                            .mapNotNull {
+                                it.title.takeIf { title -> title.isNotBlank() }
+                            }.take(TRENDING_SUGGESTIONS_LIMIT),
+                    currentPopularPage = if (popularList.isNotEmpty()) FIRST_PAGE + NEXT_PAGE else FIRST_PAGE,
+                    isPopularEndReached = popularList.isEmpty(),
+                )
+            }
+            if (fromRefresh) _effect.trySend(SearchMoviesEffect.ShowRefreshSuccess)
+        }
+
+        private suspend fun fetchDashboardResults(): Pair<
+            DashboardResults,
+            Boolean,
+        > =
+            coroutineScope {
                 val popularDeferred =
                     async { collectWithStale(getPopularMoviesUseCase(FIRST_PAGE)) }
                 val nowPlayingDeferred =
@@ -394,36 +455,14 @@ internal class SearchMoviesViewModel
                         upcomingStale ||
                         trendingStale
 
-                _uiState.update { state ->
-                    val nowPlayingList = nowPlayingResult.getOrDefault(emptyList()).toUiList()
-                    val popularList = popularResult.getOrDefault(emptyList()).toUiList()
-
-                    state.copy(
-                        screenState = SearchScreenState.Content,
-                        isShowingStaleData = isStale,
-                        isRefreshing = false,
-                        nowPlayingMovies = nowPlayingList,
-                        popularMovies = popularList,
-                        topRatedMovies = topRatedResult.getOrDefault(emptyList()).toUiList(),
-                        upcomingMovies = upcomingResult.getOrDefault(emptyList()).toUiList(),
-                        trendingMovies = trendingResult.getOrDefault(emptyList()).toUiList(),
-                        trendingSuggestions =
-                            trendingResult
-                                .getOrDefault(emptyList())
-                                .mapNotNull { movie -> movie.title.takeIf { it.isNotBlank() } }
-                                .take(TRENDING_SUGGESTIONS_LIMIT),
-                        currentPopularPage =
-                            if (popularList.isNotEmpty()) {
-                                FIRST_PAGE + NEXT_PAGE
-                            } else {
-                                FIRST_PAGE
-                            },
-                        isPopularEndReached = popularList.isEmpty(),
-                    )
-                }
-                if (fromRefresh) _effect.trySend(SearchMoviesEffect.ShowRefreshSuccess)
+                DashboardResults(
+                    nowPlaying = nowPlayingResult,
+                    popular = popularResult,
+                    topRated = topRatedResult,
+                    upcoming = upcomingResult,
+                    trending = trendingResult,
+                ) to isStale
             }
-        }
 
         private fun getPopularMovies() {
             _uiState.update { it.copy(isPopularLoadingMore = true) }
@@ -452,6 +491,35 @@ internal class SearchMoviesViewModel
             }
         }
     }
+
+private data class DashboardResults(
+    val nowPlaying: Result<List<Movie>>,
+    val popular: Result<List<Movie>>,
+    val topRated: Result<List<Movie>>,
+    val upcoming: Result<List<Movie>>,
+    val trending: Result<List<Movie>>,
+)
+
+private fun resolveDashboardScreenState(
+    movieLists: List<List<MovieUi>>,
+    results: List<Result<List<Movie>>>,
+): SearchScreenState {
+    val hasAnyData = movieLists.any { it.isNotEmpty() }
+    val hasAnySuccess = results.any { it.isSuccess }
+    return when {
+        hasAnyData -> SearchScreenState.Content
+        hasAnySuccess -> SearchScreenState.Empty
+        else ->
+            SearchScreenState.Error(
+                results
+                    .firstOrNull {
+                        it.isFailure
+                    }?.exceptionOrNull()
+                    ?.message
+                    .orEmpty(),
+            )
+    }
+}
 
 private suspend fun collectWithStale(
     flow: kotlinx.coroutines.flow.Flow<Result<List<Movie>>>,

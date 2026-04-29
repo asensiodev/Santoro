@@ -351,4 +351,20 @@ class SearchMoviesViewModelTest {
                     com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType.POPULAR
             }
         }
+
+    @Test
+    fun `GIVEN all dashboard calls fail without cache WHEN loadInitialData THEN screenState is Error`() =
+        runTest {
+            every { getPopularMoviesUseCase(any()) } returns flowOf(Result.failure(java.io.IOException("No network")))
+            every { getNowPlayingMoviesUseCase(any()) } returns
+                flowOf(Result.failure(java.io.IOException("No network")))
+            every { getTopRatedMoviesUseCase(any()) } returns flowOf(Result.failure(java.io.IOException("No network")))
+            every { getUpcomingMoviesUseCase(any()) } returns flowOf(Result.failure(java.io.IOException("No network")))
+            every { getTrendingMoviesUseCase(any()) } returns flowOf(Result.failure(java.io.IOException("No network")))
+
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.screenState shouldBeInstanceOf SearchScreenState.Error::class
+        }
 }

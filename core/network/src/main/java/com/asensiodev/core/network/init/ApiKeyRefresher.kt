@@ -20,6 +20,8 @@ class ApiKeyRefresher
          * If RC fails or returns blank, this method is a no-op.
          */
         suspend fun ensureKeyUpToDate() {
+            remoteConfig.initialize()
+
             val current: String? = repository.getSyncOrNull()
 
             val remote: String =
