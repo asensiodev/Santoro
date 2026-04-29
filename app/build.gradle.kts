@@ -1,5 +1,3 @@
-import java.util.Properties
-
 plugins {
     alias(libs.plugins.convention.android.application.compose)
     alias(libs.plugins.convention.android.hilt)
@@ -14,19 +12,22 @@ android {
 
     signingConfigs {
         create("release") {
-            val keystoreFile = project.rootProject.file("local.properties")
-            val properties = Properties()
-            properties.load(keystoreFile.inputStream())
-            keyAlias = properties.getProperty("KEYSTORE_KEY_ALIAS")
-            storeFile = file(properties.getProperty("KEYSTORE_STORE_FILE"))
-            storePassword = properties.getProperty("KEYSTORE_STORE_PASSWORD")
-            keyPassword = properties.getProperty("KEYSTORE_KEY_PASSWORD")
+            val keystoreStoreFile = findProperty("KEYSTORE_STORE_FILE") as String?
+            if (keystoreStoreFile != null) {
+                keyAlias = findProperty("KEYSTORE_KEY_ALIAS") as String?
+                storeFile = file(keystoreStoreFile)
+                storePassword = findProperty("KEYSTORE_STORE_PASSWORD") as String?
+                keyPassword = findProperty("KEYSTORE_KEY_PASSWORD") as String?
+            }
         }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            val releaseSigning = signingConfigs.findByName("release")
+            if (releaseSigning?.storeFile != null) {
+                signingConfig = releaseSigning
+            }
         }
     }
 
