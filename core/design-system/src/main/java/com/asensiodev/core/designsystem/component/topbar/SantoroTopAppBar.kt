@@ -15,10 +15,12 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.asensiodev.core.designsystem.theme.AppIcons
 import com.asensiodev.core.designsystem.theme.SantoroTheme
 import com.asensiodev.core.designsystem.theme.Size
+import com.asensiodev.santoro.core.stringresources.R as SR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,7 +40,7 @@ fun SantoroAppBar(
                     IconButton(onClick = onBackClicked) {
                         Icon(
                             imageVector = AppIcons.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(SR.string.navigate_back),
                         )
                     }
                 },

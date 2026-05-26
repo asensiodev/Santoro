@@ -419,7 +419,12 @@ internal class SearchMoviesViewModel
                             .mapNotNull {
                                 it.title.takeIf { title -> title.isNotBlank() }
                             }.take(TRENDING_SUGGESTIONS_LIMIT),
-                    currentPopularPage = if (popularList.isNotEmpty()) FIRST_PAGE + NEXT_PAGE else FIRST_PAGE,
+                    currentPopularPage =
+                        if (popularList.isNotEmpty()) {
+                            FIRST_PAGE + NEXT_PAGE
+                        } else {
+                            FIRST_PAGE
+                        },
                     isPopularEndReached = popularList.isEmpty(),
                 )
             }

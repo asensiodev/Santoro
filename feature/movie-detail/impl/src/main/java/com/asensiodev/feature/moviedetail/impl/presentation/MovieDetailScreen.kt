@@ -273,7 +273,7 @@ private fun CollapsibleTopAppBar(
             IconButton(onClick = onBackClicked) {
                 Icon(
                     imageVector = AppIcons.ArrowBack,
-                    contentDescription = null,
+                    contentDescription = stringResource(SR.string.navigate_back),
                     tint = iconTint,
                 )
             }
