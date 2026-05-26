@@ -26,42 +26,42 @@ internal class CachingSearchMoviesRepository
             cachedFlow(
                 section = BrowseSectionKeys.searchKey(query),
                 page = page,
-                ttlMs = BrowseCacheTtl.SEARCH_MS,
+                cacheValidityMs = BrowseCacheTtl.SEARCH_MS,
             ) { remoteDatasource.searchMovies(query, page) }
 
         override fun getNowPlayingMovies(page: Int): Flow<Result<List<Movie>>> =
             cachedFlow(
                 section = BrowseSectionKeys.NOW_PLAYING,
                 page = page,
-                ttlMs = BrowseCacheTtl.CURATED_MS,
+                cacheValidityMs = BrowseCacheTtl.CURATED_MS,
             ) { remoteDatasource.getNowPlayingMovies(page) }
 
         override fun getPopularMovies(page: Int): Flow<Result<List<Movie>>> =
             cachedFlow(
                 section = BrowseSectionKeys.POPULAR,
                 page = page,
-                ttlMs = BrowseCacheTtl.CURATED_MS,
+                cacheValidityMs = BrowseCacheTtl.CURATED_MS,
             ) { remoteDatasource.getPopularMovies(page) }
 
         override fun getTopRatedMovies(page: Int): Flow<Result<List<Movie>>> =
             cachedFlow(
                 section = BrowseSectionKeys.TOP_RATED,
                 page = page,
-                ttlMs = BrowseCacheTtl.CURATED_MS,
+                cacheValidityMs = BrowseCacheTtl.CURATED_MS,
             ) { remoteDatasource.getTopRatedMovies(page) }
 
         override fun getUpcomingMovies(page: Int): Flow<Result<List<Movie>>> =
             cachedFlow(
                 section = BrowseSectionKeys.UPCOMING,
                 page = page,
-                ttlMs = BrowseCacheTtl.CURATED_MS,
+                cacheValidityMs = BrowseCacheTtl.CURATED_MS,
             ) { remoteDatasource.getUpcomingMovies(page) }
 
         override fun getTrendingMovies(page: Int): Flow<Result<List<Movie>>> =
             cachedFlow(
                 section = BrowseSectionKeys.TRENDING,
                 page = page,
-                ttlMs = BrowseCacheTtl.CURATED_MS,
+                cacheValidityMs = BrowseCacheTtl.CURATED_MS,
             ) { remoteDatasource.getTrendingMovies(page) }
 
         override fun getMoviesByGenre(
@@ -77,7 +77,7 @@ internal class CachingSearchMoviesRepository
         private fun cachedFlow(
             section: String,
             page: Int,
-            ttlMs: Long,
+            cacheValidityMs: Long,
             remoteFetch: suspend () -> Result<List<Movie>>,
         ): Flow<Result<List<Movie>>> =
             flow {
@@ -85,7 +85,7 @@ internal class CachingSearchMoviesRepository
                     withContext(dispatchers.io) { localDataSource.getCachedPage(section, page) }
                 val now = System.currentTimeMillis()
 
-                if (cached != null && now - cached.cachedAt < ttlMs) {
+                if (cached != null && now - cached.cachedAt < cacheValidityMs) {
                     emit(Result.success(cached.movies))
                     return@flow
                 }
