@@ -134,6 +134,7 @@
     <string name="settings_delete_account_confirm">Delete</string>
     <string name="settings_delete_account_cancel">Cancel</string>
     <string name="settings_delete_account_error">There was a problem deleting your account. Please try again.</string>
+    <string name="settings_logout_error">There was a problem syncing your data before logout. Please try again.</string>
     <string name="settings_tmdb_attribution">Powered by TMDB</string>
     <string name="settings_tmdb_url">https://www.themoviedb.org</string>
     <string name="settings_privacy_policy">Privacy Policy</string>

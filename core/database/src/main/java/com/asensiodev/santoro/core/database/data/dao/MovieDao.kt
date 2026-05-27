@@ -46,7 +46,7 @@ interface MovieDao {
         updatedAt: Long,
     )
 
-    @Query("SELECT * FROM movies WHERE isWatched = 1 OR isInWatchlist = 1")
+    @Query("SELECT * FROM movies WHERE updatedAt > 0")
     suspend fun getMoviesForSync(): List<MovieEntity>
 
     @Query(

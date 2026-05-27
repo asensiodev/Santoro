@@ -7,10 +7,12 @@ import androidx.lifecycle.viewModelScope
 import com.asensiodev.auth.domain.usecase.ObserveAuthStateUseCase
 import com.asensiodev.auth.domain.usecase.SignOutUseCase
 import com.asensiodev.core.domain.model.AppLanguage
+import com.asensiodev.core.domain.model.SantoroUser
 import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.core.domain.usecase.ObserveThemeUseCase
 import com.asensiodev.core.domain.usecase.SetThemeUseCase
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
+import com.asensiodev.santoro.core.sync.domain.repository.SyncRepository
 import com.asensiodev.settings.impl.domain.usecase.DeleteAccountUseCase
 import com.asensiodev.ui.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,7 +36,10 @@ internal class SettingsViewModel
         private val observeThemeUseCase: ObserveThemeUseCase,
         private val setThemeUseCase: SetThemeUseCase,
         private val databaseRepository: DatabaseRepository,
+        private val syncRepository: SyncRepository,
     ) : ViewModel() {
+        private var currentUser: SantoroUser? = null
+
         private val _uiState =
             MutableStateFlow(SettingsUiState(currentLanguage = resolveCurrentLanguage()))
         val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
@@ -62,6 +67,7 @@ internal class SettingsViewModel
         private fun observeAuth() {
             viewModelScope.launch {
                 observeAuthStateUseCase().collect { user ->
+                    currentUser = user
                     _uiState.update { it.copy(isAnonymous = user?.isAnonymous == true) }
                 }
             }
@@ -110,8 +116,27 @@ internal class SettingsViewModel
 
         private fun onLogoutClicked() {
             viewModelScope.launch {
-                databaseRepository.clearAllUserData()
-                signOutUseCase()
+                val user = currentUser
+                _uiState.update { it.copy(isLoading = true, error = null) }
+                val syncResult =
+                    if (user != null && !user.isAnonymous) {
+                        syncRepository.uploadPendingChanges(user.uid)
+                    } else {
+                        Result.success(Unit)
+                    }
+                syncResult
+                    .onSuccess {
+                        databaseRepository.clearAllUserData()
+                        signOutUseCase()
+                        _uiState.update { it.copy(isLoading = false) }
+                    }.onFailure {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                error = UiText.StringResource(SR.string.settings_logout_error),
+                            )
+                        }
+                    }
             }
         }
 
