@@ -132,6 +132,44 @@ class MovieDaoTest {
         }
     }
 
+    @Test
+    fun getMoviesForSync_returnsMoviesWithLocalChangesEvenWhenUnmarked() {
+        runBlocking {
+            val activeMovie =
+                MockUtils.createTestMovieEntity(
+                    id = 111,
+                    title = "Active",
+                    isWatched = true,
+                    updatedAt = 1000L,
+                )
+            val unmarkedMovie =
+                MockUtils.createTestMovieEntity(
+                    id = 112,
+                    title = "Unmarked",
+                    isWatched = false,
+                    isInWatchlist = false,
+                    updatedAt = 2000L,
+                )
+            val untouchedMovie =
+                MockUtils.createTestMovieEntity(
+                    id = 113,
+                    title = "Untouched",
+                    isWatched = false,
+                    isInWatchlist = false,
+                    updatedAt = 0L,
+                )
+            movieDao.insertOrUpdateMovie(activeMovie)
+            movieDao.insertOrUpdateMovie(unmarkedMovie)
+            movieDao.insertOrUpdateMovie(untouchedMovie)
+
+            val movies = movieDao.getMoviesForSync()
+
+            movies.size shouldBeEqualTo 2
+            movies.map { it.id } shouldContain 111
+            movies.map { it.id } shouldContain 112
+        }
+    }
+
     @ExperimentalCoroutinesApi
     @Test
     fun searchWatchedMoviesByTitle_returnsFilteredResults() {

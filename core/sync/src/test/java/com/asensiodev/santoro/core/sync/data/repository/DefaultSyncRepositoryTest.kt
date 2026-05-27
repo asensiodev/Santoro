@@ -76,6 +76,34 @@ class DefaultSyncRepositoryTest {
         }
 
     @Test
+    fun `GIVEN locally unmarked movie WHEN uploadPendingChanges THEN uploads false state`() =
+        runTest {
+            val movie =
+                SyncMockUtils.createMovie(
+                    id = 42,
+                    isWatched = false,
+                    isInWatchlist = false,
+                    updatedAt = 2000L,
+                )
+            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(listOf(movie))
+            coEvery { firestoreDataSource.uploadMovie(any(), any()) } returns Result.success(Unit)
+
+            sut.uploadPendingChanges(uid = "uid123")
+
+            coVerify(exactly = 1) {
+                firestoreDataSource.uploadMovie(
+                    "uid123",
+                    match {
+                        it.movieId == 42 &&
+                            !it.isWatched &&
+                            !it.isInWatchlist &&
+                            it.updatedAt == 2000L
+                    },
+                )
+            }
+        }
+
+    @Test
     fun `GIVEN upload fails mid-batch WHEN uploadPendingChanges THEN returns error early`() =
         runTest {
             val movies =

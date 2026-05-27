@@ -10,6 +10,7 @@ object MockUtils {
         isInWatchlist: Boolean = false,
         genres: String = "[]",
         productionCountries: String = "[]",
+        updatedAt: Long = 0L,
     ) = MovieEntity(
         id = id,
         title = title,
@@ -23,5 +24,6 @@ object MockUtils {
         productionCountries = productionCountries,
         isWatched = isWatched,
         isInWatchlist = isInWatchlist,
+        updatedAt = updatedAt,
     )
 }
