@@ -11,7 +11,6 @@ import com.asensiodev.core.domain.model.SantoroUser
 import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.core.domain.usecase.ObserveThemeUseCase
 import com.asensiodev.core.domain.usecase.SetThemeUseCase
-import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import com.asensiodev.santoro.core.sync.domain.repository.SyncRepository
 import com.asensiodev.settings.impl.domain.usecase.DeleteAccountUseCase
 import com.asensiodev.ui.UiText
@@ -35,7 +34,6 @@ internal class SettingsViewModel
         private val deleteAccountUseCase: DeleteAccountUseCase,
         private val observeThemeUseCase: ObserveThemeUseCase,
         private val setThemeUseCase: SetThemeUseCase,
-        private val databaseRepository: DatabaseRepository,
         private val syncRepository: SyncRepository,
     ) : ViewModel() {
         private var currentUser: SantoroUser? = null
@@ -126,7 +124,6 @@ internal class SettingsViewModel
                     }
                 syncResult
                     .onSuccess {
-                        databaseRepository.clearAllUserData()
                         signOutUseCase()
                         _uiState.update { it.copy(isLoading = false) }
                     }.onFailure {

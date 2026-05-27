@@ -9,7 +9,6 @@ import com.asensiodev.core.domain.model.SantoroUser
 import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.core.domain.usecase.ObserveThemeUseCase
 import com.asensiodev.core.domain.usecase.SetThemeUseCase
-import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import com.asensiodev.santoro.core.sync.domain.repository.SyncRepository
 import com.asensiodev.settings.impl.domain.usecase.DeleteAccountUseCase
 import io.mockk.coEvery
@@ -41,7 +40,6 @@ class SettingsViewModelTest {
     private val deleteAccountUseCase: DeleteAccountUseCase = mockk(relaxed = true)
     private val observeThemeUseCase: ObserveThemeUseCase = mockk()
     private val setThemeUseCase: SetThemeUseCase = mockk(relaxed = true)
-    private val databaseRepository: DatabaseRepository = mockk(relaxed = true)
     private val syncRepository: SyncRepository = mockk(relaxed = true)
 
     private lateinit var sut: SettingsViewModel
@@ -61,7 +59,6 @@ class SettingsViewModelTest {
                 deleteAccountUseCase = deleteAccountUseCase,
                 observeThemeUseCase = observeThemeUseCase,
                 setThemeUseCase = setThemeUseCase,
-                databaseRepository = databaseRepository,
                 syncRepository = syncRepository,
             )
     }
@@ -134,17 +131,16 @@ class SettingsViewModelTest {
         }
 
     @Test
-    fun `GIVEN OnLogoutClicked WHEN process THEN clears data and signs out`() =
+    fun `GIVEN OnLogoutClicked WHEN process THEN signs out without clearing data`() =
         runTest {
             sut.process(SettingsIntent.OnLogoutClicked)
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { databaseRepository.clearAllUserData() }
             coVerify(exactly = 1) { signOutUseCase() }
         }
 
     @Test
-    fun `GIVEN Google user WHEN OnLogoutClicked THEN uploads changes before clearing data`() =
+    fun `GIVEN Google user WHEN OnLogoutClicked THEN uploads changes before signing out`() =
         runTest {
             val user = SantoroUser("uid123", "test@email.com", null, null, false)
             every { observeAuthStateUseCase() } returns flowOf(user)
@@ -155,7 +151,6 @@ class SettingsViewModelTest {
             advanceUntilIdle()
 
             coVerify(exactly = 1) { syncRepository.uploadPendingChanges("uid123") }
-            coVerify(exactly = 1) { databaseRepository.clearAllUserData() }
             coVerify(exactly = 1) { signOutUseCase() }
         }
 
@@ -171,7 +166,6 @@ class SettingsViewModelTest {
             sut.process(SettingsIntent.OnLogoutClicked)
             advanceUntilIdle()
 
-            coVerify(exactly = 0) { databaseRepository.clearAllUserData() }
             coVerify(exactly = 0) { signOutUseCase() }
             sut.uiState.value.error
                 .shouldNotBeNull()

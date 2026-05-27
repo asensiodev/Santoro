@@ -13,13 +13,10 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -65,15 +62,6 @@ class MainActivityViewModel
             authFlow
                 .mapNotNull { user -> user?.uid }
                 .distinctUntilChanged()
-                .drop(1)
-                .onEach {
-                    syncScheduler.schedulePeriodicSync()
-                    syncScheduler.scheduleImmediateSync()
-                }.launchIn(viewModelScope)
-
-            authFlow
-                .filter { user -> user != null }
-                .take(1)
                 .onEach {
                     syncScheduler.schedulePeriodicSync()
                     syncScheduler.scheduleImmediateSync()
