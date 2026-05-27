@@ -192,6 +192,18 @@ class SearchMoviesViewModelTest {
         }
 
     @Test
+    fun `GIVEN empty browse content WHEN query updated THEN loading is shown before debounced search`() =
+        runTest {
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+
+            viewModel.process(SearchMoviesIntent.UpdateQuery("c"))
+
+            viewModel.uiState.value.screenState shouldBeInstanceOf SearchScreenState.Loading::class
+            viewModel.uiState.value.searchMovieResults shouldBeEqualTo emptyList()
+        }
+
+    @Test
     fun `GIVEN network error with no cache WHEN loadInitialData THEN isShowingStaleData is false`() =
         runTest {
             every { getPopularMoviesUseCase(any()) } returns

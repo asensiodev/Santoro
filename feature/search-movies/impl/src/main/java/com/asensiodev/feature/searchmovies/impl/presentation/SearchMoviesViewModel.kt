@@ -125,7 +125,18 @@ internal class SearchMoviesViewModel
         }
 
         private fun updateQuery(query: String) {
-            _uiState.update { it.copy(query = query) }
+            _uiState.update {
+                it.copy(
+                    query = query,
+                    screenState =
+                        when {
+                            query.isBlank() &&
+                                it.selectedGenreId == null -> SearchScreenState.Content
+                            it.searchMovieResults.isEmpty() -> SearchScreenState.Loading
+                            else -> it.screenState
+                        },
+                )
+            }
 
             savedStateHandle[SEARCH_QUERY_KEY] = query
         }
@@ -188,7 +199,13 @@ internal class SearchMoviesViewModel
                 )
             }
             if (query.isBlank() && _uiState.value.selectedGenreId == null) {
-                _uiState.update { it.copy(screenState = SearchScreenState.Content) }
+                _uiState.update {
+                    if (it.screenState is SearchScreenState.Error) {
+                        it
+                    } else {
+                        it.copy(screenState = SearchScreenState.Content)
+                    }
+                }
             } else {
                 performSearch(FIRST_PAGE, isInitialLoad = true)
             }
