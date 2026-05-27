@@ -37,3 +37,5 @@ render.experimental.xml
 .kotlin/
 **/.kotlin/
 
+# Local closed testing notes
+docs/closed-testing-feedback.md
