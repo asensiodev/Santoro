@@ -418,6 +418,56 @@ Features approved for a future release. Each will get a FIP before implementatio
 | **Rationale** | Completes the viral loop started by FIP-002 (Share Movie): Share → Tap link → Open in Santoro. Standard approach used by Letterboxd, JustWatch |
 | **Notes** | Standard deep link (no `autoVerify` — we don't control `themoviedb.org`). `DeepLinkHandler` is a pure object, fully unit-tested |
 
+### F-24 — Closed Testing: Contrast & Tooltip Audit
+
+| Attribute   | Detail |
+|-------------|--------|
+| **Status**  | 📋 Planned |
+| **Scope**   | Google sign-in button, onboarding tooltip, and dark theme surfaces |
+| **Current state** | Closed testing reported possible white text on white backgrounds in dark mode for the Google login button and a tooltip. The issue was not consistently reproducible during follow-up testing |
+| **Behaviour** | Audit affected components in light and dark themes, ensure text/background colors meet WCAG AA, and add screenshot coverage where practical |
+| **Rationale** | If reproducible, unreadable auth or onboarding UI is a high-priority accessibility and onboarding defect |
+
+### F-25 — Search: Watched & Watchlist Result Indicators
+
+| Attribute   | Detail |
+|-------------|--------|
+| **Status**  | 📋 Planned |
+| **Scope**   | Search result movie cards |
+| **Current state** | Users can mark a movie as watched or add it to the watchlist, but search results do not clearly show those persisted states when the movie appears again |
+| **Behaviour** | Show lightweight visual indicators for movies already watched and movies already in the watchlist directly on search result cards |
+| **Rationale** | Reduces memory burden and makes persisted state visible across the app, matching tester feedback |
+
+### F-26 — Search: Multi-Genre Filtering
+
+| Attribute   | Detail |
+|-------------|--------|
+| **Status**  | 📋 Planned |
+| **Scope**   | Search and browse genre chips |
+| **Current state** | Genre chips support a single selected category at a time |
+| **Behaviour** | Allow selecting multiple genres and apply them together to search/browse results |
+| **Rationale** | Closed testing requested searching by more than one category. This improves discovery without changing the core search model |
+
+### F-27 — Watchlist & Onboarding Gesture Polish
+
+| Attribute   | Detail |
+|-------------|--------|
+| **Status**  | 📋 Planned |
+| **Scope**   | Watchlist swipe-to-delete affordance and welcome bottom sheet |
+| **Current state** | Closed testing reported that the swipe-to-delete icon feels oddly centered and the welcome bottom sheet is not dismissible with a gesture |
+| **Behaviour** | Align the swipe delete icon with the drag direction and allow expected gesture dismissal for the welcome bottom sheet if it does not conflict with onboarding requirements |
+| **Rationale** | Small interaction polish that makes existing shipped flows feel more native and predictable |
+
+### F-28 — Local Data Isolation Per User
+
+| Attribute   | Detail |
+|-------------|--------|
+| **Status**  | 📋 Planned |
+| **Scope**   | Room movie state, sync merge, and all local list queries |
+| **Current state** | Room stores movie user state locally without a per-user partition. Normal logout no longer clears local data to avoid losing watched/watchlist state, but same-device multi-account switching can expose stale local state until sync corrects it |
+| **Behaviour** | Persist watched/watchlist state per `userId` and filter all local user-state queries by the active account |
+| **Rationale** | Preserves the safer logout behavior while preventing account cross-contamination on shared devices |
+
 ---
 
 ## 10. Version History
@@ -437,3 +487,4 @@ Features approved for a future release. Each will get a FIP before implementatio
 | 2.0     | 2026-03-08 | F-22 Recent & Trending Searches marked ✅ Shipped — FIP-013. PRD cleanup: removed stale §3.4 planned item, updated §3.5 stats description, added `tagline` to §5 data model, fixed F-19 broken FIP link, renamed §8 to Resolved Gaps, updated §3.7 Settings with delete account + TMDB attribution, updated F-22 current state |
 | 2.1     | 2026-03-08 | F-23 Deep Link added and marked ✅ Shipped — FIP-014 |
 | 2.2     | 2026-03-08 | F-18 See All Navigation marked ✅ Shipped — FIP-015 |
+| 2.3     | 2026-05-27 | Add F-24 through F-28 from closed testing follow-ups |
