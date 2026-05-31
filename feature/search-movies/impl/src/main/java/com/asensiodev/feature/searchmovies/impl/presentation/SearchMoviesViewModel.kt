@@ -21,6 +21,7 @@ import com.asensiodev.feature.searchmovies.impl.presentation.mapper.toUiList
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 import com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -115,9 +116,8 @@ internal class SearchMoviesViewModel
             val selectedGenreId = _uiState.value.selectedGenreId
             _uiState.update { it.copy(isRefreshing = true) }
             viewModelScope.launch {
-                cachingRepository.clearAllSections()
                 if (query.isBlank() && selectedGenreId == null) {
-                    fetchDashboardData(fromRefresh = true)
+                    loadDashboardData(fromRefresh = true)
                 } else {
                     performSearch(FIRST_PAGE, isInitialLoad = true, isFromRefresh = true)
                 }
@@ -389,63 +389,41 @@ internal class SearchMoviesViewModel
         }
 
         private suspend fun loadDashboardData(fromRefresh: Boolean) {
-            if (!fromRefresh) cachingRepository.clearStaleEntries()
+            try {
+                if (!fromRefresh) cachingRepository.clearStaleEntries()
 
-            val (results, isStale) = fetchDashboardResults()
-            val nowPlayingResult = results.nowPlaying
-            val popularResult = results.popular
-            val topRatedResult = results.topRated
-            val upcomingResult = results.upcoming
-            val trendingResult = results.trending
+                val (results, isStale) = fetchDashboardResults()
+                var refreshFailedWithExistingData = false
 
-            _uiState.update { state ->
-                val nowPlayingList = nowPlayingResult.getOrDefault(emptyList()).toUiList()
-                val popularList = popularResult.getOrDefault(emptyList()).toUiList()
-                val topRatedList = topRatedResult.getOrDefault(emptyList()).toUiList()
-                val upcomingList = upcomingResult.getOrDefault(emptyList()).toUiList()
-                val trendingList = trendingResult.getOrDefault(emptyList()).toUiList()
-                val finalScreenState =
-                    resolveDashboardScreenState(
-                        listOf(
-                            nowPlayingList,
-                            popularList,
-                            topRatedList,
-                            upcomingList,
-                            trendingList,
-                        ),
-                        listOf(
-                            nowPlayingResult,
-                            popularResult,
-                            topRatedResult,
-                            upcomingResult,
-                            trendingResult,
-                        ),
+                _uiState.update { state ->
+                    val movies = results.toUiLists()
+                    val finalScreenState =
+                        resolveDashboardScreenState(
+                            movies.all,
+                            results.all,
+                        )
+                    refreshFailedWithExistingData =
+                        shouldKeepExistingDashboard(
+                            fromRefresh = fromRefresh,
+                            screenState = finalScreenState,
+                            state = state,
+                            results = results,
+                        )
+                    state.withDashboardResults(
+                        movies = movies,
+                        screenState = finalScreenState,
+                        isStale = isStale,
+                        keepExisting = refreshFailedWithExistingData,
                     )
-
-                state.copy(
-                    screenState = finalScreenState,
-                    isShowingStaleData = isStale,
-                    isRefreshing = false,
-                    nowPlayingMovies = nowPlayingList,
-                    popularMovies = popularList,
-                    topRatedMovies = topRatedList,
-                    upcomingMovies = upcomingList,
-                    trendingMovies = trendingList,
-                    trendingSuggestions =
-                        trendingList
-                            .mapNotNull {
-                                it.title.takeIf { title -> title.isNotBlank() }
-                            }.take(TRENDING_SUGGESTIONS_LIMIT),
-                    currentPopularPage =
-                        if (popularList.isNotEmpty()) {
-                            FIRST_PAGE + NEXT_PAGE
-                        } else {
-                            FIRST_PAGE
-                        },
-                    isPopularEndReached = popularList.isEmpty(),
-                )
+                }
+                if (fromRefresh && !refreshFailedWithExistingData) {
+                    _effect.trySend(SearchMoviesEffect.ShowRefreshSuccess)
+                }
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                _uiState.update { state -> state.withDashboardException(exception) }
             }
-            if (fromRefresh) _effect.trySend(SearchMoviesEffect.ShowRefreshSuccess)
         }
 
         private suspend fun fetchDashboardResults(): Pair<
@@ -520,7 +498,90 @@ private data class DashboardResults(
     val topRated: Result<List<Movie>>,
     val upcoming: Result<List<Movie>>,
     val trending: Result<List<Movie>>,
-)
+) {
+    val all: List<Result<List<Movie>>>
+        get() = listOf(nowPlaying, popular, topRated, upcoming, trending)
+}
+
+private data class DashboardMovies(
+    val nowPlaying: List<MovieUi>,
+    val popular: List<MovieUi>,
+    val topRated: List<MovieUi>,
+    val upcoming: List<MovieUi>,
+    val trending: List<MovieUi>,
+) {
+    val all: List<List<MovieUi>>
+        get() = listOf(nowPlaying, popular, topRated, upcoming, trending)
+}
+
+private fun DashboardResults.toUiLists(): DashboardMovies =
+    DashboardMovies(
+        nowPlaying = nowPlaying.getOrDefault(emptyList()).toUiList(),
+        popular = popular.getOrDefault(emptyList()).toUiList(),
+        topRated = topRated.getOrDefault(emptyList()).toUiList(),
+        upcoming = upcoming.getOrDefault(emptyList()).toUiList(),
+        trending = trending.getOrDefault(emptyList()).toUiList(),
+    )
+
+private fun shouldKeepExistingDashboard(
+    fromRefresh: Boolean,
+    screenState: SearchScreenState,
+    state: SearchMoviesUiState,
+    results: DashboardResults,
+): Boolean =
+    fromRefresh &&
+        screenState !is SearchScreenState.Content &&
+        state.hasDashboardData() &&
+        results.all.any { result -> result.isFailure }
+
+private fun SearchMoviesUiState.withDashboardResults(
+    movies: DashboardMovies,
+    screenState: SearchScreenState,
+    isStale: Boolean,
+    keepExisting: Boolean,
+): SearchMoviesUiState =
+    copy(
+        screenState = if (keepExisting) SearchScreenState.Content else screenState,
+        isShowingStaleData = isStale || keepExisting,
+        isRefreshing = false,
+        nowPlayingMovies = if (keepExisting) nowPlayingMovies else movies.nowPlaying,
+        popularMovies = if (keepExisting) popularMovies else movies.popular,
+        topRatedMovies = if (keepExisting) topRatedMovies else movies.topRated,
+        upcomingMovies = if (keepExisting) upcomingMovies else movies.upcoming,
+        trendingMovies = if (keepExisting) trendingMovies else movies.trending,
+        trendingSuggestions =
+            if (keepExisting) {
+                trendingSuggestions
+            } else {
+                movies.trendingSuggestions()
+            },
+        currentPopularPage = if (keepExisting) currentPopularPage else movies.nextPopularPage(),
+        isPopularEndReached = if (keepExisting) isPopularEndReached else movies.popular.isEmpty(),
+    )
+
+private fun SearchMoviesUiState.withDashboardException(exception: Exception): SearchMoviesUiState =
+    copy(
+        screenState =
+            if (hasDashboardData()) {
+                SearchScreenState.Content
+            } else {
+                SearchScreenState.Error(exception.message.orEmpty())
+            },
+        isShowingStaleData = hasDashboardData(),
+        isRefreshing = false,
+    )
+
+private fun DashboardMovies.trendingSuggestions(): List<String> =
+    trending
+        .mapNotNull { movie -> movie.title.takeIf { title -> title.isNotBlank() } }
+        .take(TRENDING_SUGGESTIONS_LIMIT)
+
+private fun DashboardMovies.nextPopularPage(): Int =
+    if (popular.isNotEmpty()) {
+        FIRST_PAGE + NEXT_PAGE
+    } else {
+        FIRST_PAGE
+    }
 
 private fun resolveDashboardScreenState(
     movieLists: List<List<MovieUi>>,
@@ -542,6 +603,15 @@ private fun resolveDashboardScreenState(
             )
     }
 }
+
+private fun SearchMoviesUiState.hasDashboardData(): Boolean =
+    listOf(
+        nowPlayingMovies,
+        popularMovies,
+        topRatedMovies,
+        upcomingMovies,
+        trendingMovies,
+    ).any { movies -> movies.isNotEmpty() }
 
 private suspend fun collectWithStale(
     flow: kotlinx.coroutines.flow.Flow<Result<List<Movie>>>,

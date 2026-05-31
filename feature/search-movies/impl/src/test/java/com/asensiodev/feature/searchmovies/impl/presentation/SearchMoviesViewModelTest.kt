@@ -192,6 +192,61 @@ class SearchMoviesViewModelTest {
         }
 
     @Test
+    fun `GIVEN dashboard content WHEN refresh fails THEN keeps content and shows stale banner`() =
+        runTest {
+            var shouldFail = false
+            every { getPopularMoviesUseCase(any()) } answers {
+                if (shouldFail) {
+                    flowOf(Result.failure(java.io.IOException("Unable to resolve host")))
+                } else {
+                    flowOf(Result.success(listOf(casinoMovie)))
+                }
+            }
+
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+
+            shouldFail = true
+            viewModel.process(SearchMoviesIntent.Refresh)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            state.screenState shouldBeInstanceOf SearchScreenState.Content::class
+            state.popularMovies.size shouldBeEqualTo 1
+            state.popularMovies.first().title shouldBeEqualTo "Casino"
+            state.isShowingStaleData shouldBeEqualTo true
+            state.isRefreshing shouldBeEqualTo false
+            coVerify(exactly = 0) { cachingRepository.clearAllSections() }
+        }
+
+    @Test
+    fun `GIVEN dashboard content WHEN refresh throws THEN stops refreshing and keeps content`() =
+        runTest {
+            var shouldThrow = false
+            every { getPopularMoviesUseCase(any()) } answers {
+                if (shouldThrow) {
+                    flow { throw java.io.IOException("Unable to resolve host") }
+                } else {
+                    flowOf(Result.success(listOf(casinoMovie)))
+                }
+            }
+
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+
+            shouldThrow = true
+            viewModel.process(SearchMoviesIntent.Refresh)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            state.screenState shouldBeInstanceOf SearchScreenState.Content::class
+            state.popularMovies.size shouldBeEqualTo 1
+            state.popularMovies.first().title shouldBeEqualTo "Casino"
+            state.isShowingStaleData shouldBeEqualTo true
+            state.isRefreshing shouldBeEqualTo false
+        }
+
+    @Test
     fun `GIVEN empty browse content WHEN query updated THEN loading is shown before debounced search`() =
         runTest {
             viewModel.process(SearchMoviesIntent.LoadInitialData)
