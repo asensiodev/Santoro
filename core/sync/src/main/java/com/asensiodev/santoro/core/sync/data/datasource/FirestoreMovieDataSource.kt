@@ -7,5 +7,9 @@ internal interface FirestoreMovieDataSource {
         uid: String,
         entity: MovieSyncEntity,
     ): Result<Unit>
+    suspend fun uploadMovies(
+        uid: String,
+        entities: List<MovieSyncEntity>,
+    ): Result<Unit>
     suspend fun downloadUserMovies(uid: String): Result<List<MovieSyncEntity>>
 }

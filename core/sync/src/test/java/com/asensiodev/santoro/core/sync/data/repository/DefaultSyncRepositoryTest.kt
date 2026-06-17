@@ -31,12 +31,14 @@ class DefaultSyncRepositoryTest {
                     SyncMockUtils.createMovie(id = 2, isInWatchlist = true),
                 )
             coEvery { databaseRepository.getMoviesForSync() } returns Result.success(movies)
-            coEvery { firestoreDataSource.uploadMovie(any(), any()) } returns Result.success(Unit)
+            coEvery { firestoreDataSource.uploadMovies(any(), any()) } returns Result.success(Unit)
 
             val result = sut.uploadPendingChanges(uid = "uid123")
 
             result.isSuccess shouldBeEqualTo true
-            coVerify(exactly = 2) { firestoreDataSource.uploadMovie(any(), any()) }
+            coVerify(exactly = 1) {
+                firestoreDataSource.uploadMovies(any(), match { it.size == 2 })
+            }
         }
 
     @Test
@@ -47,7 +49,7 @@ class DefaultSyncRepositoryTest {
             val result = sut.uploadPendingChanges(uid = "uid123")
 
             result.isFailure shouldBeEqualTo true
-            coVerify(exactly = 0) { firestoreDataSource.uploadMovie(any(), any()) }
+            coVerify(exactly = 0) { firestoreDataSource.uploadMovies(any(), any()) }
         }
 
     @Test
@@ -58,7 +60,7 @@ class DefaultSyncRepositoryTest {
             val result = sut.uploadPendingChanges(uid = "uid123")
 
             result.isSuccess shouldBeEqualTo true
-            coVerify(exactly = 0) { firestoreDataSource.uploadMovie(any(), any()) }
+            coVerify(exactly = 0) { firestoreDataSource.uploadMovies(any(), any()) }
         }
 
     @Test
@@ -66,12 +68,12 @@ class DefaultSyncRepositoryTest {
         runTest {
             val movie = SyncMockUtils.createMovie(id = 42, isWatched = true)
             coEvery { databaseRepository.getMoviesForSync() } returns Result.success(listOf(movie))
-            coEvery { firestoreDataSource.uploadMovie(any(), any()) } returns Result.success(Unit)
+            coEvery { firestoreDataSource.uploadMovies(any(), any()) } returns Result.success(Unit)
 
             sut.uploadPendingChanges(uid = "uid123")
 
             coVerify(exactly = 1) {
-                firestoreDataSource.uploadMovie("uid123", match { it.movieId == 42 })
+                firestoreDataSource.uploadMovies("uid123", match { it.single().movieId == 42 })
             }
         }
 
@@ -86,25 +88,26 @@ class DefaultSyncRepositoryTest {
                     updatedAt = 2000L,
                 )
             coEvery { databaseRepository.getMoviesForSync() } returns Result.success(listOf(movie))
-            coEvery { firestoreDataSource.uploadMovie(any(), any()) } returns Result.success(Unit)
+            coEvery { firestoreDataSource.uploadMovies(any(), any()) } returns Result.success(Unit)
 
             sut.uploadPendingChanges(uid = "uid123")
 
             coVerify(exactly = 1) {
-                firestoreDataSource.uploadMovie(
+                firestoreDataSource.uploadMovies(
                     "uid123",
                     match {
-                        it.movieId == 42 &&
-                            !it.isWatched &&
-                            !it.isInWatchlist &&
-                            it.updatedAt == 2000L
+                        val entity = it.single()
+                        entity.movieId == 42 &&
+                            !entity.isWatched &&
+                            !entity.isInWatchlist &&
+                            entity.updatedAt == 2000L
                     },
                 )
             }
         }
 
     @Test
-    fun `GIVEN upload fails mid-batch WHEN uploadPendingChanges THEN returns error early`() =
+    fun `GIVEN upload fails WHEN uploadPendingChanges THEN returns error`() =
         runTest {
             val movies =
                 listOf(
@@ -112,19 +115,13 @@ class DefaultSyncRepositoryTest {
                     SyncMockUtils.createMovie(id = 2, isWatched = true),
                 )
             coEvery { databaseRepository.getMoviesForSync() } returns Result.success(movies)
-            coEvery {
-                firestoreDataSource.uploadMovie("uid123", match { it.movieId == 1 })
-            } returns Result.failure(Exception("network"))
-            coEvery {
-                firestoreDataSource.uploadMovie("uid123", match { it.movieId == 2 })
-            } returns Result.success(Unit)
+            coEvery { firestoreDataSource.uploadMovies(any(), any()) } returns
+                Result.failure(Exception("network"))
 
             val result = sut.uploadPendingChanges(uid = "uid123")
 
             result.isFailure shouldBeEqualTo true
-            coVerify(exactly = 0) {
-                firestoreDataSource.uploadMovie("uid123", match { it.movieId == 2 })
-            }
+            coVerify(exactly = 1) { firestoreDataSource.uploadMovies("uid123", any()) }
         }
 
     @Test

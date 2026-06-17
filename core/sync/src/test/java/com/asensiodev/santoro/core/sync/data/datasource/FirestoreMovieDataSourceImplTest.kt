@@ -7,8 +7,10 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.WriteBatch
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldBeTrue
@@ -21,6 +23,7 @@ class FirestoreMovieDataSourceImplTest {
     private val userDocument: DocumentReference = mockk()
     private val moviesCollection: CollectionReference = mockk()
     private val movieDocument: DocumentReference = mockk()
+    private val batch: WriteBatch = mockk()
 
     private lateinit var sut: FirestoreMovieDataSourceImpl
 
@@ -32,13 +35,15 @@ class FirestoreMovieDataSourceImplTest {
         every { usersCollection.document(any()) } returns userDocument
         every { userDocument.collection("movies") } returns moviesCollection
         every { moviesCollection.document(any()) } returns movieDocument
+        every { firestore.batch() } returns batch
+        every { batch.set(any<DocumentReference>(), any<Map<String, Any?>>()) } returns batch
     }
 
     @Test
     fun `GIVEN valid entity WHEN uploadMovie THEN returns success`() =
         runTest {
             val entity = SyncMockUtils.createSyncEntity(movieId = 1, isWatched = true)
-            every { movieDocument.set(any<Map<String, Any?>>()) } returns Tasks.forResult(null)
+            every { batch.commit() } returns Tasks.forResult(null)
 
             val result = sut.uploadMovie(uid = "uid123", entity = entity)
 
@@ -46,12 +51,27 @@ class FirestoreMovieDataSourceImplTest {
         }
 
     @Test
+    fun `GIVEN valid entities WHEN uploadMovies THEN commits one batch`() =
+        runTest {
+            val entities =
+                listOf(
+                    SyncMockUtils.createSyncEntity(movieId = 1, isWatched = true),
+                    SyncMockUtils.createSyncEntity(movieId = 2, isInWatchlist = true),
+                )
+            every { batch.commit() } returns Tasks.forResult(null)
+
+            val result = sut.uploadMovies(uid = "uid123", entities = entities)
+
+            result.isSuccess.shouldBeTrue()
+            verify(exactly = 2) { batch.set(any<DocumentReference>(), any<Map<String, Any?>>()) }
+            verify(exactly = 1) { batch.commit() }
+        }
+
+    @Test
     fun `GIVEN Firestore throws WHEN uploadMovie THEN returns failure`() =
         runTest {
             val entity = SyncMockUtils.createSyncEntity(movieId = 1)
-            every {
-                movieDocument.set(any<Map<String, Any?>>())
-            } returns Tasks.forException(Exception("Firestore error"))
+            every { batch.commit() } returns Tasks.forException(Exception("Firestore error"))
 
             val result = sut.uploadMovie(uid = "uid123", entity = entity)
 

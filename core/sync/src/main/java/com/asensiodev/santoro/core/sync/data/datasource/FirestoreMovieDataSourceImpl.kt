@@ -7,6 +7,7 @@ import javax.inject.Inject
 
 private const val COLLECTION_USERS = "users"
 private const val COLLECTION_MOVIES = "movies"
+private const val FIRESTORE_BATCH_LIMIT = 500
 
 private const val FIELD_MOVIE_ID = "movieId"
 private const val FIELD_TITLE = "title"
@@ -26,28 +27,46 @@ internal class FirestoreMovieDataSourceImpl
         override suspend fun uploadMovie(
             uid: String,
             entity: MovieSyncEntity,
+        ): Result<Unit> = uploadMovies(uid, listOf(entity))
+
+        override suspend fun uploadMovies(
+            uid: String,
+            entities: List<MovieSyncEntity>,
         ): Result<Unit> =
             runCatching {
-                val data =
-                    mapOf(
-                        FIELD_MOVIE_ID to entity.movieId,
-                        FIELD_TITLE to entity.title,
-                        FIELD_POSTER_PATH to entity.posterPath,
-                        FIELD_GENRES to entity.genres,
-                        FIELD_RUNTIME to entity.runtime,
-                        FIELD_IS_WATCHED to entity.isWatched,
-                        FIELD_IS_IN_WATCHLIST to entity.isInWatchlist,
-                        FIELD_WATCHED_AT to entity.watchedAt,
-                        FIELD_UPDATED_AT to entity.updatedAt,
-                    )
-                firestore
-                    .collection(COLLECTION_USERS)
-                    .document(uid)
-                    .collection(COLLECTION_MOVIES)
-                    .document(entity.movieId.toString())
-                    .set(data)
-                    .await()
+                val moviesCollection =
+                    firestore
+                        .collection(COLLECTION_USERS)
+                        .document(uid)
+                        .collection(COLLECTION_MOVIES)
+                entities
+                    .chunked(FIRESTORE_BATCH_LIMIT)
+                    .forEach { chunk ->
+                        val batch = firestore.batch()
+                        chunk.forEach { entity ->
+                            batch.set(
+                                moviesCollection.document(entity.movieId.toString()),
+                                entity.toData(),
+                            )
+                        }
+                        batch
+                            .commit()
+                            .await()
+                    }
             }
+
+        private fun MovieSyncEntity.toData(): Map<String, Any?> =
+            mapOf(
+                FIELD_MOVIE_ID to movieId,
+                FIELD_TITLE to title,
+                FIELD_POSTER_PATH to posterPath,
+                FIELD_GENRES to genres,
+                FIELD_RUNTIME to runtime,
+                FIELD_IS_WATCHED to isWatched,
+                FIELD_IS_IN_WATCHLIST to isInWatchlist,
+                FIELD_WATCHED_AT to watchedAt,
+                FIELD_UPDATED_AT to updatedAt,
+            )
 
         override suspend fun downloadUserMovies(uid: String): Result<List<MovieSyncEntity>> =
             runCatching {

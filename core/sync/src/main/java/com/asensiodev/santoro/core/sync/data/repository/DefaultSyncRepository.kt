@@ -31,8 +31,11 @@ internal class DefaultSyncRepository
             uid: String,
             movies: List<Movie>,
         ): Result<Unit> {
-            movies.forEach { movie ->
-                val entity =
+            if (movies.isEmpty()) {
+                return Result.success(Unit)
+            }
+            val entities =
+                movies.map { movie ->
                     MovieSyncEntity(
                         movieId = movie.id,
                         title = movie.title,
@@ -44,14 +47,8 @@ internal class DefaultSyncRepository
                         watchedAt = movie.watchedAt,
                         updatedAt = movie.updatedAt,
                     )
-                val uploadResult = firestoreDataSource.uploadMovie(uid, entity)
-                if (uploadResult.isFailure) {
-                    return Result.failure(
-                        uploadResult.exceptionOrNull() ?: Exception("Upload failed"),
-                    )
                 }
-            }
-            return Result.success(Unit)
+            return firestoreDataSource.uploadMovies(uid, entities)
         }
 
         override suspend fun downloadAndMerge(uid: String): Result<Unit> {
