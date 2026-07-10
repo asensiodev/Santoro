@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.core.domain.observability.NoOpObservabilityTracker
+import com.asensiodev.core.domain.observability.ObservabilityTracker
 import com.asensiodev.feature.searchmovies.impl.data.repository.CachingSearchMoviesRepository
 import com.asensiodev.feature.searchmovies.impl.data.repository.StaleDataException
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.ClearRecentSearchesUseCase
@@ -56,6 +58,7 @@ internal class SearchMoviesViewModel
         private val getRecentSearchesUseCase: GetRecentSearchesUseCase,
         private val saveRecentSearchUseCase: SaveRecentSearchUseCase,
         private val clearRecentSearchesUseCase: ClearRecentSearchesUseCase,
+        private val observabilityTracker: ObservabilityTracker = NoOpObservabilityTracker,
     ) : ViewModel() {
         private var searchJob: Job? = null
         private var observersSetUp = false
@@ -88,6 +91,7 @@ internal class SearchMoviesViewModel
         }
 
         private fun loadInitialData() {
+            observabilityTracker.trackScreen(SCREEN_SEARCH)
             setupObservers()
             fetchDashboardData()
         }
@@ -114,6 +118,13 @@ internal class SearchMoviesViewModel
         private fun refresh() {
             val query = _uiState.value.query
             val selectedGenreId = _uiState.value.selectedGenreId
+            observabilityTracker.trackAction(
+                SEARCH_REFRESH,
+                mapOf(
+                    HAS_QUERY to query.isNotBlank().toString(),
+                    HAS_GENRE to (selectedGenreId != null).toString(),
+                ),
+            )
             _uiState.update { it.copy(isRefreshing = true) }
             viewModelScope.launch {
                 if (query.isBlank() && selectedGenreId == null) {
@@ -142,6 +153,12 @@ internal class SearchMoviesViewModel
         }
 
         private fun onGenreSelected(genreId: Int) {
+            observabilityTracker.trackAction(
+                SEARCH_GENRE_SELECTED,
+                mapOf(
+                    GENRE_ID to genreId.toString(),
+                ),
+            )
             searchJob?.cancel()
             _uiState.update {
                 it.copy(
@@ -298,32 +315,45 @@ internal class SearchMoviesViewModel
                     if (isFromRefresh) _effect.trySend(SearchMoviesEffect.ShowRefreshSuccess)
                 },
                 onFailure = { exception ->
-                    if (exception is StaleDataException) {
-                        _uiState.update {
-                            it.copy(
-                                isShowingStaleData = true,
-                                isSearchLoadingMore = false,
-                                isRefreshing = false,
-                            )
-                        }
-                        return@fold
-                    }
-                    _uiState.update {
-                        it.copy(
-                            screenState =
-                                if (isInitialLoad && it.searchMovieResults.isEmpty()) {
-                                    SearchScreenState.Error(exception.message ?: "Unknown error")
-                                } else {
-                                    it.screenState
-                                },
-                            isSearchLoadingMore = false,
-                            isRefreshing = false,
-                            isShowingStaleData = false,
-                            isSearchEndReached = true,
-                        )
-                    }
+                    handleSearchFailure(exception, isInitialLoad, page)
                 },
             )
+        }
+
+        private fun handleSearchFailure(
+            exception: Throwable,
+            isInitialLoad: Boolean,
+            page: Int,
+        ) {
+            if (exception is StaleDataException) {
+                _uiState.update {
+                    it.copy(
+                        isShowingStaleData = true,
+                        isSearchLoadingMore = false,
+                        isRefreshing = false,
+                    )
+                }
+                return
+            }
+            observabilityTracker.recordError(
+                SEARCH_RESULTS_FAILED,
+                exception,
+                mapOf(IS_INITIAL_LOAD to isInitialLoad.toString(), PAGE to page.toString()),
+            )
+            _uiState.update {
+                it.copy(
+                    screenState =
+                        if (isInitialLoad && it.searchMovieResults.isEmpty()) {
+                            SearchScreenState.Error(exception.message ?: "Unknown error")
+                        } else {
+                            it.screenState
+                        },
+                    isSearchLoadingMore = false,
+                    isRefreshing = false,
+                    isShowingStaleData = false,
+                    isSearchEndReached = true,
+                )
+            }
         }
 
         private fun loadMorePopularMovies() {
@@ -347,12 +377,22 @@ internal class SearchMoviesViewModel
         private fun onSearchTriggered() {
             val query = _uiState.value.query
             if (query.isNotBlank()) {
+                observabilityTracker.trackAction(
+                    SEARCH_SUBMITTED,
+                    mapOf(
+                        QUERY_LENGTH to query.length.toString(),
+                    ),
+                )
                 viewModelScope.launch { saveRecentSearchUseCase(query) }
             }
         }
 
         private fun onMovieClicked(movieId: Int) {
             val query = _uiState.value.query
+            observabilityTracker.trackAction(
+                SEARCH_MOVIE_CLICKED,
+                mapOf(MOVIE_ID to movieId.toString(), HAS_QUERY to query.isNotBlank().toString()),
+            )
             if (query.isNotBlank()) {
                 viewModelScope.launch { saveRecentSearchUseCase(query) }
             }
@@ -368,16 +408,29 @@ internal class SearchMoviesViewModel
         }
 
         private fun onSuggestionTapped(query: String) {
+            observabilityTracker.trackAction(
+                SEARCH_SUGGESTION_TAPPED,
+                mapOf(
+                    QUERY_LENGTH to query.length.toString(),
+                ),
+            )
             _uiState.update { it.copy(query = query, isFieldFocused = false) }
             savedStateHandle[SEARCH_QUERY_KEY] = query
             viewModelScope.launch { saveRecentSearchUseCase(query) }
         }
 
         private fun onClearRecentSearches() {
+            observabilityTracker.trackAction(SEARCH_RECENT_CLEARED)
             viewModelScope.launch { clearRecentSearchesUseCase() }
         }
 
         private fun onSeeAllClicked(sectionType: SectionType) {
+            observabilityTracker.trackAction(
+                SEARCH_SEE_ALL_CLICKED,
+                mapOf(
+                    SECTION_TYPE to sectionType.name,
+                ),
+            )
             _effect.trySend(SearchMoviesEffect.NavigateToSeeAll(sectionType))
         }
 
@@ -422,6 +475,7 @@ internal class SearchMoviesViewModel
             } catch (exception: CancellationException) {
                 throw exception
             } catch (exception: Exception) {
+                observabilityTracker.recordError(SEARCH_DASHBOARD_FAILED, exception)
                 _uiState.update { state -> state.withDashboardException(exception) }
             }
         }
@@ -482,6 +536,7 @@ internal class SearchMoviesViewModel
                             }
                         },
                         onFailure = {
+                            observabilityTracker.recordError(SEARCH_POPULAR_LOAD_MORE_FAILED, it)
                             _uiState.update {
                                 it.copy(isPopularLoadingMore = false, isPopularEndReached = true)
                             }
@@ -633,3 +688,22 @@ private const val FIRST_PAGE: Int = 1
 private const val NEXT_PAGE: Int = 1
 private const val SEARCH_QUERY_KEY = "search_query"
 private const val TRENDING_SUGGESTIONS_LIMIT = 10
+private const val SCREEN_SEARCH = "search"
+private const val HAS_QUERY = "has_query"
+private const val HAS_GENRE = "has_genre"
+private const val GENRE_ID = "genre_id"
+private const val QUERY_LENGTH = "query_length"
+private const val MOVIE_ID = "movie_id"
+private const val SECTION_TYPE = "section_type"
+private const val IS_INITIAL_LOAD = "is_initial_load"
+private const val PAGE = "page"
+private const val SEARCH_REFRESH = "search_refresh"
+private const val SEARCH_GENRE_SELECTED = "search_genre_selected"
+private const val SEARCH_SUBMITTED = "search_submitted"
+private const val SEARCH_MOVIE_CLICKED = "search_movie_clicked"
+private const val SEARCH_SUGGESTION_TAPPED = "search_suggestion_tapped"
+private const val SEARCH_RECENT_CLEARED = "search_recent_cleared"
+private const val SEARCH_SEE_ALL_CLICKED = "search_see_all_clicked"
+private const val SEARCH_DASHBOARD_FAILED = "search_dashboard_failed"
+private const val SEARCH_RESULTS_FAILED = "search_results_failed"
+private const val SEARCH_POPULAR_LOAD_MORE_FAILED = "search_popular_load_more_failed"

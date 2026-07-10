@@ -2,6 +2,8 @@ package com.asensiodev.feature.moviedetail.impl.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.asensiodev.core.domain.observability.NoOpObservabilityTracker
+import com.asensiodev.core.domain.observability.ObservabilityTracker
 import com.asensiodev.core.domain.usecase.ObserveHasSeenDetailTooltipUseCase
 import com.asensiodev.core.domain.usecase.SetDetailTooltipSeenUseCase
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseCase
@@ -29,6 +31,7 @@ internal class MovieDetailViewModel
         private val syncScheduler: WorkManagerSyncScheduler,
         private val observeHasSeenDetailTooltipUseCase: ObserveHasSeenDetailTooltipUseCase,
         private val setDetailTooltipSeenUseCase: SetDetailTooltipSeenUseCase,
+        private val observabilityTracker: ObservabilityTracker = NoOpObservabilityTracker,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(MovieDetailUiState())
         val uiState: StateFlow<MovieDetailUiState> = _uiState.asStateFlow()
@@ -51,6 +54,13 @@ internal class MovieDetailViewModel
 
         private fun fetchMovieDetails(movieId: Int) {
             lastRequestedMovieId = movieId
+            observabilityTracker.trackScreen(SCREEN_MOVIE_DETAIL)
+            observabilityTracker.trackAction(
+                MOVIE_DETAIL_FETCH,
+                mapOf(
+                    MOVIE_ID to movieId.toString(),
+                ),
+            )
             _uiState.update { it.copy(screenState = MovieDetailScreenState.Loading) }
             viewModelScope.launch {
                 getMovieDetailUseCase(movieId)
@@ -66,6 +76,11 @@ internal class MovieDetailViewModel
                                 checkTooltip()
                             },
                             onFailure = { exception ->
+                                observabilityTracker.recordError(
+                                    MOVIE_DETAIL_FETCH_FAILED,
+                                    exception,
+                                    mapOf(MOVIE_ID to movieId.toString()),
+                                )
                                 _uiState.update {
                                     it.copy(
                                         screenState =
@@ -87,6 +102,12 @@ internal class MovieDetailViewModel
 
         private fun emitShareEffect() {
             val movie = _uiState.value.movie ?: return
+            observabilityTracker.trackAction(
+                MOVIE_DETAIL_SHARE,
+                mapOf(
+                    MOVIE_ID to movie.id.toString(),
+                ),
+            )
             viewModelScope.launch {
                 _effect.send(MovieDetailEffect.ShareMovie(movie))
             }
@@ -104,9 +125,21 @@ internal class MovieDetailViewModel
             viewModelScope.launch {
                 updateMovieStateUseCase(updatedMovie.toDomain())
                     .onSuccess {
+                        observabilityTracker.trackAction(
+                            MOVIE_DETAIL_TOGGLE_WATCHLIST,
+                            mapOf(
+                                MOVIE_ID to movie.id.toString(),
+                                IS_ENABLED to isNowInWatchlist.toString(),
+                            ),
+                        )
                         _uiState.update { it.copy(movie = updatedMovie) }
                         syncScheduler.enqueueUpload(movie.id)
                     }.onFailure { exception ->
+                        observabilityTracker.recordError(
+                            MOVIE_DETAIL_TOGGLE_WATCHLIST_FAILED,
+                            exception,
+                            mapOf(MOVIE_ID to movie.id.toString()),
+                        )
                         _effect.trySend(MovieDetailEffect.ShowError(exception.message.orEmpty()))
                     }
             }
@@ -124,9 +157,21 @@ internal class MovieDetailViewModel
             viewModelScope.launch {
                 updateMovieStateUseCase(updatedMovie.toDomain())
                     .onSuccess {
+                        observabilityTracker.trackAction(
+                            MOVIE_DETAIL_TOGGLE_WATCHED,
+                            mapOf(
+                                MOVIE_ID to movie.id.toString(),
+                                IS_ENABLED to isNowWatched.toString(),
+                            ),
+                        )
                         _uiState.update { it.copy(movie = updatedMovie) }
                         syncScheduler.enqueueUpload(movie.id)
                     }.onFailure { exception ->
+                        observabilityTracker.recordError(
+                            MOVIE_DETAIL_TOGGLE_WATCHED_FAILED,
+                            exception,
+                            mapOf(MOVIE_ID to movie.id.toString()),
+                        )
                         _effect.trySend(MovieDetailEffect.ShowError(exception.message.orEmpty()))
                     }
             }
@@ -142,9 +187,24 @@ internal class MovieDetailViewModel
         }
 
         private fun dismissTooltip() {
+            observabilityTracker.trackAction(MOVIE_DETAIL_TOOLTIP_DISMISSED)
             _uiState.update { it.copy(showTooltip = false) }
             viewModelScope.launch {
                 setDetailTooltipSeenUseCase()
             }
+        }
+
+        private companion object {
+            const val SCREEN_MOVIE_DETAIL = "movie_detail"
+            const val MOVIE_ID = "movie_id"
+            const val IS_ENABLED = "is_enabled"
+            const val MOVIE_DETAIL_FETCH = "movie_detail_fetch"
+            const val MOVIE_DETAIL_FETCH_FAILED = "movie_detail_fetch_failed"
+            const val MOVIE_DETAIL_SHARE = "movie_detail_share"
+            const val MOVIE_DETAIL_TOGGLE_WATCHLIST = "movie_detail_toggle_watchlist"
+            const val MOVIE_DETAIL_TOGGLE_WATCHLIST_FAILED = "movie_detail_toggle_watchlist_failed"
+            const val MOVIE_DETAIL_TOGGLE_WATCHED = "movie_detail_toggle_watched"
+            const val MOVIE_DETAIL_TOGGLE_WATCHED_FAILED = "movie_detail_toggle_watched_failed"
+            const val MOVIE_DETAIL_TOOLTIP_DISMISSED = "movie_detail_tooltip_dismissed"
         }
     }

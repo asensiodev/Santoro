@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asensiodev.auth.domain.usecase.ObserveAuthStateUseCase
 import com.asensiodev.core.domain.model.ThemeOption
+import com.asensiodev.core.domain.observability.NoOpObservabilityTracker
+import com.asensiodev.core.domain.observability.ObservabilityTracker
 import com.asensiodev.core.domain.usecase.ObserveHasSeenGuestOnboardingUseCase
 import com.asensiodev.core.domain.usecase.ObserveThemeUseCase
 import com.asensiodev.core.domain.usecase.SetHasSeenGuestOnboardingUseCase
@@ -29,6 +31,7 @@ class MainActivityViewModel
         observeThemeUseCase: ObserveThemeUseCase,
         private val setHasSeenGuestOnboardingUseCase: SetHasSeenGuestOnboardingUseCase,
         private val syncScheduler: WorkManagerSyncScheduler,
+        private val observabilityTracker: ObservabilityTracker = NoOpObservabilityTracker,
     ) : ViewModel() {
         private val authFlow = observeAuthStateUseCase()
 
@@ -62,16 +65,29 @@ class MainActivityViewModel
             authFlow
                 .mapNotNull { user -> user?.uid }
                 .distinctUntilChanged()
-                .onEach {
+                .onEach { uid ->
+                    observabilityTracker.trackAction(
+                        SYNC_SCHEDULED,
+                        mapOf(
+                            USER_ID_PRESENT to uid.isNotBlank().toString(),
+                        ),
+                    )
                     syncScheduler.schedulePeriodicSync()
                     syncScheduler.scheduleImmediateSync()
                 }.launchIn(viewModelScope)
         }
 
         fun dismissGuestOnboarding() {
+            observabilityTracker.trackAction(GUEST_ONBOARDING_DISMISSED)
             viewModelScope.launch {
                 setHasSeenGuestOnboardingUseCase(true)
             }
+        }
+
+        private companion object {
+            const val SYNC_SCHEDULED = "sync_scheduled"
+            const val USER_ID_PRESENT = "user_id_present"
+            const val GUEST_ONBOARDING_DISMISSED = "guest_onboarding_dismissed"
         }
     }
 
