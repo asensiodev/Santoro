@@ -44,12 +44,21 @@ jobs:
 
       - name: Configure Firebase
         env:
-          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+          GOOGLE_SERVICES_DEBUG_JSON: ${{ secrets.GOOGLE_SERVICES_DEBUG_JSON }}
+          GOOGLE_SERVICES_RELEASE_JSON: ${{ secrets.GOOGLE_SERVICES_RELEASE_JSON }}
         run: |
-          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
-            printf '%s' "$GOOGLE_SERVICES_JSON" > app/google-services.json
+          mkdir -p app/src/debug app/src/release
+
+          if [ -n "$GOOGLE_SERVICES_DEBUG_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_DEBUG_JSON" > app/src/debug/google-services.json
           else
-            printf '%s' '{"project_info":{"project_number":"1","project_id":"santoro-ci"},"client":[{"client_info":{"mobilesdk_app_id":"1:1:android:1","android_client_info":{"package_name":"com.asensiodev.santoro"}},"api_key":[{"current_key":"ci-placeholder"}]},{"client_info":{"mobilesdk_app_id":"1:1:android:2","android_client_info":{"package_name":"com.asensiodev.santoro.debug"}},"api_key":[{"current_key":"ci-placeholder"}]}],"configuration_version":"1"}' > app/google-services.json
+            printf '%s' '{"project_info":{"project_number":"1","project_id":"santoro-ci"},"client":[{"client_info":{"mobilesdk_app_id":"1:1:android:1","android_client_info":{"package_name":"com.asensiodev.santoro.debug"}},"api_key":[{"current_key":"ci-placeholder"}]}],"configuration_version":"1"}' > app/src/debug/google-services.json
+          fi
+
+          if [ -n "$GOOGLE_SERVICES_RELEASE_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_RELEASE_JSON" > app/src/release/google-services.json
+          else
+            printf '%s' '{"project_info":{"project_number":"1","project_id":"santoro-ci"},"client":[{"client_info":{"mobilesdk_app_id":"1:1:android:2","android_client_info":{"package_name":"com.asensiodev.santoro"}},"api_key":[{"current_key":"ci-placeholder"}]}],"configuration_version":"1"}' > app/src/release/google-services.json
           fi
 
       - name: Run quality checks and unit tests
