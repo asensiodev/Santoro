@@ -14,6 +14,7 @@ dependencies {
     implementation(projects.core.ui)
     implementation(projects.core.database)
     implementation(projects.library.remoteConfig.api)
+    implementation(projects.library.observability.api)
 
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson.converter)

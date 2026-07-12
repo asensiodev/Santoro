@@ -3,8 +3,8 @@ package com.asensiodev.auth.data.repository
 import com.asensiodev.auth.AuthDataSource
 import com.asensiodev.auth.domain.repository.AuthRepository
 import com.asensiodev.core.domain.model.SantoroUser
-import com.asensiodev.core.domain.observability.NoOpObservabilityTracker
-import com.asensiodev.core.domain.observability.ObservabilityTracker
+import com.asensiodev.library.observability.api.NoOpObservabilityTracker
+import com.asensiodev.library.observability.api.ObservabilityTracker
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 

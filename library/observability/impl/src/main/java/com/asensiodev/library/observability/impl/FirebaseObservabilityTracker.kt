@@ -1,7 +1,7 @@
-package com.asensiodev.santoro.observability
+package com.asensiodev.library.observability.impl
 
 import android.os.Bundle
-import com.asensiodev.core.domain.observability.ObservabilityTracker
+import com.asensiodev.library.observability.api.ObservabilityTracker
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import javax.inject.Inject
@@ -18,16 +18,11 @@ class FirebaseObservabilityTracker
             userId: String,
             isAnonymous: Boolean,
         ) {
+            val userType = if (isAnonymous) USER_TYPE_ANONYMOUS else USER_TYPE_REGISTERED
             analytics.setUserId(userId)
-            analytics.setUserProperty(
-                USER_TYPE,
-                if (isAnonymous) USER_TYPE_ANONYMOUS else USER_TYPE_REGISTERED,
-            )
+            analytics.setUserProperty(USER_TYPE, userType)
             crashlytics.setUserId(userId)
-            crashlytics.setCustomKey(
-                USER_TYPE,
-                if (isAnonymous) USER_TYPE_ANONYMOUS else USER_TYPE_REGISTERED,
-            )
+            crashlytics.setCustomKey(USER_TYPE, userType)
         }
 
         override fun clearUser() {
@@ -64,7 +59,10 @@ class FirebaseObservabilityTracker
             )
             crashlytics.setCustomKey(ERROR_NAME, errorName)
             parameters.forEach { (key, value) ->
-                crashlytics.setCustomKey(key.toFirebaseName(), value)
+                crashlytics.setCustomKey(
+                    key.toFirebaseName(),
+                    value,
+                )
             }
             crashlytics.recordException(throwable)
         }
@@ -72,7 +70,10 @@ class FirebaseObservabilityTracker
         private fun Map<String, String>.toBundle(): Bundle =
             Bundle().apply {
                 forEach { (key, value) ->
-                    putString(key.toFirebaseName(), value.take(MAX_PARAM_VALUE_LENGTH))
+                    putString(
+                        key.toFirebaseName(),
+                        value.take(MAX_PARAM_VALUE_LENGTH),
+                    )
                 }
             }
 

@@ -4,11 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asensiodev.auth.domain.usecase.ObserveAuthStateUseCase
 import com.asensiodev.core.domain.model.ThemeOption
-import com.asensiodev.core.domain.observability.NoOpObservabilityTracker
-import com.asensiodev.core.domain.observability.ObservabilityTracker
 import com.asensiodev.core.domain.usecase.ObserveHasSeenGuestOnboardingUseCase
 import com.asensiodev.core.domain.usecase.ObserveThemeUseCase
 import com.asensiodev.core.domain.usecase.SetHasSeenGuestOnboardingUseCase
+import com.asensiodev.library.observability.api.NoOpObservabilityTracker
+import com.asensiodev.library.observability.api.ObservabilityTracker
 import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted

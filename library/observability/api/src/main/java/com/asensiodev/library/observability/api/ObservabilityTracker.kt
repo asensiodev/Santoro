@@ -1,4 +1,4 @@
-package com.asensiodev.core.domain.observability
+package com.asensiodev.library.observability.api
 
 interface ObservabilityTracker {
     fun setUser(

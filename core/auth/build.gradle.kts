@@ -10,6 +10,7 @@ android {
 dependencies {
     implementation(projects.core.domain)
     implementation(projects.core.stringResources)
+    implementation(projects.library.observability.api)
 
     implementation(libs.firebase.auth)
     implementation(libs.kotlinx.coroutines.core)

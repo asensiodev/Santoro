@@ -11,6 +11,7 @@ dependencies {
     implementation(projects.core.domain)
     implementation(projects.core.database)
     implementation(projects.core.auth)
+    implementation(projects.library.observability.api)
 
     implementation(libs.firebase.firestore)
     implementation(libs.kotlinx.coroutines.play.services)

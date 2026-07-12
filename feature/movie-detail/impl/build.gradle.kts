@@ -12,6 +12,7 @@ dependencies {
     implementation(projects.core.data)
     implementation(projects.core.database)
     implementation(projects.core.sync)
+    implementation(projects.library.observability.api)
 
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson.converter)

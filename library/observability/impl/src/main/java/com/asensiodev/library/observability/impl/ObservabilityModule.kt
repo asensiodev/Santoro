@@ -1,7 +1,7 @@
-package com.asensiodev.santoro.observability
+package com.asensiodev.library.observability.impl
 
 import android.content.Context
-import com.asensiodev.core.domain.observability.ObservabilityTracker
+import com.asensiodev.library.observability.api.ObservabilityTracker
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.Binds

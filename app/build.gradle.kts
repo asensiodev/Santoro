@@ -53,6 +53,8 @@ dependencies {
     implementation(projects.santoro.library.remoteConfig.impl)
     implementation(projects.santoro.library.secureStorage.api)
     implementation(projects.santoro.library.secureStorage.impl)
+    implementation(projects.library.observability.api)
+    implementation(projects.library.observability.impl)
 
     implementation(projects.core.auth)
     implementation(projects.core.domain)
@@ -70,10 +72,6 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.core.splashscreen)
 
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.analytics)
-    implementation(libs.firebase.remote.config)
-    implementation(libs.firebase.crashlytics)
     implementation(libs.androidx.startup)
 }
 

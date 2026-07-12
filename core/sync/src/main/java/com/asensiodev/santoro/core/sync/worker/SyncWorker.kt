@@ -5,8 +5,8 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.asensiodev.auth.domain.repository.AuthRepository
-import com.asensiodev.core.domain.observability.NoOpObservabilityTracker
-import com.asensiodev.core.domain.observability.ObservabilityTracker
+import com.asensiodev.library.observability.api.NoOpObservabilityTracker
+import com.asensiodev.library.observability.api.ObservabilityTracker
 import com.asensiodev.santoro.core.sync.domain.repository.SyncRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject

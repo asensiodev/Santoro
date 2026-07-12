@@ -2,14 +2,14 @@ package com.asensiodev.feature.moviedetail.impl.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.asensiodev.core.domain.observability.NoOpObservabilityTracker
-import com.asensiodev.core.domain.observability.ObservabilityTracker
 import com.asensiodev.core.domain.usecase.ObserveHasSeenDetailTooltipUseCase
 import com.asensiodev.core.domain.usecase.SetDetailTooltipSeenUseCase
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseCase
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.UpdateMovieStateUseCase
 import com.asensiodev.feature.moviedetail.impl.presentation.mapper.toDomain
 import com.asensiodev.feature.moviedetail.impl.presentation.mapper.toUi
+import com.asensiodev.library.observability.api.NoOpObservabilityTracker
+import com.asensiodev.library.observability.api.ObservabilityTracker
 import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel

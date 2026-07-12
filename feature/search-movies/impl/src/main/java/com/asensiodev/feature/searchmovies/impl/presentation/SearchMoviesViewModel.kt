@@ -4,8 +4,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asensiodev.core.domain.model.Movie
-import com.asensiodev.core.domain.observability.NoOpObservabilityTracker
-import com.asensiodev.core.domain.observability.ObservabilityTracker
 import com.asensiodev.feature.searchmovies.impl.data.repository.CachingSearchMoviesRepository
 import com.asensiodev.feature.searchmovies.impl.data.repository.StaleDataException
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.ClearRecentSearchesUseCase
@@ -22,6 +20,8 @@ import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesUseCa
 import com.asensiodev.feature.searchmovies.impl.presentation.mapper.toUiList
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 import com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType
+import com.asensiodev.library.observability.api.NoOpObservabilityTracker
+import com.asensiodev.library.observability.api.ObservabilityTracker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
