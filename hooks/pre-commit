@@ -60,5 +60,20 @@ echo "Running ktlintCheck on changed files..."
     echo "All ktlint issues resolved by ktlintFormat!"
 }
 
+### Konsist ###
+echo "Running Konsist architecture tests..."
+KONSIST_OUTPUT=$(mktemp)
+./gradlew konsistCheck > "$KONSIST_OUTPUT" 2>&1 || {
+    cat "$KONSIST_OUTPUT"
+    rm -f "$KONSIST_OUTPUT"
+    echo "************************************************"
+    echo "        Konsist architecture tests failed        "
+    echo " Please fix the above issues before committing  "
+    echo "************************************************"
+    error_exit "Konsist architecture tests failed."
+}
+echo "All Konsist architecture tests passed!"
+rm -f "$KONSIST_OUTPUT"
+
 echo "All checks passed."
 exit 0

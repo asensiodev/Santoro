@@ -89,3 +89,10 @@ tasks.register("copyGitHooks") {
             }
     }
 }
+
+tasks.register("konsistCheck") {
+    group = "verification"
+    description = "Runs Konsist architecture tests"
+
+    dependsOn(":architecture-tests:test")
+}

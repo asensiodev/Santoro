@@ -22,6 +22,7 @@ dependencyResolutionManagement {
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 rootProject.name = "Santoro"
+include(":architecture-tests")
 include(":app")
 include(":core:auth")
 include(":core:build-config")
