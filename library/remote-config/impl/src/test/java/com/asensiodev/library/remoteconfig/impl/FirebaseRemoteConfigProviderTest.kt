@@ -1,15 +1,12 @@
 package com.asensiodev.library.remoteconfig.impl
 
-import com.asensiodev.core.testing.coVerifyOnce
 import com.asensiodev.core.testing.verifyOnce
 import com.asensiodev.library.remoteconfig.api.RemoteConfigName
-import com.google.android.gms.tasks.Task
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
-import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.BeforeEach
@@ -34,14 +31,11 @@ class FirebaseRemoteConfigProviderTest {
     @Test
     fun `GIVEN initialize WHEN called THEN fetchAndActivate is awaited`() =
         runTest {
-            val task = mockk<Task<Boolean>>()
-            coEvery { task.await() } returns true
-            every { firebaseRemoteConfig.fetchAndActivate() } returns task
+            every { firebaseRemoteConfig.fetchAndActivate() } returns Tasks.forResult(true)
 
             remoteConfigProvider.initialize()
 
             verifyOnce { firebaseRemoteConfig.fetchAndActivate() }
-            coVerifyOnce { task.await() }
         }
 
     @Test

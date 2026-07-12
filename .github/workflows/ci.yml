@@ -21,10 +21,30 @@ permissions:
   contents: read
 
 jobs:
-  quality:
-    name: Quality and build
+  verification:
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Static analysis
+            command: ./gradlew ktlintCheck detekt
+            firebase: false
+            reports: false
+          - name: Unit tests
+            command: >-
+              ./gradlew testDebugUnitTest
+              :architecture-tests:test
+              :core:data:test
+              :core:domain:test
+            firebase: true
+            reports: true
+          - name: Debug build
+            command: ./gradlew assembleDebug
+            firebase: true
+            reports: false
 
     steps:
       - name: Check out repository
@@ -43,6 +63,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Configure Firebase
+        if: matrix.firebase
         env:
           GOOGLE_SERVICES_DEBUG_JSON: ${{ secrets.GOOGLE_SERVICES_DEBUG_JSON }}
           GOOGLE_SERVICES_RELEASE_JSON: ${{ secrets.GOOGLE_SERVICES_RELEASE_JSON }}
@@ -61,11 +82,11 @@ jobs:
             printf '%s' '{"project_info":{"project_number":"1","project_id":"santoro-ci"},"client":[{"client_info":{"mobilesdk_app_id":"1:1:android:2","android_client_info":{"package_name":"com.asensiodev.santoro"}},"api_key":[{"current_key":"ci-placeholder"}]}],"configuration_version":"1"}' > app/src/release/google-services.json
           fi
 
-      - name: Run quality checks and unit tests
-        run: ./gradlew ktlintCheck detekt test assembleDebug
+      - name: Run ${{ matrix.name }}
+        run: ${{ matrix.command }}
 
       - name: Upload test reports
-        if: failure()
+        if: failure() && matrix.reports
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-reports
@@ -75,7 +96,7 @@ jobs:
 
   instrumented-tests:
     name: Instrumented feature tests
-    needs: quality
+    needs: verification
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
