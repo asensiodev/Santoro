@@ -2,6 +2,7 @@ package com.asensiodev.feature.watchlist.impl.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.watchlist.impl.domain.usecase.GetWatchlistMoviesUseCase
 import com.asensiodev.feature.watchlist.impl.domain.usecase.RemoveFromWatchlistUseCase
 import com.asensiodev.feature.watchlist.impl.domain.usecase.SearchWatchlistMoviesUseCase
@@ -9,16 +10,17 @@ import com.asensiodev.feature.watchlist.impl.presentation.mapper.toUiList
 import com.asensiodev.feature.watchlist.impl.presentation.model.MovieUi
 import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -40,6 +42,7 @@ internal class WatchlistMoviesViewModel
         val effect = _effect.receiveAsFlow()
 
         private val searchQuery = MutableStateFlow("")
+        private var moviesJob: Job? = null
 
         fun process(intent: WatchlistIntent) {
             when (intent) {
@@ -51,118 +54,86 @@ internal class WatchlistMoviesViewModel
             }
         }
 
-        @OptIn(FlowPreview::class)
+        @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
         private fun loadMovies() {
-            fetchWatchlistMovies()
-
-            searchQuery
-                .drop(SKIP_INITIAL_EMISSION)
-                .debounce(DELAY)
-                .distinctUntilChanged()
-                .onEach { query ->
-                    if (query.isBlank()) {
-                        fetchWatchlistMovies()
-                    } else {
-                        searchWatchlistMovies(query)
-                    }
-                }.launchIn(viewModelScope)
+            val isRetry = _uiState.value.screenState is WatchlistScreenState.Error
+            if (moviesJob?.isActive == true && !isRetry) return
+            moviesJob?.cancel()
+            showLoadingIfEmpty()
+            moviesJob =
+                viewModelScope.launch {
+                    searchQuery
+                        .debounce { query -> if (query.isBlank()) NO_DELAY else SEARCH_DELAY }
+                        .distinctUntilChanged()
+                        .flatMapLatest { query ->
+                            val movies =
+                                if (query.isBlank()) {
+                                    getWatchlistMoviesUseCase()
+                                } else {
+                                    searchWatchlistMoviesUseCase(query)
+                                }
+                            movies.map { result -> query to result }
+                        }.collect { (query, result) ->
+                            updateMovies(query, result)
+                        }
+                }
         }
 
-        private fun fetchWatchlistMovies() {
-            showLoadingIfEmpty()
-            viewModelScope.launch {
-                getWatchlistMoviesUseCase()
-                    .collect { result ->
-                        result.fold(
-                            onSuccess = { movies ->
-                                val moviesUi = movies.toUiList()
-                                val totalMoviesCount = moviesUi.size
-                                _uiState.update {
-                                    val screenState =
-                                        if (moviesUi.isEmpty()) {
-                                            WatchlistScreenState.Empty
-                                        } else {
-                                            WatchlistScreenState.Content
-                                        }
-                                    it.copy(
-                                        screenState = screenState,
-                                        totalMoviesCount = totalMoviesCount,
-                                        hasMovies = totalMoviesCount > 0,
-                                        listHeader =
-                                            createListHeader(
-                                                query = it.query,
-                                                screenState = screenState,
-                                                visibleMoviesCount = moviesUi.size,
-                                            ),
-                                        movies = moviesUi,
-                                    )
-                                }
-                            },
-                            onFailure = { exception ->
-                                _uiState.update {
-                                    it.copy(
-                                        screenState =
-                                            WatchlistScreenState.Error(
-                                                exception.message.orEmpty(),
-                                            ),
-                                        listHeader = null,
-                                    )
-                                }
-                            },
+        private fun updateMovies(
+            query: String,
+            result: Result<List<Movie>>,
+        ) {
+            result.fold(
+                onSuccess = { movies ->
+                    val moviesUi = movies.toUiList()
+                    _uiState.update { state ->
+                        val screenState = createScreenState(query, moviesUi, state.hasMovies)
+                        val totalMoviesCount =
+                            if (query.isBlank()) {
+                                moviesUi.size
+                            } else {
+                                state.totalMoviesCount
+                            }
+                        state.copy(
+                            screenState = screenState,
+                            totalMoviesCount = totalMoviesCount,
+                            hasMovies = totalMoviesCount > 0,
+                            listHeader =
+                                createListHeader(
+                                    query = query,
+                                    screenState = screenState,
+                                    visibleMoviesCount = moviesUi.size,
+                                ),
+                            movies = moviesUi,
                         )
                     }
-            }
+                },
+                onFailure = { exception ->
+                    _uiState.update {
+                        it.copy(
+                            screenState = WatchlistScreenState.Error(exception.message.orEmpty()),
+                            listHeader = null,
+                        )
+                    }
+                },
+            )
         }
+
+        private fun createScreenState(
+            query: String,
+            movies: List<MovieUi>,
+            hasMovies: Boolean?,
+        ): WatchlistScreenState =
+            when {
+                movies.isNotEmpty() -> WatchlistScreenState.Content
+                query.isBlank() -> WatchlistScreenState.Empty
+                hasMovies == false -> WatchlistScreenState.Empty
+                else -> WatchlistScreenState.NoResults
+            }
 
         private fun updateQuery(query: String) {
             searchQuery.value = query
             _uiState.update { it.copy(query = query) }
-        }
-
-        private fun searchWatchlistMovies(query: String) {
-            showLoadingIfEmpty()
-            viewModelScope.launch {
-                searchWatchlistMoviesUseCase(query).collect { result ->
-                    result.fold(
-                        onSuccess = { movies ->
-                            val moviesUi = movies.toUiList()
-                            _uiState.update {
-                                val screenState =
-                                    if (moviesUi.isEmpty()) {
-                                        if (it.hasMovies == false) {
-                                            WatchlistScreenState.Empty
-                                        } else {
-                                            WatchlistScreenState.NoResults
-                                        }
-                                    } else {
-                                        WatchlistScreenState.Content
-                                    }
-                                it.copy(
-                                    screenState = screenState,
-                                    listHeader =
-                                        createListHeader(
-                                            query = query,
-                                            screenState = screenState,
-                                            visibleMoviesCount = moviesUi.size,
-                                        ),
-                                    movies = moviesUi,
-                                )
-                            }
-                        },
-                        onFailure = { exception ->
-                            _uiState.update {
-                                it.copy(
-                                    screenState =
-                                        WatchlistScreenState.Error(
-                                            exception.message.orEmpty(),
-                                        ),
-                                    listHeader = null,
-                                )
-                            }
-                        },
-                    )
-                }
-            }
         }
 
         private fun showLoadingIfEmpty() {
@@ -209,5 +180,5 @@ internal class WatchlistMoviesViewModel
         }
     }
 
-private const val DELAY: Long = 500
-private const val SKIP_INITIAL_EMISSION = 1
+private const val SEARCH_DELAY = 500L
+private const val NO_DELAY = 0L

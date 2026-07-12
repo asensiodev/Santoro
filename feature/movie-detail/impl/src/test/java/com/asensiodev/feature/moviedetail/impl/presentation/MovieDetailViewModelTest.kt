@@ -15,6 +15,8 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -99,6 +101,34 @@ class MovieDetailViewModelTest {
                     viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                     cancelAndConsumeRemainingEvents()
                 }
+            }
+
+        @Test
+        fun `GIVEN active fetch WHEN Retry intent THEN replaces previous collector`() =
+            runTest {
+                var activeCollectors = 0
+                var maximumActiveCollectors = 0
+                var subscriptions = 0
+                every { getMovieDetailUseCase(testMovie.id) } returns
+                    flow {
+                        subscriptions++
+                        activeCollectors++
+                        maximumActiveCollectors = maxOf(maximumActiveCollectors, activeCollectors)
+                        try {
+                            awaitCancellation()
+                        } finally {
+                            activeCollectors--
+                        }
+                    }
+
+                viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
+                advanceUntilIdle()
+                viewModel.process(MovieDetailIntent.Retry)
+                advanceUntilIdle()
+
+                subscriptions shouldBeEqualTo 2
+                maximumActiveCollectors shouldBeEqualTo 1
+                activeCollectors shouldBeEqualTo 1
             }
     }
 

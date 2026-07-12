@@ -14,6 +14,9 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
@@ -262,6 +265,83 @@ class WatchlistMoviesViewModelTest {
 
             viewModel.uiState.value.screenState shouldBeEqualTo WatchlistScreenState.Content
             viewModel.uiState.value.listHeader shouldBeEqualTo WatchlistListHeaderUi.SearchResults(1)
+        }
+
+    @Test
+    fun `GIVEN active observation WHEN LoadMovies repeats THEN database is collected once`() =
+        runTest {
+            var subscriptions = 0
+            every { getWatchlistMoviesUseCase() } returns
+                flow {
+                    subscriptions++
+                    emit(Result.success(emptyList()))
+                    awaitCancellation()
+                }
+
+            viewModel.process(WatchlistIntent.LoadMovies)
+            advanceUntilIdle()
+            viewModel.process(WatchlistIntent.LoadMovies)
+            viewModel.process(WatchlistIntent.LoadMovies)
+            advanceUntilIdle()
+
+            subscriptions shouldBeEqualTo 1
+        }
+
+    @Test
+    fun `GIVEN failed observation WHEN LoadMovies retries THEN database collection restarts once`() =
+        runTest {
+            var subscriptions = 0
+            var activeCollectors = 0
+            var maximumActiveCollectors = 0
+            every { getWatchlistMoviesUseCase() } returns
+                flow {
+                    subscriptions++
+                    activeCollectors++
+                    maximumActiveCollectors = maxOf(maximumActiveCollectors, activeCollectors)
+                    try {
+                        emit(Result.failure(Exception("database error")))
+                        awaitCancellation()
+                    } finally {
+                        activeCollectors--
+                    }
+                }
+
+            viewModel.process(WatchlistIntent.LoadMovies)
+            advanceUntilIdle()
+            viewModel.process(WatchlistIntent.LoadMovies)
+            advanceUntilIdle()
+
+            subscriptions shouldBeEqualTo 2
+            maximumActiveCollectors shouldBeEqualTo 1
+            activeCollectors shouldBeEqualTo 1
+        }
+
+    @Test
+    fun `GIVEN older slow search WHEN newer search completes THEN newer results remain visible`() =
+        runTest {
+            val olderMovie = buildMovie(id = 1, title = "Older")
+            val newerMovie = buildMovie(id = 2, title = "Newer")
+            every { searchWatchlistMoviesUseCase("old") } returns
+                flow {
+                    delay(1_000)
+                    emit(Result.success(listOf(olderMovie)))
+                }
+            every { searchWatchlistMoviesUseCase("new") } returns
+                flow {
+                    delay(10)
+                    emit(Result.success(listOf(newerMovie)))
+                }
+
+            viewModel.process(WatchlistIntent.LoadMovies)
+            advanceUntilIdle()
+            viewModel.process(WatchlistIntent.UpdateQuery("old"))
+            advanceTimeBy(500)
+            viewModel.process(WatchlistIntent.UpdateQuery("new"))
+            advanceTimeBy(500)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.movies
+                .map { movie -> movie.id } shouldBeEqualTo listOf(newerMovie.id)
         }
 
     private fun buildMovie(

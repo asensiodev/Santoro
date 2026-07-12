@@ -12,6 +12,7 @@ import com.asensiodev.library.observability.api.NoOpObservabilityTracker
 import com.asensiodev.library.observability.api.ObservabilityTracker
 import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,6 +41,7 @@ internal class MovieDetailViewModel
         val effect = _effect.receiveAsFlow()
 
         private var lastRequestedMovieId: Int? = null
+        private var fetchJob: Job? = null
 
         fun process(intent: MovieDetailIntent) {
             when (intent) {
@@ -62,37 +64,39 @@ internal class MovieDetailViewModel
                 ),
             )
             _uiState.update { it.copy(screenState = MovieDetailScreenState.Loading) }
-            viewModelScope.launch {
-                getMovieDetailUseCase(movieId)
-                    .collect { result ->
-                        result.fold(
-                            onSuccess = { movie ->
-                                _uiState.update {
-                                    it.copy(
-                                        screenState = MovieDetailScreenState.Content,
-                                        movie = movie?.toUi(),
+            fetchJob?.cancel()
+            fetchJob =
+                viewModelScope.launch {
+                    getMovieDetailUseCase(movieId)
+                        .collect { result ->
+                            result.fold(
+                                onSuccess = { movie ->
+                                    _uiState.update {
+                                        it.copy(
+                                            screenState = MovieDetailScreenState.Content,
+                                            movie = movie?.toUi(),
+                                        )
+                                    }
+                                    checkTooltip()
+                                },
+                                onFailure = { exception ->
+                                    observabilityTracker.recordError(
+                                        MOVIE_DETAIL_FETCH_FAILED,
+                                        exception,
+                                        mapOf(MOVIE_ID to movieId.toString()),
                                     )
-                                }
-                                checkTooltip()
-                            },
-                            onFailure = { exception ->
-                                observabilityTracker.recordError(
-                                    MOVIE_DETAIL_FETCH_FAILED,
-                                    exception,
-                                    mapOf(MOVIE_ID to movieId.toString()),
-                                )
-                                _uiState.update {
-                                    it.copy(
-                                        screenState =
-                                            MovieDetailScreenState.Error(
-                                                exception.message.orEmpty(),
-                                            ),
-                                    )
-                                }
-                            },
-                        )
-                    }
-            }
+                                    _uiState.update {
+                                        it.copy(
+                                            screenState =
+                                                MovieDetailScreenState.Error(
+                                                    exception.message.orEmpty(),
+                                                ),
+                                        )
+                                    }
+                                },
+                            )
+                        }
+                }
         }
 
         private fun retryFetch() {
