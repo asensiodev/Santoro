@@ -13,12 +13,12 @@ import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetUpcomingMovies
 import com.asensiodev.feature.searchmovies.impl.presentation.mapper.toUiList
 import com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -41,8 +41,8 @@ internal class SeeAllMoviesViewModel
         private val _uiState = MutableStateFlow(SeeAllMoviesUiState(sectionType = sectionType))
         val uiState: StateFlow<SeeAllMoviesUiState> = _uiState.asStateFlow()
 
-        private val _effect = Channel<SeeAllMoviesEffect>(Channel.BUFFERED)
-        val effect: Flow<SeeAllMoviesEffect> = _effect.receiveAsFlow()
+        private val _effect = MutableSharedFlow<SeeAllMoviesEffect>(extraBufferCapacity = 1)
+        val effect: Flow<SeeAllMoviesEffect> = _effect.asSharedFlow()
 
         private var currentPage = FIRST_PAGE
 
@@ -77,7 +77,7 @@ internal class SeeAllMoviesViewModel
         }
 
         private fun onMovieClicked(movieId: Int) {
-            _effect.trySend(SeeAllMoviesEffect.NavigateToDetail(movieId))
+            _effect.tryEmit(SeeAllMoviesEffect.NavigateToDetail(movieId))
         }
 
         private fun loadPage(

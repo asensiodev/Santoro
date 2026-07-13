@@ -44,6 +44,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -94,6 +96,7 @@ import com.asensiodev.feature.moviedetail.impl.presentation.model.CastMemberUi
 import com.asensiodev.feature.moviedetail.impl.presentation.model.CrewMemberUi
 import com.asensiodev.feature.moviedetail.impl.presentation.model.GenreUi
 import com.asensiodev.feature.moviedetail.impl.presentation.model.MovieUi
+import com.asensiodev.ui.CollectEffectWithLifecycle
 import java.util.Locale
 import com.asensiodev.santoro.core.designsystem.R as DR
 import com.asensiodev.santoro.core.stringresources.R as SR
@@ -128,33 +131,41 @@ internal fun MovieDetailRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(movieId) {
         viewModel.process(MovieDetailIntent.FetchDetails(movieId))
     }
 
-    LaunchedEffect(viewModel) {
-        viewModel.effect.collect { effect ->
-            when (effect) {
-                is MovieDetailEffect.ShareMovie -> ShareMovieHelper.share(context, effect.movie)
-                is MovieDetailEffect.NavigateBack -> onBackClicked()
-                is MovieDetailEffect.ShowError -> Unit
-            }
+    CollectEffectWithLifecycle(viewModel.effect) { effect ->
+        when (effect) {
+            is MovieDetailEffect.ShareMovie -> ShareMovieHelper.share(context, effect.movie)
+            is MovieDetailEffect.NavigateBack -> onBackClicked()
+            is MovieDetailEffect.ShowError ->
+                snackbarHostState.showSnackbar(
+                    effect.message.asString(context),
+                )
         }
     }
 
     val onProcess = remember(viewModel) { viewModel::process }
 
-    MovieDetailScreen(
-        uiState = uiState,
-        onToggleWatchlist = { onProcess(MovieDetailIntent.ToggleWatchlist) },
-        onToggleWatched = { onProcess(MovieDetailIntent.ToggleWatched) },
-        onRetry = { onProcess(MovieDetailIntent.Retry) },
-        onBackClicked = onBackClicked,
-        onShareClicked = { onProcess(MovieDetailIntent.ShareMovie) },
-        onDismissTooltip = { onProcess(MovieDetailIntent.DismissTooltip) },
-        modifier = modifier,
-    )
+    Box(modifier = modifier) {
+        MovieDetailScreen(
+            uiState = uiState,
+            onToggleWatchlist = { onProcess(MovieDetailIntent.ToggleWatchlist) },
+            onToggleWatched = { onProcess(MovieDetailIntent.ToggleWatched) },
+            onRetry = { onProcess(MovieDetailIntent.Retry) },
+            onBackClicked = onBackClicked,
+            onShareClicked = { onProcess(MovieDetailIntent.ShareMovie) },
+            onDismissTooltip = { onProcess(MovieDetailIntent.DismissTooltip) },
+            modifier = Modifier.fillMaxSize(),
+        )
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

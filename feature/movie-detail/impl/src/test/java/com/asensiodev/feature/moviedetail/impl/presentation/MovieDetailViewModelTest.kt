@@ -10,10 +10,12 @@ import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseC
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.UpdateMovieStateUseCase
 import com.asensiodev.feature.moviedetail.impl.presentation.mapper.toUi
 import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
+import com.asensiodev.ui.UiText
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -28,6 +30,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import com.asensiodev.santoro.core.stringresources.R as SR
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MovieDetailViewModelTest {
@@ -202,7 +205,8 @@ class MovieDetailViewModelTest {
                 viewModel.effect.test {
                     viewModel.process(MovieDetailIntent.ToggleWatchlist)
                     val effect = awaitItem()
-                    effect shouldBeEqualTo MovieDetailEffect.ShowError(errorMessage)
+                    val message = (effect as MovieDetailEffect.ShowError).message
+                    (message as UiText.StringResource).resId shouldBeEqualTo SR.string.error_message_retry
                 }
             }
 
@@ -370,7 +374,8 @@ class MovieDetailViewModelTest {
                 viewModel.effect.test {
                     viewModel.process(MovieDetailIntent.ToggleWatched)
                     val effect = awaitItem()
-                    effect shouldBeEqualTo MovieDetailEffect.ShowError(errorMessage)
+                    val message = (effect as MovieDetailEffect.ShowError).message
+                    (message as UiText.StringResource).resId shouldBeEqualTo SR.string.error_message_retry
                 }
             }
 
@@ -427,6 +432,19 @@ class MovieDetailViewModelTest {
                 advanceUntilIdle()
 
                 viewModel.uiState.value.showTooltip shouldBeEqualTo false
+            }
+
+        @Test
+        fun `GIVEN detail emits repeatedly WHEN tooltip is checked THEN checks once per movie`() =
+            runTest {
+                every { observeHasSeenDetailTooltipUseCase() } returns flowOf(true)
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns
+                    flowOf(Result.success(testMovie), Result.success(testMovie))
+
+                viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
+                advanceUntilIdle()
+
+                verify(exactly = 1) { observeHasSeenDetailTooltipUseCase() }
             }
 
         @Test

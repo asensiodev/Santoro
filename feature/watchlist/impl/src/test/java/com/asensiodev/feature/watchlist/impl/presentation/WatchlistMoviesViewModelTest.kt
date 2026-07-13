@@ -347,6 +347,26 @@ class WatchlistMoviesViewModelTest {
         }
 
     @Test
+    fun `GIVEN LoadMovies repeats WHEN query changes THEN search is collected once`() =
+        runTest {
+            var subscriptions = 0
+            every { searchWatchlistMoviesUseCase("matrix") } returns
+                flow {
+                    subscriptions++
+                    emit(Result.success(emptyList()))
+                }
+
+            viewModel.process(WatchlistIntent.LoadMovies)
+            viewModel.process(WatchlistIntent.LoadMovies)
+            advanceUntilIdle()
+            viewModel.process(WatchlistIntent.UpdateQuery("matrix"))
+            advanceTimeBy(500)
+            advanceUntilIdle()
+
+            subscriptions shouldBeEqualTo 1
+        }
+
+    @Test
     fun `GIVEN failed observation WHEN LoadMovies retries THEN database collection restarts once`() =
         runTest {
             var subscriptions = 0

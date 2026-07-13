@@ -10,6 +10,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
@@ -177,6 +179,18 @@ class DefaultMovieDetailRepositoryTest {
             repository.getMovieDetail(movieId).test {
                 awaitItem() shouldBeEqualTo Result.success(localMovie)
                 awaitComplete()
+            }
+        }
+
+    @Test
+    fun `GIVEN upstream cancellation WHEN getMovieDetail THEN cancellation propagates`() =
+        runTest {
+            val movieId = 6
+            every { localDataSource.getMovieDetail(movieId) } returns flow { throw CancellationException() }
+            every { remoteDataSource.getMovieDetail(movieId) } returns flowOf(Result.success(null))
+
+            repository.getMovieDetail(movieId).test {
+                awaitError().shouldBeInstanceOf<CancellationException>()
             }
         }
 

@@ -11,17 +11,20 @@ import com.asensiodev.feature.moviedetail.impl.presentation.mapper.toUi
 import com.asensiodev.library.observability.api.NoOpObservabilityTracker
 import com.asensiodev.library.observability.api.ObservabilityTracker
 import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
+import com.asensiodev.ui.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.asensiodev.santoro.core.stringresources.R as SR
 
 @HiltViewModel
 internal class MovieDetailViewModel
@@ -37,11 +40,12 @@ internal class MovieDetailViewModel
         private val _uiState = MutableStateFlow(MovieDetailUiState())
         val uiState: StateFlow<MovieDetailUiState> = _uiState.asStateFlow()
 
-        private val _effect = Channel<MovieDetailEffect>(Channel.BUFFERED)
-        val effect = _effect.receiveAsFlow()
+        private val _effect = MutableSharedFlow<MovieDetailEffect>(extraBufferCapacity = 1)
+        val effect = _effect.asSharedFlow()
 
         private var lastRequestedMovieId: Int? = null
         private var fetchJob: Job? = null
+        private var tooltipCheckedMovieId: Int? = null
 
         fun process(intent: MovieDetailIntent) {
             when (intent) {
@@ -77,7 +81,10 @@ internal class MovieDetailViewModel
                                             movie = movie?.toUi(),
                                         )
                                     }
-                                    checkTooltip()
+                                    if (tooltipCheckedMovieId != movieId) {
+                                        tooltipCheckedMovieId = movieId
+                                        checkTooltip()
+                                    }
                                 },
                                 onFailure = { exception ->
                                     observabilityTracker.recordError(
@@ -113,7 +120,7 @@ internal class MovieDetailViewModel
                 ),
             )
             viewModelScope.launch {
-                _effect.send(MovieDetailEffect.ShareMovie(movie))
+                _effect.emit(MovieDetailEffect.ShareMovie(movie))
             }
         }
 
@@ -141,7 +148,7 @@ internal class MovieDetailViewModel
                                 ),
                             )
                             _uiState.update { it.copy(movie = updatedMovie) }
-                            runCatching { syncScheduler.enqueueUpload(movie.id) }
+                            enqueueUpload(movie.id)
                         }.onFailure { exception ->
                             observabilityTracker.recordError(
                                 MOVIE_DETAIL_TOGGLE_WATCHLIST_FAILED,
@@ -149,9 +156,9 @@ internal class MovieDetailViewModel
                                 mapOf(MOVIE_ID to movie.id.toString()),
                             )
                             _effect
-                                .trySend(
+                                .tryEmit(
                                     MovieDetailEffect.ShowError(
-                                        exception.message.orEmpty(),
+                                        UiText.StringResource(SR.string.error_message_retry),
                                     ),
                                 )
                         }
@@ -185,7 +192,7 @@ internal class MovieDetailViewModel
                                 ),
                             )
                             _uiState.update { it.copy(movie = updatedMovie) }
-                            runCatching { syncScheduler.enqueueUpload(movie.id) }
+                            enqueueUpload(movie.id)
                         }.onFailure { exception ->
                             observabilityTracker.recordError(
                                 MOVIE_DETAIL_TOGGLE_WATCHED_FAILED,
@@ -193,9 +200,9 @@ internal class MovieDetailViewModel
                                 mapOf(MOVIE_ID to movie.id.toString()),
                             )
                             _effect
-                                .trySend(
+                                .tryEmit(
                                     MovieDetailEffect.ShowError(
-                                        exception.message.orEmpty(),
+                                        UiText.StringResource(SR.string.error_message_retry),
                                     ),
                                 )
                         }
@@ -211,6 +218,16 @@ internal class MovieDetailViewModel
                 if (!hasSeen) {
                     _uiState.update { it.copy(showTooltip = true) }
                 }
+            }
+        }
+
+        private fun enqueueUpload(movieId: Int) {
+            try {
+                syncScheduler.enqueueUpload(movieId)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (_: IllegalStateException) {
+                Unit
             }
         }
 

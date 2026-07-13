@@ -227,13 +227,13 @@ No new feature, API, implementation, or layer module is planned.
     - Tests that depend on wall-clock time or arbitrary delays.
 
 - [x] Add a Watchlist test proving repeated `LoadMovies`/retry does not create multiple database subscriptions.
-- [ ] Add a Watchlist test proving repeated `LoadMovies` does not create multiple query observers.
+- [x] Add a Watchlist test proving repeated `LoadMovies` does not create multiple query observers.
 - [x] Add a Watchlist latest-query-wins test where query A completes after query B.
 - [x] Add a Movie Detail test proving retry replaces or reuses the active fetch rather than adding a collector.
 - [x] Add rapid-toggle tests defining the accepted behavior while a mutation is pending.
-- [ ] Add cancellation tests proving affected repositories/use cases do not convert cancellation into `Result.failure`.
+- [x] Add cancellation tests proving affected repositories/use cases do not convert cancellation into `Result.failure`.
 - [ ] Add effect tests defining whether each navigation/share/error effect is delivered, dropped, or retained across collector inactivity.
-- [ ] Record the accepted concurrency/effect contracts in test names and this FIP's Decisions section during implementation.
+- [x] Record the accepted concurrency/effect contracts in test names and this FIP's Decisions section during implementation.
 
 ### Phase 2 — P0: Make Long-Lived Observation Idempotent
 
@@ -258,9 +258,9 @@ No new feature, API, implementation, or layer module is planned.
 - [x] Implement explicit latest-query-wins semantics for Watchlist search.
 - [x] Ensure the unfiltered Room stream and filtered search stream cannot race to publish contradictory movie lists.
 - [x] Retain/cancel the active Movie Detail fetch job or model route IDs through a latest-only Flow.
-- [ ] Ensure tooltip checks and other success follow-ups execute once per accepted detail result.
+- [x] Ensure tooltip checks and other success follow-ups execute once per accepted detail result.
 - [x] Preserve current Loading, Content, Empty, NoResults, and Error behavior.
-- [ ] Make all Phase 1 concurrency tests pass.
+- [x] Make all Phase 1 concurrency tests pass.
 
 ### Phase 3 — P0: Serialize User Mutations and Preserve State Consistency
 
@@ -302,11 +302,11 @@ No new feature, API, implementation, or layer module is planned.
     - Converting cancellation into user-visible error state.
     - Changing API/backend error payloads.
 
-- [ ] Audit production `catch (Exception)` and Flow `.catch` blocks in affected data, sync, and feature paths.
-- [ ] Rethrow cancellation consistently before converting failures to `Result`.
-- [ ] Narrow catches to expected transport, database, mapping, or authentication failures where practical.
-- [ ] Preserve diagnostic causes while exposing stable domain/presentation errors.
-- [ ] Add cancellation regression tests with controlled test dispatchers.
+- [x] Audit production `catch (Exception)` and Flow `.catch` blocks in affected data, sync, and feature paths.
+- [x] Rethrow cancellation consistently before converting failures to `Result`.
+- [x] Narrow catches to expected transport, database, mapping, or authentication failures where practical.
+- [x] Preserve diagnostic causes while exposing stable domain/presentation errors.
+- [x] Add cancellation regression tests with controlled test dispatchers.
 - [ ] Extend architecture/static checks only if a reliable non-textual rule can prevent recurrence.
 
 ### Phase 5 — P1: Define Lifecycle-Aware Effect Delivery
@@ -328,11 +328,11 @@ No new feature, API, implementation, or layer module is planned.
     - Standardizing direct navigation callbacks solely for stylistic consistency when no bug exists.
 
 - [ ] Inventory every feature effect and classify it as navigation, platform action, user feedback, or durable state transition.
-- [ ] Define drop, buffer, replay, and acknowledgement semantics for each category.
-- [ ] Introduce or reuse one lifecycle-aware effect collection pattern.
-- [ ] Migrate Search, Watchlist, and Movie Detail effect collection first.
-- [ ] Remove declared effects that are unreachable or intentionally use direct callbacks.
-- [ ] Ensure `trySend`/`send` failures are handled according to the chosen contract.
+- [x] Define drop, buffer, replay, and acknowledgement semantics for each category.
+- [x] Introduce or reuse one lifecycle-aware effect collection pattern.
+- [x] Migrate Search, Watchlist, and Movie Detail effect collection first.
+- [x] Remove declared effects that are unreachable or intentionally use direct callbacks.
+- [x] Ensure `trySend`/`send` failures are handled according to the chosen contract.
 - [ ] Add lifecycle transition tests for navigation and user-feedback effects where feasible.
 - [ ] Verify no effect executes after its destination is no longer active.
 
@@ -358,9 +358,9 @@ No new feature, API, implementation, or layer module is planned.
 - [ ] Define the minimum shared error categories required by affected features.
 - [ ] Replace raw exception-message state in Watchlist, Search, and Movie Detail.
 - [ ] Remove hardcoded fallback error text from production Kotlin.
-- [ ] Ensure Watchlist removal failure is visible and recoverable.
-- [ ] Ensure Movie Detail `ShowError` effects are rendered rather than ignored, or remove them if state handles the failure.
-- [ ] Keep screen-level loading failures distinct from non-blocking mutation failures.
+- [x] Ensure Watchlist removal failure is visible and recoverable.
+- [x] Ensure Movie Detail `ShowError` effects are rendered rather than ignored, or remove them if state handles the failure.
+- [x] Keep screen-level loading failures distinct from non-blocking mutation failures.
 - [ ] Add matching English and Spanish resources.
 - [ ] Add tests for error mapping, localized resource selection, state preservation, and observability calls.
 
@@ -568,9 +568,9 @@ _Fill after implementation. A phase is not considered validated solely because i
 
 | What | Result | Notes |
 |------|--------|-------|
-| Unit and Flow regression tests | ⏳ | Duplicate collectors, latest-wins, cancellation, mutations, effects |
-| Architecture tests | ⏳ | Existing and new semantic rules |
-| Static analysis and formatting | ⏳ | ktlint and explicitly wired Detekt configuration |
+| Unit and Flow regression tests | ✅ | Affected database, sync, network, Watchlist, Movie Detail, and Search tests pass |
+| Architecture tests | ✅ | Existing Konsist architecture tests pass |
+| Static analysis and formatting | ✅ | Affected-module Detekt and ktlint checks pass |
 | Coverage verification | ⏳ | Measured aggregate baseline and staged thresholds |
 | Android lint | ⏳ | Record exact task and result |
 | Paparazzi verification | ⏳ | Record exact task and result |
@@ -595,8 +595,8 @@ _Fill after implementation. A phase is not considered validated solely because i
 
 | # | Question | Resolution |
 |---|----------|------------|
-| 1 | Should transient effects be dropped while inactive or buffered until STARTED? | Resolve per effect category in Phase 5 before implementation |
-| 2 | Should failed movie mutations be pessimistic or optimistic with rollback? | Resolve per feature in Phase 3 using current UX and Room source-of-truth behavior |
+| 1 | Should transient effects be dropped while inactive or buffered until STARTED? | Drop transient navigation, platform-action, and snackbar effects while inactive; do not replay them on return |
+| 2 | Should failed movie mutations be pessimistic or optimistic with rollback? | Use pessimistic, mutually exclusive mutations because Room writes are fast and rollback complexity is unnecessary |
 | 3 | Which Search responsibilities merit extraction rather than private functions? | Resolve in Phase 8 using independent lifecycle/cancellation/test complexity as criteria |
 | 4 | Which state values materially need process-death restoration? | Resolve in Phase 9; default to reloading derived data |
 | 5 | What are the measured Kover baselines after correct aggregation/exclusions? | Measure in Phase 11 before selecting thresholds |
@@ -617,6 +617,9 @@ _Fill after implementation. A phase is not considered validated solely because i
 | 7 | Measure coverage before enforcing thresholds | Apply documented targets immediately | Unmeasured thresholds can block work or reward low-value tests |
 | 8 | Use one query-driven Watchlist pipeline with `flatMapLatest` and one replaceable Movie Detail fetch job | Independent coroutine launches; strict serialized MVI store | The latest query/fetch is authoritative without changing the established MVI-style architecture |
 | 9 | Use pessimistic, mutually exclusive local movie mutations | Optimistic updates with rollback; queued repeated taps | Room writes are fast, current behavior is already pessimistic, and disabling conflicting actions avoids rollback and stale-state complexity |
+| 10 | Rethrow `CancellationException` from affected repository, data-source, and authentication boundaries | Convert cancellation to `Result.failure`; catch all exceptions uniformly | Cancellation is control flow and must remain visible to structured concurrency |
+| 11 | Collect transient effects only while STARTED and use non-replay `SharedFlow` producers | Buffered channels; replayed flows; durable state for every effect | Navigation, platform actions, and snackbar feedback should not execute after their screen becomes inactive |
+| 12 | Represent Movie Detail mutation errors with localized `UiText` and render them as snackbar feedback | Raw exception text; silent effects; blocking screen error state | Mutation failure is non-blocking, must be localized, and should preserve loaded content |
 
 ---
 

@@ -27,16 +27,16 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -65,8 +65,8 @@ internal class SearchMoviesViewModel
         private val _uiState = MutableStateFlow(SearchMoviesUiState())
         val uiState: StateFlow<SearchMoviesUiState> = _uiState.asStateFlow()
 
-        private val _effect = Channel<SearchMoviesEffect>(Channel.BUFFERED)
-        val effect = _effect.receiveAsFlow()
+        private val _effect = MutableSharedFlow<SearchMoviesEffect>(extraBufferCapacity = 1)
+        val effect = _effect.asSharedFlow()
 
         private val searchQuery = savedStateHandle.getStateFlow(SEARCH_QUERY_KEY, "")
 
@@ -312,7 +312,7 @@ internal class SearchMoviesViewModel
                             isSearchEndReached = newMovies.isEmpty(),
                         )
                     }
-                    if (isFromRefresh) _effect.trySend(SearchMoviesEffect.ShowRefreshSuccess)
+                    if (isFromRefresh) _effect.tryEmit(SearchMoviesEffect.ShowRefreshSuccess)
                 },
                 onFailure = { exception ->
                     handleSearchFailure(exception, isInitialLoad, page)
@@ -396,7 +396,7 @@ internal class SearchMoviesViewModel
             if (query.isNotBlank()) {
                 viewModelScope.launch { saveRecentSearchUseCase(query) }
             }
-            _effect.trySend(SearchMoviesEffect.NavigateToDetail(movieId))
+            _effect.tryEmit(SearchMoviesEffect.NavigateToDetail(movieId))
         }
 
         private fun onFieldFocused() {
@@ -431,7 +431,7 @@ internal class SearchMoviesViewModel
                     SECTION_TYPE to sectionType.name,
                 ),
             )
-            _effect.trySend(SearchMoviesEffect.NavigateToSeeAll(sectionType))
+            _effect.tryEmit(SearchMoviesEffect.NavigateToSeeAll(sectionType))
         }
 
         private fun fetchDashboardData(fromRefresh: Boolean = false) {
@@ -470,7 +470,7 @@ internal class SearchMoviesViewModel
                     )
                 }
                 if (fromRefresh && !refreshFailedWithExistingData) {
-                    _effect.trySend(SearchMoviesEffect.ShowRefreshSuccess)
+                    _effect.tryEmit(SearchMoviesEffect.ShowRefreshSuccess)
                 }
             } catch (exception: CancellationException) {
                 throw exception

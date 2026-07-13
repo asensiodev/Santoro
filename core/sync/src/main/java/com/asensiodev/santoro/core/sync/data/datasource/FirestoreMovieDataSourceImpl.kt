@@ -2,6 +2,7 @@ package com.asensiodev.santoro.core.sync.data.datasource
 
 import com.asensiodev.santoro.core.sync.data.model.MovieSyncEntity
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -33,7 +34,7 @@ internal class FirestoreMovieDataSourceImpl
             uid: String,
             entities: List<MovieSyncEntity>,
         ): Result<Unit> =
-            runCatching {
+            try {
                 val moviesCollection =
                     firestore
                         .collection(COLLECTION_USERS)
@@ -53,6 +54,11 @@ internal class FirestoreMovieDataSourceImpl
                             .commit()
                             .await()
                     }
+                Result.success(Unit)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                Result.failure(exception)
             }
 
         private fun MovieSyncEntity.toData(): Map<String, Any?> =
@@ -69,32 +75,38 @@ internal class FirestoreMovieDataSourceImpl
             )
 
         override suspend fun downloadUserMovies(uid: String): Result<List<MovieSyncEntity>> =
-            runCatching {
-                firestore
-                    .collection(COLLECTION_USERS)
-                    .document(uid)
-                    .collection(COLLECTION_MOVIES)
-                    .get()
-                    .await()
-                    .documents
-                    .mapNotNull { doc ->
-                        val movieId =
-                            (doc.getLong(FIELD_MOVIE_ID) ?: return@mapNotNull null).toInt()
-                        val title =
-                            doc
-                                .getString(FIELD_TITLE)
-                                .takeUnless { it.isNullOrEmpty() } ?: return@mapNotNull null
-                        MovieSyncEntity(
-                            movieId = movieId,
-                            title = title,
-                            posterPath = doc.getString(FIELD_POSTER_PATH),
-                            genres = doc.getString(FIELD_GENRES).orEmpty(),
-                            runtime = doc.getLong(FIELD_RUNTIME)?.toInt(),
-                            isWatched = doc.getBoolean(FIELD_IS_WATCHED) ?: false,
-                            isInWatchlist = doc.getBoolean(FIELD_IS_IN_WATCHLIST) ?: false,
-                            watchedAt = doc.getLong(FIELD_WATCHED_AT),
-                            updatedAt = doc.getLong(FIELD_UPDATED_AT) ?: 0L,
-                        )
-                    }
+            try {
+                val movies =
+                    firestore
+                        .collection(COLLECTION_USERS)
+                        .document(uid)
+                        .collection(COLLECTION_MOVIES)
+                        .get()
+                        .await()
+                        .documents
+                        .mapNotNull { doc ->
+                            val movieId =
+                                (doc.getLong(FIELD_MOVIE_ID) ?: return@mapNotNull null).toInt()
+                            val title =
+                                doc
+                                    .getString(FIELD_TITLE)
+                                    .takeUnless { it.isNullOrEmpty() } ?: return@mapNotNull null
+                            MovieSyncEntity(
+                                movieId = movieId,
+                                title = title,
+                                posterPath = doc.getString(FIELD_POSTER_PATH),
+                                genres = doc.getString(FIELD_GENRES).orEmpty(),
+                                runtime = doc.getLong(FIELD_RUNTIME)?.toInt(),
+                                isWatched = doc.getBoolean(FIELD_IS_WATCHED) ?: false,
+                                isInWatchlist = doc.getBoolean(FIELD_IS_IN_WATCHLIST) ?: false,
+                                watchedAt = doc.getLong(FIELD_WATCHED_AT),
+                                updatedAt = doc.getLong(FIELD_UPDATED_AT) ?: 0L,
+                            )
+                        }
+                Result.success(movies)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                Result.failure(exception)
             }
     }

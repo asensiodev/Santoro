@@ -2,6 +2,7 @@ package com.asensiodev.core.network.data.auth
 
 import com.asensiodev.core.network.data.repository.ApiKeyRepository
 import com.asensiodev.core.network.init.ApiKeyRefresher
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import okhttp3.Authenticator
 import okhttp3.Request
@@ -42,7 +43,9 @@ class ApiKeyAuthenticator
                 try {
                     refresher.ensureKeyUpToDate()
                     repository.getSyncOrNull()
-                } catch (_: Throwable) {
+                } catch (exception: CancellationException) {
+                    throw exception
+                } catch (_: Exception) {
                     null
                 }
             }

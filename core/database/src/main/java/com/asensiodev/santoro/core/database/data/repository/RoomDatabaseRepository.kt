@@ -6,6 +6,7 @@ import com.asensiodev.santoro.core.database.data.dao.MovieDao
 import com.asensiodev.santoro.core.database.data.mapper.toDomain
 import com.asensiodev.santoro.core.database.data.mapper.toEntity
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emitAll
@@ -24,7 +25,10 @@ class RoomDatabaseRepository
                     movieDao
                         .getWatchedMovies()
                         .map { movies -> Result.success(movies.map { it.toDomain() }) }
-                        .catch { e -> emit(Result.failure(e)) },
+                        .catch { exception ->
+                            if (exception is CancellationException) throw exception
+                            emit(Result.failure(exception))
+                        },
                 )
             }
 
@@ -34,7 +38,10 @@ class RoomDatabaseRepository
                     movieDao
                         .getWatchlistMovies()
                         .map { movies -> Result.success(movies.map { it.toDomain() }) }
-                        .catch { e -> emit(Result.failure(e)) },
+                        .catch { exception ->
+                            if (exception is CancellationException) throw exception
+                            emit(Result.failure(exception))
+                        },
                 )
             }
 
@@ -42,6 +49,8 @@ class RoomDatabaseRepository
             try {
                 val movie = movieDao.getMovieById(movieId)?.toDomain()
                 Result.success(movie)
+            } catch (exception: CancellationException) {
+                throw exception
             } catch (e: SQLiteException) {
                 Result.failure(e)
             } catch (e: Exception) {
@@ -55,7 +64,10 @@ class RoomDatabaseRepository
                         .searchWatchedMoviesByTitle(query)
                         .map { entities ->
                             Result.success(entities.map { it.toDomain() })
-                        }.catch { e -> emit(Result.failure(e)) },
+                        }.catch { exception ->
+                            if (exception is CancellationException) throw exception
+                            emit(Result.failure(exception))
+                        },
                 )
             }
 
@@ -66,7 +78,10 @@ class RoomDatabaseRepository
                         .searchWatchlistMoviesByTitle(query)
                         .map { entities ->
                             Result.success(entities.map { it.toDomain() })
-                        }.catch { e -> emit(Result.failure(e)) },
+                        }.catch { exception ->
+                            if (exception is CancellationException) throw exception
+                            emit(Result.failure(exception))
+                        },
                 )
             }
 
@@ -74,6 +89,8 @@ class RoomDatabaseRepository
             try {
                 movieDao.insertOrUpdateMovie(movie.toEntity())
                 Result.success(true)
+            } catch (exception: CancellationException) {
+                throw exception
             } catch (e: SQLiteException) {
                 Result.failure(e)
             } catch (e: Exception) {
@@ -84,6 +101,8 @@ class RoomDatabaseRepository
             try {
                 movieDao.removeFromWatchlist(movieId, System.currentTimeMillis())
                 Result.success(true)
+            } catch (exception: CancellationException) {
+                throw exception
             } catch (e: SQLiteException) {
                 Result.failure(e)
             } catch (e: Exception) {
@@ -93,6 +112,8 @@ class RoomDatabaseRepository
         override suspend fun getMoviesForSync(): Result<List<Movie>> =
             try {
                 Result.success(movieDao.getMoviesForSync().map { it.toDomain() })
+            } catch (exception: CancellationException) {
+                throw exception
             } catch (e: SQLiteException) {
                 Result.failure(e)
             } catch (e: Exception) {
@@ -123,6 +144,8 @@ class RoomDatabaseRepository
                     updatedAt,
                 )
                 Result.success(Unit)
+            } catch (exception: CancellationException) {
+                throw exception
             } catch (e: SQLiteException) {
                 Result.failure(e)
             } catch (e: Exception) {
@@ -145,6 +168,8 @@ class RoomDatabaseRepository
                     updatedAt,
                 )
                 Result.success(Unit)
+            } catch (exception: CancellationException) {
+                throw exception
             } catch (e: SQLiteException) {
                 Result.failure(e)
             } catch (e: Exception) {
@@ -155,6 +180,8 @@ class RoomDatabaseRepository
             try {
                 movieDao.clearAllUserData()
                 Result.success(Unit)
+            } catch (exception: CancellationException) {
+                throw exception
             } catch (e: SQLiteException) {
                 Result.failure(e)
             } catch (e: Exception) {

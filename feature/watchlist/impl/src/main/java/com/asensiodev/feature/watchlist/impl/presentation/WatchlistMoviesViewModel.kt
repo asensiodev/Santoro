@@ -10,10 +10,10 @@ import com.asensiodev.feature.watchlist.impl.presentation.mapper.toUiList
 import com.asensiodev.feature.watchlist.impl.presentation.model.MovieUi
 import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -37,9 +36,6 @@ internal class WatchlistMoviesViewModel
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(WatchlistMoviesUiState())
         val uiState: StateFlow<WatchlistMoviesUiState> = _uiState.asStateFlow()
-
-        private val _effect = Channel<WatchlistEffect>(Channel.BUFFERED)
-        val effect = _effect.receiveAsFlow()
 
         private val searchQuery = MutableStateFlow("")
         private var moviesJob: Job? = null
@@ -166,7 +162,13 @@ internal class WatchlistMoviesViewModel
                     removeFromWatchlistUseCase(movie.id)
                         .onSuccess {
                             _uiState.update { it.copy(movieToRemove = null) }
-                            runCatching { syncScheduler.enqueueUpload(movie.id) }
+                            try {
+                                syncScheduler.enqueueUpload(movie.id)
+                            } catch (exception: CancellationException) {
+                                throw exception
+                            } catch (_: IllegalStateException) {
+                                Unit
+                            }
                         }.onFailure {
                             _uiState.update { it.copy(hasRemoveError = true) }
                         }

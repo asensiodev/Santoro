@@ -80,6 +80,7 @@ import com.asensiodev.feature.searchmovies.impl.presentation.component.SearchSug
 import com.asensiodev.feature.searchmovies.impl.presentation.model.GenreConstants
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 import com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType
+import com.asensiodev.ui.CollectEffectWithLifecycle
 import com.asensiodev.ui.LaunchedEffectOnce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.asensiodev.santoro.core.stringresources.R as SR
@@ -99,23 +100,21 @@ internal fun SearchMoviesRoute(
         viewModel.process(SearchMoviesIntent.LoadInitialData)
     }
 
-    LaunchedEffect(viewModel) {
-        viewModel.effect.collect { effect ->
-            when (effect) {
-                is SearchMoviesEffect.ShowRefreshSuccess -> {
-                    snackbarHostState.showSnackbar(
-                        message = refreshSuccessMessage,
-                        duration = SnackbarDuration.Short,
-                    )
-                }
+    CollectEffectWithLifecycle(viewModel.effect) { effect ->
+        when (effect) {
+            is SearchMoviesEffect.ShowRefreshSuccess -> {
+                snackbarHostState.showSnackbar(
+                    message = refreshSuccessMessage,
+                    duration = SnackbarDuration.Short,
+                )
+            }
 
-                is SearchMoviesEffect.NavigateToDetail -> {
-                    onMovieClick(effect.movieId)
-                }
+            is SearchMoviesEffect.NavigateToDetail -> {
+                onMovieClick(effect.movieId)
+            }
 
-                is SearchMoviesEffect.NavigateToSeeAll -> {
-                    onSeeAllClick(effect.sectionType.key)
-                }
+            is SearchMoviesEffect.NavigateToSeeAll -> {
+                onSeeAllClick(effect.sectionType.key)
             }
         }
     }

@@ -7,6 +7,7 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
+import kotlinx.coroutines.CancellationException
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
@@ -15,6 +16,7 @@ import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldNotBe
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class ApiKeyAuthenticatorTest {
     private var refresher: ApiKeyRefresher = mockk()
@@ -57,6 +59,15 @@ class ApiKeyAuthenticatorTest {
         val newRequest = authenticator.authenticate(null, response)
 
         newRequest shouldBe null
+    }
+
+    @Test
+    fun `GIVEN refresher is cancelled WHEN authenticate is called THEN cancellation propagates`() {
+        coEvery { refresher.ensureKeyUpToDate() } throws CancellationException()
+
+        assertThrows<CancellationException> {
+            authenticator.authenticate(null, response)
+        }
     }
 
     @Test

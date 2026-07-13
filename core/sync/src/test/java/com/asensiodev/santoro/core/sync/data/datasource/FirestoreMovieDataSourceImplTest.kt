@@ -11,6 +11,7 @@ import com.google.firebase.firestore.WriteBatch
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldBeTrue
@@ -79,6 +80,23 @@ class FirestoreMovieDataSourceImplTest {
         }
 
     @Test
+    fun `GIVEN upload is cancelled WHEN uploadMovie THEN cancellation propagates`() =
+        runTest {
+            val entity = SyncMockUtils.createSyncEntity(movieId = 1)
+            every { batch.commit() } returns Tasks.forException(CancellationException())
+
+            val exception =
+                try {
+                    sut.uploadMovie(uid = "uid123", entity = entity)
+                    null
+                } catch (exception: CancellationException) {
+                    exception
+                }
+
+            (exception is CancellationException) shouldBeEqualTo true
+        }
+
+    @Test
     fun `GIVEN remote documents WHEN downloadUserMovies THEN returns mapped entities`() =
         runTest {
             val querySnapshot: QuerySnapshot = mockk()
@@ -116,6 +134,22 @@ class FirestoreMovieDataSourceImplTest {
             val result = sut.downloadUserMovies(uid = "uid123")
 
             result.isFailure.shouldBeTrue()
+        }
+
+    @Test
+    fun `GIVEN download is cancelled WHEN downloadUserMovies THEN cancellation propagates`() =
+        runTest {
+            every { moviesCollection.get() } returns Tasks.forException(CancellationException())
+
+            val exception =
+                try {
+                    sut.downloadUserMovies(uid = "uid123")
+                    null
+                } catch (exception: CancellationException) {
+                    exception
+                }
+
+            (exception is CancellationException) shouldBeEqualTo true
         }
 
     @Test

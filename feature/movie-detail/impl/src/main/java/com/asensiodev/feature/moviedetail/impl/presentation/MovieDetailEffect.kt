@@ -1,6 +1,7 @@
 package com.asensiodev.feature.moviedetail.impl.presentation
 
 import com.asensiodev.feature.moviedetail.impl.presentation.model.MovieUi
+import com.asensiodev.ui.UiText
 
 internal sealed interface MovieDetailEffect {
     data class ShareMovie(
@@ -8,6 +9,6 @@ internal sealed interface MovieDetailEffect {
     ) : MovieDetailEffect
     data object NavigateBack : MovieDetailEffect
     data class ShowError(
-        val message: String,
+        val message: UiText,
     ) : MovieDetailEffect
 }

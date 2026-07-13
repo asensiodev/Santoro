@@ -10,6 +10,8 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
@@ -78,6 +80,16 @@ class RoomDatabaseRepositoryTest {
         }
 
     @Test
+    fun `GIVEN watchlist flow is cancelled WHEN collected THEN cancellation propagates`() =
+        runTest {
+            every { movieDao.getWatchlistMovies() } returns flow { throw CancellationException() }
+
+            repository.getWatchlistMovies().test {
+                awaitError().shouldBeInstanceOf<CancellationException>()
+            }
+        }
+
+    @Test
     fun `GIVEN existing movieId WHEN getMovieById THEN returns expected movie`() =
         runTest {
             val entity = MockUtils.createTestMovieEntity(id = 200, title = "Movie 200", isWatched = true)
@@ -101,6 +113,22 @@ class RoomDatabaseRepositoryTest {
             val result = repository.getMovieById(300)
             result.isFailure shouldBeEqualTo true
             result.exceptionOrNull().shouldBeInstanceOf<RuntimeException>()
+        }
+
+    @Test
+    fun `GIVEN dao cancels WHEN getMovieById THEN cancellation propagates`() =
+        runTest {
+            coEvery { movieDao.getMovieById(300) } throws CancellationException()
+
+            val exception =
+                try {
+                    repository.getMovieById(300)
+                    null
+                } catch (exception: CancellationException) {
+                    exception
+                }
+
+            exception.shouldBeInstanceOf<CancellationException>()
         }
 
     @Test
@@ -196,6 +224,23 @@ class RoomDatabaseRepositoryTest {
         }
 
     @Test
+    fun `GIVEN dao cancels WHEN updateMovieState THEN cancellation propagates`() =
+        runTest {
+            coEvery { movieDao.insertOrUpdateMovie(any()) } throws CancellationException()
+            val domainMovie = MockUtils.createTestMovieEntity(id = 402).toDomain()
+
+            val exception =
+                try {
+                    repository.updateMovieState(domainMovie)
+                    null
+                } catch (exception: CancellationException) {
+                    exception
+                }
+
+            exception.shouldBeInstanceOf<CancellationException>()
+        }
+
+    @Test
     fun `GIVEN a movie id WHEN removeFromWatchlist THEN delegates to dao and returns success`() =
         runTest {
             coEvery { movieDao.removeFromWatchlist(any(), any()) } just runs
@@ -228,5 +273,21 @@ class RoomDatabaseRepositoryTest {
 
             result.isFailure shouldBeEqualTo true
             result.exceptionOrNull().shouldBeInstanceOf<RuntimeException>()
+        }
+
+    @Test
+    fun `GIVEN dao cancels WHEN removeFromWatchlist THEN cancellation propagates`() =
+        runTest {
+            coEvery { movieDao.removeFromWatchlist(any(), any()) } throws CancellationException()
+
+            val exception =
+                try {
+                    repository.removeFromWatchlist(1)
+                    null
+                } catch (exception: CancellationException) {
+                    exception
+                }
+
+            exception.shouldBeInstanceOf<CancellationException>()
         }
 }

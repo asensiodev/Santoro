@@ -33,6 +33,7 @@ import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.feature.searchmovies.impl.presentation.component.MovieCard
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 import com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType
+import com.asensiodev.ui.CollectEffectWithLifecycle
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.asensiodev.santoro.core.stringresources.R as SR
 
@@ -49,11 +50,9 @@ internal fun SeeAllMoviesRoute(
         viewModel.process(SeeAllMoviesIntent.LoadInitial)
     }
 
-    LaunchedEffect(viewModel) {
-        viewModel.effect.collect { effect ->
-            when (effect) {
-                is SeeAllMoviesEffect.NavigateToDetail -> onMovieClick(effect.movieId)
-            }
+    CollectEffectWithLifecycle(viewModel.effect) { effect ->
+        when (effect) {
+            is SeeAllMoviesEffect.NavigateToDetail -> onMovieClick(effect.movieId)
         }
     }
 
