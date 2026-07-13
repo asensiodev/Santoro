@@ -141,6 +141,8 @@ internal fun WatchlistMoviesScreen(
     uiState.movieToRemove?.let { movie ->
         ConfirmRemoveDialog(
             movieTitle = movie.title,
+            isRemoving = uiState.isRemovingMovie,
+            hasError = uiState.hasRemoveError,
             onConfirm = { onProcess(WatchlistIntent.ConfirmRemove) },
             onDismiss = { onProcess(WatchlistIntent.DismissRemoveDialog) },
         )
@@ -276,6 +278,8 @@ private fun SwipeToRemoveContainer(
 @Composable
 private fun ConfirmRemoveDialog(
     movieTitle: String,
+    isRemoving: Boolean,
+    hasError: Boolean,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -288,20 +292,31 @@ private fun ConfirmRemoveDialog(
             Text(text = stringResource(SR.string.watchlist_remove_dialog_title))
         },
         text = {
-            Text(
-                text =
-                    buildWatchlistRemoveDialogBody(
-                        template = bodyTemplate,
-                        formattedText = bodyText,
-                        movieTitle = movieTitle,
-                    ),
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(Spacings.spacing8)) {
+                Text(
+                    text =
+                        buildWatchlistRemoveDialogBody(
+                            template = bodyTemplate,
+                            formattedText = bodyText,
+                            movieTitle = movieTitle,
+                        ),
+                )
+                if (hasError) {
+                    Text(
+                        text = stringResource(SR.string.error_message_retry),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
         },
         confirmButton = {
-            TextButton(onClick = {
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                onConfirm()
-            }) {
+            TextButton(
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onConfirm()
+                },
+                enabled = !isRemoving,
+            ) {
                 Text(
                     text = stringResource(SR.string.watchlist_remove_dialog_confirm),
                     color = MaterialTheme.colorScheme.error,
@@ -309,7 +324,7 @@ private fun ConfirmRemoveDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss, enabled = !isRemoving) {
                 Text(text = stringResource(SR.string.watchlist_remove_dialog_cancel))
             }
         },

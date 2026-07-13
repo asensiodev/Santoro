@@ -14,11 +14,14 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.BeforeEach
@@ -228,6 +231,66 @@ class MovieDetailViewModelTest {
                 viewModel.process(MovieDetailIntent.ToggleWatchlist)
                 advanceUntilIdle()
 
+                coVerify(exactly = 0) { syncScheduler.enqueueUpload(any()) }
+            }
+
+        @Test
+        fun `GIVEN movie state update pending WHEN toggles repeat THEN updates movie once`() =
+            runTest {
+                val update = CompletableDeferred<Result<Boolean>>()
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+                coEvery { updateMovieStateUseCase(any()) } coAnswers { update.await() }
+
+                viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
+                advanceUntilIdle()
+                viewModel.process(MovieDetailIntent.ToggleWatchlist)
+                viewModel.process(MovieDetailIntent.ToggleWatched)
+                viewModel.process(MovieDetailIntent.ToggleWatchlist)
+                runCurrent()
+
+                viewModel.uiState.value.isMovieStateUpdatePending shouldBeEqualTo true
+                coVerify(exactly = 1) { updateMovieStateUseCase(any()) }
+
+                update.complete(Result.success(true))
+                advanceUntilIdle()
+
+                viewModel.uiState.value.isMovieStateUpdatePending shouldBeEqualTo false
+                viewModel.uiState.value.movie
+                    ?.isInWatchlist shouldBeEqualTo true
+                viewModel.uiState.value.movie
+                    ?.isWatched shouldBeEqualTo false
+            }
+
+        @Test
+        fun `GIVEN local update succeeds WHEN upload scheduling fails THEN movie state remains updated`() =
+            runTest {
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+                coEvery { updateMovieStateUseCase(any()) } returns Result.success(true)
+                every { syncScheduler.enqueueUpload(testMovie.id) } throws IllegalStateException()
+
+                viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
+                advanceUntilIdle()
+                viewModel.process(MovieDetailIntent.ToggleWatchlist)
+                advanceUntilIdle()
+
+                viewModel.uiState.value.movie
+                    ?.isInWatchlist shouldBeEqualTo true
+                viewModel.uiState.value.isMovieStateUpdatePending shouldBeEqualTo false
+            }
+
+        @Test
+        fun `GIVEN movie state update is cancelled WHEN operation ends THEN pending state is cleared`() =
+            runTest {
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+                coEvery { updateMovieStateUseCase(any()) } throws CancellationException()
+
+                viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
+                advanceUntilIdle()
+                viewModel.process(MovieDetailIntent.ToggleWatchlist)
+                advanceUntilIdle()
+
+                viewModel.uiState.value.movie shouldBeEqualTo testMovie.toUi()
+                viewModel.uiState.value.isMovieStateUpdatePending shouldBeEqualTo false
                 coVerify(exactly = 0) { syncScheduler.enqueueUpload(any()) }
             }
     }

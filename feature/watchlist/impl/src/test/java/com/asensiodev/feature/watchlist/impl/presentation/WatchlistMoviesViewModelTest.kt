@@ -12,6 +12,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
@@ -22,6 +24,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.amshove.kluent.shouldBeEqualTo
@@ -143,6 +146,62 @@ class WatchlistMoviesViewModelTest {
             viewModel.process(WatchlistIntent.ConfirmRemove)
             advanceUntilIdle()
 
+            coVerify(exactly = 0) { syncScheduler.enqueueUpload(any()) }
+            viewModel.uiState.value.movieToRemove shouldBeEqualTo inceptionMovieUi
+            viewModel.uiState.value.isRemovingMovie shouldBeEqualTo false
+            viewModel.uiState.value.hasRemoveError shouldBeEqualTo true
+        }
+
+    @Test
+    fun `GIVEN removal pending WHEN ConfirmRemove repeats THEN removes movie once`() =
+        runTest {
+            val removal = CompletableDeferred<Result<Boolean>>()
+            coEvery { removeFromWatchlistUseCase(inceptionMovieUi.id) } coAnswers { removal.await() }
+
+            viewModel.process(WatchlistIntent.RequestRemove(inceptionMovieUi))
+            viewModel.process(WatchlistIntent.ConfirmRemove)
+            viewModel.process(WatchlistIntent.ConfirmRemove)
+            runCurrent()
+
+            viewModel.uiState.value.isRemovingMovie shouldBeEqualTo true
+            coVerify(exactly = 1) { removeFromWatchlistUseCase(inceptionMovieUi.id) }
+
+            removal.complete(Result.success(true))
+            advanceUntilIdle()
+
+            viewModel.uiState.value.movieToRemove
+                .shouldBeNull()
+            viewModel.uiState.value.isRemovingMovie shouldBeEqualTo false
+        }
+
+    @Test
+    fun `GIVEN local removal succeeds WHEN upload scheduling fails THEN removal remains successful`() =
+        runTest {
+            coEvery { removeFromWatchlistUseCase(inceptionMovieUi.id) } returns Result.success(true)
+            every { syncScheduler.enqueueUpload(inceptionMovieUi.id) } throws IllegalStateException()
+
+            viewModel.process(WatchlistIntent.RequestRemove(inceptionMovieUi))
+            viewModel.process(WatchlistIntent.ConfirmRemove)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.movieToRemove
+                .shouldBeNull()
+            viewModel.uiState.value.isRemovingMovie shouldBeEqualTo false
+            viewModel.uiState.value.hasRemoveError shouldBeEqualTo false
+        }
+
+    @Test
+    fun `GIVEN removal is cancelled WHEN operation ends THEN pending state is cleared`() =
+        runTest {
+            coEvery { removeFromWatchlistUseCase(inceptionMovieUi.id) } throws CancellationException()
+
+            viewModel.process(WatchlistIntent.RequestRemove(inceptionMovieUi))
+            viewModel.process(WatchlistIntent.ConfirmRemove)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.movieToRemove shouldBeEqualTo inceptionMovieUi
+            viewModel.uiState.value.isRemovingMovie shouldBeEqualTo false
+            viewModel.uiState.value.hasRemoveError shouldBeEqualTo false
             coVerify(exactly = 0) { syncScheduler.enqueueUpload(any()) }
         }
 

@@ -230,7 +230,7 @@ No new feature, API, implementation, or layer module is planned.
 - [ ] Add a Watchlist test proving repeated `LoadMovies` does not create multiple query observers.
 - [x] Add a Watchlist latest-query-wins test where query A completes after query B.
 - [x] Add a Movie Detail test proving retry replaces or reuses the active fetch rather than adding a collector.
-- [ ] Add rapid-toggle tests defining the accepted behavior while a mutation is pending.
+- [x] Add rapid-toggle tests defining the accepted behavior while a mutation is pending.
 - [ ] Add cancellation tests proving affected repositories/use cases do not convert cancellation into `Result.failure`.
 - [ ] Add effect tests defining whether each navigation/share/error effect is delivered, dropped, or retained across collector inactivity.
 - [ ] Record the accepted concurrency/effect contracts in test names and this FIP's Decisions section during implementation.
@@ -279,12 +279,12 @@ No new feature, API, implementation, or layer module is planned.
     - Treating sync scheduling failure as failure of an already successful local mutation.
     - Adding backend APIs or changing persistence schemas.
 
-- [ ] Choose and document pessimistic, optimistic-with-rollback, or serialized mutation behavior for Watchlist removal.
-- [ ] Choose and document the same behavior for Movie Detail watched/watchlist toggles.
-- [ ] Prevent rapid repeated taps from issuing duplicate operations based on stale state.
-- [ ] Keep dialog/pending state consistent until mutation success or failure is resolved.
-- [ ] Separate local mutation outcome from subsequent sync-scheduling outcome.
-- [ ] Add tests for success, failure, repeated tap, cancellation, and sync-scheduling failure.
+- [x] Choose and document pessimistic, optimistic-with-rollback, or serialized mutation behavior for Watchlist removal.
+- [x] Choose and document the same behavior for Movie Detail watched/watchlist toggles.
+- [x] Prevent rapid repeated taps from issuing duplicate operations based on stale state.
+- [x] Keep dialog/pending state consistent until mutation success or failure is resolved.
+- [x] Separate local mutation outcome from subsequent sync-scheduling outcome.
+- [x] Add tests for success, failure, repeated tap, cancellation, and sync-scheduling failure.
 
 ### Phase 4 — P0: Preserve Structured Cancellation
 
@@ -616,6 +616,7 @@ _Fill after implementation. A phase is not considered validated solely because i
 | 6 | Save user input/identifiers, reload derived data | Save complete screen state | Small saved state is safer and avoids stale/oversized bundles |
 | 7 | Measure coverage before enforcing thresholds | Apply documented targets immediately | Unmeasured thresholds can block work or reward low-value tests |
 | 8 | Use one query-driven Watchlist pipeline with `flatMapLatest` and one replaceable Movie Detail fetch job | Independent coroutine launches; strict serialized MVI store | The latest query/fetch is authoritative without changing the established MVI-style architecture |
+| 9 | Use pessimistic, mutually exclusive local movie mutations | Optimistic updates with rollback; queued repeated taps | Room writes are fast, current behavior is already pessimistic, and disabling conflicting actions avoids rollback and stale-state complexity |
 
 ---
 
@@ -651,3 +652,4 @@ _Fill after implementation. A phase is not considered validated solely because i
 | 1.0     | 2026-07-12 | Initial prioritized architecture reliability refactor plan |
 | 1.1     | 2026-07-12 | Started execution of Phases 1–2 |
 | 1.2     | 2026-07-12 | Completed the urgent duplicate-collector and latest-result subset of Phases 1–2 |
+| 1.3     | 2026-07-12 | Completed Phase 3 pessimistic mutation consistency and regression tests |

@@ -337,6 +337,7 @@ internal fun MovieDetailContent(
             ) {
                 WatchlistActionsRow(
                     movie = movie,
+                    enabled = !uiState.isMovieStateUpdatePending,
                     onToggleWatchlist = onToggleWatchlist,
                     onToggleWatched = onToggleWatched,
                     modifier =
@@ -545,6 +546,7 @@ private fun MovieMetadataRow(
 @Composable
 private fun WatchlistActionsRow(
     movie: MovieUi,
+    enabled: Boolean,
     onToggleWatchlist: () -> Unit,
     onToggleWatched: () -> Unit,
     modifier: Modifier = Modifier,
@@ -581,6 +583,7 @@ private fun WatchlistActionsRow(
             watchedContainerColor,
             watchedContentColor,
             movie,
+            enabled = enabled,
             hasBorder = !movie.isWatched,
         )
 
@@ -609,6 +612,7 @@ private fun WatchlistActionsRow(
             watchlistContainerColor,
             watchlistContentColor,
             movie,
+            enabled = enabled,
             hasBorder = !movie.isInWatchlist,
         )
     }
@@ -666,12 +670,14 @@ private fun RowScope.WatchlistButton(
     watchlistContainerColor: Color,
     watchlistContentColor: Color,
     movie: MovieUi,
+    enabled: Boolean,
     hasBorder: Boolean,
 ) {
     BounceButton(
         onClick = onToggleWatchlist,
         containerColor = watchlistContainerColor,
         contentColor = watchlistContentColor,
+        enabled = enabled,
         hasBorder = hasBorder,
         modifier = Modifier.weight(1f),
     ) {
@@ -708,12 +714,14 @@ private fun RowScope.WatchedButton(
     watchedContainerColor: Color,
     watchedContentColor: Color,
     movie: MovieUi,
+    enabled: Boolean,
     hasBorder: Boolean,
 ) {
     BounceButton(
         onClick = onToggleWatched,
         containerColor = watchedContainerColor,
         contentColor = watchedContentColor,
+        enabled = enabled,
         hasBorder = hasBorder,
         modifier = Modifier.weight(1f),
     ) {
@@ -1005,6 +1013,7 @@ private fun BounceButton(
     onClick: () -> Unit,
     containerColor: Color,
     contentColor: Color,
+    enabled: Boolean,
     hasBorder: Boolean,
     modifier: Modifier = Modifier,
     content: @Composable RowScope.() -> Unit,
@@ -1018,6 +1027,7 @@ private fun BounceButton(
         label = "buttonScale",
     )
     Button(
+        enabled = enabled,
         onClick = {
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             onClick()
@@ -1034,6 +1044,8 @@ private fun BounceButton(
             ButtonDefaults.buttonColors(
                 containerColor = containerColor,
                 contentColor = contentColor,
+                disabledContainerColor = containerColor,
+                disabledContentColor = contentColor,
             ),
         border =
             if (hasBorder) {

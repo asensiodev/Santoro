@@ -118,7 +118,9 @@ internal class MovieDetailViewModel
         }
 
         private fun toggleWatchlist() {
-            val movie = uiState.value.movie ?: return
+            val state = uiState.value
+            val movie = state.movie ?: return
+            if (state.isMovieStateUpdatePending) return
             val isNowInWatchlist = !movie.isInWatchlist
             val updatedMovie =
                 movie.copy(
@@ -126,31 +128,43 @@ internal class MovieDetailViewModel
                     isWatched = !isNowInWatchlist && movie.isWatched,
                     watchedAt = if (isNowInWatchlist) null else movie.watchedAt,
                 )
+            _uiState.update { it.copy(isMovieStateUpdatePending = true) }
             viewModelScope.launch {
-                updateMovieStateUseCase(updatedMovie.toDomain())
-                    .onSuccess {
-                        observabilityTracker.trackAction(
-                            MOVIE_DETAIL_TOGGLE_WATCHLIST,
-                            mapOf(
-                                MOVIE_ID to movie.id.toString(),
-                                IS_ENABLED to isNowInWatchlist.toString(),
-                            ),
-                        )
-                        _uiState.update { it.copy(movie = updatedMovie) }
-                        syncScheduler.enqueueUpload(movie.id)
-                    }.onFailure { exception ->
-                        observabilityTracker.recordError(
-                            MOVIE_DETAIL_TOGGLE_WATCHLIST_FAILED,
-                            exception,
-                            mapOf(MOVIE_ID to movie.id.toString()),
-                        )
-                        _effect.trySend(MovieDetailEffect.ShowError(exception.message.orEmpty()))
-                    }
+                try {
+                    updateMovieStateUseCase(updatedMovie.toDomain())
+                        .onSuccess {
+                            observabilityTracker.trackAction(
+                                MOVIE_DETAIL_TOGGLE_WATCHLIST,
+                                mapOf(
+                                    MOVIE_ID to movie.id.toString(),
+                                    IS_ENABLED to isNowInWatchlist.toString(),
+                                ),
+                            )
+                            _uiState.update { it.copy(movie = updatedMovie) }
+                            runCatching { syncScheduler.enqueueUpload(movie.id) }
+                        }.onFailure { exception ->
+                            observabilityTracker.recordError(
+                                MOVIE_DETAIL_TOGGLE_WATCHLIST_FAILED,
+                                exception,
+                                mapOf(MOVIE_ID to movie.id.toString()),
+                            )
+                            _effect
+                                .trySend(
+                                    MovieDetailEffect.ShowError(
+                                        exception.message.orEmpty(),
+                                    ),
+                                )
+                        }
+                } finally {
+                    _uiState.update { it.copy(isMovieStateUpdatePending = false) }
+                }
             }
         }
 
         private fun toggleWatched() {
-            val movie = uiState.value.movie ?: return
+            val state = uiState.value
+            val movie = state.movie ?: return
+            if (state.isMovieStateUpdatePending) return
             val isNowWatched = !movie.isWatched
             val updatedMovie =
                 movie.copy(
@@ -158,26 +172,36 @@ internal class MovieDetailViewModel
                     isInWatchlist = !isNowWatched && movie.isInWatchlist,
                     watchedAt = if (isNowWatched) System.currentTimeMillis() else null,
                 )
+            _uiState.update { it.copy(isMovieStateUpdatePending = true) }
             viewModelScope.launch {
-                updateMovieStateUseCase(updatedMovie.toDomain())
-                    .onSuccess {
-                        observabilityTracker.trackAction(
-                            MOVIE_DETAIL_TOGGLE_WATCHED,
-                            mapOf(
-                                MOVIE_ID to movie.id.toString(),
-                                IS_ENABLED to isNowWatched.toString(),
-                            ),
-                        )
-                        _uiState.update { it.copy(movie = updatedMovie) }
-                        syncScheduler.enqueueUpload(movie.id)
-                    }.onFailure { exception ->
-                        observabilityTracker.recordError(
-                            MOVIE_DETAIL_TOGGLE_WATCHED_FAILED,
-                            exception,
-                            mapOf(MOVIE_ID to movie.id.toString()),
-                        )
-                        _effect.trySend(MovieDetailEffect.ShowError(exception.message.orEmpty()))
-                    }
+                try {
+                    updateMovieStateUseCase(updatedMovie.toDomain())
+                        .onSuccess {
+                            observabilityTracker.trackAction(
+                                MOVIE_DETAIL_TOGGLE_WATCHED,
+                                mapOf(
+                                    MOVIE_ID to movie.id.toString(),
+                                    IS_ENABLED to isNowWatched.toString(),
+                                ),
+                            )
+                            _uiState.update { it.copy(movie = updatedMovie) }
+                            runCatching { syncScheduler.enqueueUpload(movie.id) }
+                        }.onFailure { exception ->
+                            observabilityTracker.recordError(
+                                MOVIE_DETAIL_TOGGLE_WATCHED_FAILED,
+                                exception,
+                                mapOf(MOVIE_ID to movie.id.toString()),
+                            )
+                            _effect
+                                .trySend(
+                                    MovieDetailEffect.ShowError(
+                                        exception.message.orEmpty(),
+                                    ),
+                                )
+                        }
+                } finally {
+                    _uiState.update { it.copy(isMovieStateUpdatePending = false) }
+                }
             }
         }
 

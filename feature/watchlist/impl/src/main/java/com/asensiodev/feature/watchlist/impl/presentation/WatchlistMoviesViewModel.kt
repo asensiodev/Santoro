@@ -147,19 +147,32 @@ internal class WatchlistMoviesViewModel
         }
 
         private fun onRemoveMovieClicked(movie: MovieUi) {
-            _uiState.update { it.copy(movieToRemove = movie) }
+            if (_uiState.value.isRemovingMovie) return
+            _uiState.update { it.copy(movieToRemove = movie, hasRemoveError = false) }
         }
 
         private fun onRemoveDismissed() {
-            _uiState.update { it.copy(movieToRemove = null) }
+            if (_uiState.value.isRemovingMovie) return
+            _uiState.update { it.copy(movieToRemove = null, hasRemoveError = false) }
         }
 
         private fun onRemoveConfirmed() {
-            val movie = _uiState.value.movieToRemove ?: return
-            _uiState.update { it.copy(movieToRemove = null) }
+            val state = _uiState.value
+            val movie = state.movieToRemove ?: return
+            if (state.isRemovingMovie) return
+            _uiState.update { it.copy(isRemovingMovie = true, hasRemoveError = false) }
             viewModelScope.launch {
-                removeFromWatchlistUseCase(movie.id)
-                    .onSuccess { syncScheduler.enqueueUpload(movie.id) }
+                try {
+                    removeFromWatchlistUseCase(movie.id)
+                        .onSuccess {
+                            _uiState.update { it.copy(movieToRemove = null) }
+                            runCatching { syncScheduler.enqueueUpload(movie.id) }
+                        }.onFailure {
+                            _uiState.update { it.copy(hasRemoveError = true) }
+                        }
+                } finally {
+                    _uiState.update { it.copy(isRemovingMovie = false) }
+                }
             }
         }
 

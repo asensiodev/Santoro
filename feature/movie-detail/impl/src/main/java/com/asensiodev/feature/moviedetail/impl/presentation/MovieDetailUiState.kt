@@ -14,4 +14,5 @@ internal data class MovieDetailUiState(
     val screenState: MovieDetailScreenState = MovieDetailScreenState.Loading,
     val movie: MovieUi? = null,
     val showTooltip: Boolean = false,
+    val isMovieStateUpdatePending: Boolean = false,
 )
