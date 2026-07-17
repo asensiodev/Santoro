@@ -21,13 +21,18 @@ import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.amshove.kluent.shouldBeEqualTo
@@ -87,9 +92,13 @@ class SearchMoviesViewModelTest {
         coJustRun { saveRecentSearchUseCase(any()) }
         coJustRun { clearRecentSearchesUseCase() }
 
+        createViewModel()
+    }
+
+    private fun createViewModel(handle: SavedStateHandle = savedStateHandle) {
         viewModel =
             SearchMoviesViewModel(
-                savedStateHandle = savedStateHandle,
+                savedStateHandle = handle,
                 searchMoviesUseCase = searchMoviesUseCase,
                 getNowPlayingMoviesUseCase = getNowPlayingMoviesUseCase,
                 getPopularMoviesUseCase = getPopularMoviesUseCase,
@@ -271,48 +280,97 @@ class SearchMoviesViewModelTest {
         }
 
     @Test
-    fun `GIVEN field not focused WHEN FieldFocused intent THEN isFieldFocused is true`() =
+    fun `GIVEN dashboard flow throws cancellation WHEN loading THEN no error stale or default state is created`() =
         runTest {
-            // GIVEN
+            every {
+                getPopularMoviesUseCase(any())
+            } returns flow { throw CancellationException() }
+
             viewModel.process(SearchMoviesIntent.LoadInitialData)
             advanceUntilIdle()
 
-            // WHEN
+            val state = viewModel.uiState.value
+            state.screenState shouldBeInstanceOf SearchScreenState.Loading::class
+            state.isShowingStaleData shouldBeEqualTo false
+            state.popularMovies shouldBeEqualTo emptyList()
+        }
+
+    @Test
+    fun `GIVEN search flow throws cancellation WHEN searching THEN error state is not created`() =
+        runTest {
+            every {
+                searchMoviesUseCase("casino", 1)
+            } returns flow { throw CancellationException() }
+
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+            viewModel.process(SearchMoviesIntent.UpdateQuery("casino"))
+            testDispatcher.scheduler.advanceTimeBy(600)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            state.screenState shouldBeInstanceOf SearchScreenState.Loading::class
+            state.isShowingStaleData shouldBeEqualTo false
+            state.searchMovieResults shouldBeEqualTo emptyList()
+        }
+
+    @Test
+    fun `GIVEN popular page flow throws cancellation WHEN loading more THEN content is preserved`() =
+        runTest {
+            every {
+                getPopularMoviesUseCase(1)
+            } returns flowOf(Result.success(listOf(casinoMovie)))
+
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+
+            every {
+                getPopularMoviesUseCase(2)
+            } returns flow { throw CancellationException() }
+            viewModel.process(SearchMoviesIntent.LoadMorePopularMovies)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            state.screenState shouldBeInstanceOf SearchScreenState.Content::class
+            state.popularMovies.map { movie -> movie.title } shouldBeEqualTo listOf("Casino")
+            state.isShowingStaleData shouldBeEqualTo false
+            state.isPopularEndReached shouldBeEqualTo false
+        }
+
+    @Test
+    fun `GIVEN field not focused WHEN FieldFocused intent THEN isFieldFocused is true`() =
+        runTest {
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+
             viewModel.process(SearchMoviesIntent.FieldFocused)
             advanceUntilIdle()
 
-            // THEN
             viewModel.uiState.value.isFieldFocused shouldBeEqualTo true
         }
 
     @Test
     fun `GIVEN field focused WHEN FieldCleared intent THEN isFieldFocused is false`() =
         runTest {
-            // GIVEN
             viewModel.process(SearchMoviesIntent.LoadInitialData)
             advanceUntilIdle()
             viewModel.process(SearchMoviesIntent.FieldFocused)
 
-            // WHEN
             viewModel.process(SearchMoviesIntent.FieldCleared)
             advanceUntilIdle()
 
-            // THEN
             viewModel.uiState.value.isFieldFocused shouldBeEqualTo false
         }
 
     @Test
     fun `GIVEN empty query WHEN SuggestionTapped with avatar THEN query becomes avatar`() =
         runTest {
-            // GIVEN
             viewModel.process(SearchMoviesIntent.LoadInitialData)
             advanceUntilIdle()
 
-            // WHEN
             viewModel.process(SearchMoviesIntent.SuggestionTapped("avatar"))
             advanceUntilIdle()
 
-            // THEN
             viewModel.uiState.value.query shouldBeEqualTo "avatar"
             viewModel.uiState.value.isFieldFocused shouldBeEqualTo false
         }
@@ -320,82 +378,67 @@ class SearchMoviesViewModelTest {
     @Test
     fun `GIVEN recent searches present WHEN ClearRecentSearches intent THEN recentSearches is empty`() =
         runTest {
-            // GIVEN
             every { getRecentSearchesUseCase() } returns flowOf(listOf("inception", "avatar"))
             viewModel.process(SearchMoviesIntent.LoadInitialData)
             advanceUntilIdle()
 
             every { getRecentSearchesUseCase() } returns flowOf(emptyList())
 
-            // WHEN
             viewModel.process(SearchMoviesIntent.ClearRecentSearches)
             advanceUntilIdle()
 
-            // THEN
             coVerify(exactly = 1) { clearRecentSearchesUseCase() }
         }
 
     @Test
     fun `GIVEN active query WHEN SearchTriggered THEN saves query`() =
         runTest {
-            // GIVEN
             viewModel.process(SearchMoviesIntent.LoadInitialData)
             advanceUntilIdle()
             viewModel.process(SearchMoviesIntent.UpdateQuery("casino"))
             advanceUntilIdle()
 
-            // WHEN
             viewModel.process(SearchMoviesIntent.SearchTriggered)
             advanceUntilIdle()
 
-            // THEN
             coVerify(exactly = 1) { saveRecentSearchUseCase("casino") }
         }
 
     @Test
     fun `GIVEN blank query WHEN SearchTriggered THEN does not save`() =
         runTest {
-            // GIVEN
             viewModel.process(SearchMoviesIntent.LoadInitialData)
             advanceUntilIdle()
 
-            // WHEN
             viewModel.process(SearchMoviesIntent.SearchTriggered)
             advanceUntilIdle()
 
-            // THEN
             coVerify(exactly = 0) { saveRecentSearchUseCase(any()) }
         }
 
     @Test
     fun `GIVEN active query WHEN MovieClicked THEN saves query and emits NavigateToDetail`() =
         runTest {
-            // GIVEN
             viewModel.process(SearchMoviesIntent.LoadInitialData)
             advanceUntilIdle()
             viewModel.process(SearchMoviesIntent.UpdateQuery("casino"))
             advanceUntilIdle()
 
-            // WHEN
             viewModel.process(SearchMoviesIntent.MovieClicked(42))
             advanceUntilIdle()
 
-            // THEN
             coVerify(exactly = 1) { saveRecentSearchUseCase("casino") }
         }
 
     @Test
     fun `GIVEN blank query WHEN MovieClicked THEN does not save but still navigates`() =
         runTest {
-            // GIVEN
             viewModel.process(SearchMoviesIntent.LoadInitialData)
             advanceUntilIdle()
 
-            // WHEN
             viewModel.process(SearchMoviesIntent.MovieClicked(42))
             advanceUntilIdle()
 
-            // THEN
             coVerify(exactly = 0) { saveRecentSearchUseCase(any()) }
         }
 
@@ -433,5 +476,127 @@ class SearchMoviesViewModelTest {
             advanceUntilIdle()
 
             viewModel.uiState.value.screenState shouldBeInstanceOf SearchScreenState.Error::class
+        }
+
+    @Test
+    fun `GIVEN restored query WHEN ViewModel is created THEN query is initialized from saved state`() =
+        runTest {
+            createViewModel(SavedStateHandle(mapOf("search_query" to "casino")))
+
+            viewModel.uiState.value.query shouldBeEqualTo "casino"
+        }
+
+    @Test
+    fun `GIVEN restored query WHEN initialized THEN searches restored query without loading dashboard`() =
+        runTest {
+            every { searchMoviesUseCase("casino", 1) } returns
+                flowOf(Result.success(listOf(casinoMovie)))
+            createViewModel(SavedStateHandle(mapOf("search_query" to "casino")))
+
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+
+            verify(exactly = 1) { searchMoviesUseCase("casino", 1) }
+            verify(exactly = 0) { getNowPlayingMoviesUseCase(any()) }
+            verify(exactly = 0) { getPopularMoviesUseCase(any()) }
+            viewModel.uiState.value.searchMovieResults
+                .first()
+                .title shouldBeEqualTo "Casino"
+        }
+
+    @Test
+    fun `GIVEN initialized ViewModel WHEN LoadInitialData repeats THEN dashboard loads once`() =
+        runTest {
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+
+            verify(exactly = 1) { getPopularMoviesUseCase(1) }
+            coVerify(exactly = 1) { cachingRepository.clearStaleEntries() }
+        }
+
+    @Test
+    fun `GIVEN initialization just started WHEN query changes THEN first query is observed`() =
+        runTest {
+            every { searchMoviesUseCase("casino", 1) } returns
+                flowOf(Result.success(listOf(casinoMovie)))
+
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            viewModel.process(SearchMoviesIntent.UpdateQuery("casino"))
+            testDispatcher.scheduler.advanceTimeBy(600)
+            advanceUntilIdle()
+
+            verify(exactly = 1) { searchMoviesUseCase("casino", 1) }
+            viewModel.uiState.value.searchMovieResults
+                .map { movie -> movie.title } shouldBeEqualTo
+                listOf("Casino")
+        }
+
+    @Test
+    fun `GIVEN dashboard is loading WHEN query search starts THEN dashboard cannot overwrite search`() =
+        runTest {
+            every { getPopularMoviesUseCase(1) } returns flow { awaitCancellation() }
+            every { searchMoviesUseCase("casino", 1) } returns
+                flowOf(Result.success(listOf(casinoMovie)))
+
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            runCurrent()
+            viewModel.process(SearchMoviesIntent.UpdateQuery("casino"))
+            testDispatcher.scheduler.advanceTimeBy(600)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            state.query shouldBeEqualTo "casino"
+            state.searchMovieResults.map { movie -> movie.title } shouldBeEqualTo listOf("Casino")
+            state.popularMovies shouldBeEqualTo emptyList()
+        }
+
+    @Test
+    fun `GIVEN query A is active WHEN query B starts THEN only query B can publish results`() =
+        runTest {
+            val queryAResults = MutableSharedFlow<Result<List<Movie>>>(extraBufferCapacity = 1)
+            val queryBMovie = casinoMovie.copy(id = 2, title = "Casino Royale")
+            every { searchMoviesUseCase("casino", 1) } returns queryAResults
+            every { searchMoviesUseCase("royale", 1) } returns
+                flowOf(Result.success(listOf(queryBMovie)))
+
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+            viewModel.process(SearchMoviesIntent.UpdateQuery("casino"))
+            testDispatcher.scheduler.advanceTimeBy(600)
+            runCurrent()
+
+            viewModel.process(SearchMoviesIntent.UpdateQuery("royale"))
+            testDispatcher.scheduler.advanceTimeBy(600)
+            advanceUntilIdle()
+            queryAResults.emit(Result.success(listOf(casinoMovie)))
+            advanceUntilIdle()
+
+            viewModel.uiState.value.query shouldBeEqualTo "royale"
+            viewModel.uiState.value.searchMovieResults
+                .map { movie -> movie.title } shouldBeEqualTo
+                listOf("Casino Royale")
+        }
+
+    @Test
+    fun `GIVEN no active collector WHEN navigation effect is emitted THEN it is not replayed`() =
+        runTest {
+            viewModel.process(SearchMoviesIntent.MovieClicked(42))
+            advanceUntilIdle()
+
+            viewModel.effect.test {
+                expectNoEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN active collector WHEN navigation effect is emitted THEN it is delivered`() =
+        runTest {
+            viewModel.effect.test {
+                viewModel.process(SearchMoviesIntent.MovieClicked(42))
+                runCurrent()
+
+                awaitItem() shouldBeEqualTo SearchMoviesEffect.NavigateToDetail(42)
+            }
         }
 }

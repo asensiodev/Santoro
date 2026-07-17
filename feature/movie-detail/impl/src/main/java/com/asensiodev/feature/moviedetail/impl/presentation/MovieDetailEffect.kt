@@ -7,7 +7,6 @@ internal sealed interface MovieDetailEffect {
     data class ShareMovie(
         val movie: MovieUi,
     ) : MovieDetailEffect
-    data object NavigateBack : MovieDetailEffect
     data class ShowError(
         val message: UiText,
     ) : MovieDetailEffect

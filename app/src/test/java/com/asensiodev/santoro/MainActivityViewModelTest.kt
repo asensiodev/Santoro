@@ -12,6 +12,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -115,6 +116,24 @@ class MainActivityViewModelTest {
 
             verify(exactly = 2) { syncScheduler.schedulePeriodicSync() }
             verify(exactly = 2) { syncScheduler.scheduleImmediateSync() }
+        }
+
+    @Test
+    fun `GIVEN scheduler fails WHEN a later user authenticates THEN schedules sync again`() =
+        runTest {
+            val authState = MutableSharedFlow<SantoroUser?>()
+            every { observeAuthStateUseCase() } returns authState
+            every { syncScheduler.schedulePeriodicSync() } throws IllegalStateException() andThen Unit
+
+            buildViewModel()
+            advanceUntilIdle()
+            authState.emit(anonymousUser)
+            advanceUntilIdle()
+            authState.emit(googleUser)
+            advanceUntilIdle()
+
+            verify(exactly = 2) { syncScheduler.schedulePeriodicSync() }
+            verify(exactly = 1) { syncScheduler.scheduleImmediateSync() }
         }
 
     @Test

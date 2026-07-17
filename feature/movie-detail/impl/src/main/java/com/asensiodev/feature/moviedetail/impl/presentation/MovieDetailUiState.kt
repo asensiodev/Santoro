@@ -1,12 +1,13 @@
 package com.asensiodev.feature.moviedetail.impl.presentation
 
 import com.asensiodev.feature.moviedetail.impl.presentation.model.MovieUi
+import com.asensiodev.ui.UiText
 
 internal sealed interface MovieDetailScreenState {
     data object Loading : MovieDetailScreenState
     data object Content : MovieDetailScreenState
     data class Error(
-        val message: String,
+        val message: UiText,
     ) : MovieDetailScreenState
 }
 

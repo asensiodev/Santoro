@@ -11,6 +11,7 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,15 +26,14 @@ class GoogleSignInHelper
         private val serverClientId: String
             get() = context.getString(R.string.default_web_client_id)
 
-        suspend fun signIn(activityContext: Context): Result<String> =
-            signInWithGoogleIdOption(activityContext).recoverCatching { error ->
-                if (error is NoCredentialException) {
-                    Log.w(TAG, "No credentials found, falling back to SignInWithGoogleOption")
-                    signInWithGoogleOption(activityContext).getOrThrow()
-                } else {
-                    throw error
-                }
+        suspend fun signIn(activityContext: Context): Result<String> {
+            val result = signInWithGoogleIdOption(activityContext)
+            if (result.exceptionOrNull() is NoCredentialException) {
+                Log.w(TAG, "No credentials found, falling back to SignInWithGoogleOption")
+                return signInWithGoogleOption(activityContext)
             }
+            return result
+        }
 
         private suspend fun signInWithGoogleIdOption(activityContext: Context): Result<String> {
             val googleIdOption =
@@ -79,6 +79,8 @@ class GoogleSignInHelper
                         result.credential.data,
                     )
                 Result.success(googleIdTokenCredential.idToken)
+            } catch (exception: CancellationException) {
+                throw exception
             } catch (e: GetCredentialException) {
                 Log.e(TAG, "GetCredentialException: ${e.type} - ${e.message}", e)
                 Result.failure(e)

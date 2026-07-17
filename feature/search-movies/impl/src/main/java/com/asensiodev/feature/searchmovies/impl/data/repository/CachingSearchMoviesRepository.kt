@@ -2,6 +2,7 @@ package com.asensiodev.feature.searchmovies.impl.data.repository
 
 import com.asensiodev.core.domain.dispatcher.DispatcherProvider
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.core.domain.result.rethrowCancellation
 import com.asensiodev.feature.searchmovies.impl.data.datasource.BrowseCacheLocalDataSource
 import com.asensiodev.feature.searchmovies.impl.data.datasource.SearchMoviesDatasource
 import com.asensiodev.feature.searchmovies.impl.domain.repository.SearchMoviesRepository
@@ -91,7 +92,7 @@ internal class CachingSearchMoviesRepository
                 }
 
                 try {
-                    val result = withContext(dispatchers.io) { remoteFetch() }
+                    val result = withContext(dispatchers.io) { remoteFetch() }.rethrowCancellation()
                     result.fold(
                         onSuccess = { movies ->
                             withContext(dispatchers.io) {

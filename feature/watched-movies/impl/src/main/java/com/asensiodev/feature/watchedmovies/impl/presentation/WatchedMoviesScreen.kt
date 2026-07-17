@@ -48,14 +48,6 @@ internal fun WatchedMoviesRoute(
         viewModel.process(WatchedMoviesIntent.LoadMovies)
     }
 
-    LaunchedEffect(viewModel) {
-        viewModel.effect.collect { effect ->
-            when (effect) {
-                is WatchedMoviesEffect.NavigateToDetail -> onMovieClick(effect.movieId)
-            }
-        }
-    }
-
     val onProcess = remember(viewModel) { viewModel::process }
 
     WatchedMoviesScreen(

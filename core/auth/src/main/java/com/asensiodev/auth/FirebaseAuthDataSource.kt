@@ -6,6 +6,7 @@ import com.asensiodev.core.domain.model.SantoroUser
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.GoogleAuthProvider
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -36,6 +37,8 @@ internal class FirebaseAuthDataSource
                 val authResult = firebaseAuth.signInAnonymously().await()
                 val user = authResult.user!!.toSantoroUser()
                 Result.success(user)
+            } catch (exception: CancellationException) {
+                throw exception
             } catch (e: Exception) {
                 Result.failure(e)
             }
@@ -46,6 +49,8 @@ internal class FirebaseAuthDataSource
                 val authResult = firebaseAuth.signInWithCredential(credential).await()
                 val user = authResult.user!!.toSantoroUser()
                 Result.success(user)
+            } catch (exception: CancellationException) {
+                throw exception
             } catch (e: Exception) {
                 Result.failure(e)
             }
@@ -57,6 +62,8 @@ internal class FirebaseAuthDataSource
                 val authResult = currentUser.linkWithCredential(credential).await()
                 val user = authResult.user!!.toSantoroUser()
                 Result.success(user)
+            } catch (exception: CancellationException) {
+                throw exception
             } catch (fce: FirebaseAuthUserCollisionException) {
                 Result.failure(
                     AccountCollisionException(
@@ -77,6 +84,8 @@ internal class FirebaseAuthDataSource
                 val user = firebaseAuth.currentUser ?: error("No user logged in")
                 user.delete().await()
                 Result.success(Unit)
+            } catch (exception: CancellationException) {
+                throw exception
             } catch (e: Exception) {
                 Result.failure(e)
             }

@@ -114,6 +114,7 @@
     <string name="movie_detail_share_text">🎬 %1$s (%2$s)\n⭐ %3$.1f/10\n\nhttps://www.themoviedb.org/movie/%4$d\n\nCompartido desde Santoro 🎬</string>
     <string name="movie_detail_share_chooser_title">Compartir con</string>
     <string name="movie_detail_share_icon_description">Compartir película</string>
+    <string name="movie_detail_not_found">No se encontraron los detalles de la película.</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">Ajustes</string>
@@ -162,7 +163,7 @@
 
     <!-- Guest Onboarding -->
     <string name="guest_onboarding_title">¡Bienvenido a Santoro!</string>
-    <string name="guest_onboarding_description">Estás navegando como <b>invitado</b>. Tienes acceso completo para buscar películas, añadirlas a tu lista de películas que quires ver y marcarlas como vistas.\n\n<b>Nota:</b> Tus listas se guardan solo en este dispositivo. Si cambias de móvil o desinstalas la app, tus datos se perderán a menos que vincules una cuenta de Google más adelante.</string>
+    <string name="guest_onboarding_description">Estás navegando como <b>invitado</b>. Tienes acceso completo para buscar películas, añadirlas a tu lista de películas que quieres ver y marcarlas como vistas.\n\n<b>Nota:</b> Tus listas se guardan solo en este dispositivo. Si cambias de móvil o desinstalas la app, tus datos se perderán a menos que vincules una cuenta de Google más adelante.</string>
     <string name="guest_onboarding_button">¡Entendido, a explorar!</string>
 
     <!-- Generic -->

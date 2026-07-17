@@ -1,6 +1,7 @@
 package com.asensiodev.feature.moviedetail.impl.data.repository
 
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.core.domain.result.rethrowCancellation
 import com.asensiodev.feature.moviedetail.impl.data.datasource.LocalMovieDetailDataSource
 import com.asensiodev.feature.moviedetail.impl.data.datasource.RemoteMovieDetailDataSource
 import com.asensiodev.feature.moviedetail.impl.domain.repository.MovieDetailRepository
@@ -26,8 +27,8 @@ internal class DefaultMovieDetailRepository
             val remoteFlow = remoteDataSource.getMovieDetail(id)
 
             return combine(localFlow, remoteFlow) { localResult, remoteResult ->
-                val localMovie = localResult.getOrNull()
-                remoteResult.fold(
+                val localMovie = localResult.rethrowCancellation().getOrNull()
+                remoteResult.rethrowCancellation().fold(
                     onSuccess = { remoteMovie ->
                         if (remoteMovie != null) {
                             Result.success(

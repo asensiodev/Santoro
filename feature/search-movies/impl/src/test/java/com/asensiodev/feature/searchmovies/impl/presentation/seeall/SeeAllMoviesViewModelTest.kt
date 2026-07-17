@@ -3,6 +3,7 @@ package com.asensiodev.feature.searchmovies.impl.presentation.seeall
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.feature.searchmovies.impl.data.repository.StaleDataException
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetPopularMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTopRatedMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTrendingMoviesUseCase
@@ -11,12 +12,16 @@ import com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.amshove.kluent.shouldBeEqualTo
@@ -115,6 +120,23 @@ class SeeAllMoviesViewModelTest {
             advanceUntilIdle()
 
             viewModel.uiState.value.screenState shouldBeInstanceOf SeeAllScreenState.Error::class
+        }
+
+    @Test
+    fun `GIVEN page flow throws cancellation WHEN LoadInitial THEN error and stale states are not created`() =
+        runTest {
+            every {
+                getTrendingMoviesUseCase(1)
+            } returns flow { throw CancellationException() }
+            createViewModel(SectionType.TRENDING)
+
+            viewModel.process(SeeAllMoviesIntent.LoadInitial)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            state.screenState shouldBeInstanceOf SeeAllScreenState.Loading::class
+            state.isShowingStaleData shouldBeEqualTo false
+            state.movies shouldBeEqualTo emptyList()
         }
 
     @Test
@@ -237,5 +259,109 @@ class SeeAllMoviesViewModelTest {
 
             verify(exactly = 1) { getUpcomingMoviesUseCase(1) }
             verify(exactly = 0) { getTrendingMoviesUseCase(any()) }
+        }
+
+    @Test
+    fun `GIVEN page 2 is loading WHEN Retry completes THEN page 2 cannot overwrite retried content`() =
+        runTest {
+            val page2Results = MutableSharedFlow<Result<List<Movie>>>(extraBufferCapacity = 1)
+            val retriedMovie = sampleMovie.copy(id = 2, title = "Interstellar")
+            var page1Calls = 0
+            every { getTrendingMoviesUseCase(1) } answers {
+                page1Calls += 1
+                flowOf(Result.success(listOf(if (page1Calls == 1) sampleMovie else retriedMovie)))
+            }
+            every { getTrendingMoviesUseCase(2) } returns page2Results
+            createViewModel()
+
+            viewModel.process(SeeAllMoviesIntent.LoadInitial)
+            advanceUntilIdle()
+            viewModel.process(SeeAllMoviesIntent.LoadMore)
+            runCurrent()
+            viewModel.process(SeeAllMoviesIntent.Retry)
+            advanceUntilIdle()
+            page2Results.emit(Result.success(listOf(sampleMovie.copy(id = 3, title = "Old page"))))
+            advanceUntilIdle()
+
+            viewModel.uiState.value.movies
+                .map { movie -> movie.title } shouldBeEqualTo
+                listOf("Interstellar")
+        }
+
+    @Test
+    fun `GIVEN stale page 2 data WHEN stale signal follows THEN pagination remains available`() =
+        runTest {
+            val secondMovie = sampleMovie.copy(id = 2, title = "Interstellar")
+            every { getTrendingMoviesUseCase(1) } returns flowOf(Result.success(listOf(sampleMovie)))
+            every { getTrendingMoviesUseCase(2) } returns
+                flow {
+                    emit(Result.success(listOf(secondMovie)))
+                    emit(Result.failure(StaleDataException()))
+                }
+            createViewModel()
+
+            viewModel.process(SeeAllMoviesIntent.LoadInitial)
+            advanceUntilIdle()
+            viewModel.process(SeeAllMoviesIntent.LoadMore)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            state.movies.map { movie -> movie.title } shouldBeEqualTo
+                listOf("Inception", "Interstellar")
+            state.isShowingStaleData shouldBeEqualTo true
+            state.isEndReached shouldBeEqualTo false
+            state.isLoadingMore shouldBeEqualTo false
+        }
+
+    @Test
+    fun `GIVEN stale content WHEN Retry returns fresh data THEN stale banner is cleared`() =
+        runTest {
+            var stale = true
+            every { getTrendingMoviesUseCase(1) } answers {
+                if (stale) {
+                    flow {
+                        emit(Result.success(listOf(sampleMovie)))
+                        emit(Result.failure(StaleDataException()))
+                    }
+                } else {
+                    flowOf(Result.success(listOf(sampleMovie)))
+                }
+            }
+            createViewModel()
+
+            viewModel.process(SeeAllMoviesIntent.LoadInitial)
+            advanceUntilIdle()
+            viewModel.uiState.value.isShowingStaleData shouldBeEqualTo true
+
+            stale = false
+            viewModel.process(SeeAllMoviesIntent.Retry)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.isShowingStaleData shouldBeEqualTo false
+        }
+
+    @Test
+    fun `GIVEN no active collector WHEN navigation effect is emitted THEN it is not replayed`() =
+        runTest {
+            createViewModel()
+            viewModel.process(SeeAllMoviesIntent.MovieClicked(42))
+            advanceUntilIdle()
+
+            viewModel.effect.test {
+                expectNoEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN active collector WHEN navigation effect is emitted THEN it is delivered`() =
+        runTest {
+            createViewModel()
+
+            viewModel.effect.test {
+                viewModel.process(SeeAllMoviesIntent.MovieClicked(42))
+                runCurrent()
+
+                awaitItem() shouldBeEqualTo SeeAllMoviesEffect.NavigateToDetail(42)
+            }
         }
 }

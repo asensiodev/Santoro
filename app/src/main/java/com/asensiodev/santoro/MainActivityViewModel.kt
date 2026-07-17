@@ -11,6 +11,7 @@ import com.asensiodev.library.observability.api.NoOpObservabilityTracker
 import com.asensiodev.library.observability.api.ObservabilityTracker
 import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -66,14 +67,20 @@ class MainActivityViewModel
                 .mapNotNull { user -> user?.uid }
                 .distinctUntilChanged()
                 .onEach { uid ->
-                    observabilityTracker.trackAction(
-                        SYNC_SCHEDULED,
-                        mapOf(
-                            USER_ID_PRESENT to uid.isNotBlank().toString(),
-                        ),
-                    )
-                    syncScheduler.schedulePeriodicSync()
-                    syncScheduler.scheduleImmediateSync()
+                    try {
+                        observabilityTracker.trackAction(
+                            SYNC_SCHEDULED,
+                            mapOf(
+                                USER_ID_PRESENT to uid.isNotBlank().toString(),
+                            ),
+                        )
+                        syncScheduler.schedulePeriodicSync()
+                        syncScheduler.scheduleImmediateSync()
+                    } catch (exception: CancellationException) {
+                        throw exception
+                    } catch (exception: IllegalStateException) {
+                        observabilityTracker.recordError(SYNC_SCHEDULING_FAILED, exception)
+                    }
                 }.launchIn(viewModelScope)
         }
 
@@ -86,6 +93,7 @@ class MainActivityViewModel
 
         private companion object {
             const val SYNC_SCHEDULED = "sync_scheduled"
+            const val SYNC_SCHEDULING_FAILED = "sync_scheduling_failed"
             const val USER_ID_PRESENT = "user_id_present"
             const val GUEST_ONBOARDING_DISMISSED = "guest_onboarding_dismissed"
         }

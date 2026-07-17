@@ -1,6 +1,7 @@
 package com.asensiodev.feature.watchlist.impl.presentation
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.pluralStringResource
@@ -222,9 +224,7 @@ private fun SwipeToRemoveContainer(
     val dismissState =
         rememberSwipeToDismissBoxState(
             confirmValueChange = { value ->
-                if (value == SwipeToDismissBoxValue.StartToEnd ||
-                    value == SwipeToDismissBoxValue.EndToStart
-                ) {
+                if (value == SwipeToDismissBoxValue.EndToStart) {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onSwiped()
                     false
@@ -237,14 +237,22 @@ private fun SwipeToRemoveContainer(
     SwipeToDismissBox(
         state = dismissState,
         modifier = modifier,
+        enableDismissFromStartToEnd = false,
+        enableDismissFromEndToStart = true,
         backgroundContent = {
+            val isSwiping = dismissState.dismissDirection != SwipeToDismissBoxValue.Settled
             val color by animateColorAsState(
                 targetValue =
-                    when (dismissState.targetValue) {
-                        SwipeToDismissBoxValue.Settled -> MaterialTheme.colorScheme.surfaceContainer
-                        else -> MaterialTheme.colorScheme.error
+                    if (isSwiping) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainer
                     },
                 label = "swipe_background_color",
+            )
+            val iconScale by animateFloatAsState(
+                targetValue = if (isSwiping) 1f else 0.8f,
+                label = "swipe_delete_icon_scale",
             )
             Box(
                 modifier =
@@ -254,12 +262,19 @@ private fun SwipeToRemoveContainer(
                             color,
                             shape = RoundedCornerShape(Size.size16),
                         ),
-                contentAlignment = Alignment.Center,
+                contentAlignment = Alignment.CenterEnd,
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Delete,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onError,
+                    modifier =
+                        Modifier
+                            .padding(end = Spacings.spacing32)
+                            .graphicsLayer {
+                                scaleX = iconScale
+                                scaleY = iconScale
+                            },
                 )
             }
         },

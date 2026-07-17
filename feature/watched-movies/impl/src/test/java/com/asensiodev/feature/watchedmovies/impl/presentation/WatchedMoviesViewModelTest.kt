@@ -8,13 +8,19 @@ import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchedStatsU
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.SearchWatchedMoviesUseCase
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.amshove.kluent.shouldBeEqualTo
@@ -209,6 +215,116 @@ class WatchedMoviesViewModelTest {
             advanceUntilIdle()
 
             viewModel.uiState.value.screenState shouldBeEqualTo WatchedScreenState.NoResults
+        }
+
+    @Test
+    fun `GIVEN repeated LoadMovies intents WHEN processed THEN movie and stats observers start once`() =
+        runTest {
+            var movieSubscriptions = 0
+            var statsSubscriptions = 0
+            every { getWatchedMoviesUseCase() } returns
+                flow {
+                    movieSubscriptions++
+                    emit(Result.success(emptyList()))
+                    awaitCancellation()
+                }
+            every { getWatchedStatsUseCase() } returns
+                flow {
+                    statsSubscriptions++
+                    emit(WatchedStats(0, 0, null, 0))
+                    awaitCancellation()
+                }
+
+            viewModel.process(WatchedMoviesIntent.LoadMovies)
+            runCurrent()
+            viewModel.process(WatchedMoviesIntent.LoadMovies)
+            viewModel.process(WatchedMoviesIntent.LoadMovies)
+            runCurrent()
+
+            movieSubscriptions shouldBeEqualTo 1
+            statsSubscriptions shouldBeEqualTo 1
+            verify(exactly = 1) { getWatchedMoviesUseCase() }
+            verify(exactly = 1) { getWatchedStatsUseCase() }
+        }
+
+    @Test
+    fun `GIVEN query changes WHEN newer search starts THEN previous search is cancelled`() =
+        runTest {
+            val firstSearchStarted = CompletableDeferred<Unit>()
+            val firstSearchCancelled = CompletableDeferred<Unit>()
+            val latestMovie = buildMovie(id = 2, title = "Latest")
+            every { searchWatchedMoviesUseCase("first") } returns
+                flow {
+                    firstSearchStarted.complete(Unit)
+                    try {
+                        awaitCancellation()
+                    } finally {
+                        firstSearchCancelled.complete(Unit)
+                    }
+                }
+            every { searchWatchedMoviesUseCase("latest") } returns
+                flowOf(Result.success(listOf(latestMovie)))
+
+            viewModel.process(WatchedMoviesIntent.LoadMovies)
+            runCurrent()
+            viewModel.process(WatchedMoviesIntent.UpdateQuery("first"))
+            advanceTimeBy(500)
+            runCurrent()
+            firstSearchStarted.await()
+
+            viewModel.process(WatchedMoviesIntent.UpdateQuery("latest"))
+            advanceTimeBy(500)
+            advanceUntilIdle()
+
+            firstSearchCancelled.await()
+            viewModel.uiState.value.movies.values
+                .flatten()
+                .map { it.id } shouldBeEqualTo listOf(2)
+        }
+
+    @Test
+    fun `GIVEN no watched movies WHEN search returns empty THEN screenState remains Empty`() =
+        runTest {
+            every { searchWatchedMoviesUseCase("missing") } returns flowOf(Result.success(emptyList()))
+
+            viewModel.process(WatchedMoviesIntent.LoadMovies)
+            advanceUntilIdle()
+            viewModel.process(WatchedMoviesIntent.UpdateQuery("missing"))
+            advanceTimeBy(500)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.screenState shouldBeEqualTo WatchedScreenState.Empty
+        }
+
+    @Test
+    fun `GIVEN movie observation failed WHEN LoadMovies retries THEN observer is replaced`() =
+        runTest {
+            every { getWatchedMoviesUseCase() } returnsMany
+                listOf(
+                    flowOf(Result.failure(Exception())),
+                    flowOf(Result.success(listOf(buildMovie(id = 1)))),
+                )
+
+            viewModel.process(WatchedMoviesIntent.LoadMovies)
+            advanceUntilIdle()
+            viewModel.process(WatchedMoviesIntent.LoadMovies)
+            advanceUntilIdle()
+
+            verify(exactly = 2) { getWatchedMoviesUseCase() }
+            viewModel.uiState.value.screenState shouldBeEqualTo WatchedScreenState.Content
+        }
+
+    @Test
+    fun `GIVEN observation throws cancellation WHEN loading THEN error state is not created`() =
+        runTest {
+            every {
+                getWatchedMoviesUseCase()
+            } returns flow { throw CancellationException() }
+
+            viewModel.process(WatchedMoviesIntent.LoadMovies)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.screenState shouldBeEqualTo WatchedScreenState.Loading
         }
 
     private fun buildMovie(

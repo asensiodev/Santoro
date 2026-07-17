@@ -148,7 +148,11 @@ private fun LoginContent(
             )
             Spacer(modifier = Modifier.height(Spacings.spacing24))
         }
-        LoginButtonsSection(onGoogleLoginClicked, onAnonymousLoginClicked)
+        LoginButtonsSection(
+            onGoogleLoginClicked = onGoogleLoginClicked,
+            onAnonymousLoginClicked = onAnonymousLoginClicked,
+            enabled = !uiState.isLoading,
+        )
     }
 }
 
@@ -156,9 +160,11 @@ private fun LoginContent(
 private fun LoginButtonsSection(
     onGoogleLoginClicked: () -> Unit,
     onAnonymousLoginClicked: () -> Unit,
+    enabled: Boolean,
 ) {
     Button(
         onClick = onGoogleLoginClicked,
+        enabled = enabled,
         modifier =
             Modifier
                 .fillMaxWidth()
@@ -188,6 +194,7 @@ private fun LoginButtonsSection(
     Spacer(modifier = Modifier.height(Spacings.spacing16))
     Button(
         onClick = onAnonymousLoginClicked,
+        enabled = enabled,
         modifier =
             Modifier
                 .fillMaxWidth()

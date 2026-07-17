@@ -6,6 +6,7 @@ import com.asensiodev.santoro.core.sync.data.datasource.FirestoreMovieDataSource
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.BeforeEach
@@ -49,6 +50,18 @@ class DefaultSyncRepositoryTest {
             val result = sut.uploadPendingChanges(uid = "uid123")
 
             result.isFailure shouldBeEqualTo true
+            coVerify(exactly = 0) { firestoreDataSource.uploadMovies(any(), any()) }
+        }
+
+    @Test
+    fun `GIVEN getMoviesForSync returns cancellation WHEN uploadPendingChanges THEN cancellation propagates`() =
+        runTest {
+            val cancellation = CancellationException("cancelled")
+            coEvery { databaseRepository.getMoviesForSync() } returns Result.failure(cancellation)
+
+            assertCancellation(cancellation) {
+                sut.uploadPendingChanges(uid = "uid123")
+            }
             coVerify(exactly = 0) { firestoreDataSource.uploadMovies(any(), any()) }
         }
 
@@ -122,6 +135,19 @@ class DefaultSyncRepositoryTest {
 
             result.isFailure shouldBeEqualTo true
             coVerify(exactly = 1) { firestoreDataSource.uploadMovies("uid123", any()) }
+        }
+
+    @Test
+    fun `GIVEN upload returns cancellation WHEN uploadPendingChanges THEN cancellation propagates`() =
+        runTest {
+            val cancellation = CancellationException("cancelled")
+            coEvery { databaseRepository.getMoviesForSync() } returns
+                Result.success(listOf(SyncMockUtils.createMovie()))
+            coEvery { firestoreDataSource.uploadMovies(any(), any()) } returns Result.failure(cancellation)
+
+            assertCancellation(cancellation) {
+                sut.uploadPendingChanges(uid = "uid123")
+            }
         }
 
     @Test
@@ -203,6 +229,17 @@ class DefaultSyncRepositoryTest {
         }
 
     @Test
+    fun `GIVEN download returns cancellation WHEN downloadAndMerge THEN cancellation propagates`() =
+        runTest {
+            val cancellation = CancellationException("cancelled")
+            coEvery { firestoreDataSource.downloadUserMovies(any()) } returns Result.failure(cancellation)
+
+            assertCancellation(cancellation) {
+                sut.downloadAndMerge(uid = "uid123")
+            }
+        }
+
+    @Test
     fun `GIVEN getMoviesForSync fails WHEN downloadAndMerge THEN returns error`() =
         runTest {
             coEvery {
@@ -213,6 +250,18 @@ class DefaultSyncRepositoryTest {
             val result = sut.downloadAndMerge(uid = "uid123")
 
             result.isFailure shouldBeEqualTo true
+        }
+
+    @Test
+    fun `GIVEN local movies return cancellation WHEN downloadAndMerge THEN cancellation propagates`() =
+        runTest {
+            val cancellation = CancellationException("cancelled")
+            coEvery { firestoreDataSource.downloadUserMovies(any()) } returns Result.success(emptyList())
+            coEvery { databaseRepository.getMoviesForSync() } returns Result.failure(cancellation)
+
+            assertCancellation(cancellation) {
+                sut.downloadAndMerge(uid = "uid123")
+            }
         }
 
     @Test
@@ -238,6 +287,20 @@ class DefaultSyncRepositoryTest {
         }
 
     @Test
+    fun `GIVEN getMovieById returns cancellation WHEN merging missing movie THEN cancellation propagates`() =
+        runTest {
+            val cancellation = CancellationException("cancelled")
+            val remoteEntity = SyncMockUtils.createSyncEntity(movieId = 99)
+            coEvery { firestoreDataSource.downloadUserMovies(any()) } returns Result.success(listOf(remoteEntity))
+            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(emptyList())
+            coEvery { databaseRepository.getMovieById(99) } returns Result.failure(cancellation)
+
+            assertCancellation(cancellation) {
+                sut.downloadAndMerge(uid = "uid123")
+            }
+        }
+
+    @Test
     fun `GIVEN upsert fails WHEN downloadAndMerge THEN returns error`() =
         runTest {
             val remoteEntity = SyncMockUtils.createSyncEntity(movieId = 1, updatedAt = 2000L)
@@ -254,6 +317,40 @@ class DefaultSyncRepositoryTest {
             val result = sut.downloadAndMerge(uid = "uid123")
 
             result.isFailure shouldBeEqualTo true
+        }
+
+    @Test
+    fun `GIVEN update returns cancellation WHEN merging newer remote movie THEN cancellation propagates`() =
+        runTest {
+            val cancellation = CancellationException("cancelled")
+            val remoteEntity = SyncMockUtils.createSyncEntity(movieId = 1, updatedAt = 2000L)
+            val localMovie = SyncMockUtils.createMovie(id = 1, updatedAt = 1000L)
+            coEvery { firestoreDataSource.downloadUserMovies(any()) } returns Result.success(listOf(remoteEntity))
+            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(listOf(localMovie))
+            coEvery {
+                databaseRepository.updateMovieSyncState(any(), any(), any(), any(), any())
+            } returns Result.failure(cancellation)
+
+            assertCancellation(cancellation) {
+                sut.downloadAndMerge(uid = "uid123")
+            }
+        }
+
+    @Test
+    fun `GIVEN upsert returns cancellation WHEN merging missing movie THEN cancellation propagates`() =
+        runTest {
+            val cancellation = CancellationException("cancelled")
+            val remoteEntity = SyncMockUtils.createSyncEntity(movieId = 99)
+            coEvery { firestoreDataSource.downloadUserMovies(any()) } returns Result.success(listOf(remoteEntity))
+            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(emptyList())
+            coEvery { databaseRepository.getMovieById(99) } returns Result.success(null)
+            coEvery {
+                databaseRepository.upsertMovieFromSync(any(), any(), any(), any(), any(), any(), any(), any(), any())
+            } returns Result.failure(cancellation)
+
+            assertCancellation(cancellation) {
+                sut.downloadAndMerge(uid = "uid123")
+            }
         }
 
     @Test
@@ -373,4 +470,19 @@ class DefaultSyncRepositoryTest {
                 databaseRepository.upsertMovieFromSync(any(), any(), any(), any(), any(), any(), any(), any(), any())
             }
         }
+
+    private suspend fun assertCancellation(
+        expected: CancellationException,
+        block: suspend () -> Unit,
+    ) {
+        val actual =
+            try {
+                block()
+                null
+            } catch (exception: CancellationException) {
+                exception
+            }
+
+        actual shouldBeEqualTo expected
+    }
 }

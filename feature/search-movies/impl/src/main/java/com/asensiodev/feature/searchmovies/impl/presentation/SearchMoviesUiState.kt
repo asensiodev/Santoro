@@ -1,12 +1,13 @@
 package com.asensiodev.feature.searchmovies.impl.presentation
 
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
+import com.asensiodev.ui.UiText
 
 internal sealed interface SearchScreenState {
     data object Loading : SearchScreenState
     data object Content : SearchScreenState
     data class Error(
-        val message: String,
+        val message: UiText,
     ) : SearchScreenState
     data object Empty : SearchScreenState
 }

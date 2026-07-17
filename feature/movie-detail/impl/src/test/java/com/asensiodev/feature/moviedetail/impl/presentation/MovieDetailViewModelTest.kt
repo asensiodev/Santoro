@@ -19,12 +19,16 @@ import io.mockk.verify
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -81,20 +85,47 @@ class MovieDetailViewModelTest {
         @Test
         fun `GIVEN error WHEN FetchDetails intent THEN update state with error`() =
             runTest {
-                val errorMessage = "Error occurred"
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns
-                    flowOf(Result.failure(Exception(errorMessage)))
+                    flowOf(Result.failure(Exception("Error occurred")))
 
                 viewModel.uiState.test {
                     awaitItem() shouldBeEqualTo MovieDetailUiState()
                     viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
-                    awaitItem() shouldBeEqualTo
-                        MovieDetailUiState(
-                            screenState = MovieDetailScreenState.Error(errorMessage),
-                            movie = null,
-                        )
+                    val error = awaitItem().screenState as MovieDetailScreenState.Error
+                    val message = error.message as UiText.StringResource
+                    message.resId shouldBeEqualTo SR.string.error_message_retry
                     cancelAndConsumeRemainingEvents()
                 }
+            }
+
+        @Test
+        fun `GIVEN fetch flow throws cancellation WHEN fetching THEN error state is not created`() =
+            runTest {
+                coEvery {
+                    getMovieDetailUseCase(testMovie.id)
+                } returns flow { throw CancellationException() }
+
+                viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
+                advanceUntilIdle()
+
+                viewModel.uiState.value shouldBeEqualTo MovieDetailUiState()
+            }
+
+        @Test
+        fun `GIVEN null success WHEN FetchDetails intent THEN shows localized not found error`() =
+            runTest {
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(null))
+
+                viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
+                advanceUntilIdle()
+
+                val state = viewModel.uiState.value
+                val error = state.screenState as MovieDetailScreenState.Error
+                val message = error.message as UiText.StringResource
+                message.resId shouldBeEqualTo SR.string.movie_detail_not_found
+                state.movie shouldBeEqualTo null
+                state.showTooltip shouldBeEqualTo false
+                state.isMovieStateUpdatePending shouldBeEqualTo false
             }
 
         @Test
@@ -135,6 +166,48 @@ class MovieDetailViewModelTest {
                 subscriptions shouldBeEqualTo 2
                 maximumActiveCollectors shouldBeEqualTo 1
                 activeCollectors shouldBeEqualTo 1
+            }
+
+        @Test
+        fun `GIVEN loaded movie WHEN a new fetch starts THEN clears stale movie and actions`() =
+            runTest {
+                val secondMovie = testMovie.copy(id = 2, title = "Arrival")
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+                every { getMovieDetailUseCase(secondMovie.id) } returns flow { awaitCancellation() }
+
+                viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
+                advanceUntilIdle()
+                viewModel.process(MovieDetailIntent.FetchDetails(secondMovie.id))
+                runCurrent()
+
+                viewModel.uiState.value shouldBeEqualTo MovieDetailUiState()
+            }
+
+        @Test
+        fun `GIVEN old fetch ignores cancellation WHEN it completes THEN it cannot replace the new movie`() =
+            runTest {
+                val oldMovie = testMovie
+                val newMovie = testMovie.copy(id = 2, title = "Arrival")
+                val oldResult = CompletableDeferred<Unit>()
+                every { getMovieDetailUseCase(oldMovie.id) } returns
+                    object : Flow<Result<Movie?>> {
+                        override suspend fun collect(collector: FlowCollector<Result<Movie?>>) {
+                            withContext(NonCancellable) {
+                                oldResult.await()
+                                collector.emit(Result.success(oldMovie))
+                            }
+                        }
+                    }
+                coEvery { getMovieDetailUseCase(newMovie.id) } returns flowOf(Result.success(newMovie))
+
+                viewModel.process(MovieDetailIntent.FetchDetails(oldMovie.id))
+                runCurrent()
+                viewModel.process(MovieDetailIntent.FetchDetails(newMovie.id))
+                runCurrent()
+                oldResult.complete(Unit)
+                advanceUntilIdle()
+
+                viewModel.uiState.value.movie shouldBeEqualTo newMovie.toUi()
             }
     }
 
@@ -297,6 +370,51 @@ class MovieDetailViewModelTest {
                 viewModel.uiState.value.isMovieStateUpdatePending shouldBeEqualTo false
                 coVerify(exactly = 0) { syncScheduler.enqueueUpload(any()) }
             }
+
+        @Test
+        fun `GIVEN mutation use case throws cancellation WHEN operation runs THEN cancellation is preserved`() =
+            runTest {
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+                coEvery { updateMovieStateUseCase(any()) } throws CancellationException()
+
+                viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
+                advanceUntilIdle()
+                viewModel.effect.test {
+                    viewModel.process(MovieDetailIntent.ToggleWatchlist)
+                    advanceUntilIdle()
+
+                    expectNoEvents()
+                }
+
+                viewModel.uiState.value.movie shouldBeEqualTo testMovie.toUi()
+                viewModel.uiState.value.isMovieStateUpdatePending shouldBeEqualTo false
+                coVerify(exactly = 0) { syncScheduler.enqueueUpload(any()) }
+            }
+
+        @Test
+        fun `GIVEN old mutation ignores cancellation WHEN a new movie loads THEN it cannot update or upload`() =
+            runTest {
+                val newMovie = testMovie.copy(id = 2, title = "Arrival")
+                val mutationResult = CompletableDeferred<Result<Boolean>>()
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+                coEvery { getMovieDetailUseCase(newMovie.id) } returns flowOf(Result.success(newMovie))
+                coEvery { updateMovieStateUseCase(any()) } coAnswers {
+                    withContext(NonCancellable) { mutationResult.await() }
+                }
+
+                viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
+                advanceUntilIdle()
+                viewModel.process(MovieDetailIntent.ToggleWatchlist)
+                runCurrent()
+                viewModel.process(MovieDetailIntent.FetchDetails(newMovie.id))
+                runCurrent()
+                mutationResult.complete(Result.success(true))
+                advanceUntilIdle()
+
+                viewModel.uiState.value.movie shouldBeEqualTo newMovie.toUi()
+                viewModel.uiState.value.isMovieStateUpdatePending shouldBeEqualTo false
+                coVerify(exactly = 0) { syncScheduler.enqueueUpload(any()) }
+            }
     }
 
     @Nested
@@ -448,6 +566,56 @@ class MovieDetailViewModelTest {
             }
 
         @Test
+        fun `GIVEN tooltip check is cancelled WHEN same movie retries THEN check runs again`() =
+            runTest {
+                every { observeHasSeenDetailTooltipUseCase() } returnsMany
+                    listOf(
+                        flow { awaitCancellation() },
+                        flowOf(true),
+                    )
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+
+                viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
+                runCurrent()
+                viewModel.process(MovieDetailIntent.Retry)
+                advanceUntilIdle()
+
+                verify(exactly = 2) { observeHasSeenDetailTooltipUseCase() }
+                viewModel.uiState.value.showTooltip shouldBeEqualTo false
+            }
+
+        @Test
+        fun `GIVEN old tooltip check ignores cancellation WHEN a new movie loads THEN it cannot show tooltip`() =
+            runTest {
+                val newMovie = testMovie.copy(id = 2, title = "Arrival")
+                val oldCheck = CompletableDeferred<Unit>()
+                every { observeHasSeenDetailTooltipUseCase() } returnsMany
+                    listOf(
+                        object : Flow<Boolean> {
+                            override suspend fun collect(collector: FlowCollector<Boolean>) {
+                                withContext(NonCancellable) {
+                                    oldCheck.await()
+                                    collector.emit(false)
+                                }
+                            }
+                        },
+                        flowOf(true),
+                    )
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+                coEvery { getMovieDetailUseCase(newMovie.id) } returns flowOf(Result.success(newMovie))
+
+                viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
+                runCurrent()
+                viewModel.process(MovieDetailIntent.FetchDetails(newMovie.id))
+                runCurrent()
+                oldCheck.complete(Unit)
+                advanceUntilIdle()
+
+                viewModel.uiState.value.movie shouldBeEqualTo newMovie.toUi()
+                viewModel.uiState.value.showTooltip shouldBeEqualTo false
+            }
+
+        @Test
         fun `GIVEN tooltip shown WHEN DismissTooltip THEN hides tooltip and calls setDetailTooltipSeen`() =
             runTest {
                 every { observeHasSeenDetailTooltipUseCase() } returns flowOf(false)
@@ -462,6 +630,24 @@ class MovieDetailViewModelTest {
 
                 viewModel.uiState.value.showTooltip shouldBeEqualTo false
                 coVerify(exactly = 1) { setDetailTooltipSeenUseCase() }
+            }
+    }
+
+    @Nested
+    inner class Effects {
+        @Test
+        fun `GIVEN no active collector WHEN share effect is emitted THEN it is not replayed`() =
+            runTest {
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+                viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
+                advanceUntilIdle()
+
+                viewModel.process(MovieDetailIntent.ShareMovie)
+                advanceUntilIdle()
+
+                viewModel.effect.test {
+                    expectNoEvents()
+                }
             }
     }
 

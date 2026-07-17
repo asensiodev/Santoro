@@ -3,6 +3,7 @@ package com.asensiodev.auth.data.repository
 import com.asensiodev.auth.AuthDataSource
 import com.asensiodev.auth.domain.repository.AuthRepository
 import com.asensiodev.core.domain.model.SantoroUser
+import com.asensiodev.core.domain.result.rethrowCancellation
 import com.asensiodev.library.observability.api.NoOpObservabilityTracker
 import com.asensiodev.library.observability.api.ObservabilityTracker
 import kotlinx.coroutines.flow.Flow
@@ -19,6 +20,7 @@ internal class DefaultAuthRepository
         override suspend fun signInAnonymously(): Result<SantoroUser> =
             dataSource
                 .signInAnonymously()
+                .rethrowCancellation()
                 .onSuccess { user ->
                     observabilityTracker.trackAction(
                         AUTH_SIGN_IN,
@@ -36,6 +38,7 @@ internal class DefaultAuthRepository
         override suspend fun signInWithGoogle(idToken: String): Result<SantoroUser> =
             dataSource
                 .signInWithGoogle(idToken)
+                .rethrowCancellation()
                 .onSuccess { user ->
                     observabilityTracker.trackAction(
                         AUTH_SIGN_IN,
@@ -53,6 +56,7 @@ internal class DefaultAuthRepository
         override suspend fun linkWithGoogle(idToken: String): Result<SantoroUser> =
             dataSource
                 .linkWithGoogle(idToken)
+                .rethrowCancellation()
                 .onSuccess { user ->
                     observabilityTracker.trackAction(AUTH_LINK_GOOGLE)
                     observabilityTracker.setUser(user.uid, user.isAnonymous)
@@ -69,6 +73,7 @@ internal class DefaultAuthRepository
         override suspend fun deleteAccount(): Result<Unit> =
             dataSource
                 .deleteAccount()
+                .rethrowCancellation()
                 .onSuccess {
                     observabilityTracker.trackAction(AUTH_DELETE_ACCOUNT)
                     observabilityTracker.clearUser()

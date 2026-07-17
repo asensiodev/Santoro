@@ -25,7 +25,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -76,12 +76,12 @@ import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.core.designsystem.theme.Weights
 import com.asensiodev.feature.searchmovies.impl.presentation.component.HeroMovieCard
 import com.asensiodev.feature.searchmovies.impl.presentation.component.MovieCard
+import com.asensiodev.feature.searchmovies.impl.presentation.component.OfflineBanner
 import com.asensiodev.feature.searchmovies.impl.presentation.component.SearchSuggestionsContent
 import com.asensiodev.feature.searchmovies.impl.presentation.model.GenreConstants
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 import com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType
 import com.asensiodev.ui.CollectEffectWithLifecycle
-import com.asensiodev.ui.LaunchedEffectOnce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.asensiodev.santoro.core.stringresources.R as SR
 
@@ -96,7 +96,7 @@ internal fun SearchMoviesRoute(
     val snackbarHostState = remember { SnackbarHostState() }
     val refreshSuccessMessage = stringResource(SR.string.browse_refresh_success)
 
-    LaunchedEffectOnce {
+    LaunchedEffect(viewModel) {
         viewModel.process(SearchMoviesIntent.LoadInitialData)
     }
 
@@ -193,7 +193,7 @@ internal fun SearchMoviesScreen(
             )
 
             AnimatedVisibility(visible = uiState.isShowingStaleData) {
-                OfflineBanner(onRetry = { onProcess(SearchMoviesIntent.LoadInitialData) })
+                OfflineBanner(onRetry = { onProcess(SearchMoviesIntent.Refresh) })
             }
 
             val isGenreOnlyMode = uiState.query.isBlank() && uiState.selectedGenreId != null
@@ -201,7 +201,7 @@ internal fun SearchMoviesScreen(
             if (isGenreOnlyMode) {
                 SearchMoviesContent(
                     uiState = uiState,
-                    onQueryChanged = { onProcess(SearchMoviesIntent.UpdateQuery(it)) },
+                    onRetry = { onProcess(SearchMoviesIntent.Refresh) },
                     onMovieClick = onMovieClick,
                     onLoadMore = { onProcess(SearchMoviesIntent.LoadMoreSearchResults) },
                     onSearchWithoutGenreFilter = {
@@ -225,7 +225,7 @@ internal fun SearchMoviesScreen(
                                     SearchMoviesIntent.LoadMorePopularMovies,
                                 )
                             },
-                            onLoadRetry = { onProcess(SearchMoviesIntent.LoadInitialData) },
+                            onLoadRetry = { onProcess(SearchMoviesIntent.Refresh) },
                             onSeeAllClick = { sectionType ->
                                 onProcess(SearchMoviesIntent.SeeAllClicked(sectionType))
                             },
@@ -233,7 +233,7 @@ internal fun SearchMoviesScreen(
                     } else {
                         SearchMoviesContent(
                             uiState = uiState,
-                            onQueryChanged = { onProcess(SearchMoviesIntent.UpdateQuery(it)) },
+                            onRetry = { onProcess(SearchMoviesIntent.Refresh) },
                             onMovieClick = onMovieClick,
                             onLoadMore = { onProcess(SearchMoviesIntent.LoadMoreSearchResults) },
                             onSearchWithoutGenreFilter = {
@@ -242,38 +242,6 @@ internal fun SearchMoviesScreen(
                         )
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun OfflineBanner(
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    androidx.compose.material3.Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.errorContainer,
-        shape = RoundedCornerShape(Size.size8),
-    ) {
-        Row(
-            modifier =
-                Modifier.padding(
-                    horizontal = Spacings.spacing12,
-                    vertical = Spacings.spacing8,
-                ),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(SR.string.browse_offline_cache_banner),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.weight(1f),
-            )
-            Button(onClick = onRetry) {
-                Text(text = stringResource(SR.string.browse_offline_retry))
             }
         }
     }
@@ -301,14 +269,18 @@ private fun DashboardContent(
 
         is SearchScreenState.Error -> {
             ErrorContent(
-                message = uiState.screenState.message,
+                message = uiState.screenState.message.asString(),
                 onRetry = { onLoadRetry() },
             )
         }
 
-        is SearchScreenState.Content,
-        is SearchScreenState.Empty,
-        -> {
+        is SearchScreenState.Empty -> {
+            NoResultsContent(
+                text = stringResource(SR.string.search_movies_no_search_results_text),
+            )
+        }
+
+        is SearchScreenState.Content -> {
             Column(
                 modifier =
                     Modifier
@@ -450,7 +422,7 @@ private fun MovieSection(
         ) {
             itemsIndexed(
                 movies,
-                key = { index, movie -> "$title-$index-${movie.id}" },
+                key = { _, movie -> "$title-${movie.id}" },
             ) { index, movie ->
                 MovieCard(
                     movie = movie,
@@ -488,7 +460,7 @@ private fun MovieSection(
 @Composable
 private fun SearchMoviesContent(
     uiState: SearchMoviesUiState,
-    onQueryChanged: (String) -> Unit,
+    onRetry: () -> Unit,
     onMovieClick: (Int) -> Unit,
     onLoadMore: () -> Unit,
     onSearchWithoutGenreFilter: () -> Unit,
@@ -502,8 +474,8 @@ private fun SearchMoviesContent(
 
             uiState.screenState is SearchScreenState.Error -> {
                 ErrorContent(
-                    message = stringResource(SR.string.error_message_retry),
-                    onRetry = { onQueryChanged(uiState.query) },
+                    message = uiState.screenState.message.asString(),
+                    onRetry = onRetry,
                 )
             }
 
@@ -559,10 +531,10 @@ private fun MovieList(
         modifier = modifier,
         state = lazyGridState,
     ) {
-        itemsIndexed(
+        items(
             movies,
-            key = { index, movie -> generateUniqueKey(index, movie) },
-        ) { _, movie ->
+            key = { movie -> movie.id },
+        ) { movie ->
             MovieCard(
                 movie = movie,
                 onClick = { onMovieClick(movie.id) },
@@ -625,11 +597,6 @@ private fun ObserveGridState(
             }
     }
 }
-
-private fun generateUniqueKey(
-    index: Int,
-    movie: MovieUi,
-) = "$index-${movie.id}"
 
 @Composable
 private fun GenreFilterChips(

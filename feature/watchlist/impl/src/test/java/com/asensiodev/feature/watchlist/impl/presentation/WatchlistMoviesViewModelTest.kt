@@ -206,6 +206,23 @@ class WatchlistMoviesViewModelTest {
         }
 
     @Test
+    fun `GIVEN removal use case throws cancellation WHEN operation ends THEN failure state is not created`() =
+        runTest {
+            coEvery {
+                removeFromWatchlistUseCase(inceptionMovieUi.id)
+            } throws CancellationException()
+
+            viewModel.process(WatchlistIntent.RequestRemove(inceptionMovieUi))
+            viewModel.process(WatchlistIntent.ConfirmRemove)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.movieToRemove shouldBeEqualTo inceptionMovieUi
+            viewModel.uiState.value.isRemovingMovie shouldBeEqualTo false
+            viewModel.uiState.value.hasRemoveError shouldBeEqualTo false
+            coVerify(exactly = 0) { syncScheduler.enqueueUpload(any()) }
+        }
+
+    @Test
     fun `GIVEN multiple movies WHEN ConfirmRemove intent THEN removes exactly one movie with correct id`() =
         runTest {
             val otherMovie =
@@ -393,6 +410,19 @@ class WatchlistMoviesViewModelTest {
             subscriptions shouldBeEqualTo 2
             maximumActiveCollectors shouldBeEqualTo 1
             activeCollectors shouldBeEqualTo 1
+        }
+
+    @Test
+    fun `GIVEN observation throws cancellation WHEN loading THEN error state is not created`() =
+        runTest {
+            every {
+                getWatchlistMoviesUseCase()
+            } returns flow { throw CancellationException() }
+
+            viewModel.process(WatchlistIntent.LoadMovies)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.screenState shouldBeEqualTo WatchlistScreenState.Loading
         }
 
     @Test

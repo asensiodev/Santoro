@@ -9,6 +9,7 @@ import com.asensiodev.feature.searchmovies.impl.data.model.BrowseCacheEntry
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldBeInstanceOf
@@ -135,6 +136,28 @@ class CachingSearchMoviesRepositoryTest {
                 error.exceptionOrNull() shouldBeInstanceOf StaleDataException::class
                 awaitComplete()
             }
+        }
+
+    @Test
+    fun `GIVEN stale cache and wrapped cancellation WHEN getPopularMovies THEN cancellation bypasses stale fallback`() =
+        runTest {
+            val staleEntry =
+                BrowseCacheEntry(
+                    section = BrowseSectionKeys.POPULAR,
+                    page = 1,
+                    movies = sampleMovies,
+                    cachedAt = System.currentTimeMillis() - BrowseCacheTtl.CURATED_MS - 1000L,
+                )
+            coEvery { localDataSource.getCachedPage(BrowseSectionKeys.POPULAR, 1) } returns staleEntry
+            coEvery {
+                remoteDatasource.getPopularMovies(1)
+            } returns Result.failure(CancellationException())
+
+            repository.getPopularMovies(1).test {
+                awaitError().shouldBeInstanceOf<CancellationException>()
+            }
+
+            coVerify(exactly = 0) { localDataSource.savePage(any(), any(), any(), any()) }
         }
 
     @Test

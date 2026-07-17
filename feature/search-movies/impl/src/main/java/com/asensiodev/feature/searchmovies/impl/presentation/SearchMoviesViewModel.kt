@@ -22,24 +22,22 @@ import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 import com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType
 import com.asensiodev.library.observability.api.NoOpObservabilityTracker
 import com.asensiodev.library.observability.api.ObservabilityTracker
+import com.asensiodev.ui.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.asensiodev.santoro.core.stringresources.R as SR
 
 @HiltViewModel
 internal class SearchMoviesViewModel
@@ -61,14 +59,16 @@ internal class SearchMoviesViewModel
         private val observabilityTracker: ObservabilityTracker = NoOpObservabilityTracker,
     ) : ViewModel() {
         private var searchJob: Job? = null
+        private var dashboardJob: Job? = null
+        private var queryJob: Job? = null
+        private var initialized = false
         private var observersSetUp = false
-        private val _uiState = MutableStateFlow(SearchMoviesUiState())
+        private val restoredQuery = savedStateHandle[SEARCH_QUERY_KEY] ?: ""
+        private val _uiState = MutableStateFlow(SearchMoviesUiState(query = restoredQuery))
         val uiState: StateFlow<SearchMoviesUiState> = _uiState.asStateFlow()
 
         private val _effect = MutableSharedFlow<SearchMoviesEffect>(extraBufferCapacity = 1)
         val effect = _effect.asSharedFlow()
-
-        private val searchQuery = savedStateHandle.getStateFlow(SEARCH_QUERY_KEY, "")
 
         fun process(intent: SearchMoviesIntent) {
             when (intent) {
@@ -91,12 +91,17 @@ internal class SearchMoviesViewModel
         }
 
         private fun loadInitialData() {
+            if (initialized) return
+            initialized = true
             observabilityTracker.trackScreen(SCREEN_SEARCH)
             setupObservers()
-            fetchDashboardData()
+            if (restoredQuery.isBlank()) {
+                fetchDashboardData()
+            } else {
+                performSearch(FIRST_PAGE, isInitialLoad = true)
+            }
         }
 
-        @OptIn(FlowPreview::class)
         private fun setupObservers() {
             if (observersSetUp) return
             observersSetUp = true
@@ -106,16 +111,10 @@ internal class SearchMoviesViewModel
                     _uiState.update { it.copy(recentSearches = searches) }
                 }
             }
-
-            searchQuery
-                .debounce(DELAY)
-                .distinctUntilChanged()
-                .onEach { query ->
-                    handleQueryChange(query)
-                }.launchIn(viewModelScope)
         }
 
         private fun refresh() {
+            queryJob?.cancel()
             val query = _uiState.value.query
             val selectedGenreId = _uiState.value.selectedGenreId
             observabilityTracker.trackAction(
@@ -126,16 +125,17 @@ internal class SearchMoviesViewModel
                 ),
             )
             _uiState.update { it.copy(isRefreshing = true) }
-            viewModelScope.launch {
-                if (query.isBlank() && selectedGenreId == null) {
-                    loadDashboardData(fromRefresh = true)
-                } else {
-                    performSearch(FIRST_PAGE, isInitialLoad = true, isFromRefresh = true)
-                }
+            if (query.isBlank() && selectedGenreId == null) {
+                fetchDashboardData(fromRefresh = true)
+            } else {
+                performSearch(FIRST_PAGE, isInitialLoad = true, isFromRefresh = true)
             }
         }
 
         private fun updateQuery(query: String) {
+            queryJob?.cancel()
+            searchJob?.cancel()
+            if (query.isNotBlank()) dashboardJob?.cancel()
             _uiState.update {
                 it.copy(
                     query = query,
@@ -150,6 +150,11 @@ internal class SearchMoviesViewModel
             }
 
             savedStateHandle[SEARCH_QUERY_KEY] = query
+            queryJob =
+                viewModelScope.launch {
+                    delay(DELAY)
+                    if (query == _uiState.value.query) handleQueryChange(query)
+                }
         }
 
         private fun onGenreSelected(genreId: Int) {
@@ -159,7 +164,9 @@ internal class SearchMoviesViewModel
                     GENRE_ID to genreId.toString(),
                 ),
             )
+            queryJob?.cancel()
             searchJob?.cancel()
+            dashboardJob?.cancel()
             _uiState.update {
                 it.copy(
                     selectedGenreId = genreId,
@@ -172,6 +179,7 @@ internal class SearchMoviesViewModel
         }
 
         private fun clearGenreSelection() {
+            queryJob?.cancel()
             val currentQuery = _uiState.value.query
             _uiState.update {
                 it.copy(
@@ -189,10 +197,15 @@ internal class SearchMoviesViewModel
             }
             if (currentQuery.isNotBlank()) {
                 performSearch(FIRST_PAGE, isInitialLoad = true)
+            } else if (_uiState.value.hasDashboardData()) {
+                _uiState.update { it.copy(screenState = SearchScreenState.Content) }
+            } else {
+                fetchDashboardData()
             }
         }
 
         private fun searchWithoutGenreFilter() {
+            queryJob?.cancel()
             val currentQuery = _uiState.value.query
             _uiState.update {
                 it.copy(
@@ -216,12 +229,11 @@ internal class SearchMoviesViewModel
                 )
             }
             if (query.isBlank() && _uiState.value.selectedGenreId == null) {
-                _uiState.update {
-                    if (it.screenState is SearchScreenState.Error) {
-                        it
-                    } else {
-                        it.copy(screenState = SearchScreenState.Content)
-                    }
+                searchJob?.cancel()
+                if (_uiState.value.hasDashboardData()) {
+                    _uiState.update { it.copy(screenState = SearchScreenState.Content) }
+                } else {
+                    fetchDashboardData()
                 }
             } else {
                 performSearch(FIRST_PAGE, isInitialLoad = true)
@@ -234,6 +246,7 @@ internal class SearchMoviesViewModel
             isFromRefresh: Boolean = false,
         ) {
             if (isInitialLoad) searchJob?.cancel()
+            dashboardJob?.cancel()
 
             val query = _uiState.value.query
             val selectedGenreId = _uiState.value.selectedGenreId
@@ -272,12 +285,17 @@ internal class SearchMoviesViewModel
                         }
 
                     searchFlow.collect { result ->
-                        handleSearchResult(result, isInitialLoad, page, isFromRefresh)
+                        if (
+                            query == _uiState.value.query &&
+                            selectedGenreId == _uiState.value.selectedGenreId
+                        ) {
+                            handleSearchResult(result, isInitialLoad, page, isFromRefresh)
+                        }
                     }
                 }
         }
 
-        private fun handleSearchResult(
+        private suspend fun handleSearchResult(
             result: Result<List<Movie>>,
             isInitialLoad: Boolean,
             page: Int,
@@ -312,7 +330,7 @@ internal class SearchMoviesViewModel
                             isSearchEndReached = newMovies.isEmpty(),
                         )
                     }
-                    if (isFromRefresh) _effect.tryEmit(SearchMoviesEffect.ShowRefreshSuccess)
+                    if (isFromRefresh) _effect.emit(SearchMoviesEffect.ShowRefreshSuccess)
                 },
                 onFailure = { exception ->
                     handleSearchFailure(exception, isInitialLoad, page)
@@ -344,7 +362,9 @@ internal class SearchMoviesViewModel
                 it.copy(
                     screenState =
                         if (isInitialLoad && it.searchMovieResults.isEmpty()) {
-                            SearchScreenState.Error(exception.message ?: "Unknown error")
+                            SearchScreenState.Error(
+                                UiText.StringResource(SR.string.error_message_retry),
+                            )
                         } else {
                             it.screenState
                         },
@@ -396,7 +416,9 @@ internal class SearchMoviesViewModel
             if (query.isNotBlank()) {
                 viewModelScope.launch { saveRecentSearchUseCase(query) }
             }
-            _effect.tryEmit(SearchMoviesEffect.NavigateToDetail(movieId))
+            viewModelScope.launch {
+                _effect.emit(SearchMoviesEffect.NavigateToDetail(movieId))
+            }
         }
 
         private fun onFieldFocused() {
@@ -414,8 +436,11 @@ internal class SearchMoviesViewModel
                     QUERY_LENGTH to query.length.toString(),
                 ),
             )
+            queryJob?.cancel()
+            searchJob?.cancel()
             _uiState.update { it.copy(query = query, isFieldFocused = false) }
             savedStateHandle[SEARCH_QUERY_KEY] = query
+            handleQueryChange(query)
             viewModelScope.launch { saveRecentSearchUseCase(query) }
         }
 
@@ -431,14 +456,17 @@ internal class SearchMoviesViewModel
                     SECTION_TYPE to sectionType.name,
                 ),
             )
-            _effect.tryEmit(SearchMoviesEffect.NavigateToSeeAll(sectionType))
+            viewModelScope.launch {
+                _effect.emit(SearchMoviesEffect.NavigateToSeeAll(sectionType))
+            }
         }
 
         private fun fetchDashboardData(fromRefresh: Boolean = false) {
+            dashboardJob?.cancel()
             if (!fromRefresh) {
                 _uiState.update { it.copy(screenState = SearchScreenState.Loading) }
             }
-            viewModelScope.launch { loadDashboardData(fromRefresh) }
+            dashboardJob = viewModelScope.launch { loadDashboardData(fromRefresh) }
         }
 
         private suspend fun loadDashboardData(fromRefresh: Boolean) {
@@ -446,6 +474,9 @@ internal class SearchMoviesViewModel
                 if (!fromRefresh) cachingRepository.clearStaleEntries()
 
                 val (results, isStale) = fetchDashboardResults()
+                if (_uiState.value.query.isNotBlank() || _uiState.value.selectedGenreId != null) {
+                    return
+                }
                 var refreshFailedWithExistingData = false
 
                 _uiState.update { state ->
@@ -470,13 +501,15 @@ internal class SearchMoviesViewModel
                     )
                 }
                 if (fromRefresh && !refreshFailedWithExistingData) {
-                    _effect.tryEmit(SearchMoviesEffect.ShowRefreshSuccess)
+                    _effect.emit(SearchMoviesEffect.ShowRefreshSuccess)
                 }
             } catch (exception: CancellationException) {
                 throw exception
             } catch (exception: Exception) {
                 observabilityTracker.recordError(SEARCH_DASHBOARD_FAILED, exception)
-                _uiState.update { state -> state.withDashboardException(exception) }
+                if (_uiState.value.query.isBlank() && _uiState.value.selectedGenreId == null) {
+                    _uiState.update { state -> state.withDashboardException() }
+                }
             }
         }
 
@@ -614,13 +647,13 @@ private fun SearchMoviesUiState.withDashboardResults(
         isPopularEndReached = if (keepExisting) isPopularEndReached else movies.popular.isEmpty(),
     )
 
-private fun SearchMoviesUiState.withDashboardException(exception: Exception): SearchMoviesUiState =
+private fun SearchMoviesUiState.withDashboardException(): SearchMoviesUiState =
     copy(
         screenState =
             if (hasDashboardData()) {
                 SearchScreenState.Content
             } else {
-                SearchScreenState.Error(exception.message.orEmpty())
+                SearchScreenState.Error(UiText.StringResource(SR.string.error_message_retry))
             },
         isShowingStaleData = hasDashboardData(),
         isRefreshing = false,
@@ -643,18 +676,13 @@ private fun resolveDashboardScreenState(
     results: List<Result<List<Movie>>>,
 ): SearchScreenState {
     val hasAnyData = movieLists.any { it.isNotEmpty() }
-    val hasAnySuccess = results.any { it.isSuccess }
+    val hasAnySuccess = results.any { result -> result.isSuccess }
     return when {
         hasAnyData -> SearchScreenState.Content
         hasAnySuccess -> SearchScreenState.Empty
         else ->
             SearchScreenState.Error(
-                results
-                    .firstOrNull {
-                        it.isFailure
-                    }?.exceptionOrNull()
-                    ?.message
-                    .orEmpty(),
+                UiText.StringResource(SR.string.error_message_retry),
             )
     }
 }
@@ -671,12 +699,13 @@ private fun SearchMoviesUiState.hasDashboardData(): Boolean =
 private suspend fun collectWithStale(
     flow: kotlinx.coroutines.flow.Flow<Result<List<Movie>>>,
 ): Pair<Result<List<Movie>>, Boolean> {
-    var data: Result<List<Movie>> = Result.failure(Exception("No data"))
+    var data: Result<List<Movie>> = Result.failure(IllegalStateException("No dashboard data"))
     var stale = false
     flow.collect { result ->
         when {
             result.isSuccess -> data = result
-            result.isFailure && result.exceptionOrNull() is StaleDataException -> stale = true
+            result.isFailure &&
+                result.exceptionOrNull() is StaleDataException -> stale = true
             result.isFailure -> data = result
         }
     }

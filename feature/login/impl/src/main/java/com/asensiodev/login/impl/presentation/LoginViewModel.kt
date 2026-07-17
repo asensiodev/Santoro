@@ -35,23 +35,16 @@ internal class LoginViewModel
         }
 
         private fun onSignInWithGoogleClicked(activityContext: Context) {
+            if (!startSignIn()) return
             viewModelScope.launch {
-                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-                googleSignInHelper
-                    .signIn(activityContext)
-                    .onSuccess { idToken ->
-                        performGoogleLogin(idToken)
-                    }.onFailure { _ ->
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                errorMessage =
-                                    UiText.StringResource(
-                                        SR.string.login_error_google_sign_in,
-                                    ),
-                            )
-                        }
-                    }
+                try {
+                    googleSignInHelper
+                        .signIn(activityContext)
+                        .onSuccess { idToken -> performGoogleLogin(idToken) }
+                        .onFailure { showError(SR.string.login_error_google_sign_in) }
+                } finally {
+                    _uiState.update { it.copy(isLoading = false) }
+                }
             }
         }
 
@@ -59,36 +52,41 @@ internal class LoginViewModel
             signInWithGoogleUseCase(idToken)
                 .onSuccess {
                     _uiState.update { it.copy(isSignInSuccessful = true) }
-                }.onFailure { _ ->
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage =
-                                UiText.StringResource(
-                                    SR.string.login_error_google_sign_in,
-                                ),
-                        )
-                    }
-                }
+                }.onFailure { showError(SR.string.login_error_google_sign_in) }
         }
 
         private fun signInAnonymously() {
+            if (!startSignIn()) return
             viewModelScope.launch {
-                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-                signInAnonymouslyUseCase()
-                    .onSuccess {
-                        _uiState.update { it.copy(isSignInSuccessful = true) }
-                    }.onFailure { _ ->
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                errorMessage =
-                                    UiText.StringResource(
-                                        SR.string.login_error_anonymous,
-                                    ),
-                            )
-                        }
-                    }
+                try {
+                    signInAnonymouslyUseCase()
+                        .onSuccess {
+                            _uiState.update { it.copy(isSignInSuccessful = true) }
+                        }.onFailure { showError(SR.string.login_error_anonymous) }
+                } finally {
+                    _uiState.update { it.copy(isLoading = false) }
+                }
+            }
+        }
+
+        private fun startSignIn(): Boolean {
+            while (true) {
+                val state = _uiState.value
+                if (state.isLoading || state.isSignInSuccessful) return false
+                if (
+                    _uiState.compareAndSet(
+                        state,
+                        state.copy(isLoading = true, errorMessage = null),
+                    )
+                ) {
+                    return true
+                }
+            }
+        }
+
+        private fun showError(messageResource: Int) {
+            _uiState.update {
+                it.copy(errorMessage = UiText.StringResource(messageResource))
             }
         }
     }

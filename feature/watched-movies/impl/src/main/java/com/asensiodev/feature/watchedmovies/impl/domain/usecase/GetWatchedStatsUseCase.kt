@@ -1,6 +1,7 @@
 package com.asensiodev.feature.watchedmovies.impl.domain.usecase
 
 import com.asensiodev.core.domain.dispatcher.DispatcherProvider
+import com.asensiodev.core.domain.result.rethrowCancellation
 import com.asensiodev.feature.watchedmovies.impl.domain.model.WatchedStats
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import kotlinx.coroutines.flow.Flow
@@ -22,7 +23,7 @@ internal class GetWatchedStatsUseCase
             repository
                 .getWatchedMovies()
                 .map { result ->
-                    result.fold(
+                    result.rethrowCancellation().fold(
                         onSuccess = { movies ->
                             val totalWatched = movies.size
                             val totalRuntimeMinutes = movies.sumOf { movie -> movie.runtime ?: 0 }

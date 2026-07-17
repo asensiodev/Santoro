@@ -1,7 +1,9 @@
 package com.asensiodev.feature.searchmovies.impl.presentation.seeall
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,7 +12,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,9 +33,11 @@ import com.asensiodev.core.designsystem.component.topbar.SantoroAppBar
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.feature.searchmovies.impl.presentation.component.MovieCard
+import com.asensiodev.feature.searchmovies.impl.presentation.component.OfflineBanner
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 import com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType
 import com.asensiodev.ui.CollectEffectWithLifecycle
+import com.asensiodev.ui.UiText
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.asensiodev.santoro.core.stringresources.R as SR
 
@@ -78,37 +82,47 @@ internal fun SeeAllMoviesScreen(
         onBackClicked = onBackClick,
         modifier = modifier,
     ) {
-        when (uiState.screenState) {
-            is SeeAllScreenState.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    LoadingIndicator()
-                }
-            }
-
-            is SeeAllScreenState.Error -> {
-                ErrorContent(
-                    message = stringResource(SR.string.error_message_retry),
+        Column(modifier = Modifier.fillMaxSize()) {
+            AnimatedVisibility(visible = uiState.isShowingStaleData) {
+                OfflineBanner(
                     onRetry = { onProcess(SeeAllMoviesIntent.Retry) },
+                    modifier = Modifier.padding(horizontal = Spacings.spacing16),
                 )
             }
+            Box(modifier = Modifier.weight(1f)) {
+                when (uiState.screenState) {
+                    is SeeAllScreenState.Loading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            LoadingIndicator()
+                        }
+                    }
 
-            is SeeAllScreenState.Empty -> {
-                NoResultsContent(
-                    text = stringResource(SR.string.search_movies_no_search_results_text),
-                )
-            }
+                    is SeeAllScreenState.Error -> {
+                        ErrorContent(
+                            message = uiState.screenState.message.asString(),
+                            onRetry = { onProcess(SeeAllMoviesIntent.Retry) },
+                        )
+                    }
 
-            is SeeAllScreenState.Content -> {
-                SeeAllMovieGrid(
-                    movies = uiState.movies,
-                    isLoadingMore = uiState.isLoadingMore,
-                    isEndReached = uiState.isEndReached,
-                    onMovieClick = { onProcess(SeeAllMoviesIntent.MovieClicked(it)) },
-                    onLoadMore = { onProcess(SeeAllMoviesIntent.LoadMore) },
-                )
+                    is SeeAllScreenState.Empty -> {
+                        NoResultsContent(
+                            text = stringResource(SR.string.search_movies_no_search_results_text),
+                        )
+                    }
+
+                    is SeeAllScreenState.Content -> {
+                        SeeAllMovieGrid(
+                            movies = uiState.movies,
+                            isLoadingMore = uiState.isLoadingMore,
+                            isEndReached = uiState.isEndReached,
+                            onMovieClick = { onProcess(SeeAllMoviesIntent.MovieClicked(it)) },
+                            onLoadMore = { onProcess(SeeAllMoviesIntent.LoadMore) },
+                        )
+                    }
+                }
             }
         }
     }
@@ -135,10 +149,10 @@ private fun SeeAllMovieGrid(
             androidx.compose.foundation.layout
                 .PaddingValues(Spacings.spacing16),
     ) {
-        itemsIndexed(
+        items(
             movies,
-            key = { index, movie -> "$index-${movie.id}" },
-        ) { _, movie ->
+            key = { movie -> movie.id },
+        ) { movie ->
             MovieCard(
                 movie = movie,
                 onClick = { onMovieClick(movie.id) },
@@ -255,7 +269,10 @@ private fun SeeAllMoviesScreenErrorPreview() {
             uiState =
                 SeeAllMoviesUiState(
                     sectionType = SectionType.TOP_RATED,
-                    screenState = SeeAllScreenState.Error("Network error"),
+                    screenState =
+                        SeeAllScreenState.Error(
+                            UiText.StringResource(SR.string.error_message_retry),
+                        ),
                 ),
             onProcess = {},
             onBackClick = {},

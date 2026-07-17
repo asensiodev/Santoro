@@ -1,6 +1,7 @@
 package com.asensiodev.santoro.core.sync.data.repository
 
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.core.domain.result.rethrowCancellation
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import com.asensiodev.santoro.core.sync.data.datasource.FirestoreMovieDataSource
 import com.asensiodev.santoro.core.sync.data.model.MovieSyncEntity
@@ -17,7 +18,7 @@ internal class DefaultSyncRepository
         private val gson = Gson()
 
         override suspend fun uploadPendingChanges(uid: String): Result<Unit> {
-            val moviesResult = databaseRepository.getMoviesForSync()
+            val moviesResult = databaseRepository.getMoviesForSync().rethrowCancellation()
             if (moviesResult.isFailure) {
                 return Result.failure(
                     moviesResult.exceptionOrNull() ?: Exception("Failed to get movies for sync"),
@@ -48,11 +49,11 @@ internal class DefaultSyncRepository
                         updatedAt = movie.updatedAt,
                     )
                 }
-            return firestoreDataSource.uploadMovies(uid, entities)
+            return firestoreDataSource.uploadMovies(uid, entities).rethrowCancellation()
         }
 
         override suspend fun downloadAndMerge(uid: String): Result<Unit> {
-            val downloadResult = firestoreDataSource.downloadUserMovies(uid)
+            val downloadResult = firestoreDataSource.downloadUserMovies(uid).rethrowCancellation()
             if (downloadResult.isFailure) {
                 return Result.failure(
                     downloadResult.exceptionOrNull() ?: Exception("Download failed"),
@@ -64,7 +65,7 @@ internal class DefaultSyncRepository
         private suspend fun mergeWithLocalMovies(
             remoteMovies: List<MovieSyncEntity>,
         ): Result<Unit> {
-            val localMoviesResult = databaseRepository.getMoviesForSync()
+            val localMoviesResult = databaseRepository.getMoviesForSync().rethrowCancellation()
             if (localMoviesResult.isFailure) {
                 return Result.failure(
                     localMoviesResult.exceptionOrNull() ?: Exception("Failed to get local movies"),
@@ -102,6 +103,7 @@ internal class DefaultSyncRepository
                             mergeMissingFromSyncLocalMovie(remote)
                         }
                     }
+                result.rethrowCancellation()
                 if (result.isFailure) {
                     return Result.failure(
                         result.exceptionOrNull() ?: Exception("Merge failed"),
@@ -112,7 +114,10 @@ internal class DefaultSyncRepository
         }
 
         private suspend fun mergeMissingFromSyncLocalMovie(remote: MovieSyncEntity): Result<Unit> {
-            val savedLocallyResult = databaseRepository.getMovieById(remote.movieId)
+            val savedLocallyResult =
+                databaseRepository
+                    .getMovieById(remote.movieId)
+                    .rethrowCancellation()
             if (savedLocallyResult.isFailure) {
                 return Result.failure(
                     savedLocallyResult.exceptionOrNull() ?: Exception("Failed to get local movie"),
@@ -144,6 +149,6 @@ internal class DefaultSyncRepository
                     )
 
                 else -> Result.success(Unit)
-            }
+            }.rethrowCancellation()
         }
     }

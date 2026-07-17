@@ -10,11 +10,11 @@ import com.asensiodev.auth.domain.usecase.SignInWithGoogleUseCase
 import com.asensiodev.auth.helper.GoogleSignInHelper
 import com.asensiodev.ui.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -32,10 +32,9 @@ internal class ProfileViewModel
         private val _uiState = MutableStateFlow(ProfileUiState())
         val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
-        private val _effect = Channel<ProfileEffect>(Channel.BUFFERED)
-        val effect = _effect.receiveAsFlow()
-
         private var pendingIdToken: String? = null
+        private var isObservingAuth = false
+        private var accountActionJob: Job? = null
 
         fun process(intent: ProfileIntent) {
             when (intent) {
@@ -48,8 +47,10 @@ internal class ProfileViewModel
         }
 
         private fun observeAuthState() {
+            if (isObservingAuth) return
+            isObservingAuth = true
+            _uiState.update { it.copy(isLoading = true) }
             viewModelScope.launch {
-                _uiState.update { it.copy(isLoading = true) }
                 observeAuthStateUseCase().collect { user ->
                     _uiState.update {
                         it.copy(
@@ -63,23 +64,36 @@ internal class ProfileViewModel
         }
 
         private fun onSignInWithGoogleClicked(context: Context) {
-            viewModelScope.launch {
-                _uiState.update { it.copy(isLoading = true) }
-                googleSignInHelper
-                    .signIn(context)
-                    .onSuccess { idToken ->
-                        handleGoogleSignIn(idToken)
-                    }.onFailure { _ ->
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                error =
-                                    UiText.StringResource(
-                                        SR.string.settings_error_google_sign_in,
-                                    ),
-                            )
-                        }
+            if (accountActionJob?.isActive == true) return
+            _uiState.update { it.copy(isLoading = true) }
+            accountActionJob =
+                viewModelScope.launch {
+                    try {
+                        googleSignInHelper
+                            .signIn(context)
+                            .onSuccess { idToken ->
+                                handleGoogleSignIn(idToken)
+                            }.onFailure {
+                                setGoogleSignInError()
+                            }
+                    } catch (exception: CancellationException) {
+                        throw exception
+                    } catch (_: Exception) {
+                        setGoogleSignInError()
+                    } finally {
+                        _uiState.update { it.copy(isLoading = false) }
                     }
+                }
+        }
+
+        private fun setGoogleSignInError() {
+            _uiState.update {
+                it.copy(
+                    error =
+                        UiText.StringResource(
+                            SR.string.settings_error_google_sign_in,
+                        ),
+                )
             }
         }
 
@@ -89,7 +103,6 @@ internal class ProfileViewModel
                     .onSuccess {
                         _uiState.update {
                             it.copy(
-                                isLoading = false,
                                 isLinkAccountSuccessful = true,
                                 error = null,
                             )
@@ -99,7 +112,6 @@ internal class ProfileViewModel
                             pendingIdToken = idToken
                             _uiState.update {
                                 it.copy(
-                                    isLoading = false,
                                     showAccountCollisionDialog = true,
                                     error = null,
                                 )
@@ -107,7 +119,6 @@ internal class ProfileViewModel
                         } else {
                             _uiState.update {
                                 it.copy(
-                                    isLoading = false,
                                     error =
                                         UiText.StringResource(
                                             SR.string.settings_error_linking_account,
@@ -119,17 +130,9 @@ internal class ProfileViewModel
             } else {
                 signInWithGoogleUseCase(idToken)
                     .onSuccess {
-                        _uiState.update { it.copy(isLoading = false, error = null) }
-                    }.onFailure { _ ->
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                error =
-                                    UiText.StringResource(
-                                        SR.string.settings_error_google_sign_in,
-                                    ),
-                            )
-                        }
+                        _uiState.update { it.copy(error = null) }
+                    }.onFailure {
+                        setGoogleSignInError()
                     }
             }
         }
@@ -145,29 +148,31 @@ internal class ProfileViewModel
 
         private fun onAccountCollisionDialogConfirm() {
             val token = pendingIdToken
-            if (token != null) {
-                viewModelScope.launch {
-                    _uiState.update {
-                        it.copy(
-                            showAccountCollisionDialog = false,
-                            isLoading = true,
-                        )
-                    }
-                    signInWithGoogleUseCase(token)
-                        .onSuccess {
-                            _uiState.update { it.copy(isLoading = false) }
-                        }.onFailure { _ ->
-                            _uiState.update {
-                                it.copy(
-                                    isLoading = false,
-                                    error =
-                                        UiText.StringResource(
-                                            SR.string.settings_error_google_sign_in,
-                                        ),
-                                )
-                            }
-                        }
+            if (token != null && accountActionJob?.isActive != true) {
+                pendingIdToken = null
+                _uiState.update {
+                    it.copy(
+                        showAccountCollisionDialog = false,
+                        isLoading = true,
+                    )
                 }
+                accountActionJob =
+                    viewModelScope.launch {
+                        try {
+                            signInWithGoogleUseCase(token)
+                                .onSuccess {
+                                    _uiState.update { it.copy(error = null) }
+                                }.onFailure {
+                                    setGoogleSignInError()
+                                }
+                        } catch (exception: CancellationException) {
+                            throw exception
+                        } catch (_: Exception) {
+                            setGoogleSignInError()
+                        } finally {
+                            _uiState.update { it.copy(isLoading = false) }
+                        }
+                    }
             }
         }
     }

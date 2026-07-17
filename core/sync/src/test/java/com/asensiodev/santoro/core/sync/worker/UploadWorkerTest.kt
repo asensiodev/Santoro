@@ -5,9 +5,13 @@ import androidx.work.ListenableWorker.Result
 import androidx.work.WorkerParameters
 import com.asensiodev.auth.domain.repository.AuthRepository
 import com.asensiodev.core.domain.model.SantoroUser
+import com.asensiodev.core.testing.relaxedMockk
+import com.asensiodev.core.testing.verifyNever
+import com.asensiodev.library.observability.api.ObservabilityTracker
 import com.asensiodev.santoro.core.sync.domain.repository.SyncRepository
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
@@ -17,6 +21,7 @@ import org.junit.jupiter.api.Test
 class UploadWorkerTest {
     private val authRepository: AuthRepository = mockk()
     private val syncRepository: SyncRepository = mockk()
+    private val observabilityTracker: ObservabilityTracker = relaxedMockk()
     private val context: Context = mockk(relaxed = true)
     private val workerParams: WorkerParameters = mockk(relaxed = true)
 
@@ -24,7 +29,7 @@ class UploadWorkerTest {
 
     @BeforeEach
     fun setUp() {
-        sut = UploadWorker(context, workerParams, authRepository, syncRepository)
+        sut = UploadWorker(context, workerParams, authRepository, syncRepository, observabilityTracker)
     }
 
     @Test
@@ -61,5 +66,26 @@ class UploadWorkerTest {
             val result = sut.doWork()
 
             result shouldBeEqualTo Result.retry()
+        }
+
+    @Test
+    fun `GIVEN repository throws cancellation WHEN doWork THEN cancellation propagates without telemetry`() =
+        runTest {
+            val cancellation = CancellationException("cancelled")
+            val user = SantoroUser("uid123", null, null, null, true)
+            coEvery { authRepository.currentUser } returns flowOf(user)
+            coEvery { syncRepository.uploadPendingChanges("uid123") } throws cancellation
+
+            val actual =
+                try {
+                    sut.doWork()
+                    null
+                } catch (exception: CancellationException) {
+                    exception
+                }
+
+            actual shouldBeEqualTo cancellation
+            verifyNever { observabilityTracker.trackAction(any(), any()) }
+            verifyNever { observabilityTracker.recordError(any(), any(), any()) }
         }
 }

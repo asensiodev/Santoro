@@ -195,6 +195,50 @@ class DefaultMovieDetailRepositoryTest {
         }
 
     @Test
+    fun `GIVEN local wrapped cancellation WHEN getMovieDetail THEN cancellation propagates`() =
+        runTest {
+            val movieId = 7
+            every {
+                localDataSource.getMovieDetail(movieId)
+            } returns flowOf(Result.failure(CancellationException()))
+            every { remoteDataSource.getMovieDetail(movieId) } returns flowOf(Result.success(null))
+
+            repository.getMovieDetail(movieId).test {
+                awaitError().shouldBeInstanceOf<CancellationException>()
+            }
+        }
+
+    @Test
+    fun `GIVEN remote wrapped cancellation with local data WHEN fetching THEN cancellation bypasses fallback`() =
+        runTest {
+            val movieId = 8
+            val localMovie =
+                Movie(
+                    id = movieId,
+                    title = "Local Movie",
+                    overview = "Local Overview",
+                    posterPath = null,
+                    backdropPath = null,
+                    releaseDate = null,
+                    popularity = 1.0,
+                    voteAverage = 1.0,
+                    voteCount = 1,
+                    genres = emptyList(),
+                    productionCountries = emptyList(),
+                    isWatched = true,
+                    isInWatchlist = false,
+                )
+            every { localDataSource.getMovieDetail(movieId) } returns flowOf(Result.success(localMovie))
+            every {
+                remoteDataSource.getMovieDetail(movieId)
+            } returns flowOf(Result.failure(CancellationException()))
+
+            repository.getMovieDetail(movieId).test {
+                awaitError().shouldBeInstanceOf<CancellationException>()
+            }
+        }
+
+    @Test
     fun `GIVEN local and remote data WHEN updateMovieState THEN updates state and returns success`() =
         runTest {
             val movie =

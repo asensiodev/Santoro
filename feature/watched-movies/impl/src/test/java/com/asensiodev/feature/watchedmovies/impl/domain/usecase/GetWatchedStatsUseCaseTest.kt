@@ -1,15 +1,18 @@
 package com.asensiodev.feature.watchedmovies.impl.domain.usecase
 
+import app.cash.turbine.test
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.testing.dispatcher.TestDispatcherProvider
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
+import org.amshove.kluent.shouldBeInstanceOf
 import org.amshove.kluent.shouldBeNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -193,6 +196,17 @@ class GetWatchedStatsUseCaseTest {
             result.totalRuntimeHours shouldBeEqualTo 0
             result.favouriteGenre.shouldBeNull()
             result.longestStreakWeeks shouldBeEqualTo 0
+        }
+
+    @Test
+    fun `GIVEN repository returns wrapped cancellation WHEN invoke THEN cancellation is thrown without zero stats`() =
+        runTest {
+            every { repository.getWatchedMovies() } returns
+                flowOf(Result.failure(CancellationException()))
+
+            useCase().test {
+                awaitError().shouldBeInstanceOf<CancellationException>()
+            }
         }
 
     private fun buildMovie(

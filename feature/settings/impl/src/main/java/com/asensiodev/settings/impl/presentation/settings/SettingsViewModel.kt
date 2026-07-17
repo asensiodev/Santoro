@@ -15,11 +15,13 @@ import com.asensiodev.santoro.core.sync.domain.repository.SyncRepository
 import com.asensiodev.settings.impl.domain.usecase.DeleteAccountUseCase
 import com.asensiodev.ui.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -37,13 +39,16 @@ internal class SettingsViewModel
         private val syncRepository: SyncRepository,
     ) : ViewModel() {
         private var currentUser: SantoroUser? = null
+        private var isObservingAuth = false
+        private var isObservingTheme = false
+        private var accountActionJob: Job? = null
 
         private val _uiState =
             MutableStateFlow(SettingsUiState(currentLanguage = resolveCurrentLanguage()))
         val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
-        private val _effect = Channel<SettingsEffect>(Channel.BUFFERED)
-        val effect = _effect.receiveAsFlow()
+        private val _effect = MutableSharedFlow<SettingsEffect>(extraBufferCapacity = 1)
+        val effect = _effect.asSharedFlow()
 
         fun process(intent: SettingsIntent) {
             when (intent) {
@@ -63,15 +68,21 @@ internal class SettingsViewModel
         }
 
         private fun observeAuth() {
+            if (isObservingAuth) return
+            isObservingAuth = true
             viewModelScope.launch {
                 observeAuthStateUseCase().collect { user ->
                     currentUser = user
-                    _uiState.update { it.copy(isAnonymous = user?.isAnonymous == true) }
+                    _uiState.update {
+                        it.copy(showAccountActions = user != null && !user.isAnonymous)
+                    }
                 }
             }
         }
 
         private fun observeTheme() {
+            if (isObservingTheme) return
+            isObservingTheme = true
             viewModelScope.launch {
                 observeThemeUseCase().collect { theme ->
                     _uiState.update { it.copy(currentTheme = theme) }
@@ -113,28 +124,32 @@ internal class SettingsViewModel
         }
 
         private fun onLogoutClicked() {
-            viewModelScope.launch {
-                val user = currentUser
-                _uiState.update { it.copy(isLoading = true, error = null) }
-                val syncResult =
-                    if (user != null && !user.isAnonymous) {
-                        syncRepository.uploadPendingChanges(user.uid)
-                    } else {
-                        Result.success(Unit)
-                    }
-                syncResult
-                    .onSuccess {
-                        signOutUseCase()
-                        _uiState.update { it.copy(isLoading = false) }
-                    }.onFailure {
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                error = UiText.StringResource(SR.string.settings_logout_error),
-                            )
+            if (accountActionJob?.isActive == true) return
+            _uiState.update { it.copy(isLoading = true) }
+            accountActionJob =
+                viewModelScope.launch {
+                    val user = currentUser
+                    try {
+                        val syncResult =
+                            if (user != null && !user.isAnonymous) {
+                                syncRepository.uploadPendingChanges(user.uid)
+                            } else {
+                                Result.success(Unit)
+                            }
+                        val syncError = syncResult.exceptionOrNull()
+                        if (syncError == null) {
+                            signOutUseCase()
+                        } else {
+                            showError(SR.string.settings_logout_error)
                         }
+                    } catch (exception: CancellationException) {
+                        throw exception
+                    } catch (_: Exception) {
+                        showError(SR.string.settings_logout_error)
+                    } finally {
+                        _uiState.update { it.copy(isLoading = false) }
                     }
-            }
+                }
         }
 
         private fun onDeleteAccountClicked() {
@@ -146,23 +161,28 @@ internal class SettingsViewModel
         }
 
         private fun confirmDeleteAccount() {
+            if (accountActionJob?.isActive == true) return
             _uiState.update { it.copy(showDeleteAccountDialog = false, isLoading = true) }
-            viewModelScope.launch {
-                deleteAccountUseCase()
-                    .onSuccess {
-                        _uiState.update { it.copy(isLoading = false) }
-                    }.onFailure {
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                error =
-                                    UiText.StringResource(
-                                        SR.string.settings_delete_account_error,
-                                    ),
-                            )
+            accountActionJob =
+                viewModelScope.launch {
+                    try {
+                        val result = deleteAccountUseCase()
+                        val error = result.exceptionOrNull()
+                        if (error != null) {
+                            showError(SR.string.settings_delete_account_error)
                         }
+                    } catch (exception: CancellationException) {
+                        throw exception
+                    } catch (_: Exception) {
+                        showError(SR.string.settings_delete_account_error)
+                    } finally {
+                        _uiState.update { it.copy(isLoading = false) }
                     }
-            }
+                }
+        }
+
+        private suspend fun showError(messageRes: Int) {
+            _effect.emit(SettingsEffect.ShowError(UiText.StringResource(messageRes)))
         }
 
         companion object {

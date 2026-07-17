@@ -2,6 +2,7 @@ package com.asensiodev.settings.impl.presentation.settings
 
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
+import app.cash.turbine.test
 import com.asensiodev.auth.domain.usecase.ObserveAuthStateUseCase
 import com.asensiodev.auth.domain.usecase.SignOutUseCase
 import com.asensiodev.core.domain.model.AppLanguage
@@ -11,27 +12,33 @@ import com.asensiodev.core.domain.usecase.ObserveThemeUseCase
 import com.asensiodev.core.domain.usecase.SetThemeUseCase
 import com.asensiodev.santoro.core.sync.domain.repository.SyncRepository
 import com.asensiodev.settings.impl.domain.usecase.DeleteAccountUseCase
+import com.asensiodev.ui.UiText
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.amshove.kluent.shouldBeEqualTo
-import org.amshove.kluent.shouldNotBeNull
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.util.Locale
+import com.asensiodev.santoro.core.stringresources.R as SR
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
@@ -167,8 +174,154 @@ class SettingsViewModelTest {
             advanceUntilIdle()
 
             coVerify(exactly = 0) { signOutUseCase() }
-            sut.uiState.value.error
-                .shouldNotBeNull()
+        }
+
+    @Test
+    fun `GIVEN auth observation is active WHEN ObserveAuth repeats THEN subscribes once`() =
+        runTest {
+            var subscriptions = 0
+            every { observeAuthStateUseCase() } returns
+                flow {
+                    subscriptions++
+                    awaitCancellation()
+                }
+
+            sut.process(SettingsIntent.ObserveAuth)
+            sut.process(SettingsIntent.ObserveAuth)
+            runCurrent()
+
+            subscriptions shouldBeEqualTo 1
+        }
+
+    @Test
+    fun `GIVEN theme observation is active WHEN ObserveTheme repeats THEN subscribes once`() =
+        runTest {
+            var subscriptions = 0
+            every { observeThemeUseCase() } returns
+                flow {
+                    subscriptions++
+                    awaitCancellation()
+                }
+
+            sut.process(SettingsIntent.ObserveTheme)
+            sut.process(SettingsIntent.ObserveTheme)
+            runCurrent()
+
+            subscriptions shouldBeEqualTo 1
+        }
+
+    @Test
+    fun `GIVEN auth has not emitted WHEN state is read THEN account actions are hidden`() =
+        runTest {
+            sut.uiState.value.showAccountActions shouldBeEqualTo false
+        }
+
+    @Test
+    fun `GIVEN known Google user WHEN auth emits THEN account actions are shown`() =
+        runTest {
+            val user = SantoroUser("uid123", "test@email.com", null, null, false)
+            every { observeAuthStateUseCase() } returns flowOf(user)
+
+            sut.process(SettingsIntent.ObserveAuth)
+            advanceUntilIdle()
+
+            sut.uiState.value.showAccountActions shouldBeEqualTo true
+        }
+
+    @Test
+    fun `GIVEN logout starts WHEN intent is processed THEN loading is set synchronously`() =
+        runTest {
+            sut.process(SettingsIntent.OnLogoutClicked)
+
+            sut.uiState.value.isLoading shouldBeEqualTo true
+        }
+
+    @Test
+    fun `GIVEN logout is pending WHEN destructive intents repeat THEN destructive work runs once`() =
+        runTest {
+            val user = SantoroUser("uid123", "test@email.com", null, null, false)
+            val releaseSync = CompletableDeferred<Unit>()
+            every { observeAuthStateUseCase() } returns flowOf(user)
+            coEvery { syncRepository.uploadPendingChanges("uid123") } coAnswers {
+                releaseSync.await()
+                Result.success(Unit)
+            }
+            sut.process(SettingsIntent.ObserveAuth)
+            advanceUntilIdle()
+
+            sut.process(SettingsIntent.OnLogoutClicked)
+            sut.process(SettingsIntent.OnLogoutClicked)
+            sut.process(SettingsIntent.ConfirmDeleteAccount)
+            runCurrent()
+
+            coVerify(exactly = 1) { syncRepository.uploadPendingChanges("uid123") }
+            coVerify(exactly = 0) { deleteAccountUseCase() }
+
+            releaseSync.complete(Unit)
+            advanceUntilIdle()
+        }
+
+    @Test
+    fun `GIVEN account deletion is pending WHEN destructive intents repeat THEN destructive work runs once`() =
+        runTest {
+            val releaseDeletion = CompletableDeferred<Unit>()
+            coEvery { deleteAccountUseCase() } coAnswers {
+                releaseDeletion.await()
+                Result.success(Unit)
+            }
+
+            sut.process(SettingsIntent.ConfirmDeleteAccount)
+            sut.process(SettingsIntent.ConfirmDeleteAccount)
+            sut.process(SettingsIntent.OnLogoutClicked)
+            runCurrent()
+
+            coVerify(exactly = 1) { deleteAccountUseCase() }
+            coVerify(exactly = 0) { signOutUseCase() }
+
+            releaseDeletion.complete(Unit)
+            advanceUntilIdle()
+        }
+
+    @Test
+    fun `GIVEN active effect collector WHEN logout fails THEN emits localized ShowError`() =
+        runTest {
+            coEvery { signOutUseCase() } throws Exception()
+
+            sut.effect.test {
+                sut.process(SettingsIntent.OnLogoutClicked)
+                advanceUntilIdle()
+
+                val effect = awaitItem() as SettingsEffect.ShowError
+                (effect.message as UiText.StringResource).resId shouldBeEqualTo
+                    SR.string.settings_logout_error
+            }
+        }
+
+    @Test
+    fun `GIVEN no effect collector WHEN logout fails THEN error is dropped`() =
+        runTest {
+            coEvery { signOutUseCase() } throws Exception()
+
+            sut.process(SettingsIntent.OnLogoutClicked)
+            advanceUntilIdle()
+
+            sut.effect.test {
+                expectNoEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN logout is cancelled WHEN work ends THEN loading resets without error effect`() =
+        runTest {
+            coEvery { signOutUseCase() } throws CancellationException()
+
+            sut.process(SettingsIntent.OnLogoutClicked)
+            advanceUntilIdle()
+
+            sut.uiState.value.isLoading shouldBeEqualTo false
+            sut.effect.test {
+                expectNoEvents()
+            }
         }
 
     @Test
@@ -215,7 +368,6 @@ class SettingsViewModelTest {
 
             // THEN
             sut.uiState.value.isLoading shouldBeEqualTo false
-            sut.uiState.value.error shouldBeEqualTo null
         }
 
     @Test
@@ -233,19 +385,19 @@ class SettingsViewModelTest {
         }
 
     @Test
-    fun `GIVEN ConfirmDeleteAccount WHEN failure THEN isLoading is false and error is set`() =
+    fun `GIVEN ConfirmDeleteAccount WHEN failure THEN isLoading is false and ShowError is emitted`() =
         runTest {
-            // GIVEN
             coEvery { deleteAccountUseCase() } returns Result.failure(Exception("error"))
 
-            // WHEN
-            sut.process(SettingsIntent.ConfirmDeleteAccount)
-            advanceUntilIdle()
+            sut.effect.test {
+                sut.process(SettingsIntent.ConfirmDeleteAccount)
+                advanceUntilIdle()
 
-            // THEN
-            sut.uiState.value.isLoading shouldBeEqualTo false
-            sut.uiState.value.error
-                .shouldNotBeNull()
+                sut.uiState.value.isLoading shouldBeEqualTo false
+                val effect = awaitItem() as SettingsEffect.ShowError
+                (effect.message as UiText.StringResource).resId shouldBeEqualTo
+                    SR.string.settings_delete_account_error
+            }
         }
 
     @Nested

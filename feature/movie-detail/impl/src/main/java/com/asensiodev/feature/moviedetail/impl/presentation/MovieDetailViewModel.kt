@@ -2,6 +2,7 @@ package com.asensiodev.feature.moviedetail.impl.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.usecase.ObserveHasSeenDetailTooltipUseCase
 import com.asensiodev.core.domain.usecase.SetDetailTooltipSeenUseCase
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseCase
@@ -45,7 +46,11 @@ internal class MovieDetailViewModel
 
         private var lastRequestedMovieId: Int? = null
         private var fetchJob: Job? = null
+        private var mutationJob: Job? = null
+        private var tooltipJob: Job? = null
         private var tooltipCheckedMovieId: Int? = null
+        private var tooltipJobRequestVersion: Int? = null
+        private var activeRequestVersion = 0
 
         fun process(intent: MovieDetailIntent) {
             when (intent) {
@@ -59,7 +64,12 @@ internal class MovieDetailViewModel
         }
 
         private fun fetchMovieDetails(movieId: Int) {
+            activeRequestVersion++
+            val requestVersion = activeRequestVersion
             lastRequestedMovieId = movieId
+            fetchJob?.cancel()
+            mutationJob?.cancel()
+            tooltipJob?.cancel()
             observabilityTracker.trackScreen(SCREEN_MOVIE_DETAIL)
             observabilityTracker.trackAction(
                 MOVIE_DETAIL_FETCH,
@@ -67,43 +77,61 @@ internal class MovieDetailViewModel
                     MOVIE_ID to movieId.toString(),
                 ),
             )
-            _uiState.update { it.copy(screenState = MovieDetailScreenState.Loading) }
-            fetchJob?.cancel()
+            _uiState.value = MovieDetailUiState()
             fetchJob =
                 viewModelScope.launch {
                     getMovieDetailUseCase(movieId)
                         .collect { result ->
-                            result.fold(
-                                onSuccess = { movie ->
-                                    _uiState.update {
-                                        it.copy(
-                                            screenState = MovieDetailScreenState.Content,
-                                            movie = movie?.toUi(),
-                                        )
-                                    }
-                                    if (tooltipCheckedMovieId != movieId) {
-                                        tooltipCheckedMovieId = movieId
-                                        checkTooltip()
-                                    }
-                                },
-                                onFailure = { exception ->
-                                    observabilityTracker.recordError(
-                                        MOVIE_DETAIL_FETCH_FAILED,
-                                        exception,
-                                        mapOf(MOVIE_ID to movieId.toString()),
-                                    )
-                                    _uiState.update {
-                                        it.copy(
-                                            screenState =
-                                                MovieDetailScreenState.Error(
-                                                    exception.message.orEmpty(),
-                                                ),
-                                        )
-                                    }
-                                },
-                            )
+                            if (requestVersion != activeRequestVersion) return@collect
+                            handleMovieDetailResult(result, movieId, requestVersion)
                         }
                 }
+        }
+
+        private fun handleMovieDetailResult(
+            result: Result<Movie?>,
+            movieId: Int,
+            requestVersion: Int,
+        ) {
+            result.fold(
+                onSuccess = { movie ->
+                    if (movie == null) {
+                        _uiState.value =
+                            MovieDetailUiState(
+                                screenState =
+                                    MovieDetailScreenState.Error(
+                                        UiText.StringResource(SR.string.movie_detail_not_found),
+                                    ),
+                            )
+                        return@fold
+                    }
+                    _uiState.update {
+                        it.copy(
+                            screenState = MovieDetailScreenState.Content,
+                            movie = movie.toUi(),
+                        )
+                    }
+                    checkTooltip(movieId, requestVersion)
+                },
+                onFailure = { exception ->
+                    observabilityTracker.recordError(
+                        MOVIE_DETAIL_FETCH_FAILED,
+                        exception,
+                        mapOf(MOVIE_ID to movieId.toString()),
+                    )
+                    _uiState.update {
+                        it.copy(
+                            screenState =
+                                MovieDetailScreenState.Error(
+                                    UiText.StringResource(SR.string.error_message_retry),
+                                ),
+                            movie = null,
+                            showTooltip = false,
+                            isMovieStateUpdatePending = false,
+                        )
+                    }
+                },
+            )
         }
 
         private fun retryFetch() {
@@ -136,10 +164,17 @@ internal class MovieDetailViewModel
                     watchedAt = if (isNowInWatchlist) null else movie.watchedAt,
                 )
             _uiState.update { it.copy(isMovieStateUpdatePending = true) }
-            viewModelScope.launch {
-                try {
-                    updateMovieStateUseCase(updatedMovie.toDomain())
-                        .onSuccess {
+            val requestVersion = activeRequestVersion
+            mutationJob =
+                viewModelScope.launch {
+                    try {
+                        val result =
+                            updateMovieStateUseCase(
+                                updatedMovie.toDomain(),
+                            )
+                        val exception = result.exceptionOrNull()
+                        if (requestVersion != activeRequestVersion) return@launch
+                        if (exception == null) {
                             observabilityTracker.trackAction(
                                 MOVIE_DETAIL_TOGGLE_WATCHLIST,
                                 mapOf(
@@ -149,23 +184,24 @@ internal class MovieDetailViewModel
                             )
                             _uiState.update { it.copy(movie = updatedMovie) }
                             enqueueUpload(movie.id)
-                        }.onFailure { exception ->
+                        } else {
                             observabilityTracker.recordError(
                                 MOVIE_DETAIL_TOGGLE_WATCHLIST_FAILED,
                                 exception,
                                 mapOf(MOVIE_ID to movie.id.toString()),
                             )
-                            _effect
-                                .tryEmit(
-                                    MovieDetailEffect.ShowError(
-                                        UiText.StringResource(SR.string.error_message_retry),
-                                    ),
-                                )
+                            _effect.emit(
+                                MovieDetailEffect.ShowError(
+                                    UiText.StringResource(SR.string.error_message_retry),
+                                ),
+                            )
                         }
-                } finally {
-                    _uiState.update { it.copy(isMovieStateUpdatePending = false) }
+                    } finally {
+                        if (requestVersion == activeRequestVersion) {
+                            _uiState.update { it.copy(isMovieStateUpdatePending = false) }
+                        }
+                    }
                 }
-            }
         }
 
         private fun toggleWatched() {
@@ -180,10 +216,17 @@ internal class MovieDetailViewModel
                     watchedAt = if (isNowWatched) System.currentTimeMillis() else null,
                 )
             _uiState.update { it.copy(isMovieStateUpdatePending = true) }
-            viewModelScope.launch {
-                try {
-                    updateMovieStateUseCase(updatedMovie.toDomain())
-                        .onSuccess {
+            val requestVersion = activeRequestVersion
+            mutationJob =
+                viewModelScope.launch {
+                    try {
+                        val result =
+                            updateMovieStateUseCase(
+                                updatedMovie.toDomain(),
+                            )
+                        val exception = result.exceptionOrNull()
+                        if (requestVersion != activeRequestVersion) return@launch
+                        if (exception == null) {
                             observabilityTracker.trackAction(
                                 MOVIE_DETAIL_TOGGLE_WATCHED,
                                 mapOf(
@@ -193,32 +236,50 @@ internal class MovieDetailViewModel
                             )
                             _uiState.update { it.copy(movie = updatedMovie) }
                             enqueueUpload(movie.id)
-                        }.onFailure { exception ->
+                        } else {
                             observabilityTracker.recordError(
                                 MOVIE_DETAIL_TOGGLE_WATCHED_FAILED,
                                 exception,
                                 mapOf(MOVIE_ID to movie.id.toString()),
                             )
-                            _effect
-                                .tryEmit(
-                                    MovieDetailEffect.ShowError(
-                                        UiText.StringResource(SR.string.error_message_retry),
-                                    ),
-                                )
+                            _effect.emit(
+                                MovieDetailEffect.ShowError(
+                                    UiText.StringResource(SR.string.error_message_retry),
+                                ),
+                            )
                         }
-                } finally {
-                    _uiState.update { it.copy(isMovieStateUpdatePending = false) }
+                    } finally {
+                        if (requestVersion == activeRequestVersion) {
+                            _uiState.update { it.copy(isMovieStateUpdatePending = false) }
+                        }
+                    }
                 }
-            }
         }
 
-        private fun checkTooltip() {
-            viewModelScope.launch {
-                val hasSeen = observeHasSeenDetailTooltipUseCase().first()
-                if (!hasSeen) {
-                    _uiState.update { it.copy(showTooltip = true) }
+        private fun checkTooltip(
+            movieId: Int,
+            requestVersion: Int,
+        ) {
+            if (tooltipCheckedMovieId == movieId) return
+            if (tooltipJob?.isActive == true && tooltipJobRequestVersion == requestVersion) return
+            tooltipJob?.cancel()
+            tooltipJobRequestVersion = requestVersion
+            tooltipJob =
+                viewModelScope.launch {
+                    val hasSeen = observeHasSeenDetailTooltipUseCase().first()
+                    val state = _uiState.value
+                    if (
+                        requestVersion != activeRequestVersion ||
+                        state.screenState !is MovieDetailScreenState.Content ||
+                        state.movie?.id != movieId
+                    ) {
+                        return@launch
+                    }
+                    tooltipCheckedMovieId = movieId
+                    if (!hasSeen) {
+                        _uiState.update { it.copy(showTooltip = true) }
+                    }
                 }
-            }
         }
 
         private fun enqueueUpload(movieId: Int) {

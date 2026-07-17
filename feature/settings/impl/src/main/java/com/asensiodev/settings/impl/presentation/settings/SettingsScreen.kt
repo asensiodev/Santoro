@@ -46,6 +46,7 @@ import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.settings.impl.presentation.component.LanguagePickerBottomSheet
 import com.asensiodev.settings.impl.presentation.component.SettingsItem
 import com.asensiodev.settings.impl.presentation.component.ThemePickerBottomSheet
+import com.asensiodev.ui.CollectEffectWithLifecycle
 import com.asensiodev.santoro.core.designsystem.R as DR
 import com.asensiodev.santoro.core.stringresources.R as SR
 
@@ -68,6 +69,7 @@ internal fun SettingsScreenRoute(
             }
         }
     val tmdbUrl = stringResource(SR.string.settings_tmdb_url)
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(viewModel) {
         viewModel.process(SettingsIntent.ObserveAuth)
@@ -77,12 +79,11 @@ internal fun SettingsScreenRoute(
         viewModel.process(SettingsIntent.ObserveTheme)
     }
 
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    uiState.error?.let { error ->
-        val errorMessage = error.asString()
-        LaunchedEffect(errorMessage) {
-            snackbarHostState.showSnackbar(message = errorMessage)
+    CollectEffectWithLifecycle(viewModel.effect) { effect ->
+        when (effect) {
+            is SettingsEffect.ShowError -> {
+                snackbarHostState.showSnackbar(effect.message.asString(context))
+            }
         }
     }
 
@@ -98,7 +99,7 @@ internal fun SettingsScreenRoute(
             onDeleteAccountClicked = {
                 viewModel.process(SettingsIntent.OnDeleteAccountClicked)
             },
-            isAnonymous = uiState.isAnonymous,
+            showAccountActions = uiState.showAccountActions,
             versionName = versionName ?: unknownFallback,
             modifier = modifier,
         )
@@ -155,7 +156,7 @@ internal fun SettingsScreen(
     onLogoutClicked: () -> Unit,
     onTmdbAttributionClicked: () -> Unit,
     onDeleteAccountClicked: () -> Unit,
-    isAnonymous: Boolean,
+    showAccountActions: Boolean,
     versionName: String,
     modifier: Modifier = Modifier,
 ) {
@@ -180,7 +181,7 @@ internal fun SettingsScreen(
                 icon = AppIcons.Info,
                 onClick = onLanguageClicked,
             )
-            if (!isAnonymous) {
+            if (showAccountActions) {
                 SettingsItem(
                     text = stringResource(SR.string.settings_logout),
                     icon = AppIcons.ExitToApp,
@@ -300,7 +301,7 @@ private fun SettingsScreenPreview() {
         onLogoutClicked = {},
         onTmdbAttributionClicked = {},
         onDeleteAccountClicked = {},
-        isAnonymous = false,
+        showAccountActions = true,
         versionName = "1.0.0",
     )
 }

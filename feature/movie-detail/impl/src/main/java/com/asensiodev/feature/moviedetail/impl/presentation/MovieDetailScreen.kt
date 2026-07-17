@@ -140,7 +140,6 @@ internal fun MovieDetailRoute(
     CollectEffectWithLifecycle(viewModel.effect) { effect ->
         when (effect) {
             is MovieDetailEffect.ShareMovie -> ShareMovieHelper.share(context, effect.movie)
-            is MovieDetailEffect.NavigateBack -> onBackClicked()
             is MovieDetailEffect.ShowError ->
                 snackbarHostState.showSnackbar(
                     effect.message.asString(context),
@@ -203,7 +202,7 @@ internal fun MovieDetailScreen(
 
             is MovieDetailScreenState.Error -> {
                 ErrorContent(
-                    message = stringResource(SR.string.error_message_retry),
+                    message = uiState.screenState.message.asString(),
                     onRetry = { onRetry() },
                 )
             }

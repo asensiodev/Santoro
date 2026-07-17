@@ -9,12 +9,16 @@ import com.asensiodev.core.domain.model.SantoroUser
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.amshove.kluent.shouldBeEqualTo
@@ -114,6 +118,23 @@ class ProfileViewModelTest {
                 sut.uiState.value.isAnonymous
                     .shouldBeFalse()
             }
+
+        @Test
+        fun `GIVEN auth observation is active WHEN ObserveAuth repeats THEN subscribes once`() =
+            runTest {
+                var subscriptions = 0
+                every { observeAuthStateUseCase() } returns
+                    flow {
+                        subscriptions++
+                        awaitCancellation()
+                    }
+
+                sut.process(ProfileIntent.ObserveAuth)
+                sut.process(ProfileIntent.ObserveAuth)
+                runCurrent()
+
+                subscriptions shouldBeEqualTo 1
+            }
     }
 
     @Nested
@@ -169,6 +190,43 @@ class ProfileViewModelTest {
                 sut.uiState.value.isLoading
                     .shouldBeFalse()
                 (sut.uiState.value.error != null).shouldBeTrue()
+            }
+
+        @Test
+        fun `GIVEN sign-in producer throws cancellation WHEN OnLinkGoogleClicked THEN loading resets without error`() =
+            runTest {
+                coEvery { googleSignInHelper.signIn(any()) } throws CancellationException("cancelled")
+
+                sut.process(ProfileIntent.OnLinkGoogleClicked(mockk(relaxed = true)))
+
+                sut.uiState.value.isLoading
+                    .shouldBeTrue()
+                advanceUntilIdle()
+
+                sut.uiState.value.isLoading
+                    .shouldBeFalse()
+                sut.uiState.value.error
+                    .shouldBeNull()
+            }
+
+        @Test
+        fun `GIVEN link producer throws cancellation WHEN OnLinkGoogleClicked THEN loading resets without error`() =
+            runTest {
+                every { observeAuthStateUseCase() } returns flowOf(anonymousUser)
+                coEvery { googleSignInHelper.signIn(any()) } returns Result.success("id-token")
+                coEvery { linkWithGoogleUseCase(any()) } throws CancellationException("cancelled")
+
+                sut.process(ProfileIntent.ObserveAuth)
+                advanceUntilIdle()
+                sut.process(ProfileIntent.OnLinkGoogleClicked(mockk(relaxed = true)))
+                advanceUntilIdle()
+
+                sut.uiState.value.isLoading
+                    .shouldBeFalse()
+                sut.uiState.value.error
+                    .shouldBeNull()
+                sut.uiState.value.showAccountCollisionDialog
+                    .shouldBeFalse()
             }
     }
 
