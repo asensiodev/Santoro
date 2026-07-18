@@ -19,7 +19,19 @@ internal class SearchMoviesByQueryAndGenreUseCase
             query: String,
             genreId: Int,
             page: Int,
-            fetchPolicy: FetchPolicy = FetchPolicy.CACHE_FIRST,
+        ): Flow<Result<List<Movie>>> = search(query, genreId, page, FetchPolicy.CACHE_FIRST)
+
+        fun refresh(
+            query: String,
+            genreId: Int,
+            page: Int,
+        ): Flow<Result<List<Movie>>> = search(query, genreId, page, FetchPolicy.REFRESH)
+
+        private fun search(
+            query: String,
+            genreId: Int,
+            page: Int,
+            fetchPolicy: FetchPolicy,
         ): Flow<Result<List<Movie>>> =
             repository
                 .searchMovies(query, page, fetchPolicy)

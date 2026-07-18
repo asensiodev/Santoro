@@ -15,6 +15,16 @@ internal class SearchMoviesUseCase
         operator fun invoke(
             query: String,
             page: Int,
-            fetchPolicy: FetchPolicy = FetchPolicy.CACHE_FIRST,
+        ) = fetch(query, page, FetchPolicy.CACHE_FIRST)
+
+        fun refresh(
+            query: String,
+            page: Int,
+        ) = fetch(query, page, FetchPolicy.REFRESH)
+
+        private fun fetch(
+            query: String,
+            page: Int,
+            fetchPolicy: FetchPolicy,
         ) = repository.searchMovies(query, page, fetchPolicy).flowOn(dispatchers.io)
     }

@@ -5,7 +5,6 @@ import app.cash.turbine.test
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.impl.data.repository.StaleDataException
-import com.asensiodev.feature.searchmovies.impl.domain.model.FetchPolicy
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.ClearRecentSearchesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetMoviesByGenreUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetNowPlayingMoviesUseCase
@@ -81,11 +80,16 @@ class SearchMoviesViewModelTest {
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        every { getNowPlayingMoviesUseCase(any(), any()) } returns flowOf(Result.success(emptyList()))
-        every { getPopularMoviesUseCase(any(), any()) } returns flowOf(Result.success(emptyList()))
-        every { getTopRatedMoviesUseCase(any(), any()) } returns flowOf(Result.success(emptyList()))
-        every { getUpcomingMoviesUseCase(any(), any()) } returns flowOf(Result.success(emptyList()))
-        every { getTrendingMoviesUseCase(any(), any()) } returns flowOf(Result.success(emptyList()))
+        every { getNowPlayingMoviesUseCase(any()) } returns flowOf(Result.success(emptyList()))
+        every { getNowPlayingMoviesUseCase.refresh(any()) } returns flowOf(Result.success(emptyList()))
+        every { getPopularMoviesUseCase(any()) } returns flowOf(Result.success(emptyList()))
+        every { getPopularMoviesUseCase.refresh(any()) } returns flowOf(Result.success(emptyList()))
+        every { getTopRatedMoviesUseCase(any()) } returns flowOf(Result.success(emptyList()))
+        every { getTopRatedMoviesUseCase.refresh(any()) } returns flowOf(Result.success(emptyList()))
+        every { getUpcomingMoviesUseCase(any()) } returns flowOf(Result.success(emptyList()))
+        every { getUpcomingMoviesUseCase.refresh(any()) } returns flowOf(Result.success(emptyList()))
+        every { getTrendingMoviesUseCase(any()) } returns flowOf(Result.success(emptyList()))
+        every { getTrendingMoviesUseCase.refresh(any()) } returns flowOf(Result.success(emptyList()))
         every { getRecentSearchesUseCase() } returns flowOf(emptyList())
         coJustRun { saveRecentSearchUseCase(any()) }
         coJustRun { clearRecentSearchesUseCase() }
@@ -201,7 +205,14 @@ class SearchMoviesViewModelTest {
     fun `GIVEN dashboard content WHEN refresh fails THEN keeps content and shows stale banner`() =
         runTest {
             var shouldFail = false
-            every { getPopularMoviesUseCase(any(), any()) } answers {
+            every { getPopularMoviesUseCase(any()) } answers {
+                if (shouldFail) {
+                    flowOf(Result.failure(java.io.IOException("Unable to resolve host")))
+                } else {
+                    flowOf(Result.success(listOf(casinoMovie)))
+                }
+            }
+            every { getPopularMoviesUseCase.refresh(any()) } answers {
                 if (shouldFail) {
                     flowOf(Result.failure(java.io.IOException("Unable to resolve host")))
                 } else {
@@ -222,16 +233,21 @@ class SearchMoviesViewModelTest {
             state.popularMovies.first().title shouldBeEqualTo "Casino"
             state.isShowingStaleData shouldBeEqualTo true
             state.isRefreshing shouldBeEqualTo false
-            verify(exactly = 1) {
-                getPopularMoviesUseCase(1, FetchPolicy.REFRESH)
-            }
+            verify(exactly = 1) { getPopularMoviesUseCase.refresh(1) }
         }
 
     @Test
     fun `GIVEN dashboard content WHEN refresh throws THEN stops refreshing and keeps content`() =
         runTest {
             var shouldThrow = false
-            every { getPopularMoviesUseCase(any(), any()) } answers {
+            every { getPopularMoviesUseCase(any()) } answers {
+                if (shouldThrow) {
+                    flow { throw java.io.IOException("Unable to resolve host") }
+                } else {
+                    flowOf(Result.success(listOf(casinoMovie)))
+                }
+            }
+            every { getPopularMoviesUseCase.refresh(any()) } answers {
                 if (shouldThrow) {
                     flow { throw java.io.IOException("Unable to resolve host") }
                 } else {
@@ -257,17 +273,13 @@ class SearchMoviesViewModelTest {
     @Test
     fun `GIVEN stale search refresh WHEN cached results are shown THEN refresh success is not emitted`() =
         runTest {
-            var refresh = false
-            every { searchMoviesUseCase("casino", 1, any()) } answers {
-                if (refresh) {
-                    flow {
-                        emit(Result.success(listOf(casinoMovie)))
-                        emit(Result.failure(StaleDataException()))
-                    }
-                } else {
-                    flowOf(Result.success(listOf(casinoMovie)))
+            every { searchMoviesUseCase("casino", 1) } returns
+                flowOf(Result.success(listOf(casinoMovie)))
+            every { searchMoviesUseCase.refresh("casino", 1) } returns
+                flow {
+                    emit(Result.success(listOf(casinoMovie)))
+                    emit(Result.failure(StaleDataException()))
                 }
-            }
 
             viewModel.process(SearchMoviesIntent.LoadInitialData)
             advanceUntilIdle()
@@ -275,7 +287,6 @@ class SearchMoviesViewModelTest {
             testDispatcher.scheduler.advanceTimeBy(600)
             advanceUntilIdle()
 
-            refresh = true
             viewModel.effect.test {
                 viewModel.process(SearchMoviesIntent.Refresh)
                 advanceUntilIdle()
@@ -283,9 +294,7 @@ class SearchMoviesViewModelTest {
                 expectNoEvents()
             }
             viewModel.uiState.value.isShowingStaleData shouldBeEqualTo true
-            verify(exactly = 1) {
-                searchMoviesUseCase("casino", 1, FetchPolicy.REFRESH)
-            }
+            verify(exactly = 1) { searchMoviesUseCase.refresh("casino", 1) }
         }
 
     @Test

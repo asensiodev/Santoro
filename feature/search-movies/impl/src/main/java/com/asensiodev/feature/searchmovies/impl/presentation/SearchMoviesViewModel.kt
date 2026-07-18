@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.impl.data.repository.StaleDataException
-import com.asensiodev.feature.searchmovies.impl.domain.model.FetchPolicy
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.ClearRecentSearchesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetMoviesByGenreUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetNowPlayingMoviesUseCase
@@ -25,10 +24,12 @@ import com.asensiodev.library.observability.api.ObservabilityTracker
 import com.asensiodev.ui.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -281,31 +282,8 @@ internal class SearchMoviesViewModel
 
             searchJob =
                 viewModelScope.launch {
-                    val fetchPolicy =
-                        if (isFromRefresh) FetchPolicy.REFRESH else FetchPolicy.CACHE_FIRST
                     val searchFlow =
-                        when {
-                            query.isNotBlank() && selectedGenreId != null -> {
-                                searchMoviesByQueryAndGenreUseCase(
-                                    query,
-                                    selectedGenreId,
-                                    page,
-                                    fetchPolicy,
-                                )
-                            }
-
-                            query.isNotBlank() -> {
-                                searchMoviesUseCase(query, page, fetchPolicy)
-                            }
-
-                            selectedGenreId != null -> {
-                                getMoviesByGenreUseCase(selectedGenreId, page)
-                            }
-
-                            else -> {
-                                return@launch
-                            }
-                        }
+                        getSearchFlow(query, selectedGenreId, page, isFromRefresh) ?: return@launch
 
                     val (result, isStale) = collectWithStale(searchFlow)
                     if (
@@ -322,6 +300,29 @@ internal class SearchMoviesViewModel
                     }
                 }
         }
+
+        private fun getSearchFlow(
+            query: String,
+            selectedGenreId: Int?,
+            page: Int,
+            isFromRefresh: Boolean,
+        ): Flow<Result<List<Movie>>>? =
+            when {
+                query.isNotBlank() && selectedGenreId != null ->
+                    if (isFromRefresh) {
+                        searchMoviesByQueryAndGenreUseCase.refresh(query, selectedGenreId, page)
+                    } else {
+                        searchMoviesByQueryAndGenreUseCase(query, selectedGenreId, page)
+                    }
+                query.isNotBlank() ->
+                    if (isFromRefresh) {
+                        searchMoviesUseCase.refresh(query, page)
+                    } else {
+                        searchMoviesUseCase(query, page)
+                    }
+                selectedGenreId != null -> getMoviesByGenreUseCase(selectedGenreId, page)
+                else -> null
+            }
 
         private suspend fun handleSearchResult(
             result: Result<List<Movie>>,
@@ -509,9 +510,7 @@ internal class SearchMoviesViewModel
 
         private suspend fun loadDashboardData(fromRefresh: Boolean) {
             try {
-                val fetchPolicy =
-                    if (fromRefresh) FetchPolicy.REFRESH else FetchPolicy.CACHE_FIRST
-                val (results, isStale) = fetchDashboardResults(fetchPolicy)
+                val (results, isStale) = fetchDashboardResults(fromRefresh)
                 if (_uiState.value.query.isNotBlank() || _uiState.value.selectedGenreId != null) {
                     return
                 }
@@ -554,32 +553,42 @@ internal class SearchMoviesViewModel
         }
 
         private suspend fun fetchDashboardResults(
-            fetchPolicy: FetchPolicy,
+            fromRefresh: Boolean,
         ): Pair<
             DashboardResults,
             Boolean,
         > =
             coroutineScope {
                 val popularDeferred =
-                    async {
-                        collectWithStale(getPopularMoviesUseCase(FIRST_PAGE, fetchPolicy))
-                    }
+                    loadDashboardSectionAsync(
+                        fromRefresh,
+                        getPopularMoviesUseCase::invoke,
+                        getPopularMoviesUseCase::refresh,
+                    )
                 val nowPlayingDeferred =
-                    async {
-                        collectWithStale(getNowPlayingMoviesUseCase(FIRST_PAGE, fetchPolicy))
-                    }
+                    loadDashboardSectionAsync(
+                        fromRefresh,
+                        getNowPlayingMoviesUseCase::invoke,
+                        getNowPlayingMoviesUseCase::refresh,
+                    )
                 val topRatedDeferred =
-                    async {
-                        collectWithStale(getTopRatedMoviesUseCase(FIRST_PAGE, fetchPolicy))
-                    }
+                    loadDashboardSectionAsync(
+                        fromRefresh,
+                        getTopRatedMoviesUseCase::invoke,
+                        getTopRatedMoviesUseCase::refresh,
+                    )
                 val upcomingDeferred =
-                    async {
-                        collectWithStale(getUpcomingMoviesUseCase(FIRST_PAGE, fetchPolicy))
-                    }
+                    loadDashboardSectionAsync(
+                        fromRefresh,
+                        getUpcomingMoviesUseCase::invoke,
+                        getUpcomingMoviesUseCase::refresh,
+                    )
                 val trendingDeferred =
-                    async {
-                        collectWithStale(getTrendingMoviesUseCase(FIRST_PAGE, fetchPolicy))
-                    }
+                    loadDashboardSectionAsync(
+                        fromRefresh,
+                        getTrendingMoviesUseCase::invoke,
+                        getTrendingMoviesUseCase::refresh,
+                    )
 
                 val (popularResult, popularStale) = popularDeferred.await()
                 val (nowPlayingResult, nowPlayingStale) = nowPlayingDeferred.await()
@@ -588,11 +597,13 @@ internal class SearchMoviesViewModel
                 val (trendingResult, trendingStale) = trendingDeferred.await()
 
                 val isStale =
-                    popularStale ||
-                        nowPlayingStale ||
-                        topRatedStale ||
-                        upcomingStale ||
-                        trendingStale
+                    anyStale(
+                        popularStale,
+                        nowPlayingStale,
+                        topRatedStale,
+                        upcomingStale,
+                        trendingStale,
+                    )
 
                 DashboardResults(
                     nowPlaying = nowPlayingResult,
@@ -602,6 +613,16 @@ internal class SearchMoviesViewModel
                     trending = trendingResult,
                 ) to isStale
             }
+
+        private fun CoroutineScope.loadDashboardSectionAsync(
+            fromRefresh: Boolean,
+            load: (Int) -> Flow<Result<List<Movie>>>,
+            refresh: (Int) -> Flow<Result<List<Movie>>>,
+        ) = async {
+            collectWithStale(if (fromRefresh) refresh(FIRST_PAGE) else load(FIRST_PAGE))
+        }
+
+        private fun anyStale(vararg values: Boolean): Boolean = values.any { it }
 
         private fun getPopularMovies() {
             _uiState.update { it.copy(isPopularLoadingMore = true) }

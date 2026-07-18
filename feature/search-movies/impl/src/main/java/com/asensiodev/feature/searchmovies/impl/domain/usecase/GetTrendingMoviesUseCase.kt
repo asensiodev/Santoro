@@ -12,8 +12,12 @@ internal class GetTrendingMoviesUseCase
         private val repository: SearchMoviesRepository,
         private val dispatchers: DispatcherProvider,
     ) {
-        operator fun invoke(
+        operator fun invoke(page: Int) = fetch(page, FetchPolicy.CACHE_FIRST)
+
+        fun refresh(page: Int) = fetch(page, FetchPolicy.REFRESH)
+
+        private fun fetch(
             page: Int,
-            fetchPolicy: FetchPolicy = FetchPolicy.CACHE_FIRST,
+            fetchPolicy: FetchPolicy,
         ) = repository.getTrendingMovies(page, fetchPolicy).flowOn(dispatchers.io)
     }
