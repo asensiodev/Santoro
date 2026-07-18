@@ -20,6 +20,14 @@ docs/
     └── GUIDE-<topic>.md      # manual setup steps, external service config
 ```
 
+### Available Guides
+
+| Guide | Purpose |
+|---|---|
+| [CI/CD Release Automation](guides/GUIDE-ci-cd-release.md) | Secure automatic Internal delivery and manual Production promotion |
+| [Firebase Firestore Setup](guides/GUIDE-firestore-setup.md) | Firebase authentication, Firestore, and security-rule setup |
+| [Release Keystore Setup](guides/keystore.md) | Local upload-key configuration and multi-machine recovery |
+
 ---
 
 ## Workflows
