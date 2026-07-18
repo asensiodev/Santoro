@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.impl.data.repository.StaleDataException
+import com.asensiodev.feature.searchmovies.impl.domain.model.FetchPolicy
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetPopularMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTopRatedMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTrendingMoviesUseCase
@@ -205,14 +206,14 @@ class SeeAllMoviesViewModelTest {
     @Test
     fun `GIVEN error state WHEN Retry THEN reloads from page 1`() =
         runTest {
-            every { getTrendingMoviesUseCase(1, false) } returns
+            every { getTrendingMoviesUseCase(1, FetchPolicy.CACHE_FIRST) } returns
                 flowOf(Result.failure(RuntimeException("error")))
             createViewModel(SectionType.TRENDING)
 
             viewModel.process(SeeAllMoviesIntent.LoadInitial)
             advanceUntilIdle()
 
-            every { getTrendingMoviesUseCase(1, true) } returns
+            every { getTrendingMoviesUseCase(1, FetchPolicy.REFRESH) } returns
                 flowOf(Result.success(listOf(sampleMovie)))
 
             viewModel.process(SeeAllMoviesIntent.Retry)
@@ -221,7 +222,9 @@ class SeeAllMoviesViewModelTest {
             val state = viewModel.uiState.value
             state.screenState shouldBeInstanceOf SeeAllScreenState.Content::class
             state.movies.size shouldBeEqualTo 1
-            verify(exactly = 1) { getTrendingMoviesUseCase(1, true) }
+            verify(exactly = 1) {
+                getTrendingMoviesUseCase(1, FetchPolicy.REFRESH)
+            }
         }
 
     @Test

@@ -6,6 +6,7 @@ import com.asensiodev.core.testing.dispatcher.TestDispatcherProvider
 import com.asensiodev.feature.searchmovies.impl.data.datasource.BrowseCacheLocalDataSource
 import com.asensiodev.feature.searchmovies.impl.data.datasource.SearchMoviesDatasource
 import com.asensiodev.feature.searchmovies.impl.data.model.BrowseCacheEntry
+import com.asensiodev.feature.searchmovies.impl.domain.model.FetchPolicy
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -82,7 +83,7 @@ class CachingSearchMoviesRepositoryTest {
             coEvery { localDataSource.getCachedPage(BrowseSectionKeys.POPULAR, 1) } returns freshEntry
             coEvery { remoteDatasource.getPopularMovies(1) } returns Result.success(refreshedMovies)
 
-            repository.getPopularMovies(1, forceRefresh = true).test {
+            repository.getPopularMovies(1, FetchPolicy.REFRESH).test {
                 awaitItem() shouldBeEqualTo Result.success(refreshedMovies)
                 awaitComplete()
             }
@@ -107,7 +108,7 @@ class CachingSearchMoviesRepositoryTest {
             coEvery { remoteDatasource.getPopularMovies(1) } returns
                 Result.failure(IOException("Network error"))
 
-            repository.getPopularMovies(1, forceRefresh = true).test {
+            repository.getPopularMovies(1, FetchPolicy.REFRESH).test {
                 awaitItem() shouldBeEqualTo Result.success(sampleMovies)
                 awaitItem().exceptionOrNull() shouldBeInstanceOf StaleDataException::class
                 awaitComplete()

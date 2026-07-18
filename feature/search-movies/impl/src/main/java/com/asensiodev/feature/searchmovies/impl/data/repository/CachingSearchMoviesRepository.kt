@@ -5,6 +5,7 @@ import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.result.rethrowCancellation
 import com.asensiodev.feature.searchmovies.impl.data.datasource.BrowseCacheLocalDataSource
 import com.asensiodev.feature.searchmovies.impl.data.datasource.SearchMoviesDatasource
+import com.asensiodev.feature.searchmovies.impl.domain.model.FetchPolicy
 import com.asensiodev.feature.searchmovies.impl.domain.repository.SearchMoviesRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -23,68 +24,68 @@ internal class CachingSearchMoviesRepository
         override fun searchMovies(
             query: String,
             page: Int,
-            forceRefresh: Boolean,
+            fetchPolicy: FetchPolicy,
         ): Flow<Result<List<Movie>>> =
             cachedFlow(
                 section = BrowseSectionKeys.searchKey(query),
                 page = page,
                 cacheValidityMs = BrowseCacheTtl.SEARCH_MS,
-                forceRefresh = forceRefresh,
+                fetchPolicy = fetchPolicy,
             ) { remoteDatasource.searchMovies(query, page) }
 
         override fun getNowPlayingMovies(
             page: Int,
-            forceRefresh: Boolean,
+            fetchPolicy: FetchPolicy,
         ): Flow<Result<List<Movie>>> =
             cachedFlow(
                 section = BrowseSectionKeys.NOW_PLAYING,
                 page = page,
                 cacheValidityMs = BrowseCacheTtl.CURATED_MS,
-                forceRefresh = forceRefresh,
+                fetchPolicy = fetchPolicy,
             ) { remoteDatasource.getNowPlayingMovies(page) }
 
         override fun getPopularMovies(
             page: Int,
-            forceRefresh: Boolean,
+            fetchPolicy: FetchPolicy,
         ): Flow<Result<List<Movie>>> =
             cachedFlow(
                 section = BrowseSectionKeys.POPULAR,
                 page = page,
                 cacheValidityMs = BrowseCacheTtl.CURATED_MS,
-                forceRefresh = forceRefresh,
+                fetchPolicy = fetchPolicy,
             ) { remoteDatasource.getPopularMovies(page) }
 
         override fun getTopRatedMovies(
             page: Int,
-            forceRefresh: Boolean,
+            fetchPolicy: FetchPolicy,
         ): Flow<Result<List<Movie>>> =
             cachedFlow(
                 section = BrowseSectionKeys.TOP_RATED,
                 page = page,
                 cacheValidityMs = BrowseCacheTtl.CURATED_MS,
-                forceRefresh = forceRefresh,
+                fetchPolicy = fetchPolicy,
             ) { remoteDatasource.getTopRatedMovies(page) }
 
         override fun getUpcomingMovies(
             page: Int,
-            forceRefresh: Boolean,
+            fetchPolicy: FetchPolicy,
         ): Flow<Result<List<Movie>>> =
             cachedFlow(
                 section = BrowseSectionKeys.UPCOMING,
                 page = page,
                 cacheValidityMs = BrowseCacheTtl.CURATED_MS,
-                forceRefresh = forceRefresh,
+                fetchPolicy = fetchPolicy,
             ) { remoteDatasource.getUpcomingMovies(page) }
 
         override fun getTrendingMovies(
             page: Int,
-            forceRefresh: Boolean,
+            fetchPolicy: FetchPolicy,
         ): Flow<Result<List<Movie>>> =
             cachedFlow(
                 section = BrowseSectionKeys.TRENDING,
                 page = page,
                 cacheValidityMs = BrowseCacheTtl.CURATED_MS,
-                forceRefresh = forceRefresh,
+                fetchPolicy = fetchPolicy,
             ) { remoteDatasource.getTrendingMovies(page) }
 
         override fun getMoviesByGenre(
@@ -101,7 +102,7 @@ internal class CachingSearchMoviesRepository
             section: String,
             page: Int,
             cacheValidityMs: Long,
-            forceRefresh: Boolean,
+            fetchPolicy: FetchPolicy,
             remoteFetch: suspend () -> Result<List<Movie>>,
         ): Flow<Result<List<Movie>>> =
             flow {
@@ -109,7 +110,11 @@ internal class CachingSearchMoviesRepository
                     withContext(dispatchers.io) { localDataSource.getCachedPage(section, page) }
                 val now = System.currentTimeMillis()
 
-                if (!forceRefresh && cached != null && now - cached.cachedAt < cacheValidityMs) {
+                if (
+                    fetchPolicy == FetchPolicy.CACHE_FIRST &&
+                    cached != null &&
+                    now - cached.cachedAt < cacheValidityMs
+                ) {
                     emit(Result.success(cached.movies))
                     return@flow
                 }

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.api.navigation.SeeAllMoviesRoute
+import com.asensiodev.feature.searchmovies.impl.domain.model.FetchPolicy
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetPopularMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTopRatedMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTrendingMoviesUseCase
@@ -54,18 +55,19 @@ internal class SeeAllMoviesViewModel
 
         fun process(intent: SeeAllMoviesIntent) {
             when (intent) {
-                is SeeAllMoviesIntent.LoadInitial -> loadInitial(forceRefresh = false)
+                is SeeAllMoviesIntent.LoadInitial -> loadInitial(FetchPolicy.CACHE_FIRST)
                 is SeeAllMoviesIntent.LoadMore -> loadMore()
                 is SeeAllMoviesIntent.MovieClicked -> onMovieClicked(intent.movieId)
                 is SeeAllMoviesIntent.Retry -> retry()
             }
         }
 
-        private fun loadInitial(forceRefresh: Boolean) {
+        private fun loadInitial(fetchPolicy: FetchPolicy) {
             pageJob?.cancel()
             currentPage = FIRST_PAGE
             _uiState.update {
-                val preserveContent = forceRefresh && it.movies.isNotEmpty()
+                val preserveContent =
+                    fetchPolicy == FetchPolicy.REFRESH && it.movies.isNotEmpty()
                 it.copy(
                     screenState =
                         if (preserveContent) {
@@ -78,7 +80,7 @@ internal class SeeAllMoviesViewModel
                     isShowingStaleData = preserveContent && it.isShowingStaleData,
                 )
             }
-            loadPage(FIRST_PAGE, isInitialLoad = true, forceRefresh = forceRefresh)
+            loadPage(FIRST_PAGE, isInitialLoad = true, fetchPolicy = fetchPolicy)
         }
 
         private fun loadMore() {
@@ -86,12 +88,12 @@ internal class SeeAllMoviesViewModel
             loadPage(
                 page = currentPage + NEXT_PAGE,
                 isInitialLoad = false,
-                forceRefresh = false,
+                fetchPolicy = FetchPolicy.CACHE_FIRST,
             )
         }
 
         private fun retry() {
-            loadInitial(forceRefresh = true)
+            loadInitial(FetchPolicy.REFRESH)
         }
 
         private fun onMovieClicked(movieId: Int) {
@@ -103,7 +105,7 @@ internal class SeeAllMoviesViewModel
         private fun loadPage(
             page: Int,
             isInitialLoad: Boolean,
-            forceRefresh: Boolean,
+            fetchPolicy: FetchPolicy,
         ) {
             pageJob?.cancel()
             _uiState.update { it.copy(isLoadingMore = !isInitialLoad) }
@@ -111,7 +113,7 @@ internal class SeeAllMoviesViewModel
 
             pageJob =
                 viewModelScope.launch {
-                    val (result, isStale) = collectWithStale(getMoviesFlow(page, forceRefresh))
+                    val (result, isStale) = collectWithStale(getMoviesFlow(page, fetchPolicy))
                     if (activeRequestId != requestId) return@launch
                     result.fold(
                         onSuccess = { movies ->
@@ -165,13 +167,13 @@ internal class SeeAllMoviesViewModel
 
         private fun getMoviesFlow(
             page: Int,
-            forceRefresh: Boolean,
+            fetchPolicy: FetchPolicy,
         ): Flow<Result<List<Movie>>> =
             when (sectionType) {
-                SectionType.TRENDING -> getTrendingMoviesUseCase(page, forceRefresh)
-                SectionType.POPULAR -> getPopularMoviesUseCase(page, forceRefresh)
-                SectionType.TOP_RATED -> getTopRatedMoviesUseCase(page, forceRefresh)
-                SectionType.UPCOMING -> getUpcomingMoviesUseCase(page, forceRefresh)
+                SectionType.TRENDING -> getTrendingMoviesUseCase(page, fetchPolicy)
+                SectionType.POPULAR -> getPopularMoviesUseCase(page, fetchPolicy)
+                SectionType.TOP_RATED -> getTopRatedMoviesUseCase(page, fetchPolicy)
+                SectionType.UPCOMING -> getUpcomingMoviesUseCase(page, fetchPolicy)
             }
     }
 

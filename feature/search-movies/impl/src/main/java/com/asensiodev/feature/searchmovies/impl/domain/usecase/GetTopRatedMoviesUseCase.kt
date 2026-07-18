@@ -1,6 +1,7 @@
 package com.asensiodev.feature.searchmovies.impl.domain.usecase
 
 import com.asensiodev.core.domain.dispatcher.DispatcherProvider
+import com.asensiodev.feature.searchmovies.impl.domain.model.FetchPolicy
 import com.asensiodev.feature.searchmovies.impl.domain.repository.SearchMoviesRepository
 import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
@@ -13,6 +14,6 @@ internal class GetTopRatedMoviesUseCase
     ) {
         operator fun invoke(
             page: Int,
-            forceRefresh: Boolean = false,
-        ) = repository.getTopRatedMovies(page, forceRefresh).flowOn(dispatchers.io)
+            fetchPolicy: FetchPolicy = FetchPolicy.CACHE_FIRST,
+        ) = repository.getTopRatedMovies(page, fetchPolicy).flowOn(dispatchers.io)
     }

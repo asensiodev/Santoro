@@ -2,6 +2,7 @@ package com.asensiodev.feature.searchmovies.impl.domain.usecase
 
 import com.asensiodev.core.domain.dispatcher.DispatcherProvider
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.feature.searchmovies.impl.domain.model.FetchPolicy
 import com.asensiodev.feature.searchmovies.impl.domain.repository.SearchMoviesRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
@@ -18,10 +19,10 @@ internal class SearchMoviesByQueryAndGenreUseCase
             query: String,
             genreId: Int,
             page: Int,
-            forceRefresh: Boolean = false,
+            fetchPolicy: FetchPolicy = FetchPolicy.CACHE_FIRST,
         ): Flow<Result<List<Movie>>> =
             repository
-                .searchMovies(query, page, forceRefresh)
+                .searchMovies(query, page, fetchPolicy)
                 .map { result ->
                     result.map { movies ->
                         movies.filter { movie ->

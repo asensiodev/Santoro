@@ -1,38 +1,39 @@
 package com.asensiodev.feature.searchmovies.impl.domain.repository
 
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.feature.searchmovies.impl.domain.model.FetchPolicy
 import kotlinx.coroutines.flow.Flow
 
 internal interface SearchMoviesRepository {
     fun searchMovies(
         query: String,
         page: Int,
-        forceRefresh: Boolean = false,
+        fetchPolicy: FetchPolicy = FetchPolicy.CACHE_FIRST,
     ): Flow<Result<List<Movie>>>
 
     fun getNowPlayingMovies(
         page: Int,
-        forceRefresh: Boolean = false,
+        fetchPolicy: FetchPolicy = FetchPolicy.CACHE_FIRST,
     ): Flow<Result<List<Movie>>>
 
     fun getPopularMovies(
         page: Int,
-        forceRefresh: Boolean = false,
+        fetchPolicy: FetchPolicy = FetchPolicy.CACHE_FIRST,
     ): Flow<Result<List<Movie>>>
 
     fun getTopRatedMovies(
         page: Int,
-        forceRefresh: Boolean = false,
+        fetchPolicy: FetchPolicy = FetchPolicy.CACHE_FIRST,
     ): Flow<Result<List<Movie>>>
 
     fun getUpcomingMovies(
         page: Int,
-        forceRefresh: Boolean = false,
+        fetchPolicy: FetchPolicy = FetchPolicy.CACHE_FIRST,
     ): Flow<Result<List<Movie>>>
 
     fun getTrendingMovies(
         page: Int,
-        forceRefresh: Boolean = false,
+        fetchPolicy: FetchPolicy = FetchPolicy.CACHE_FIRST,
     ): Flow<Result<List<Movie>>>
 
     fun getMoviesByGenre(

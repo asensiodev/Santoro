@@ -5,6 +5,7 @@ import app.cash.turbine.test
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.impl.data.repository.StaleDataException
+import com.asensiodev.feature.searchmovies.impl.domain.model.FetchPolicy
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.ClearRecentSearchesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetMoviesByGenreUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetNowPlayingMoviesUseCase
@@ -221,7 +222,9 @@ class SearchMoviesViewModelTest {
             state.popularMovies.first().title shouldBeEqualTo "Casino"
             state.isShowingStaleData shouldBeEqualTo true
             state.isRefreshing shouldBeEqualTo false
-            verify(exactly = 1) { getPopularMoviesUseCase(1, true) }
+            verify(exactly = 1) {
+                getPopularMoviesUseCase(1, FetchPolicy.REFRESH)
+            }
         }
 
     @Test
@@ -280,7 +283,9 @@ class SearchMoviesViewModelTest {
                 expectNoEvents()
             }
             viewModel.uiState.value.isShowingStaleData shouldBeEqualTo true
-            verify(exactly = 1) { searchMoviesUseCase("casino", 1, true) }
+            verify(exactly = 1) {
+                searchMoviesUseCase("casino", 1, FetchPolicy.REFRESH)
+            }
         }
 
     @Test
