@@ -6,11 +6,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.api.navigation.SeeAllMoviesRoute
-import com.asensiodev.feature.searchmovies.impl.data.repository.StaleDataException
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetPopularMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTopRatedMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTrendingMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetUpcomingMoviesUseCase
+import com.asensiodev.feature.searchmovies.impl.presentation.collectWithStale
 import com.asensiodev.feature.searchmovies.impl.presentation.mapper.toUiList
 import com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType
 import com.asensiodev.ui.UiText
@@ -54,34 +54,44 @@ internal class SeeAllMoviesViewModel
 
         fun process(intent: SeeAllMoviesIntent) {
             when (intent) {
-                is SeeAllMoviesIntent.LoadInitial -> loadInitial()
+                is SeeAllMoviesIntent.LoadInitial -> loadInitial(forceRefresh = false)
                 is SeeAllMoviesIntent.LoadMore -> loadMore()
                 is SeeAllMoviesIntent.MovieClicked -> onMovieClicked(intent.movieId)
                 is SeeAllMoviesIntent.Retry -> retry()
             }
         }
 
-        private fun loadInitial() {
+        private fun loadInitial(forceRefresh: Boolean) {
             pageJob?.cancel()
             currentPage = FIRST_PAGE
             _uiState.update {
+                val preserveContent = forceRefresh && it.movies.isNotEmpty()
                 it.copy(
-                    screenState = SeeAllScreenState.Loading,
-                    movies = emptyList(),
+                    screenState =
+                        if (preserveContent) {
+                            SeeAllScreenState.Content
+                        } else {
+                            SeeAllScreenState.Loading
+                        },
+                    movies = if (preserveContent) it.movies else emptyList(),
                     isEndReached = false,
-                    isShowingStaleData = false,
+                    isShowingStaleData = preserveContent && it.isShowingStaleData,
                 )
             }
-            loadPage(FIRST_PAGE, isInitialLoad = true)
+            loadPage(FIRST_PAGE, isInitialLoad = true, forceRefresh = forceRefresh)
         }
 
         private fun loadMore() {
             if (_uiState.value.isLoadingMore || _uiState.value.isEndReached) return
-            loadPage(currentPage + NEXT_PAGE, isInitialLoad = false)
+            loadPage(
+                page = currentPage + NEXT_PAGE,
+                isInitialLoad = false,
+                forceRefresh = false,
+            )
         }
 
         private fun retry() {
-            loadInitial()
+            loadInitial(forceRefresh = true)
         }
 
         private fun onMovieClicked(movieId: Int) {
@@ -93,6 +103,7 @@ internal class SeeAllMoviesViewModel
         private fun loadPage(
             page: Int,
             isInitialLoad: Boolean,
+            forceRefresh: Boolean,
         ) {
             pageJob?.cancel()
             _uiState.update { it.copy(isLoadingMore = !isInitialLoad) }
@@ -100,67 +111,67 @@ internal class SeeAllMoviesViewModel
 
             pageJob =
                 viewModelScope.launch {
-                    getMoviesFlow(page).collect { result ->
-                        if (activeRequestId != requestId) return@collect
-                        result.fold(
-                            onSuccess = { movies ->
-                                val newMovies = movies.toUiList()
-                                currentPage = page
+                    val (result, isStale) = collectWithStale(getMoviesFlow(page, forceRefresh))
+                    if (activeRequestId != requestId) return@launch
+                    result.fold(
+                        onSuccess = { movies ->
+                            val newMovies = movies.toUiList()
+                            currentPage = page
 
-                                _uiState.update { state ->
-                                    val updatedMovies =
-                                        if (isInitialLoad) newMovies else state.movies + newMovies
+                            _uiState.update { state ->
+                                val updatedMovies =
+                                    if (isInitialLoad) newMovies else state.movies + newMovies
 
-                                    state.copy(
-                                        screenState =
-                                            if (isInitialLoad && newMovies.isEmpty()) {
-                                                SeeAllScreenState.Empty
-                                            } else {
-                                                SeeAllScreenState.Content
-                                            },
-                                        movies = updatedMovies,
-                                        isLoadingMore = false,
-                                        isEndReached = newMovies.isEmpty(),
-                                        isShowingStaleData = false,
-                                    )
-                                }
-                            },
-                            onFailure = { exception ->
-                                _uiState.update { state ->
-                                    if (exception is StaleDataException) {
-                                        return@update state.copy(
-                                            isLoadingMore = false,
-                                            isShowingStaleData = true,
-                                        )
-                                    }
-                                    state.copy(
-                                        screenState =
-                                            if (isInitialLoad && state.movies.isEmpty()) {
-                                                SeeAllScreenState.Error(
-                                                    UiText.StringResource(
-                                                        SR.string.error_message_retry,
-                                                    ),
-                                                )
-                                            } else {
-                                                state.screenState
-                                            },
-                                        isLoadingMore = false,
-                                        isEndReached = true,
-                                        isShowingStaleData = false,
-                                    )
-                                }
-                            },
-                        )
-                    }
+                                state.copy(
+                                    screenState =
+                                        if (isInitialLoad && newMovies.isEmpty()) {
+                                            SeeAllScreenState.Empty
+                                        } else {
+                                            SeeAllScreenState.Content
+                                        },
+                                    movies = updatedMovies,
+                                    isLoadingMore = false,
+                                    isEndReached = newMovies.isEmpty(),
+                                    isShowingStaleData =
+                                        isStale ||
+                                            (!isInitialLoad && state.isShowingStaleData),
+                                )
+                            }
+                        },
+                        onFailure = {
+                            _uiState.update { state ->
+                                val preserveContent = isInitialLoad && state.movies.isNotEmpty()
+                                state.copy(
+                                    screenState =
+                                        if (isInitialLoad && !preserveContent) {
+                                            SeeAllScreenState.Error(
+                                                UiText.StringResource(
+                                                    SR.string.error_message_retry,
+                                                ),
+                                            )
+                                        } else {
+                                            state.screenState
+                                        },
+                                    isLoadingMore = false,
+                                    isEndReached = true,
+                                    isShowingStaleData =
+                                        state.isShowingStaleData || preserveContent,
+                                )
+                            }
+                        },
+                    )
                 }
         }
 
-        private fun getMoviesFlow(page: Int): Flow<Result<List<Movie>>> =
+        private fun getMoviesFlow(
+            page: Int,
+            forceRefresh: Boolean,
+        ): Flow<Result<List<Movie>>> =
             when (sectionType) {
-                SectionType.TRENDING -> getTrendingMoviesUseCase(page)
-                SectionType.POPULAR -> getPopularMoviesUseCase(page)
-                SectionType.TOP_RATED -> getTopRatedMoviesUseCase(page)
-                SectionType.UPCOMING -> getUpcomingMoviesUseCase(page)
+                SectionType.TRENDING -> getTrendingMoviesUseCase(page, forceRefresh)
+                SectionType.POPULAR -> getPopularMoviesUseCase(page, forceRefresh)
+                SectionType.TOP_RATED -> getTopRatedMoviesUseCase(page, forceRefresh)
+                SectionType.UPCOMING -> getUpcomingMoviesUseCase(page, forceRefresh)
             }
     }
 

@@ -33,7 +33,7 @@ import com.asensiodev.core.designsystem.component.topbar.SantoroAppBar
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.feature.searchmovies.impl.presentation.component.MovieCard
-import com.asensiodev.feature.searchmovies.impl.presentation.component.OfflineBanner
+import com.asensiodev.feature.searchmovies.impl.presentation.component.SavedResultsBanner
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 import com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType
 import com.asensiodev.ui.CollectEffectWithLifecycle
@@ -84,7 +84,7 @@ internal fun SeeAllMoviesScreen(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             AnimatedVisibility(visible = uiState.isShowingStaleData) {
-                OfflineBanner(
+                SavedResultsBanner(
                     onRetry = { onProcess(SeeAllMoviesIntent.Retry) },
                     modifier = Modifier.padding(horizontal = Spacings.spacing16),
                 )

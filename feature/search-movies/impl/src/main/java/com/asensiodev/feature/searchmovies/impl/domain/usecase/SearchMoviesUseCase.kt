@@ -14,5 +14,6 @@ internal class SearchMoviesUseCase
         operator fun invoke(
             query: String,
             page: Int,
-        ) = repository.searchMovies(query, page).flowOn(dispatchers.io)
+            forceRefresh: Boolean = false,
+        ) = repository.searchMovies(query, page, forceRefresh).flowOn(dispatchers.io)
     }

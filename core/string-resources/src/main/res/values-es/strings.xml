@@ -46,7 +46,7 @@
     <string name="search_movies_western_title">Western</string>
     <string name="search_movies_error_button_retry">Reintentar</string>
     <string name="vote_average_format">%.1f</string>
-    <string name="browse_offline_cache_banner">Sin conexión. Mostrando resultados en caché.</string>
+    <string name="browse_saved_results_banner">No se pudo actualizar. Mostrando resultados guardados.</string>
     <string name="browse_offline_retry">Reintentar</string>
     <string name="browse_refresh_success">Contenido actualizado</string>
     <string name="browse_see_all">Ver todo</string>

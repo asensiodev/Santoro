@@ -11,5 +11,8 @@ internal class GetTrendingMoviesUseCase
         private val repository: SearchMoviesRepository,
         private val dispatchers: DispatcherProvider,
     ) {
-        operator fun invoke(page: Int) = repository.getTrendingMovies(page).flowOn(dispatchers.io)
+        operator fun invoke(
+            page: Int,
+            forceRefresh: Boolean = false,
+        ) = repository.getTrendingMovies(page, forceRefresh).flowOn(dispatchers.io)
     }

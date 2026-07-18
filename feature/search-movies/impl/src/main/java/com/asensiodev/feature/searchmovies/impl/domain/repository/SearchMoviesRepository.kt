@@ -7,17 +7,33 @@ internal interface SearchMoviesRepository {
     fun searchMovies(
         query: String,
         page: Int,
+        forceRefresh: Boolean = false,
     ): Flow<Result<List<Movie>>>
 
-    fun getNowPlayingMovies(page: Int): Flow<Result<List<Movie>>>
+    fun getNowPlayingMovies(
+        page: Int,
+        forceRefresh: Boolean = false,
+    ): Flow<Result<List<Movie>>>
 
-    fun getPopularMovies(page: Int): Flow<Result<List<Movie>>>
+    fun getPopularMovies(
+        page: Int,
+        forceRefresh: Boolean = false,
+    ): Flow<Result<List<Movie>>>
 
-    fun getTopRatedMovies(page: Int): Flow<Result<List<Movie>>>
+    fun getTopRatedMovies(
+        page: Int,
+        forceRefresh: Boolean = false,
+    ): Flow<Result<List<Movie>>>
 
-    fun getUpcomingMovies(page: Int): Flow<Result<List<Movie>>>
+    fun getUpcomingMovies(
+        page: Int,
+        forceRefresh: Boolean = false,
+    ): Flow<Result<List<Movie>>>
 
-    fun getTrendingMovies(page: Int): Flow<Result<List<Movie>>>
+    fun getTrendingMovies(
+        page: Int,
+        forceRefresh: Boolean = false,
+    ): Flow<Result<List<Movie>>>
 
     fun getMoviesByGenre(
         genreId: Int,

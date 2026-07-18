@@ -20,7 +20,7 @@ import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.santoro.core.stringresources.R as SR
 
 @Composable
-internal fun OfflineBanner(
+internal fun SavedResultsBanner(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -39,7 +39,7 @@ internal fun OfflineBanner(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(SR.string.browse_offline_cache_banner),
+                text = stringResource(SR.string.browse_saved_results_banner),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onErrorContainer,
                 modifier = Modifier.weight(1f),
@@ -53,8 +53,8 @@ internal fun OfflineBanner(
 
 @PreviewLightDark
 @Composable
-private fun OfflineBannerPreview() {
+private fun SavedResultsBannerPreview() {
     PreviewContent {
-        OfflineBanner(onRetry = {})
+        SavedResultsBanner(onRetry = {})
     }
 }

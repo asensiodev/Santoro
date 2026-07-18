@@ -4,7 +4,6 @@ import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
-import com.asensiodev.feature.searchmovies.impl.data.repository.CachingSearchMoviesRepository
 import com.asensiodev.feature.searchmovies.impl.data.repository.StaleDataException
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.ClearRecentSearchesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetMoviesByGenreUseCase
@@ -52,7 +51,6 @@ class SearchMoviesViewModelTest {
     private val getTrendingMoviesUseCase: GetTrendingMoviesUseCase = mockk(relaxed = true)
     private val getMoviesByGenreUseCase: GetMoviesByGenreUseCase = mockk(relaxed = true)
     private val searchMoviesByQueryAndGenreUseCase: SearchMoviesByQueryAndGenreUseCase = mockk(relaxed = true)
-    private val cachingRepository: CachingSearchMoviesRepository = mockk(relaxed = true)
     private val getRecentSearchesUseCase: GetRecentSearchesUseCase = mockk(relaxed = true)
     private val saveRecentSearchUseCase: SaveRecentSearchUseCase = mockk(relaxed = true)
     private val clearRecentSearchesUseCase: ClearRecentSearchesUseCase = mockk(relaxed = true)
@@ -82,12 +80,11 @@ class SearchMoviesViewModelTest {
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        coJustRun { cachingRepository.clearStaleEntries() }
-        every { getNowPlayingMoviesUseCase(any()) } returns flowOf(Result.success(emptyList()))
-        every { getPopularMoviesUseCase(any()) } returns flowOf(Result.success(emptyList()))
-        every { getTopRatedMoviesUseCase(any()) } returns flowOf(Result.success(emptyList()))
-        every { getUpcomingMoviesUseCase(any()) } returns flowOf(Result.success(emptyList()))
-        every { getTrendingMoviesUseCase(any()) } returns flowOf(Result.success(emptyList()))
+        every { getNowPlayingMoviesUseCase(any(), any()) } returns flowOf(Result.success(emptyList()))
+        every { getPopularMoviesUseCase(any(), any()) } returns flowOf(Result.success(emptyList()))
+        every { getTopRatedMoviesUseCase(any(), any()) } returns flowOf(Result.success(emptyList()))
+        every { getUpcomingMoviesUseCase(any(), any()) } returns flowOf(Result.success(emptyList()))
+        every { getTrendingMoviesUseCase(any(), any()) } returns flowOf(Result.success(emptyList()))
         every { getRecentSearchesUseCase() } returns flowOf(emptyList())
         coJustRun { saveRecentSearchUseCase(any()) }
         coJustRun { clearRecentSearchesUseCase() }
@@ -107,7 +104,6 @@ class SearchMoviesViewModelTest {
                 getTrendingMoviesUseCase = getTrendingMoviesUseCase,
                 getMoviesByGenreUseCase = getMoviesByGenreUseCase,
                 searchMoviesByQueryAndGenreUseCase = searchMoviesByQueryAndGenreUseCase,
-                cachingRepository = cachingRepository,
                 getRecentSearchesUseCase = getRecentSearchesUseCase,
                 saveRecentSearchUseCase = saveRecentSearchUseCase,
                 clearRecentSearchesUseCase = clearRecentSearchesUseCase,
@@ -204,7 +200,7 @@ class SearchMoviesViewModelTest {
     fun `GIVEN dashboard content WHEN refresh fails THEN keeps content and shows stale banner`() =
         runTest {
             var shouldFail = false
-            every { getPopularMoviesUseCase(any()) } answers {
+            every { getPopularMoviesUseCase(any(), any()) } answers {
                 if (shouldFail) {
                     flowOf(Result.failure(java.io.IOException("Unable to resolve host")))
                 } else {
@@ -225,14 +221,14 @@ class SearchMoviesViewModelTest {
             state.popularMovies.first().title shouldBeEqualTo "Casino"
             state.isShowingStaleData shouldBeEqualTo true
             state.isRefreshing shouldBeEqualTo false
-            coVerify(exactly = 0) { cachingRepository.clearAllSections() }
+            verify(exactly = 1) { getPopularMoviesUseCase(1, true) }
         }
 
     @Test
     fun `GIVEN dashboard content WHEN refresh throws THEN stops refreshing and keeps content`() =
         runTest {
             var shouldThrow = false
-            every { getPopularMoviesUseCase(any()) } answers {
+            every { getPopularMoviesUseCase(any(), any()) } answers {
                 if (shouldThrow) {
                     flow { throw java.io.IOException("Unable to resolve host") }
                 } else {
@@ -253,6 +249,84 @@ class SearchMoviesViewModelTest {
             state.popularMovies.first().title shouldBeEqualTo "Casino"
             state.isShowingStaleData shouldBeEqualTo true
             state.isRefreshing shouldBeEqualTo false
+        }
+
+    @Test
+    fun `GIVEN stale search refresh WHEN cached results are shown THEN refresh success is not emitted`() =
+        runTest {
+            var refresh = false
+            every { searchMoviesUseCase("casino", 1, any()) } answers {
+                if (refresh) {
+                    flow {
+                        emit(Result.success(listOf(casinoMovie)))
+                        emit(Result.failure(StaleDataException()))
+                    }
+                } else {
+                    flowOf(Result.success(listOf(casinoMovie)))
+                }
+            }
+
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+            viewModel.process(SearchMoviesIntent.UpdateQuery("casino"))
+            testDispatcher.scheduler.advanceTimeBy(600)
+            advanceUntilIdle()
+
+            refresh = true
+            viewModel.effect.test {
+                viewModel.process(SearchMoviesIntent.Refresh)
+                advanceUntilIdle()
+
+                expectNoEvents()
+            }
+            viewModel.uiState.value.isShowingStaleData shouldBeEqualTo true
+            verify(exactly = 1) { searchMoviesUseCase("casino", 1, true) }
+        }
+
+    @Test
+    fun `GIVEN stale search page 1 WHEN page 2 is fresh THEN stale banner remains visible`() =
+        runTest {
+            val secondMovie = casinoMovie.copy(id = 2, title = "Casino Royale")
+            every { searchMoviesUseCase("casino", 1) } returns
+                flow {
+                    emit(Result.success(listOf(casinoMovie)))
+                    emit(Result.failure(StaleDataException()))
+                }
+            every { searchMoviesUseCase("casino", 2) } returns
+                flowOf(Result.success(listOf(secondMovie)))
+
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+            viewModel.process(SearchMoviesIntent.UpdateQuery("casino"))
+            testDispatcher.scheduler.advanceTimeBy(600)
+            advanceUntilIdle()
+            viewModel.process(SearchMoviesIntent.LoadMoreSearchResults)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.isShowingStaleData shouldBeEqualTo true
+        }
+
+    @Test
+    fun `GIVEN stale search results WHEN query is cleared THEN fresh dashboard has no stale banner`() =
+        runTest {
+            every { getPopularMoviesUseCase(any()) } returns
+                flowOf(Result.success(listOf(casinoMovie)))
+            every { searchMoviesUseCase("casino", 1) } returns
+                flow {
+                    emit(Result.success(listOf(casinoMovie)))
+                    emit(Result.failure(StaleDataException()))
+                }
+
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+            viewModel.process(SearchMoviesIntent.UpdateQuery("casino"))
+            testDispatcher.scheduler.advanceTimeBy(600)
+            advanceUntilIdle()
+            viewModel.process(SearchMoviesIntent.UpdateQuery(""))
+            testDispatcher.scheduler.advanceTimeBy(600)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.isShowingStaleData shouldBeEqualTo false
         }
 
     @Test
@@ -512,7 +586,6 @@ class SearchMoviesViewModelTest {
             advanceUntilIdle()
 
             verify(exactly = 1) { getPopularMoviesUseCase(1) }
-            coVerify(exactly = 1) { cachingRepository.clearStaleEntries() }
         }
 
     @Test

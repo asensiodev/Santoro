@@ -4,7 +4,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asensiodev.core.domain.model.Movie
-import com.asensiodev.feature.searchmovies.impl.data.repository.CachingSearchMoviesRepository
 import com.asensiodev.feature.searchmovies.impl.data.repository.StaleDataException
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.ClearRecentSearchesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetMoviesByGenreUseCase
@@ -52,7 +51,6 @@ internal class SearchMoviesViewModel
         private val getTrendingMoviesUseCase: GetTrendingMoviesUseCase,
         private val getMoviesByGenreUseCase: GetMoviesByGenreUseCase,
         private val searchMoviesByQueryAndGenreUseCase: SearchMoviesByQueryAndGenreUseCase,
-        private val cachingRepository: CachingSearchMoviesRepository,
         private val getRecentSearchesUseCase: GetRecentSearchesUseCase,
         private val saveRecentSearchUseCase: SaveRecentSearchUseCase,
         private val clearRecentSearchesUseCase: ClearRecentSearchesUseCase,
@@ -63,6 +61,7 @@ internal class SearchMoviesViewModel
         private var queryJob: Job? = null
         private var initialized = false
         private var observersSetUp = false
+        private var isDashboardStale = false
         private val restoredQuery = savedStateHandle[SEARCH_QUERY_KEY] ?: ""
         private val _uiState = MutableStateFlow(SearchMoviesUiState(query = restoredQuery))
         val uiState: StateFlow<SearchMoviesUiState> = _uiState.asStateFlow()
@@ -139,6 +138,12 @@ internal class SearchMoviesViewModel
             _uiState.update {
                 it.copy(
                     query = query,
+                    isShowingStaleData =
+                        if (query.isBlank() && it.selectedGenreId == null) {
+                            isDashboardStale
+                        } else {
+                            false
+                        },
                     screenState =
                         when {
                             query.isBlank() &&
@@ -173,6 +178,7 @@ internal class SearchMoviesViewModel
                     searchMovieResults = emptyList(),
                     currentSearchPage = FIRST_PAGE,
                     isSearchEndReached = false,
+                    isShowingStaleData = false,
                 )
             }
             performSearch(FIRST_PAGE, isInitialLoad = true)
@@ -187,6 +193,8 @@ internal class SearchMoviesViewModel
                     searchMovieResults = emptyList(),
                     currentSearchPage = FIRST_PAGE,
                     isSearchEndReached = false,
+                    isShowingStaleData =
+                        if (currentQuery.isBlank()) isDashboardStale else false,
                     screenState =
                         if (currentQuery.isBlank()) {
                             SearchScreenState.Content
@@ -213,6 +221,7 @@ internal class SearchMoviesViewModel
                     searchMovieResults = emptyList(),
                     currentSearchPage = FIRST_PAGE,
                     isSearchEndReached = false,
+                    isShowingStaleData = false,
                 )
             }
             if (currentQuery.isNotBlank()) {
@@ -226,6 +235,12 @@ internal class SearchMoviesViewModel
                     searchMovieResults = emptyList(),
                     currentSearchPage = FIRST_PAGE,
                     isSearchEndReached = false,
+                    isShowingStaleData =
+                        if (query.isBlank() && it.selectedGenreId == null) {
+                            isDashboardStale
+                        } else {
+                            false
+                        },
                 )
             }
             if (query.isBlank() && _uiState.value.selectedGenreId == null) {
@@ -268,11 +283,16 @@ internal class SearchMoviesViewModel
                     val searchFlow =
                         when {
                             query.isNotBlank() && selectedGenreId != null -> {
-                                searchMoviesByQueryAndGenreUseCase(query, selectedGenreId, page)
+                                searchMoviesByQueryAndGenreUseCase(
+                                    query,
+                                    selectedGenreId,
+                                    page,
+                                    isFromRefresh,
+                                )
                             }
 
                             query.isNotBlank() -> {
-                                searchMoviesUseCase(query, page)
+                                searchMoviesUseCase(query, page, isFromRefresh)
                             }
 
                             selectedGenreId != null -> {
@@ -284,13 +304,18 @@ internal class SearchMoviesViewModel
                             }
                         }
 
-                    searchFlow.collect { result ->
-                        if (
-                            query == _uiState.value.query &&
-                            selectedGenreId == _uiState.value.selectedGenreId
-                        ) {
-                            handleSearchResult(result, isInitialLoad, page, isFromRefresh)
-                        }
+                    val (result, isStale) = collectWithStale(searchFlow)
+                    if (
+                        query == _uiState.value.query &&
+                        selectedGenreId == _uiState.value.selectedGenreId
+                    ) {
+                        handleSearchResult(
+                            result = result,
+                            isInitialLoad = isInitialLoad,
+                            page = page,
+                            isFromRefresh = isFromRefresh,
+                            isStale = isStale,
+                        )
                     }
                 }
         }
@@ -300,6 +325,7 @@ internal class SearchMoviesViewModel
             isInitialLoad: Boolean,
             page: Int,
             isFromRefresh: Boolean = false,
+            isStale: Boolean = false,
         ) {
             result.fold(
                 onSuccess = { movies ->
@@ -324,16 +350,19 @@ internal class SearchMoviesViewModel
                             screenState = finalState,
                             isSearchLoadingMore = false,
                             isRefreshing = false,
-                            isShowingStaleData = false,
+                            isShowingStaleData =
+                                isStale || (!isInitialLoad && it.isShowingStaleData),
                             searchMovieResults = updatedResults,
                             currentSearchPage = page,
                             isSearchEndReached = newMovies.isEmpty(),
                         )
                     }
-                    if (isFromRefresh) _effect.emit(SearchMoviesEffect.ShowRefreshSuccess)
+                    if (isFromRefresh && !isStale) {
+                        _effect.emit(SearchMoviesEffect.ShowRefreshSuccess)
+                    }
                 },
                 onFailure = { exception ->
-                    handleSearchFailure(exception, isInitialLoad, page)
+                    handleSearchFailure(exception, isInitialLoad, page, isFromRefresh)
                 },
             )
         }
@@ -342,6 +371,7 @@ internal class SearchMoviesViewModel
             exception: Throwable,
             isInitialLoad: Boolean,
             page: Int,
+            isFromRefresh: Boolean,
         ) {
             if (exception is StaleDataException) {
                 _uiState.update {
@@ -370,7 +400,12 @@ internal class SearchMoviesViewModel
                         },
                     isSearchLoadingMore = false,
                     isRefreshing = false,
-                    isShowingStaleData = false,
+                    isShowingStaleData =
+                        if (isInitialLoad) {
+                            isFromRefresh && it.searchMovieResults.isNotEmpty()
+                        } else {
+                            it.isShowingStaleData
+                        },
                     isSearchEndReached = true,
                 )
             }
@@ -471,9 +506,7 @@ internal class SearchMoviesViewModel
 
         private suspend fun loadDashboardData(fromRefresh: Boolean) {
             try {
-                if (!fromRefresh) cachingRepository.clearStaleEntries()
-
-                val (results, isStale) = fetchDashboardResults()
+                val (results, isStale) = fetchDashboardResults(fromRefresh)
                 if (_uiState.value.query.isNotBlank() || _uiState.value.selectedGenreId != null) {
                     return
                 }
@@ -500,7 +533,8 @@ internal class SearchMoviesViewModel
                         keepExisting = refreshFailedWithExistingData,
                     )
                 }
-                if (fromRefresh && !refreshFailedWithExistingData) {
+                isDashboardStale = isStale || refreshFailedWithExistingData
+                if (fromRefresh && !refreshFailedWithExistingData && !isStale) {
                     _effect.emit(SearchMoviesEffect.ShowRefreshSuccess)
                 }
             } catch (exception: CancellationException) {
@@ -509,25 +543,38 @@ internal class SearchMoviesViewModel
                 observabilityTracker.recordError(SEARCH_DASHBOARD_FAILED, exception)
                 if (_uiState.value.query.isBlank() && _uiState.value.selectedGenreId == null) {
                     _uiState.update { state -> state.withDashboardException() }
+                    isDashboardStale = _uiState.value.isShowingStaleData
                 }
             }
         }
 
-        private suspend fun fetchDashboardResults(): Pair<
+        private suspend fun fetchDashboardResults(
+            forceRefresh: Boolean,
+        ): Pair<
             DashboardResults,
             Boolean,
         > =
             coroutineScope {
                 val popularDeferred =
-                    async { collectWithStale(getPopularMoviesUseCase(FIRST_PAGE)) }
+                    async {
+                        collectWithStale(getPopularMoviesUseCase(FIRST_PAGE, forceRefresh))
+                    }
                 val nowPlayingDeferred =
-                    async { collectWithStale(getNowPlayingMoviesUseCase(FIRST_PAGE)) }
+                    async {
+                        collectWithStale(getNowPlayingMoviesUseCase(FIRST_PAGE, forceRefresh))
+                    }
                 val topRatedDeferred =
-                    async { collectWithStale(getTopRatedMoviesUseCase(FIRST_PAGE)) }
+                    async {
+                        collectWithStale(getTopRatedMoviesUseCase(FIRST_PAGE, forceRefresh))
+                    }
                 val upcomingDeferred =
-                    async { collectWithStale(getUpcomingMoviesUseCase(FIRST_PAGE)) }
+                    async {
+                        collectWithStale(getUpcomingMoviesUseCase(FIRST_PAGE, forceRefresh))
+                    }
                 val trendingDeferred =
-                    async { collectWithStale(getTrendingMoviesUseCase(FIRST_PAGE)) }
+                    async {
+                        collectWithStale(getTrendingMoviesUseCase(FIRST_PAGE, forceRefresh))
+                    }
 
                 val (popularResult, popularStale) = popularDeferred.await()
                 val (nowPlayingResult, nowPlayingStale) = nowPlayingDeferred.await()
@@ -555,27 +602,34 @@ internal class SearchMoviesViewModel
             _uiState.update { it.copy(isPopularLoadingMore = true) }
 
             viewModelScope.launch {
-                getPopularMoviesUseCase(_uiState.value.currentPopularPage).collect { result ->
-                    result.fold(
-                        onSuccess = { movies ->
-                            val newMovies = movies.toUiList()
-                            _uiState.update {
-                                it.copy(
-                                    isPopularLoadingMore = false,
-                                    popularMovies = it.popularMovies + newMovies,
-                                    currentPopularPage = it.currentPopularPage + NEXT_PAGE,
-                                    isPopularEndReached = newMovies.isEmpty(),
-                                )
-                            }
-                        },
-                        onFailure = {
-                            observabilityTracker.recordError(SEARCH_POPULAR_LOAD_MORE_FAILED, it)
-                            _uiState.update {
-                                it.copy(isPopularLoadingMore = false, isPopularEndReached = true)
-                            }
-                        },
+                val (result, isStale) =
+                    collectWithStale(
+                        getPopularMoviesUseCase(_uiState.value.currentPopularPage),
                     )
-                }
+                result.fold(
+                    onSuccess = { movies ->
+                        val newMovies = movies.toUiList()
+                        _uiState.update {
+                            it.copy(
+                                isPopularLoadingMore = false,
+                                popularMovies = it.popularMovies + newMovies,
+                                currentPopularPage = it.currentPopularPage + NEXT_PAGE,
+                                isPopularEndReached = newMovies.isEmpty(),
+                                isShowingStaleData = it.isShowingStaleData || isStale,
+                            )
+                        }
+                        isDashboardStale = isDashboardStale || isStale
+                    },
+                    onFailure = {
+                        observabilityTracker.recordError(SEARCH_POPULAR_LOAD_MORE_FAILED, it)
+                        _uiState.update { state ->
+                            state.copy(
+                                isPopularLoadingMore = false,
+                                isPopularEndReached = true,
+                            )
+                        }
+                    },
+                )
             }
         }
     }
@@ -696,7 +750,7 @@ private fun SearchMoviesUiState.hasDashboardData(): Boolean =
         trendingMovies,
     ).any { movies -> movies.isNotEmpty() }
 
-private suspend fun collectWithStale(
+internal suspend fun collectWithStale(
     flow: kotlinx.coroutines.flow.Flow<Result<List<Movie>>>,
 ): Pair<Result<List<Movie>>, Boolean> {
     var data: Result<List<Movie>> = Result.failure(IllegalStateException("No dashboard data"))

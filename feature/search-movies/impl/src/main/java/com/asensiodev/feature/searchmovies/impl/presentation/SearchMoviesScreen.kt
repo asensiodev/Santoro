@@ -76,7 +76,7 @@ import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.core.designsystem.theme.Weights
 import com.asensiodev.feature.searchmovies.impl.presentation.component.HeroMovieCard
 import com.asensiodev.feature.searchmovies.impl.presentation.component.MovieCard
-import com.asensiodev.feature.searchmovies.impl.presentation.component.OfflineBanner
+import com.asensiodev.feature.searchmovies.impl.presentation.component.SavedResultsBanner
 import com.asensiodev.feature.searchmovies.impl.presentation.component.SearchSuggestionsContent
 import com.asensiodev.feature.searchmovies.impl.presentation.model.GenreConstants
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
@@ -193,7 +193,7 @@ internal fun SearchMoviesScreen(
             )
 
             AnimatedVisibility(visible = uiState.isShowingStaleData) {
-                OfflineBanner(onRetry = { onProcess(SearchMoviesIntent.Refresh) })
+                SavedResultsBanner(onRetry = { onProcess(SearchMoviesIntent.Refresh) })
             }
 
             val isGenreOnlyMode = uiState.query.isBlank() && uiState.selectedGenreId != null

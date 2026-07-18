@@ -11,5 +11,8 @@ internal class GetNowPlayingMoviesUseCase
         private val repository: SearchMoviesRepository,
         private val dispatchers: DispatcherProvider,
     ) {
-        operator fun invoke(page: Int) = repository.getNowPlayingMovies(page).flowOn(dispatchers.io)
+        operator fun invoke(
+            page: Int,
+            forceRefresh: Boolean = false,
+        ) = repository.getNowPlayingMovies(page, forceRefresh).flowOn(dispatchers.io)
     }

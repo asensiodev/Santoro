@@ -18,9 +18,10 @@ internal class SearchMoviesByQueryAndGenreUseCase
             query: String,
             genreId: Int,
             page: Int,
+            forceRefresh: Boolean = false,
         ): Flow<Result<List<Movie>>> =
             repository
-                .searchMovies(query, page)
+                .searchMovies(query, page, forceRefresh)
                 .map { result ->
                     result.map { movies ->
                         movies.filter { movie ->

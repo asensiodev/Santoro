@@ -205,14 +205,15 @@ class SeeAllMoviesViewModelTest {
     @Test
     fun `GIVEN error state WHEN Retry THEN reloads from page 1`() =
         runTest {
-            every { getTrendingMoviesUseCase(1) } returns
+            every { getTrendingMoviesUseCase(1, false) } returns
                 flowOf(Result.failure(RuntimeException("error")))
             createViewModel(SectionType.TRENDING)
 
             viewModel.process(SeeAllMoviesIntent.LoadInitial)
             advanceUntilIdle()
 
-            every { getTrendingMoviesUseCase(1) } returns flowOf(Result.success(listOf(sampleMovie)))
+            every { getTrendingMoviesUseCase(1, true) } returns
+                flowOf(Result.success(listOf(sampleMovie)))
 
             viewModel.process(SeeAllMoviesIntent.Retry)
             advanceUntilIdle()
@@ -220,6 +221,7 @@ class SeeAllMoviesViewModelTest {
             val state = viewModel.uiState.value
             state.screenState shouldBeInstanceOf SeeAllScreenState.Content::class
             state.movies.size shouldBeEqualTo 1
+            verify(exactly = 1) { getTrendingMoviesUseCase(1, true) }
         }
 
     @Test
@@ -267,7 +269,7 @@ class SeeAllMoviesViewModelTest {
             val page2Results = MutableSharedFlow<Result<List<Movie>>>(extraBufferCapacity = 1)
             val retriedMovie = sampleMovie.copy(id = 2, title = "Interstellar")
             var page1Calls = 0
-            every { getTrendingMoviesUseCase(1) } answers {
+            every { getTrendingMoviesUseCase(1, any()) } answers {
                 page1Calls += 1
                 flowOf(Result.success(listOf(if (page1Calls == 1) sampleMovie else retriedMovie)))
             }
@@ -314,10 +316,31 @@ class SeeAllMoviesViewModelTest {
         }
 
     @Test
+    fun `GIVEN stale page 1 WHEN page 2 is fresh THEN stale banner remains visible`() =
+        runTest {
+            val secondMovie = sampleMovie.copy(id = 2, title = "Interstellar")
+            every { getTrendingMoviesUseCase(1) } returns
+                flow {
+                    emit(Result.success(listOf(sampleMovie)))
+                    emit(Result.failure(StaleDataException()))
+                }
+            every { getTrendingMoviesUseCase(2) } returns
+                flowOf(Result.success(listOf(secondMovie)))
+            createViewModel()
+
+            viewModel.process(SeeAllMoviesIntent.LoadInitial)
+            advanceUntilIdle()
+            viewModel.process(SeeAllMoviesIntent.LoadMore)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.isShowingStaleData shouldBeEqualTo true
+        }
+
+    @Test
     fun `GIVEN stale content WHEN Retry returns fresh data THEN stale banner is cleared`() =
         runTest {
             var stale = true
-            every { getTrendingMoviesUseCase(1) } answers {
+            every { getTrendingMoviesUseCase(1, any()) } answers {
                 if (stale) {
                     flow {
                         emit(Result.success(listOf(sampleMovie)))

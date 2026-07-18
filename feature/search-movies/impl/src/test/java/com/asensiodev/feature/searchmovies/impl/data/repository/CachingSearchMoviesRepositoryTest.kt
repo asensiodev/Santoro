@@ -69,6 +69,55 @@ class CachingSearchMoviesRepositoryTest {
         }
 
     @Test
+    fun `GIVEN fresh cache WHEN getPopularMovies forces refresh THEN calls remote and updates cache`() =
+        runTest {
+            val freshEntry =
+                BrowseCacheEntry(
+                    section = BrowseSectionKeys.POPULAR,
+                    page = 1,
+                    movies = sampleMovies,
+                    cachedAt = System.currentTimeMillis(),
+                )
+            val refreshedMovies = listOf(sampleMovies.first().copy(title = "Interstellar"))
+            coEvery { localDataSource.getCachedPage(BrowseSectionKeys.POPULAR, 1) } returns freshEntry
+            coEvery { remoteDatasource.getPopularMovies(1) } returns Result.success(refreshedMovies)
+
+            repository.getPopularMovies(1, forceRefresh = true).test {
+                awaitItem() shouldBeEqualTo Result.success(refreshedMovies)
+                awaitComplete()
+            }
+
+            coVerify(exactly = 1) { remoteDatasource.getPopularMovies(1) }
+            coVerify(exactly = 1) {
+                localDataSource.savePage(BrowseSectionKeys.POPULAR, 1, refreshedMovies, any())
+            }
+        }
+
+    @Test
+    fun `GIVEN fresh cache WHEN forced refresh fails THEN emits saved movies and stale signal`() =
+        runTest {
+            val freshEntry =
+                BrowseCacheEntry(
+                    section = BrowseSectionKeys.POPULAR,
+                    page = 1,
+                    movies = sampleMovies,
+                    cachedAt = System.currentTimeMillis(),
+                )
+            coEvery { localDataSource.getCachedPage(BrowseSectionKeys.POPULAR, 1) } returns freshEntry
+            coEvery { remoteDatasource.getPopularMovies(1) } returns
+                Result.failure(IOException("Network error"))
+
+            repository.getPopularMovies(1, forceRefresh = true).test {
+                awaitItem() shouldBeEqualTo Result.success(sampleMovies)
+                awaitItem().exceptionOrNull() shouldBeInstanceOf StaleDataException::class
+                awaitComplete()
+            }
+
+            coVerify(exactly = 1) { remoteDatasource.getPopularMovies(1) }
+            coVerify(exactly = 0) { localDataSource.savePage(any(), any(), any(), any()) }
+        }
+
+    @Test
     fun `GIVEN expired cache WHEN getPopularMovies THEN calls remote saves result and emits fresh movies`() =
         runTest {
             val staleEntry =
