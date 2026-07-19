@@ -26,7 +26,7 @@ class MovieUiMapperTest {
                 voteCount = 32000,
                 genres = listOf(Genre(0, "Action"), Genre(1, "Sci-Fi")),
                 productionCountries = listOf(ProductionCountry("USA")),
-                cast = listOf(CastMember(1, "Leo", "Cobb", "/leo.jpg")),
+                cast = listOf(CastMember(1, "credit-1", "Leo", "Cobb", "/leo.jpg")),
                 runtime = 148,
                 tagline = "Your mind is the scene of the crime.",
                 director = "Christopher Nolan",
@@ -46,7 +46,16 @@ class MovieUiMapperTest {
                 voteCount = 32000,
                 genres = listOf(GenreUi(0, "Action"), GenreUi(1, "Sci-Fi")),
                 productionCountries = listOf("USA"),
-                cast = listOf(CastMemberUi(1, "Leo", "Cobb", "https://image.tmdb.org/t/p/w185/leo.jpg")),
+                cast =
+                    listOf(
+                        CastMemberUi(
+                            1,
+                            "credit-1",
+                            "Leo",
+                            "Cobb",
+                            "https://image.tmdb.org/t/p/w185/leo.jpg",
+                        ),
+                    ),
                 runtime = "2h 28m",
                 runtimeMinutes = 148,
                 tagline = "Your mind is the scene of the crime.",
@@ -74,7 +83,16 @@ class MovieUiMapperTest {
                 voteCount = 32000,
                 genres = listOf(GenreUi(0, "Action"), GenreUi(1, "Sci-Fi")),
                 productionCountries = listOf("USA"),
-                cast = listOf(CastMemberUi(1, "Leo", "Cobb", "https://image.tmdb.org/t/p/w185/leo.jpg")),
+                cast =
+                    listOf(
+                        CastMemberUi(
+                            1,
+                            "credit-1",
+                            "Leo",
+                            "Cobb",
+                            "https://image.tmdb.org/t/p/w185/leo.jpg",
+                        ),
+                    ),
                 runtime = "2h 28m",
                 runtimeMinutes = 148,
                 tagline = "Your mind is the scene of the crime.",
@@ -96,7 +114,7 @@ class MovieUiMapperTest {
                 voteCount = 32000,
                 genres = listOf(Genre(0, "Action"), Genre(1, "Sci-Fi")),
                 productionCountries = listOf(ProductionCountry("USA")),
-                cast = listOf(CastMember(1, "Leo", "Cobb", "/leo.jpg")),
+                cast = listOf(CastMember(1, "credit-1", "Leo", "Cobb", "/leo.jpg")),
                 runtime = 148,
                 tagline = "Your mind is the scene of the crime.",
                 director = "Christopher Nolan",
@@ -108,4 +126,35 @@ class MovieUiMapperTest {
 
         result shouldBeEqualTo expectedMovie
     }
+
+    @Test
+    fun `GIVEN one person with multiple credits WHEN toUi THEN preserves every credit identity`() {
+        val cast =
+            listOf(
+                CastMember(1, "credit-1", "Leo", "Cobb", "/leo.jpg"),
+                CastMember(1, "credit-2", "Leo", "Mr. Charles", "/leo.jpg"),
+            )
+
+        val result = movieWithCast(cast).toUi()
+
+        result.cast.map { member -> member.creditId } shouldBeEqualTo listOf("credit-1", "credit-2")
+    }
+
+    private fun movieWithCast(cast: List<CastMember>) =
+        Movie(
+            id = 123,
+            title = "Inception",
+            overview = "Overview",
+            posterPath = null,
+            backdropPath = null,
+            releaseDate = null,
+            popularity = 0.0,
+            voteAverage = 0.0,
+            voteCount = 0,
+            genres = emptyList(),
+            productionCountries = emptyList(),
+            cast = cast,
+            isWatched = false,
+            isInWatchlist = false,
+        )
 }

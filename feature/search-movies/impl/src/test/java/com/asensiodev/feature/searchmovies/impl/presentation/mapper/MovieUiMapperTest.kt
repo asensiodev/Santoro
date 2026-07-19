@@ -97,4 +97,28 @@ class MovieUiMapperTest {
 
         result shouldBeEqualTo expectedMoviesUi
     }
+
+    @Test
+    fun `GIVEN duplicate movie IDs WHEN toUiList THEN returns unique movie IDs`() {
+        val movie =
+            Movie(
+                id = 1,
+                title = "Inception",
+                posterPath = "/inception.jpg",
+                backdropPath = null,
+                overview = "A thief who steals corporate secrets.",
+                releaseDate = "2010-07-16",
+                popularity = 8.3,
+                voteAverage = 8.8,
+                voteCount = 32000,
+                genres = emptyList(),
+                productionCountries = emptyList(),
+                isWatched = false,
+                isInWatchlist = false,
+            )
+
+        val result = listOf(movie, movie.copy(title = "Duplicate")).toUiList()
+
+        result.map { movieUi -> movieUi.id } shouldBeEqualTo listOf(1)
+    }
 }

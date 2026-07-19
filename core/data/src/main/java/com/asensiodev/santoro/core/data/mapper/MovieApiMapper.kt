@@ -45,6 +45,7 @@ fun GenreApiModel.toDomain() =
 fun CastMemberApiModel.toDomain() =
     CastMember(
         id = id,
+        creditId = creditId,
         name = name,
         character = character ?: "",
         profilePath = profilePath,

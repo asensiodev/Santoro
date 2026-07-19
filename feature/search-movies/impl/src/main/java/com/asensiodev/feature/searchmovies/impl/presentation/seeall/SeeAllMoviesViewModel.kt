@@ -120,7 +120,8 @@ internal class SeeAllMoviesViewModel
 
                             _uiState.update { state ->
                                 val updatedMovies =
-                                    if (isInitialLoad) newMovies else state.movies + newMovies
+                                    (if (isInitialLoad) newMovies else state.movies + newMovies)
+                                        .distinctBy { movie -> movie.id }
 
                                 state.copy(
                                     screenState =

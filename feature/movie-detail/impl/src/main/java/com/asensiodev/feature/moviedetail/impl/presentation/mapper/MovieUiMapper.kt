@@ -60,6 +60,7 @@ internal fun MovieUi.toDomain(): Movie =
 private fun CastMember.toUi() =
     CastMemberUi(
         id = id,
+        creditId = creditId,
         name = name,
         character = character,
         profileUrl = profilePath?.let { BASE_PROFILE_URL + it },
@@ -68,6 +69,7 @@ private fun CastMember.toUi() =
 private fun CastMemberUi.toDomain() =
     CastMember(
         id = id,
+        creditId = creditId,
         name = name,
         character = character,
         profilePath = profileUrl?.removePrefix(BASE_PROFILE_URL),

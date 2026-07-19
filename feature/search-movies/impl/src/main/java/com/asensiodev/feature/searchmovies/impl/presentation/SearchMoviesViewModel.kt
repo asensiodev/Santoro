@@ -336,11 +336,13 @@ internal class SearchMoviesViewModel
                     val newMovies = movies.toUiList()
 
                     val updatedResults =
-                        if (isInitialLoad) {
-                            newMovies
-                        } else {
-                            _uiState.value.searchMovieResults + newMovies
-                        }
+                        (
+                            if (isInitialLoad) {
+                                newMovies
+                            } else {
+                                _uiState.value.searchMovieResults + newMovies
+                            }
+                        ).distinctBy { movie -> movie.id }
 
                     val finalState =
                         if (isInitialLoad && newMovies.isEmpty()) {
@@ -638,7 +640,9 @@ internal class SearchMoviesViewModel
                         _uiState.update {
                             it.copy(
                                 isPopularLoadingMore = false,
-                                popularMovies = it.popularMovies + newMovies,
+                                popularMovies =
+                                    (it.popularMovies + newMovies)
+                                        .distinctBy { movie -> movie.id },
                                 currentPopularPage = it.currentPopularPage + NEXT_PAGE,
                                 isPopularEndReached = newMovies.isEmpty(),
                                 isShowingStaleData = it.isShowingStaleData || isStale,

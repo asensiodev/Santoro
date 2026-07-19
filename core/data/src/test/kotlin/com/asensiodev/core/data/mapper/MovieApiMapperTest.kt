@@ -1,9 +1,11 @@
 package com.asensiodev.core.data.mapper
 
+import com.asensiodev.core.domain.model.CastMember
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.ProductionCountry
 import com.asensiodev.santoro.core.data.mapper.toDomain
+import com.asensiodev.santoro.core.data.model.CastMemberApiModel
 import com.asensiodev.santoro.core.data.model.GenreApiModel
 import com.asensiodev.santoro.core.data.model.MovieApiModel
 import com.asensiodev.santoro.core.data.model.ProductionCountryApiModel
@@ -11,6 +13,27 @@ import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.Test
 
 class MovieApiMapperTest {
+    @Test
+    fun `GIVEN a CastMemberApiModel WHEN toDomain THEN preserves credit identity`() {
+        val castMember =
+            CastMemberApiModel(
+                id = 1,
+                creditId = "credit-1",
+                name = "Leo",
+                character = "Cobb",
+                profilePath = "/leo.jpg",
+            )
+
+        castMember.toDomain() shouldBeEqualTo
+            CastMember(
+                id = 1,
+                creditId = "credit-1",
+                name = "Leo",
+                character = "Cobb",
+                profilePath = "/leo.jpg",
+            )
+    }
+
     @Test
     fun `GIVEN a MovieApiModel WHEN toDomain THEN returns expected Movie`() {
         val genreApiModels = listOf(GenreApiModel(1, "Action"), GenreApiModel(2, "Drama"))

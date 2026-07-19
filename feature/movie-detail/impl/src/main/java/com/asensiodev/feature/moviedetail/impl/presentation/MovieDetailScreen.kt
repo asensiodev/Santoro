@@ -972,7 +972,7 @@ private fun CastSection(cast: List<CastMemberUi>) {
             horizontalArrangement = Arrangement.spacedBy(Spacings.spacing16),
             contentPadding = PaddingValues(horizontal = Spacings.spacing16),
         ) {
-            items(cast, key = { actor -> actor.id }) { actor ->
+            items(cast, key = { actor -> actor.creditId }) { actor ->
                 CastMemberItem(actor)
             }
         }

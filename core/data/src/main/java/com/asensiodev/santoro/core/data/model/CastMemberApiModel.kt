@@ -5,6 +5,8 @@ import com.google.gson.annotations.SerializedName
 data class CastMemberApiModel(
     @SerializedName("id")
     val id: Int,
+    @SerializedName("credit_id")
+    val creditId: String,
     @SerializedName("name")
     val name: String,
     @SerializedName("character")

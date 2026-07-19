@@ -202,6 +202,27 @@ class SearchMoviesViewModelTest {
         }
 
     @Test
+    fun `GIVEN duplicate dashboard movie IDs WHEN loading THEN every section has unique IDs`() =
+        runTest {
+            val duplicateMovies = listOf(casinoMovie, casinoMovie.copy(title = "Duplicate"))
+            every { getNowPlayingMoviesUseCase(1) } returns flowOf(Result.success(duplicateMovies))
+            every { getPopularMoviesUseCase(1) } returns flowOf(Result.success(duplicateMovies))
+            every { getTopRatedMoviesUseCase(1) } returns flowOf(Result.success(duplicateMovies))
+            every { getUpcomingMoviesUseCase(1) } returns flowOf(Result.success(duplicateMovies))
+            every { getTrendingMoviesUseCase(1) } returns flowOf(Result.success(duplicateMovies))
+
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            state.nowPlayingMovies.map { movie -> movie.id } shouldBeEqualTo listOf(casinoMovie.id)
+            state.popularMovies.map { movie -> movie.id } shouldBeEqualTo listOf(casinoMovie.id)
+            state.topRatedMovies.map { movie -> movie.id } shouldBeEqualTo listOf(casinoMovie.id)
+            state.upcomingMovies.map { movie -> movie.id } shouldBeEqualTo listOf(casinoMovie.id)
+            state.trendingMovies.map { movie -> movie.id } shouldBeEqualTo listOf(casinoMovie.id)
+        }
+
+    @Test
     fun `GIVEN dashboard content WHEN refresh fails THEN keeps content and shows stale banner`() =
         runTest {
             var shouldFail = false
@@ -318,6 +339,47 @@ class SearchMoviesViewModelTest {
             advanceUntilIdle()
 
             viewModel.uiState.value.isShowingStaleData shouldBeEqualTo true
+        }
+
+    @Test
+    fun `GIVEN search page 2 repeats a movie WHEN loading more THEN movie IDs remain unique`() =
+        runTest {
+            val secondMovie = casinoMovie.copy(id = 2, title = "Casino Royale")
+            every { searchMoviesUseCase("casino", 1) } returns
+                flowOf(Result.success(listOf(casinoMovie)))
+            every { searchMoviesUseCase("casino", 2) } returns
+                flowOf(Result.success(listOf(casinoMovie, secondMovie)))
+
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+            viewModel.process(SearchMoviesIntent.UpdateQuery("casino"))
+            testDispatcher.scheduler.advanceTimeBy(600)
+            advanceUntilIdle()
+            viewModel.process(SearchMoviesIntent.LoadMoreSearchResults)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.searchMovieResults
+                .map { movie -> movie.id } shouldBeEqualTo
+                listOf(casinoMovie.id, secondMovie.id)
+        }
+
+    @Test
+    fun `GIVEN popular page 2 repeats a movie WHEN loading more THEN movie IDs remain unique`() =
+        runTest {
+            val secondMovie = casinoMovie.copy(id = 2, title = "Casino Royale")
+            every { getPopularMoviesUseCase(1) } returns
+                flowOf(Result.success(listOf(casinoMovie)))
+            every { getPopularMoviesUseCase(2) } returns
+                flowOf(Result.success(listOf(casinoMovie, secondMovie)))
+
+            viewModel.process(SearchMoviesIntent.LoadInitialData)
+            advanceUntilIdle()
+            viewModel.process(SearchMoviesIntent.LoadMorePopularMovies)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.popularMovies
+                .map { movie -> movie.id } shouldBeEqualTo
+                listOf(casinoMovie.id, secondMovie.id)
         }
 
     @Test

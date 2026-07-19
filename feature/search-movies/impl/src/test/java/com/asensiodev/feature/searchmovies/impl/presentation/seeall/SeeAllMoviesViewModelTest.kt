@@ -172,6 +172,24 @@ class SeeAllMoviesViewModelTest {
         }
 
     @Test
+    fun `GIVEN page 2 repeats a movie WHEN LoadMore THEN movie IDs remain unique`() =
+        runTest {
+            val secondMovie = sampleMovie.copy(id = 2, title = "Interstellar")
+            every { getTrendingMoviesUseCase(1) } returns flowOf(Result.success(listOf(sampleMovie)))
+            every { getTrendingMoviesUseCase(2) } returns
+                flowOf(Result.success(listOf(sampleMovie, secondMovie)))
+            createViewModel(SectionType.TRENDING)
+
+            viewModel.process(SeeAllMoviesIntent.LoadInitial)
+            advanceUntilIdle()
+            viewModel.process(SeeAllMoviesIntent.LoadMore)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.movies
+                .map { movie -> movie.id } shouldBeEqualTo listOf(1, 2)
+        }
+
+    @Test
     fun `GIVEN loaded page 1 WHEN LoadMore returns empty THEN endReached is true`() =
         runTest {
             every { getTrendingMoviesUseCase(1) } returns flowOf(Result.success(listOf(sampleMovie)))

@@ -13,7 +13,8 @@ internal fun Movie.toUi(): MovieUi =
         genreIds = genres.map { it.id },
     )
 
-internal fun List<Movie>.toUiList(): List<MovieUi> = this.map { it.toUi() }
+internal fun List<Movie>.toUiList(): List<MovieUi> =
+    distinctBy { movie -> movie.id }.map { movie -> movie.toUi() }
 
 private const val BASE_POSTER_URL = "https://image.tmdb.org/t/p/w500"
 private const val BASE_BACKDROP_URL = "https://image.tmdb.org/t/p/w780"
