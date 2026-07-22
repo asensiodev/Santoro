@@ -1,3 +1,5 @@
+import kotlinx.kover.gradle.plugin.dsl.AggregationType
+import kotlinx.kover.gradle.plugin.dsl.CoverageUnit
 import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -34,6 +36,102 @@ subprojects {
         }
         filter {
             exclude("**/generated/**")
+        }
+    }
+}
+
+dependencies {
+    kover(project(":app"))
+    kover(project(":core:auth"))
+    kover(project(":core:build-config"))
+    kover(project(":core:data"))
+    kover(project(":core:database"))
+    kover(project(":core:design-system"))
+    kover(project(":core:domain"))
+    kover(project(":core:network"))
+    kover(project(":core:sync"))
+    kover(project(":core:ui"))
+    kover(project(":feature:login:api"))
+    kover(project(":feature:login:impl"))
+    kover(project(":feature:movie-detail:api"))
+    kover(project(":feature:movie-detail:impl"))
+    kover(project(":feature:search-movies:api"))
+    kover(project(":feature:search-movies:impl"))
+    kover(project(":feature:settings:api"))
+    kover(project(":feature:settings:impl"))
+    kover(project(":feature:watched-movies:api"))
+    kover(project(":feature:watched-movies:impl"))
+    kover(project(":feature:watchlist:api"))
+    kover(project(":feature:watchlist:impl"))
+    kover(project(":library:observability:api"))
+    kover(project(":library:observability:impl"))
+    kover(project(":library:remote-config:api"))
+    kover(project(":library:remote-config:impl"))
+    kover(project(":library:secure-storage:api"))
+    kover(project(":library:secure-storage:impl"))
+}
+
+kover {
+    reports {
+        filters {
+            excludes {
+                classes(
+                    "*.BuildConfig",
+                    "*.R",
+                    "*.R\$*",
+                    "*.Manifest",
+                    "*.Manifest\$*",
+                    "*ComposableSingletons*",
+                    "*Dagger*",
+                    "*Hilt_*",
+                    "*_Factory",
+                    "*_Factory\$*",
+                    "*_MembersInjector",
+                    "*Database_Impl*",
+                    "*Dao_Impl*",
+                    "*.di.*",
+                )
+                annotatedBy(
+                    "androidx.compose.runtime.Composable",
+                    "dagger.internal.DaggerGenerated",
+                )
+                inheritedFrom(
+                    "android.app.Application",
+                    "androidx.activity.ComponentActivity",
+                )
+            }
+        }
+        total {
+            xml {
+                xmlFile =
+                    layout.buildDirectory
+                        .file("reports/kover/report.xml")
+                        .get()
+                        .asFile
+            }
+            html {
+                htmlDir =
+                    layout.buildDirectory
+                        .dir("reports/kover/html")
+                        .get()
+                        .asFile
+            }
+            log {
+                header = "Santoro aggregate coverage"
+                format = "<entity>: <value>%"
+            }
+            verify {
+                rule("Aggregate line coverage") {
+                    minBound(75)
+                }
+                rule("Aggregate branch coverage") {
+                    minBound(
+                        71,
+                        CoverageUnit.BRANCH,
+                        AggregationType.COVERED_PERCENTAGE,
+                    )
+                }
+            }
         }
     }
 }

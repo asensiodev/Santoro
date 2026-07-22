@@ -33,18 +33,22 @@ jobs:
             command: ./gradlew ktlintCheck detekt
             firebase: false
             reports: false
-          - name: Unit tests
+            coverage: false
+          - name: Unit tests and coverage
             command: >-
-              ./gradlew testDebugUnitTest
+              ./gradlew
+              :koverXmlReport
+              :koverHtmlReport
+              :koverVerify
               :architecture-tests:test
-              :core:data:test
-              :core:domain:test
             firebase: true
             reports: true
+            coverage: true
           - name: Debug build
             command: ./gradlew assembleDebug
             firebase: true
             reports: false
+            coverage: false
 
     steps:
       - name: Check out repository
@@ -81,6 +85,34 @@ jobs:
 
       - name: Run ${{ matrix.name }}
         run: ${{ matrix.command }}
+
+      - name: Add coverage summary
+        if: success() && matrix.coverage
+        run: |
+          printf '### Aggregate coverage\n\n```text\n' >> "$GITHUB_STEP_SUMMARY"
+          ./gradlew -q :koverLog >> "$GITHUB_STEP_SUMMARY"
+          printf '```\n' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage reports
+        if: always() && matrix.coverage
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage-reports
+          path: |
+            build/reports/kover/report.xml
+            build/reports/kover/html/**
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload coverage to Codecov
+        if: success() && matrix.coverage
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: build/reports/kover/report.xml
+          disable_search: true
+          flags: unit
+          fail_ci_if_error: false
 
       - name: Upload test reports
         if: failure() && matrix.reports
