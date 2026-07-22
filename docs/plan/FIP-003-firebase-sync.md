@@ -21,7 +21,7 @@
 
 Before any phase can be executed, the Firebase Console setup must be complete.
 
-- [x] Complete **all steps** in [`docs/guides/GUIDE-firestore-setup.md`](../guides/GUIDE-firestore-setup.md)
+- [x] Complete the required Firebase Console setup
 - [x] Firestore database is created and in **Production mode**
 - [x] Security rules are published
 - [x] `firebase-firestore` dependency added to `libs.versions.toml`

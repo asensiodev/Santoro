@@ -39,3 +39,4 @@ render.experimental.xml
 
 # Local closed testing notes
 docs/closed-testing-feedback.md
+docs/guides/GUIDE-ci-cd-release.md
