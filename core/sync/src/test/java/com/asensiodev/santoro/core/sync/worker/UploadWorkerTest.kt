@@ -10,6 +10,8 @@ import com.asensiodev.core.testing.verifyNever
 import com.asensiodev.library.observability.api.ObservabilityTracker
 import com.asensiodev.santoro.core.sync.domain.repository.SyncRepository
 import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.flowOf
@@ -29,6 +31,7 @@ class UploadWorkerTest {
 
     @BeforeEach
     fun setUp() {
+        every { workerParams.inputData.getInt(UploadWorker.MOVIE_ID_KEY, -1) } returns 42
         sut = UploadWorker(context, workerParams, authRepository, syncRepository, observabilityTracker)
     }
 
@@ -47,11 +50,13 @@ class UploadWorkerTest {
         runTest {
             val user = SantoroUser("uid123", null, null, null, true)
             coEvery { authRepository.currentUser } returns flowOf(user)
-            coEvery { syncRepository.uploadPendingChanges("uid123") } returns kotlin.Result.success(Unit)
+            coEvery { syncRepository.uploadMovie("uid123", 42) } returns kotlin.Result.success(Unit)
 
             val result = sut.doWork()
 
             result shouldBeEqualTo Result.success()
+            coVerify(exactly = 1) { syncRepository.uploadMovie("uid123", 42) }
+            coVerify(exactly = 0) { syncRepository.uploadPendingChanges(any()) }
         }
 
     @Test
@@ -60,7 +65,7 @@ class UploadWorkerTest {
             val user = SantoroUser("uid123", null, null, null, true)
             coEvery { authRepository.currentUser } returns flowOf(user)
             coEvery {
-                syncRepository.uploadPendingChanges("uid123")
+                syncRepository.uploadMovie("uid123", 42)
             } returns kotlin.Result.failure(Exception("network"))
 
             val result = sut.doWork()
@@ -74,7 +79,7 @@ class UploadWorkerTest {
             val cancellation = CancellationException("cancelled")
             val user = SantoroUser("uid123", null, null, null, true)
             coEvery { authRepository.currentUser } returns flowOf(user)
-            coEvery { syncRepository.uploadPendingChanges("uid123") } throws cancellation
+            coEvery { syncRepository.uploadMovie("uid123", 42) } throws cancellation
 
             val actual =
                 try {
@@ -87,5 +92,20 @@ class UploadWorkerTest {
             actual shouldBeEqualTo cancellation
             verifyNever { observabilityTracker.trackAction(any(), any()) }
             verifyNever { observabilityTracker.recordError(any(), any(), any()) }
+        }
+
+    @Test
+    fun `GIVEN legacy work without movie id WHEN doWork THEN uploads pending changes`() =
+        runTest {
+            every { workerParams.inputData.getInt(UploadWorker.MOVIE_ID_KEY, -1) } returns -1
+            val user = SantoroUser("uid123", null, null, null, true)
+            coEvery { authRepository.currentUser } returns flowOf(user)
+            coEvery { syncRepository.uploadPendingChanges("uid123") } returns kotlin.Result.success(Unit)
+
+            val result = sut.doWork()
+
+            result shouldBeEqualTo Result.success()
+            coVerify(exactly = 1) { syncRepository.uploadPendingChanges("uid123") }
+            coVerify(exactly = 0) { syncRepository.uploadMovie(any(), any()) }
         }
 }

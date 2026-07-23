@@ -7,7 +7,7 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
-import com.google.firebase.firestore.WriteBatch
+import com.google.firebase.firestore.Transaction
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -24,7 +24,8 @@ class FirestoreMovieDataSourceImplTest {
     private val userDocument: DocumentReference = mockk()
     private val moviesCollection: CollectionReference = mockk()
     private val movieDocument: DocumentReference = mockk()
-    private val batch: WriteBatch = mockk()
+    private val transaction: Transaction = mockk()
+    private val remoteDocument: DocumentSnapshot = mockk()
 
     private lateinit var sut: FirestoreMovieDataSourceImpl
 
@@ -36,43 +37,73 @@ class FirestoreMovieDataSourceImplTest {
         every { usersCollection.document(any()) } returns userDocument
         every { userDocument.collection("movies") } returns moviesCollection
         every { moviesCollection.document(any()) } returns movieDocument
-        every { firestore.batch() } returns batch
-        every { batch.set(any<DocumentReference>(), any<Map<String, Any?>>()) } returns batch
+        every { transaction.get(movieDocument) } returns remoteDocument
+        every { transaction.set(movieDocument, any<Map<String, Any?>>()) } returns transaction
+        every { firestore.runTransaction<Unit>(any()) } answers {
+            val function = firstArg<Transaction.Function<Unit>>()
+            Tasks.forResult(function.apply(transaction))
+        }
     }
 
     @Test
     fun `GIVEN valid entity WHEN uploadMovie THEN returns success`() =
         runTest {
             val entity = SyncMockUtils.createSyncEntity(movieId = 1, isWatched = true)
-            every { batch.commit() } returns Tasks.forResult(null)
+            every { remoteDocument.getLong("updatedAt") } returns null
 
             val result = sut.uploadMovie(uid = "uid123", entity = entity)
 
             result.isSuccess.shouldBeTrue()
+            verify(exactly = 1) { transaction.set(movieDocument, any<Map<String, Any?>>()) }
         }
 
     @Test
-    fun `GIVEN valid entities WHEN uploadMovies THEN commits one batch`() =
+    fun `GIVEN remote movie is newer WHEN uploadMovie THEN does not overwrite it`() =
+        runTest {
+            val entity = SyncMockUtils.createSyncEntity(movieId = 1, updatedAt = 1000L)
+            every { remoteDocument.getLong("updatedAt") } returns 2000L
+
+            val result = sut.uploadMovie(uid = "uid123", entity = entity)
+
+            result.isSuccess.shouldBeTrue()
+            verify(exactly = 0) { transaction.set(any(), any<Map<String, Any?>>()) }
+        }
+
+    @Test
+    fun `GIVEN local movie is newer WHEN uploadMovie THEN overwrites remote movie`() =
+        runTest {
+            val entity = SyncMockUtils.createSyncEntity(movieId = 1, updatedAt = 2000L)
+            every { remoteDocument.getLong("updatedAt") } returns 1000L
+
+            val result = sut.uploadMovie(uid = "uid123", entity = entity)
+
+            result.isSuccess.shouldBeTrue()
+            verify(exactly = 1) { transaction.set(movieDocument, any<Map<String, Any?>>()) }
+        }
+
+    @Test
+    fun `GIVEN valid entities WHEN uploadMovies THEN uploads every movie`() =
         runTest {
             val entities =
                 listOf(
                     SyncMockUtils.createSyncEntity(movieId = 1, isWatched = true),
                     SyncMockUtils.createSyncEntity(movieId = 2, isInWatchlist = true),
                 )
-            every { batch.commit() } returns Tasks.forResult(null)
+            every { remoteDocument.getLong("updatedAt") } returns null
 
             val result = sut.uploadMovies(uid = "uid123", entities = entities)
 
             result.isSuccess.shouldBeTrue()
-            verify(exactly = 2) { batch.set(any<DocumentReference>(), any<Map<String, Any?>>()) }
-            verify(exactly = 1) { batch.commit() }
+            verify(exactly = 2) { transaction.set(any<DocumentReference>(), any<Map<String, Any?>>()) }
         }
 
     @Test
     fun `GIVEN Firestore throws WHEN uploadMovie THEN returns failure`() =
         runTest {
             val entity = SyncMockUtils.createSyncEntity(movieId = 1)
-            every { batch.commit() } returns Tasks.forException(Exception("Firestore error"))
+            every {
+                firestore.runTransaction<Unit>(any())
+            } returns Tasks.forException(Exception("Firestore error"))
 
             val result = sut.uploadMovie(uid = "uid123", entity = entity)
 
@@ -83,7 +114,9 @@ class FirestoreMovieDataSourceImplTest {
     fun `GIVEN upload is cancelled WHEN uploadMovie THEN cancellation propagates`() =
         runTest {
             val entity = SyncMockUtils.createSyncEntity(movieId = 1)
-            every { batch.commit() } returns Tasks.forException(CancellationException())
+            every {
+                firestore.runTransaction<Unit>(any())
+            } returns Tasks.forException(CancellationException())
 
             val exception =
                 try {

@@ -8,7 +8,7 @@ import javax.inject.Inject
 
 private const val COLLECTION_USERS = "users"
 private const val COLLECTION_MOVIES = "movies"
-private const val FIRESTORE_BATCH_LIMIT = 500
+private const val FIRESTORE_TRANSACTION_LIMIT = 500
 
 private const val FIELD_MOVIE_ID = "movieId"
 private const val FIELD_TITLE = "title"
@@ -28,38 +28,57 @@ internal class FirestoreMovieDataSourceImpl
         override suspend fun uploadMovie(
             uid: String,
             entity: MovieSyncEntity,
-        ): Result<Unit> = uploadMovies(uid, listOf(entity))
-
-        override suspend fun uploadMovies(
-            uid: String,
-            entities: List<MovieSyncEntity>,
         ): Result<Unit> =
             try {
-                val moviesCollection =
-                    firestore
-                        .collection(COLLECTION_USERS)
-                        .document(uid)
-                        .collection(COLLECTION_MOVIES)
-                entities
-                    .chunked(FIRESTORE_BATCH_LIMIT)
-                    .forEach { chunk ->
-                        val batch = firestore.batch()
-                        chunk.forEach { entity ->
-                            batch.set(
-                                moviesCollection.document(entity.movieId.toString()),
-                                entity.toData(),
-                            )
-                        }
-                        batch
-                            .commit()
-                            .await()
-                    }
+                uploadEntities(uid, listOf(entity))
                 Result.success(Unit)
             } catch (exception: CancellationException) {
                 throw exception
             } catch (exception: Exception) {
                 Result.failure(exception)
             }
+
+        override suspend fun uploadMovies(
+            uid: String,
+            entities: List<MovieSyncEntity>,
+        ): Result<Unit> =
+            try {
+                entities.chunked(FIRESTORE_TRANSACTION_LIMIT).forEach { chunk ->
+                    uploadEntities(uid, chunk)
+                }
+                Result.success(Unit)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                Result.failure(exception)
+            }
+
+        private suspend fun uploadEntities(
+            uid: String,
+            entities: List<MovieSyncEntity>,
+        ) {
+            val moviesCollection =
+                firestore
+                    .collection(COLLECTION_USERS)
+                    .document(uid)
+                    .collection(COLLECTION_MOVIES)
+            val movieDocuments =
+                entities.map { entity -> moviesCollection.document(entity.movieId.toString()) }
+            firestore
+                .runTransaction { transaction ->
+                    val remoteUpdatedAtValues =
+                        movieDocuments.map { document ->
+                            transaction.get(document).getLong(FIELD_UPDATED_AT)
+                        }
+                    entities.forEachIndexed { index, entity ->
+                        val remoteUpdatedAt = remoteUpdatedAtValues[index]
+                        if (remoteUpdatedAt == null || entity.updatedAt > remoteUpdatedAt) {
+                            transaction.set(movieDocuments[index], entity.toData())
+                        }
+                    }
+                    Unit
+                }.await()
+        }
 
         private fun MovieSyncEntity.toData(): Map<String, Any?> =
             mapOf(

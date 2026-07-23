@@ -23,8 +23,14 @@ internal class UploadWorker
         private val observabilityTracker: ObservabilityTracker = NoOpObservabilityTracker,
     ) : CoroutineWorker(context, params) {
         override suspend fun doWork(): Result {
+            val movieId = inputData.getInt(MOVIE_ID_KEY, INVALID_MOVIE_ID)
             val uid = authRepository.currentUser.firstOrNull()?.uid ?: return Result.success()
-            val syncResult = syncRepository.uploadPendingChanges(uid)
+            val syncResult =
+                if (movieId == INVALID_MOVIE_ID) {
+                    syncRepository.uploadPendingChanges(uid)
+                } else {
+                    syncRepository.uploadMovie(uid, movieId)
+                }
             return syncResult.fold(
                 onSuccess = {
                     observabilityTracker.trackAction(SYNC_UPLOAD_SUCCESS)
@@ -37,8 +43,11 @@ internal class UploadWorker
             )
         }
 
-        private companion object {
-            const val SYNC_UPLOAD_SUCCESS = "sync_upload_success"
-            const val SYNC_UPLOAD_FAILED = "sync_upload_failed"
+        companion object {
+            private const val INVALID_MOVIE_ID = -1
+            private const val SYNC_UPLOAD_SUCCESS = "sync_upload_success"
+            private const val SYNC_UPLOAD_FAILED = "sync_upload_failed"
+
+            internal const val MOVIE_ID_KEY = "movie_id"
         }
     }

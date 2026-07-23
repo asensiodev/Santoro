@@ -8,6 +8,7 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.asensiodev.santoro.core.sync.worker.SyncWorker
 import com.asensiodev.santoro.core.sync.worker.UploadWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -64,6 +65,7 @@ class WorkManagerSyncScheduler
             val request =
                 OneTimeWorkRequestBuilder<UploadWorker>()
                     .setConstraints(networkConstraints)
+                    .setInputData(workDataOf(UploadWorker.MOVIE_ID_KEY to movieId))
                     .addTag("$UPLOAD_WORK_NAME_PREFIX$movieId")
                     .build()
 

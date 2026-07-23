@@ -17,6 +17,28 @@ internal class DefaultSyncRepository
     ) : SyncRepository {
         private val gson = Gson()
 
+        override suspend fun uploadMovie(
+            uid: String,
+            movieId: Int,
+        ): Result<Unit> {
+            val movieResult = databaseRepository.getMovieById(movieId).rethrowCancellation()
+            val movie = movieResult.getOrNull()
+            return when {
+                movieResult.isFailure ->
+                    Result.failure(
+                        movieResult.exceptionOrNull() ?: Exception("Failed to get movie for sync"),
+                    )
+
+                movie == null -> Result.success(Unit)
+                else ->
+                    firestoreDataSource
+                        .uploadMovie(
+                            uid,
+                            movie.toSyncEntity(),
+                        ).rethrowCancellation()
+            }
+        }
+
         override suspend fun uploadPendingChanges(uid: String): Result<Unit> {
             val moviesResult = databaseRepository.getMoviesForSync().rethrowCancellation()
             if (moviesResult.isFailure) {
@@ -36,21 +58,22 @@ internal class DefaultSyncRepository
                 return Result.success(Unit)
             }
             val entities =
-                movies.map { movie ->
-                    MovieSyncEntity(
-                        movieId = movie.id,
-                        title = movie.title,
-                        posterPath = movie.posterPath,
-                        genres = gson.toJson(movie.genres),
-                        runtime = movie.runtime,
-                        isWatched = movie.isWatched,
-                        isInWatchlist = movie.isInWatchlist,
-                        watchedAt = movie.watchedAt,
-                        updatedAt = movie.updatedAt,
-                    )
-                }
+                movies.map { movie -> movie.toSyncEntity() }
             return firestoreDataSource.uploadMovies(uid, entities).rethrowCancellation()
         }
+
+        private fun Movie.toSyncEntity() =
+            MovieSyncEntity(
+                movieId = id,
+                title = title,
+                posterPath = posterPath,
+                genres = gson.toJson(genres),
+                runtime = runtime,
+                isWatched = isWatched,
+                isInWatchlist = isInWatchlist,
+                watchedAt = watchedAt,
+                updatedAt = updatedAt,
+            )
 
         override suspend fun downloadAndMerge(uid: String): Result<Unit> {
             val downloadResult = firestoreDataSource.downloadUserMovies(uid).rethrowCancellation()

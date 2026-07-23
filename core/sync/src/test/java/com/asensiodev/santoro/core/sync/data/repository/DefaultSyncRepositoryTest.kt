@@ -151,6 +151,47 @@ class DefaultSyncRepositoryTest {
         }
 
     @Test
+    fun `GIVEN requested movie exists WHEN uploadMovie THEN uploads only that movie`() =
+        runTest {
+            val movie = SyncMockUtils.createMovie(id = 42, isWatched = true)
+            coEvery { databaseRepository.getMovieById(42) } returns Result.success(movie)
+            coEvery { firestoreDataSource.uploadMovie(any(), any()) } returns Result.success(Unit)
+
+            val result = sut.uploadMovie(uid = "uid123", movieId = 42)
+
+            result.isSuccess shouldBeEqualTo true
+            coVerify(exactly = 1) {
+                firestoreDataSource.uploadMovie("uid123", match { it.movieId == 42 })
+            }
+            coVerify(exactly = 0) { databaseRepository.getMoviesForSync() }
+            coVerify(exactly = 0) { firestoreDataSource.uploadMovies(any(), any()) }
+        }
+
+    @Test
+    fun `GIVEN requested movie is missing WHEN uploadMovie THEN returns success without uploading`() =
+        runTest {
+            coEvery { databaseRepository.getMovieById(42) } returns Result.success(null)
+
+            val result = sut.uploadMovie(uid = "uid123", movieId = 42)
+
+            result.isSuccess shouldBeEqualTo true
+            coVerify(exactly = 0) { firestoreDataSource.uploadMovie(any(), any()) }
+        }
+
+    @Test
+    fun `GIVEN requested movie read fails WHEN uploadMovie THEN returns failure`() =
+        runTest {
+            coEvery {
+                databaseRepository.getMovieById(42)
+            } returns Result.failure(Exception("db error"))
+
+            val result = sut.uploadMovie(uid = "uid123", movieId = 42)
+
+            result.isFailure shouldBeEqualTo true
+            coVerify(exactly = 0) { firestoreDataSource.uploadMovie(any(), any()) }
+        }
+
+    @Test
     fun `GIVEN Firestore newer WHEN downloadAndMerge THEN upserts into Room`() =
         runTest {
             val remoteEntity = SyncMockUtils.createSyncEntity(movieId = 1, updatedAt = 2000L)
