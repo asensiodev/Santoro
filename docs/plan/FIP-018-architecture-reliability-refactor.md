@@ -526,7 +526,7 @@ No new feature, API, implementation, or layer module is planned.
     - Performance refactors without a measured baseline.
     - Changing authentication or encryption providers as part of this plan.
 
-- [ ] Add secure-storage tests for normal access, corrupted/invalid key recovery, and data-loss boundaries.
+- [x] Add secure-storage tests for normal access, corrupted/invalid key recovery, and data-loss boundaries.
 - [ ] Narrow encrypted-preference destructive recovery to expected key/storage failures.
 - [ ] Add observability tests for event sanitization, truncation, user clearing, and stale Crashlytics metadata.
 - [ ] Define a telemetry privacy allowlist.

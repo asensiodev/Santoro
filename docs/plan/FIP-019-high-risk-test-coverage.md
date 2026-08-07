@@ -6,7 +6,7 @@
 |------------------------|--------------------------------------------------------------------------|
 | **FIP ID**             | FIP-019                                                                  |
 | **Version**            | 1.0                                                                      |
-| **Status**             | 🟡 Draft                                                                 |
+| **Status**             | 🔵 In Progress                                                           |
 | **PRD ref**            | Internal quality initiative — no PRD feature                             |
 | **Feature**            | Behavioral coverage for high-risk Android and service boundaries        |
 | **Date**               | 2026-08-06                                                               |
@@ -141,11 +141,59 @@ No new Gradle module is planned.
     - Change production behavior or quality thresholds.
     - Delete failing tests or exclusions to create a green baseline.
 
-- [ ] Run all currently affected JVM and instrumented suites and record exact results.
-- [ ] Build a traceability table mapping every goal to production classes, test class, test type, and CI task.
-- [ ] Identify tests already covered by FIP-018 and assign one owning FIP for each shared outcome.
-- [ ] Confirm test dependencies already available before adding new version-catalog entries.
-- [ ] Record any pre-existing failure as a blocker rather than weakening the planned assertion.
+- [x] Run all currently affected JVM and instrumented suites and record exact results.
+- [x] Build a traceability table mapping every goal to production classes, test class, test type, and CI task.
+- [x] Identify tests already covered by FIP-018 and assign one owning FIP for each shared outcome.
+- [x] Confirm test dependencies already available before adding new version-catalog entries.
+- [x] Record any pre-existing failure as a blocker rather than weakening the planned assertion.
+
+#### Phase 1 Baseline
+
+| Suite | Command | Result |
+|-------|---------|--------|
+| Affected JVM suites | `./gradlew :core:auth:testDebugUnitTest :core:database:testDebugUnitTest :core:network:testDebugUnitTest :core:sync:testDebugUnitTest :feature:search-movies:impl:testDebugUnitTest :library:secure-storage:impl:testDebugUnitTest :app:testDebugUnitTest` | ✅ Passed on 2026-08-07; 494 tasks, 1 executed and 493 up-to-date |
+| Database, secure-storage, and app instrumentation | `./gradlew :core:database:connectedDebugAndroidTest :library:secure-storage:impl:connectedDebugAndroidTest :app:connectedDebugAndroidTest` | ✅ Passed on 2026-08-07 using `Pixel_9a` (`sdk_gphone16k_arm64`, API 37): 6 database tests, 0 secure-storage tests, and 0 app tests |
+
+The first instrumentation attempt found no connected device. After starting the available `Pixel_9a` AVD, the complete command passed. During the first compilation, a Kotlin daemon `NoSuchMethodError` occurred and Gradle's non-daemon fallback compiled the suite successfully; it did not recur or cause a test failure.
+
+#### Traceability
+
+| Goal | Production contract | Existing or planned test | Type and task |
+|------|---------------------|--------------------------|---------------|
+| Secure persistence | `EncryptedPrefsSecureKeyValueStore` | Planned `EncryptedPrefsSecureKeyValueStoreTest` | Instrumented, `:library:secure-storage:impl:connectedDebugAndroidTest` |
+| Recent-search persistence | `DataStoreRecentSearchesDataSource` | Planned `DataStoreRecentSearchesDataSourceTest`; existing use-case tests remain repository-level only | JVM local integration, `:feature:search-movies:impl:testDebugUnitTest` |
+| Firebase authentication | `FirebaseAuthDataSource` | Expand existing `FirebaseAuthDataSourceTest`; repository tests already cover wrapped cancellation | JVM, `:core:auth:testDebugUnitTest` |
+| Credential parsing | `GoogleSignInHelper` | Planned `GoogleSignInHelperTest` | JVM or Robolectric pending deterministic-seam evidence, `:core:auth:testDebugUnitTest` |
+| Work scheduling | `WorkManagerSyncScheduler` | Planned `WorkManagerSyncSchedulerTest`; existing worker tests cover execution rather than request construction | JVM or Robolectric, `:core:sync:testDebugUnitTest` |
+| HTTP authorization and locale | `AuthorizationInterceptor`, `LanguageInterceptor`, `ApiKeyAuthenticator`, assembled `OkHttpClient` | Planned interceptor/chain tests; existing `ApiKeyAuthenticatorTest` owns retry and cancellation behavior | JVM with MockWebServer, `:core:network:testDebugUnitTest` |
+| Room migrations | `SantoroRoomDatabase` migrations 1–5 | Planned `SantoroRoomDatabaseMigrationTest`; version-1 schema remains unavailable | Instrumented, `:core:database:connectedDebugAndroidTest` |
+| DAO and browse-cache SQL | `MovieDao`, `BrowseCacheDao` | Expand `MovieDaoTest` and add `BrowseCacheDaoTest`; mocked repository/data-source tests do not cover SQLite semantics | Instrumented, `:core:database:connectedDebugAndroidTest` |
+| Authentication routing | `MainActivity`, `SantoroNavHost` | Planned `MainActivityAuthenticationJourneyTest` | Hilt/Compose instrumentation, `:app:connectedDebugAndroidTest` |
+| Deep links and navigation | `MainActivity`, `DeepLinkHandler`, `SantoroTabNavGraph`, `SantoroMainTabComponent` | Planned app journey tests; existing `DeepLinkHandlerTest` owns parser-only cases | Hilt/Compose instrumentation, `:app:connectedDebugAndroidTest` |
+
+#### Dependency Inventory
+
+| Dependency or support | Baseline status |
+|-----------------------|-----------------|
+| WorkManager testing | Already catalogued as `workmanager-testing` and used by `core/sync` test configuration |
+| Compose UI test, AndroidX JUnit, Espresso, Kluent Android | Already supplied to Android modules by convention plugins |
+| DataStore and coroutine testing | Existing Search production dependency and shared JVM test configuration are sufficient for temporary-file tests |
+| Firebase Auth, Google Tasks, MockK, coroutine testing | Already available to `core/auth` JVM tests |
+| MockWebServer | Missing; add only to `core/network` when Phase 5 starts |
+| Room testing | Missing; add only to `core/database` instrumented tests when Phase 6 starts |
+| Robolectric | Missing; add only if Phase 3 or 4 proves a local Android runtime is required |
+| Hilt Android testing, `kspAndroidTest`, navigation testing, Hilt test runner | Missing from `app`; add the minimum module-local setup when Phase 7 starts |
+
+#### Shared Ownership with FIP-018
+
+| Outcome | Owning implementation |
+|---------|-----------------------|
+| Secure-storage behavioral characterization | FIP-019; the same suite may satisfy FIP-018 Phase 12, while any production recovery narrowing remains owned by FIP-018 unless a FIP-019 defect amendment says otherwise |
+| Authentication and authenticator cancellation | Existing FIP-018 tests; FIP-019 expands success, failure, listener, malformed-result, and request contracts without duplicating cancellation cases |
+| WorkManager request construction | FIP-019; FIP-018 may later own the domain-facing scheduler abstraction |
+| Room migrations and real SQL semantics | FIP-019 |
+| Feature effect lifecycle and deep-link process restoration | FIP-018; FIP-019 tests only app assembly and navigation outcomes |
+| CI visibility and reports | First completed implementation satisfies both plans; FIP-019 must not change thresholds owned by FIP-018 |
 
 ### Phase 2 — Secure and Recent-Search Persistence
 
@@ -164,12 +212,14 @@ No new Gradle module is planned.
     - Change encryption providers or persist test credentials.
     - Add network, Firebase, or database calls.
 
-- [ ] Add direct tests for secure-store put/get, overwrite, remove, clear, missing keys, and instance recreation.
-- [ ] Verify the documented encrypted-preference recovery path and its data-loss boundary using an isolated test context.
-- [ ] Add direct tests for recent-search insertion, deduplication, recency ordering, maximum-size truncation, clear, and instance recreation.
-- [ ] Define and test the existing malformed/blank JSON contract without silently inventing recovery behavior.
-- [ ] Add concurrency coverage for overlapping DataStore edits where the public API permits them.
-- [ ] Keep test files and temporary state isolated so execution order cannot affect results.
+- [x] Add direct tests for secure-store put/get, overwrite, remove, clear, missing keys, and instance recreation.
+- [x] Verify the documented encrypted-preference recovery path and its data-loss boundary using an isolated test context.
+- [x] Add direct tests for recent-search insertion, deduplication, recency ordering, maximum-size truncation, clear, and instance recreation.
+- [x] Define and test the existing malformed/blank JSON contract without silently inventing recovery behavior.
+- [x] Add concurrency coverage for overlapping DataStore edits where the public API permits them.
+- [x] Keep test files and temporary state isolated so execution order cannot affect results.
+
+Phase 2 preserves the existing malformed-data contract: blank JSON reads as an empty list; malformed JSON fails the read Flow with `JsonSyntaxException`; a later `saveSearch` recovers from either value and starts a new history. Secure-storage corruption coverage proves that an invalid encrypted keyset deletes all values in that isolated preference file before recreating usable encrypted storage.
 
 ### Phase 3 — Authentication and Credential Adapters
 
@@ -321,9 +371,9 @@ No new Gradle module is planned.
 
 | What | Result | Notes |
 |------|--------|-------|
-| Existing baseline suites | ⏳ | Record commands and results before implementation |
+| Existing baseline suites | ✅ | Affected JVM suites passed; instrumented baseline passed on a local API 37 AVD with 6 database tests and no current secure-storage/app tests |
 | Authentication adapter tests | ⏳ | Record JVM/instrumented task and cases |
-| Secure/DataStore persistence tests | ⏳ | Record storage isolation and task |
+| Secure/DataStore persistence tests | ✅ | 7 secure-storage instrumented tests and 8 DataStore JVM tests passed on 2026-08-07; preference files and DataStore directories are isolated and removed after each test |
 | WorkManager scheduler tests | ⏳ | Record test-driver/task result |
 | HTTP contract tests | ⏳ | Confirm loopback-only traffic |
 | Room migration and DAO tests | ⏳ | Record validated source/target versions |
@@ -340,6 +390,7 @@ No new Gradle module is planned.
 | # | Blocker | Raised | Resolved | Impact |
 |---|---------|--------|----------|--------|
 | 1 | Version-1 Room schema is not currently checked in | 2026-08-06 | Open | `MIGRATION_1_2` cannot be claimed as validated until a trustworthy source schema/fixture is established |
+| 2 | No Android device or emulator was connected for the first local baseline attempt | 2026-08-07 | 2026-08-07 | Resolved by starting the available `Pixel_9a` API 37 AVD; CI API 35 execution remains required for final verification |
 
 ---
 
@@ -391,3 +442,5 @@ No new Gradle module is planned.
 | Version | Date       | Summary |
 |---------|------------|---------|
 | 1.0     | 2026-08-06 | Initial high-risk Android and service-boundary test plan |
+| 1.1     | 2026-08-07 | Completed Phase 1 inventory, dependency audit, ownership mapping, and JVM/instrumented baselines |
+| 1.2     | 2026-08-07 | Completed Phase 2 secure-storage and recent-search persistence coverage |
