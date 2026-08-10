@@ -154,7 +154,7 @@ No new Gradle module is planned.
 | Affected JVM suites | `./gradlew :core:auth:testDebugUnitTest :core:database:testDebugUnitTest :core:network:testDebugUnitTest :core:sync:testDebugUnitTest :feature:search-movies:impl:testDebugUnitTest :library:secure-storage:impl:testDebugUnitTest :app:testDebugUnitTest` | ✅ Passed on 2026-08-07; 494 tasks, 1 executed and 493 up-to-date |
 | Database, secure-storage, and app instrumentation | `./gradlew :core:database:connectedDebugAndroidTest :library:secure-storage:impl:connectedDebugAndroidTest :app:connectedDebugAndroidTest` | ✅ Passed on 2026-08-07 using `Pixel_9a` (`sdk_gphone16k_arm64`, API 37): 6 database tests, 0 secure-storage tests, and 0 app tests |
 
-The first instrumentation attempt found no connected device. After starting the available `Pixel_9a` AVD, the complete command passed. During the first compilation, a Kotlin daemon `NoSuchMethodError` occurred and Gradle's non-daemon fallback compiled the suite successfully; it did not recur or cause a test failure.
+The first instrumentation attempt found no connected device. After starting the available `Pixel_9a` AVD, the complete command passed. A Kotlin daemon `NoSuchMethodError` occurred during the baseline and recurred during Phase 3; Gradle's non-daemon fallback compiled the affected suites successfully and no test failed because of it.
 
 #### Traceability
 
@@ -163,7 +163,7 @@ The first instrumentation attempt found no connected device. After starting the 
 | Secure persistence | `EncryptedPrefsSecureKeyValueStore` | Planned `EncryptedPrefsSecureKeyValueStoreTest` | Instrumented, `:library:secure-storage:impl:connectedDebugAndroidTest` |
 | Recent-search persistence | `DataStoreRecentSearchesDataSource` | Planned `DataStoreRecentSearchesDataSourceTest`; existing use-case tests remain repository-level only | JVM local integration, `:feature:search-movies:impl:testDebugUnitTest` |
 | Firebase authentication | `FirebaseAuthDataSource` | Expand existing `FirebaseAuthDataSourceTest`; repository tests already cover wrapped cancellation | JVM, `:core:auth:testDebugUnitTest` |
-| Credential parsing | `GoogleSignInHelper` | Planned `GoogleSignInHelperTest` | JVM or Robolectric pending deterministic-seam evidence, `:core:auth:testDebugUnitTest` |
+| Credential parsing | `GoogleSignInHelper` | `GoogleSignInHelperTest` | Robolectric JVM test through JUnit 4/Vintage, `:core:auth:testDebugUnitTest` |
 | Work scheduling | `WorkManagerSyncScheduler` | Planned `WorkManagerSyncSchedulerTest`; existing worker tests cover execution rather than request construction | JVM or Robolectric, `:core:sync:testDebugUnitTest` |
 | HTTP authorization and locale | `AuthorizationInterceptor`, `LanguageInterceptor`, `ApiKeyAuthenticator`, assembled `OkHttpClient` | Planned interceptor/chain tests; existing `ApiKeyAuthenticatorTest` owns retry and cancellation behavior | JVM with MockWebServer, `:core:network:testDebugUnitTest` |
 | Room migrations | `SantoroRoomDatabase` migrations 1–5 | Planned `SantoroRoomDatabaseMigrationTest`; version-1 schema remains unavailable | Instrumented, `:core:database:connectedDebugAndroidTest` |
@@ -181,7 +181,7 @@ The first instrumentation attempt found no connected device. After starting the 
 | Firebase Auth, Google Tasks, MockK, coroutine testing | Already available to `core/auth` JVM tests |
 | MockWebServer | Missing; add only to `core/network` when Phase 5 starts |
 | Room testing | Missing; add only to `core/database` instrumented tests when Phase 6 starts |
-| Robolectric | Missing; add only if Phase 3 or 4 proves a local Android runtime is required |
+| Robolectric | Added module-locally to `core/auth` after Phase 3 proved that real `Bundle` request and token parsing required a local Android runtime |
 | Hilt Android testing, `kspAndroidTest`, navigation testing, Hilt test runner | Missing from `app`; add the minimum module-local setup when Phase 7 starts |
 
 #### Shared Ownership with FIP-018
@@ -237,13 +237,15 @@ Phase 2 preserves the existing malformed-data contract: blank JSON reads as an e
     - Use real accounts, tokens, client IDs, credentials, or emulator secrets.
     - Change account-switching, deletion, linking, or reauthentication product behavior.
 
-- [ ] Expand `FirebaseAuthDataSourceTest` for auth-state initial/emitted values and listener cleanup.
-- [ ] Cover anonymous sign-in success, expected failure, and cancellation propagation.
-- [ ] Cover Google sign-in success, null/malformed SDK results, expected failure, and cancellation propagation.
-- [ ] Cover anonymous account linking, account collision mapping, missing current user, expected failure, and cancellation propagation.
-- [ ] Cover sign-out and account-deletion success, missing-user, failure, and cancellation contracts.
-- [ ] Add `GoogleSignInHelper` tests for primary credential flow, fallback flow, token parsing, unsupported credential type, cancellation, and expected exceptions.
-- [ ] Assert that tests and logs never include raw credentials or tokens.
+- [x] Expand `FirebaseAuthDataSourceTest` for auth-state initial/emitted values and listener cleanup.
+- [x] Cover anonymous sign-in success, expected failure, and cancellation propagation.
+- [x] Cover Google sign-in success, null/malformed SDK results, expected failure, and cancellation propagation.
+- [x] Cover anonymous account linking, account collision mapping, missing current user, expected failure, and cancellation propagation.
+- [x] Cover sign-out and account-deletion success, missing-user, failure, and cancellation contracts.
+- [x] Add `GoogleSignInHelper` tests for primary credential flow, fallback flow, token parsing, unsupported credential type, cancellation, and expected exceptions.
+- [x] Assert that tests and logs never include raw credentials or tokens.
+
+Phase 3 adds 21 direct `FirebaseAuthDataSource` tests and six Robolectric `GoogleSignInHelper` tests, bringing `core/auth` to 31 passing tests in both debug and release variants. Sign-out has no current-user branch and is covered as direct success, failure, and cancellation propagation; missing-user behavior is covered for linking and deletion. The unsupported-type regression first demonstrated that a custom credential carrying a valid Google bundle was accepted, then added explicit type validation before parsing. Assertions compare token digests, the suite checks captured logs for sensitive fixtures, and generated XML/HTML reports contain neither the synthetic token nor client ID.
 
 ### Phase 4 — WorkManager Scheduling Contract
 
@@ -372,7 +374,7 @@ Phase 2 preserves the existing malformed-data contract: blank JSON reads as an e
 | What | Result | Notes |
 |------|--------|-------|
 | Existing baseline suites | ✅ | Affected JVM suites passed; instrumented baseline passed on a local API 37 AVD with 6 database tests and no current secure-storage/app tests |
-| Authentication adapter tests | ⏳ | Record JVM/instrumented task and cases |
+| Authentication adapter tests | ✅ | `./gradlew :core:auth:testDebugUnitTest` and `:core:auth:testReleaseUnitTest` passed on 2026-08-10 with 31 tests per variant; module `ktlintCheck` and `detekt` passed |
 | Secure/DataStore persistence tests | ✅ | 7 secure-storage instrumented tests and 8 DataStore JVM tests passed on 2026-08-07; preference files and DataStore directories are isolated and removed after each test |
 | WorkManager scheduler tests | ⏳ | Record test-driver/task result |
 | HTTP contract tests | ⏳ | Confirm loopback-only traffic |
@@ -414,6 +416,9 @@ Phase 2 preserves the existing malformed-data contract: blank JSON reads as an e
 | 3 | Separate scheduler construction tests from worker behavior tests | Treat worker tests as sufficient | A correct worker cannot compensate for a malformed or never-enqueued request |
 | 4 | Test app assembly with controlled external collaborators | Full production Firebase stack | The target is navigation/composition behavior, not third-party service availability |
 | 5 | Keep coverage thresholds unchanged during implementation | Raise thresholds after each phase | Behavioral confidence, not numerical inflation, is the goal |
+| 6 | Use module-local Robolectric with JUnit 4/Vintage for `GoogleSignInHelperTest` | Mock Android `Bundle` parsing under JUnit 5; move the suite to instrumentation | Real SDK request and token parsing behavior is material to this boundary; the exception is limited to one test class and avoids emulator-only feedback |
+| 7 | Reject credentials whose declared type is not `GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL` | Parse any credential carrying a compatible data bundle | Credential type is part of the SDK boundary contract; accepting mismatched custom credentials bypasses the intended provider check |
+| 8 | Add an internal `CredentialManager` constructor seam while retaining the injected context constructor | Static-mock `CredentialManager.create`; introduce a credential service interface | Static interception failed under Robolectric's classloader before any helper behavior executed; direct manager injection is the smallest deterministic seam and does not change Hilt or runtime behavior |
 
 ---
 
@@ -444,3 +449,4 @@ Phase 2 preserves the existing malformed-data contract: blank JSON reads as an e
 | 1.0     | 2026-08-06 | Initial high-risk Android and service-boundary test plan |
 | 1.1     | 2026-08-07 | Completed Phase 1 inventory, dependency audit, ownership mapping, and JVM/instrumented baselines |
 | 1.2     | 2026-08-07 | Completed Phase 2 secure-storage and recent-search persistence coverage |
+| 1.3     | 2026-08-10 | Completed Phase 3 Firebase Auth and Credential Manager adapter coverage, including unsupported credential-type rejection |

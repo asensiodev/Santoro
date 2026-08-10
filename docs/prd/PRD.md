@@ -422,11 +422,11 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
-| **Status**  | 📋 Planned |
+| **Status**  | ❌ Closed — false positive |
 | **Scope**   | Google sign-in button, onboarding tooltip, and dark theme surfaces |
-| **Current state** | Closed testing reported possible white text on white backgrounds in dark mode for the Google login button and a tooltip. The issue was not consistently reproducible during follow-up testing |
-| **Behaviour** | Audit affected components in light and dark themes, ensure text/background colors meet WCAG AA, and add screenshot coverage where practical |
-| **Rationale** | If reproducible, unreadable auth or onboarding UI is a high-priority accessibility and onboarding defect |
+| **Current state** | The reporter confirmed that the contrast observations were a user misunderstanding rather than product defects |
+| **Behaviour** | No product change or dedicated audit is required for this report |
+| **Rationale** | Preserve the closed-testing history without carrying a false positive as planned work |
 
 ### F-25 — Search: Watched & Watchlist Result Indicators
 

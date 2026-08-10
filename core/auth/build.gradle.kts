@@ -20,4 +20,7 @@ dependencies {
     implementation(libs.googleid)
 
     testImplementation(libs.google.play.services.tasks)
+    testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testRuntimeOnly(libs.junit.jupiter.vintage.engine)
 }

@@ -40,6 +40,7 @@ kover = "0.9.8"
 konsist = "0.17.3"
 mockk = "1.13.13"
 paparazzi = "2.0.0-alpha02"
+robolectric = "4.16.1"
 splashscreen = "1.0.1"
 storage = "1.6.0"
 turbine = "1.2.1"
@@ -130,6 +131,7 @@ androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "a
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4", version.ref = "compose-test" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 paparazzi = { group = "app.cash.paparazzi", name = "paparazzi", version.ref = "paparazzi" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 
 junit-jupiter-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit5" }
 junit-jupiter-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit5" }
