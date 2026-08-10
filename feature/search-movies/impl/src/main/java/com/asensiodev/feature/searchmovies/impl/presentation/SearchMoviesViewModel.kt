@@ -781,7 +781,7 @@ private fun SearchMoviesUiState.hasDashboardData(): Boolean =
     ).any { movies -> movies.isNotEmpty() }
 
 internal suspend fun collectWithStale(
-    flow: kotlinx.coroutines.flow.Flow<Result<List<Movie>>>,
+    flow: Flow<Result<List<Movie>>>,
 ): Pair<Result<List<Movie>>, Boolean> {
     var data: Result<List<Movie>> = Result.failure(IllegalStateException("No dashboard data"))
     var stale = false
