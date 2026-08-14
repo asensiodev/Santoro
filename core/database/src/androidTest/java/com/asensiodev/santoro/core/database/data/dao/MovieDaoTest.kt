@@ -242,4 +242,158 @@ class MovieDaoTest {
             fromDb.productionCountries shouldBeEqualTo """["USA","Canada"]"""
         }
     }
+
+    @Test
+    fun givenMixedMovieStates_whenWatchlistSearched_thenMatchingWatchlistTitlesReturned() {
+        runBlocking {
+            val movies =
+                listOf(
+                    MockUtils.createTestMovieEntity(401, "The Matrix", isInWatchlist = true),
+                    MockUtils.createTestMovieEntity(402, "Matrix Reloaded", isInWatchlist = true),
+                    MockUtils.createTestMovieEntity(
+                        403,
+                        "Matrix Revolutions",
+                        isInWatchlist = false,
+                    ),
+                    MockUtils.createTestMovieEntity(404, "Arrival", isInWatchlist = true),
+                )
+            movies.forEach { movie -> movieDao.insertOrUpdateMovie(movie) }
+
+            val result = movieDao.searchWatchlistMoviesByTitle("mAtRiX").first()
+
+            result.map { movie -> movie.id }.sorted() shouldBeEqualTo listOf(401, 402)
+        }
+    }
+
+    @Test
+    fun givenWatchlistMovie_whenRemoved_thenTimestampChangesAndUnrelatedFieldsRemain() {
+        runBlocking {
+            val movie =
+                MockUtils.createTestMovieEntity(
+                    id = 501,
+                    title = "Removal",
+                    isWatched = true,
+                    isInWatchlist = true,
+                    overview = "Preserved overview",
+                    posterPath = "/preserved.jpg",
+                    tagline = "Preserved tagline",
+                    runtime = 123,
+                    watchedAt = 700L,
+                    updatedAt = 600L,
+                )
+            movieDao.insertOrUpdateMovie(movie)
+
+            movieDao.removeFromWatchlist(movie.id, 800L)
+
+            movieDao.getMovieById(movie.id) shouldBeEqualTo
+                movie.copy(isInWatchlist = false, updatedAt = 800L)
+            movieDao.getMoviesForSync().map { synced -> synced.id } shouldContain movie.id
+        }
+    }
+
+    @Test
+    fun givenRemoteMovie_whenSyncUpserted_thenFieldsAndSqlDefaultsStored() {
+        runBlocking {
+            movieDao.upsertMovieFromSync(
+                movieId = 601,
+                title = "Synced",
+                posterPath = "/synced.jpg",
+                genres = "[\"Drama\"]",
+                runtime = 140,
+                isWatched = true,
+                isInWatchlist = false,
+                watchedAt = 900L,
+                updatedAt = 1_000L,
+            )
+
+            movieDao.getMovieById(601) shouldBeEqualTo
+                com.asensiodev.santoro.core.database.data.model.MovieEntity(
+                    id = 601,
+                    title = "Synced",
+                    overview = "",
+                    posterPath = "/synced.jpg",
+                    releaseDate = null,
+                    popularity = 0.0,
+                    voteAverage = 0.0,
+                    voteCount = 0,
+                    genres = "[\"Drama\"]",
+                    productionCountries = "",
+                    tagline = null,
+                    runtime = 140,
+                    isWatched = true,
+                    isInWatchlist = false,
+                    watchedAt = 900L,
+                    updatedAt = 1_000L,
+                )
+        }
+    }
+
+    @Test
+    fun givenRichMovie_whenSyncStateUpdated_thenContentFieldsRemainUnchanged() {
+        runBlocking {
+            val movie =
+                MockUtils.createTestMovieEntity(
+                    id = 701,
+                    title = "State update",
+                    overview = "Rich overview",
+                    posterPath = "/rich.jpg",
+                    releaseDate = "2025-01-01",
+                    tagline = "Rich tagline",
+                    runtime = 110,
+                    updatedAt = 100L,
+                )
+            movieDao.insertOrUpdateMovie(movie)
+
+            movieDao.updateMovieSyncState(
+                movieId = movie.id,
+                isWatched = true,
+                isInWatchlist = true,
+                watchedAt = 200L,
+                updatedAt = 300L,
+            )
+
+            movieDao.getMovieById(movie.id) shouldBeEqualTo
+                movie.copy(
+                    isWatched = true,
+                    isInWatchlist = true,
+                    watchedAt = 200L,
+                    updatedAt = 300L,
+                )
+        }
+    }
+
+    @Test
+    fun givenWatchedMovies_whenObserved_thenNewestWatchedTimestampIsFirst() {
+        runBlocking {
+            val movies =
+                listOf(
+                    MockUtils.createTestMovieEntity(801, isWatched = true, watchedAt = 100L),
+                    MockUtils.createTestMovieEntity(802, isWatched = true, watchedAt = 300L),
+                    MockUtils.createTestMovieEntity(803, isWatched = true, watchedAt = 200L),
+                    MockUtils.createTestMovieEntity(804, isWatched = false, watchedAt = 400L),
+                )
+            movies.forEach { movie -> movieDao.insertOrUpdateMovie(movie) }
+
+            val result = movieDao.getWatchedMovies().first()
+
+            result.map { movie -> movie.id } shouldBeEqualTo listOf(802, 803, 801)
+        }
+    }
+
+    @Test
+    fun givenStoredMovies_whenUserDataCleared_thenEveryMovieIsRemoved() {
+        runBlocking {
+            movieDao.insertOrUpdateMovie(MockUtils.createTestMovieEntity(901, isWatched = true))
+            movieDao.insertOrUpdateMovie(MockUtils.createTestMovieEntity(902, isInWatchlist = true))
+            movieDao.insertOrUpdateMovie(MockUtils.createTestMovieEntity(903))
+
+            movieDao.clearAllUserData()
+
+            movieDao.getWatchedMovies().first().isEmpty() shouldBeEqualTo true
+            movieDao.getWatchlistMovies().first().isEmpty() shouldBeEqualTo true
+            movieDao.getMovieById(901) shouldBeEqualTo null
+            movieDao.getMovieById(902) shouldBeEqualTo null
+            movieDao.getMovieById(903) shouldBeEqualTo null
+        }
+    }
 }

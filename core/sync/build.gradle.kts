@@ -28,4 +28,6 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.google.play.services.tasks)
     testImplementation(libs.workmanager.testing)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.room.runtime)
 }

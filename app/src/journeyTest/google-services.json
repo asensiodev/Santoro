@@ -1,0 +1,22 @@
+{
+  "project_info": {
+    "project_number": "1",
+    "project_id": "santoro-journey-test"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1:android:journeytest",
+        "android_client_info": {
+          "package_name": "com.asensiodev.santoro.debug"
+        }
+      },
+      "api_key": [
+        {
+          "current_key": "journey-test-placeholder"
+        }
+      ]
+    }
+  ],
+  "configuration_version": "1"
+}

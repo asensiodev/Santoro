@@ -95,4 +95,18 @@ class ApiKeyAuthenticatorTest {
 
         newRequest shouldBe null
     }
+
+    @Test
+    fun `GIVEN stale authorization WHEN authenticate THEN retry replaces it without duplication`() {
+        coEvery { refresher.ensureKeyUpToDate() } just runs
+        every { repository.getSyncOrNull() } returns "synthetic-refreshed-key"
+        val staleRequest = request.newBuilder().header("Authorization", "Bearer stale-test-key").build()
+        val staleResponse = response.newBuilder().request(staleRequest).build()
+
+        val newRequest = authenticator.authenticate(null, staleResponse)
+
+        val authorizationValues = newRequest?.headers?.values("Authorization").orEmpty()
+        authorizationValues.size shouldBeEqualTo 1
+        (authorizationValues.single() == "Bearer synthetic-refreshed-key") shouldBeEqualTo true
+    }
 }

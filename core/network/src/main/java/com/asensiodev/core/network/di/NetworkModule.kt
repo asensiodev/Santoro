@@ -43,11 +43,7 @@ object NetworkProvidesModule {
 
     @Provides
     @Singleton
-    fun provideLoggingInterceptor(): HttpLoggingInterceptor {
-        val interceptor = HttpLoggingInterceptor()
-        interceptor.level = HttpLoggingInterceptor.Level.BODY
-        return interceptor
-    }
+    fun provideLoggingInterceptor(): HttpLoggingInterceptor = createLoggingInterceptor()
 
     @Provides
     @Singleton
@@ -83,5 +79,13 @@ object NetworkProvidesModule {
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
 }
+
+internal fun createLoggingInterceptor(
+    logger: HttpLoggingInterceptor.Logger = HttpLoggingInterceptor.Logger.DEFAULT,
+): HttpLoggingInterceptor =
+    HttpLoggingInterceptor(logger).apply {
+        level = HttpLoggingInterceptor.Level.BODY
+        redactHeader("Authorization")
+    }
 
 private const val TMDB_BASE_URL = "https://api.themoviedb.org/3/"

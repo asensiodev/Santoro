@@ -124,7 +124,7 @@ jobs:
           retention-days: 7
 
   instrumented-tests:
-    name: Instrumented feature tests
+    name: Instrumented boundary and journey tests
     needs: verification
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -158,10 +158,12 @@ jobs:
           disable-animations: true
           script: >-
             ./gradlew
+            :app:connectedJourneyTestAndroidTest
             :core:database:connectedDebugAndroidTest
             :feature:watchlist:impl:connectedDebugAndroidTest
             :feature:movie-detail:impl:connectedDebugAndroidTest
             :feature:watched-movies:impl:connectedDebugAndroidTest
+            :library:secure-storage:impl:connectedDebugAndroidTest
 
       - name: Upload instrumented test reports
         if: failure()

@@ -23,6 +23,11 @@ android {
     }
 
     buildTypes {
+        create("journeyTest") {
+            initWith(getByName("debug"))
+            matchingFallbacks += "debug"
+        }
+
         release {
             val releaseSigning = signingConfigs.findByName("release")
             if (releaseSigning?.storeFile != null) {
@@ -33,7 +38,10 @@ android {
 
     defaultConfig {
         applicationId = "com.asensiodev.santoro"
+        testInstrumentationRunner = "com.asensiodev.santoro.HiltTestRunner"
     }
+
+    testBuildType = "journeyTest"
 }
 
 dependencies {
@@ -73,6 +81,10 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
 
     implementation(libs.androidx.startup)
+
+    androidTestImplementation(libs.hilt.android.testing)
+    androidTestImplementation(projects.core.database)
+    kspAndroidTest(libs.dagger.hilt.compiler)
 }
 
 tasks

@@ -168,8 +168,8 @@ The first instrumentation attempt found no connected device. After starting the 
 | HTTP authorization and locale | `AuthorizationInterceptor`, `LanguageInterceptor`, `ApiKeyAuthenticator`, assembled `OkHttpClient` | Planned interceptor/chain tests; existing `ApiKeyAuthenticatorTest` owns retry and cancellation behavior | JVM with MockWebServer, `:core:network:testDebugUnitTest` |
 | Room migrations | `SantoroRoomDatabase` migrations 1–5 | Planned `SantoroRoomDatabaseMigrationTest`; version-1 schema remains unavailable | Instrumented, `:core:database:connectedDebugAndroidTest` |
 | DAO and browse-cache SQL | `MovieDao`, `BrowseCacheDao` | Expand `MovieDaoTest` and add `BrowseCacheDaoTest`; mocked repository/data-source tests do not cover SQLite semantics | Instrumented, `:core:database:connectedDebugAndroidTest` |
-| Authentication routing | `MainActivity`, `SantoroNavHost` | Planned `MainActivityAuthenticationJourneyTest` | Hilt/Compose instrumentation, `:app:connectedDebugAndroidTest` |
-| Deep links and navigation | `MainActivity`, `DeepLinkHandler`, `SantoroTabNavGraph`, `SantoroMainTabComponent` | Planned app journey tests; existing `DeepLinkHandlerTest` owns parser-only cases | Hilt/Compose instrumentation, `:app:connectedDebugAndroidTest` |
+| Authentication routing | `MainActivity`, `SantoroNavHost` | `MainActivityAuthenticationJourneyTest` | Hilt/Compose instrumentation, `:app:connectedJourneyTestAndroidTest` |
+| Deep links and navigation | `MainActivity`, `DeepLinkHandler`, `SantoroTabNavGraph`, `SantoroMainTabComponent` | App journey tests; `DeepLinkHandlerTest` owns parser-only cases | Hilt/Compose instrumentation, `:app:connectedJourneyTestAndroidTest` |
 
 #### Dependency Inventory
 
@@ -262,12 +262,14 @@ Phase 3 adds 21 direct `FirebaseAuthDataSource` tests and six Robolectric `Googl
     - Execute live synchronization or upload side effects.
     - Change scheduling policy, periodicity, worker retry behavior, or worker payload semantics under the guise of testing.
 
-- [ ] Add the existing catalogued WorkManager testing dependency to the narrowest required test configuration.
-- [ ] Verify periodic work name, six-hour interval, connected-network constraint, and existing-work policy.
-- [ ] Verify immediate sync name, connected-network constraint, and existing-work policy.
-- [ ] Verify per-movie upload unique name, tag, input movie ID, connected-network constraint, and existing-work policy.
-- [ ] Verify repeated scheduling produces the currently documented replacement/retention behavior.
-- [ ] Keep scheduler tests separate from existing worker behavior tests.
+- [x] Add the existing catalogued WorkManager testing dependency to the narrowest required test configuration.
+- [x] Verify periodic work name, six-hour interval, connected-network constraint, and existing-work policy.
+- [x] Verify immediate sync name, connected-network constraint, and existing-work policy.
+- [x] Verify per-movie upload unique name, tag, input movie ID, connected-network constraint, and existing-work policy.
+- [x] Verify repeated scheduling produces the currently documented replacement/retention behavior.
+- [x] Keep scheduler tests separate from existing worker behavior tests.
+
+Phase 4 adds three Robolectric tests against WorkManager's in-memory test database. They verify periodic `KEEP`, immediate `REPLACE`, per-movie upload `REPLACE`, unique names, tags, persisted input, connected-network constraints, and the six-hour repeat/flex interval without executing workers. FIP-003's historical `APPEND_OR_REPLACE` upload note does not match current or pre-existing production behavior; this phase characterizes the existing `REPLACE` contract without changing scheduling behavior.
 
 ### Phase 5 — HTTP Request Contract
 
@@ -285,12 +287,16 @@ Phase 3 adds 21 direct `FirebaseAuthDataSource` tests and six Robolectric `Googl
     - Read real API-key storage or include real credentials in fixtures/reports.
     - Change network timeout, retry, authentication, or localization behavior without a separately approved defect amendment.
 
-- [ ] Add a MockWebServer test dependency aligned with the repository’s OkHttp version if no existing dependency can validate the contract.
-- [ ] Test blank and nonblank authorization-key behavior, header replacement, and absence of duplicate authorization headers.
-- [ ] Test language tags with and without country and behavior when a language query parameter already exists.
-- [ ] Test the assembled interceptor chain against recorded requests, including JSON accept headers.
-- [ ] Verify authenticator retry requests do not expose secrets in assertions or reports.
-- [ ] Add a regression assertion that debug logging redacts the authorization header; if production redaction is absent, record it as a blocking defect before changing code.
+- [x] Add a MockWebServer test dependency aligned with the repository’s OkHttp version if no existing dependency can validate the contract.
+- [x] Test blank and nonblank authorization-key behavior, header replacement, and absence of duplicate authorization headers.
+- [x] Test language tags with and without country and behavior when a language query parameter already exists.
+- [x] Test the assembled interceptor chain against recorded requests, including JSON accept headers.
+- [x] Verify authenticator retry requests do not expose secrets in assertions or reports.
+- [x] Add a regression assertion that debug logging redacts the authorization header; if production redaction is absent, record it as a blocking defect before changing code.
+
+Phase 5 baseline evidence found that `AuthorizationInterceptor.addHeader` duplicates a caller-provided authorization value and that debug BODY logging emits the resulting authorization header without redaction. It also confirmed that `LanguageInterceptor.addQueryParameter` duplicates an existing `language` parameter. On 2026-08-14 the intended contracts were approved before production changes: authorization and language values are replaced so each request contains exactly one authoritative value, and debug logging redacts authorization credentials.
+
+Phase 5 adds eight loopback request-contract tests and one authenticator replacement regression, bringing `core/network` to 24 passing tests in both debug and release variants. MockWebServer 5.1.0 matches OkHttp, all network traffic remains in-process, module Detekt and ktlint pass, and generated XML/HTML results contain none of the synthetic key fixtures.
 
 ### Phase 6 — Room Migrations and SQL Semantics
 
@@ -308,12 +314,16 @@ Phase 3 adds 21 direct `FirebaseAuthDataSource` tests and six Robolectric `Googl
     - Change schema, migration SQL, conflict policy, or query semantics unless a failing regression demonstrates a defect and this FIP is amended.
     - Use destructive migration fallback.
 
-- [ ] Add the Room migration-testing dependency to the database module’s instrumented test configuration.
-- [ ] Validate each available migration path and the complete supported upgrade path to version 5.
-- [ ] Resolve the missing version-1 schema prerequisite explicitly before claiming `MIGRATION_1_2` validation.
-- [ ] Add real SQLite tests for browse-cache composite lookup, replacement, section deletion, age cutoff, and full clear.
-- [ ] Extend `MovieDaoTest` for watchlist search, watchlist removal timestamps, sync upsert fields, sync-state updates, watched ordering, and clear-all behavior.
-- [ ] Assert preserved data and default/null values introduced by each migration.
+- [x] Add the Room migration-testing dependency to the database module’s instrumented test configuration.
+- [x] Validate each available migration path and the complete supported upgrade path to version 5.
+- [x] Resolve the missing version-1 schema prerequisite explicitly: validation is skipped because no trustworthy shipped v1 schema exists.
+- [x] Add real SQLite tests for browse-cache composite lookup, replacement, section deletion, age cutoff, and full clear.
+- [x] Extend `MovieDaoTest` for watchlist search, watchlist removal timestamps, sync upsert fields, sync-state updates, watched ordering, and clear-all behavior.
+- [x] Assert preserved data and default/null values introduced by each migration.
+
+Phase 6 adds four migration tests covering every trustworthy checked schema edge (`2→3`, `3→4`, `4→5`) and the complete available `2→5` chain, five browse-cache DAO tests, and six additional MovieDao tests. All 21 database instrumented tests pass on the API 37 Pixel 9a AVD; JVM debug/release tests, Android-test assembly, Detekt, and ktlint also pass with no checked-schema drift.
+
+Version 1 remains intentionally unclaimed. Git history proves that `watchedAt` was added while the database remained at version 1, producing early and late v1 shapes, and no v1 schema was exported. Distribution provenance is unknown, so generating one canonical schema would hide a potentially unsupported early-v1 migration. On 2026-08-14 the missing v1 validation was explicitly accepted as skipped; the production migration remains unchanged and the residual upgrade risk remains documented.
 
 ### Phase 7 — App Navigation and Authentication Journeys
 
@@ -332,14 +342,18 @@ Phase 3 adds 21 direct `FirebaseAuthDataSource` tests and six Robolectric `Googl
     - Add test-only branches to production navigation.
     - Change destination graphs, authentication policy, or back-stack behavior without a reproduced defect and plan amendment.
 
-- [ ] Add the minimum Hilt/Compose/navigation test dependencies and runner configuration needed for app-level instrumentation.
-- [ ] Verify unauthenticated launch selects Login and authenticated launch selects the tab host.
-- [ ] Verify logout returns to Login and prevents navigating back into authenticated content.
-- [ ] Verify authenticated movie deep links, `onNewIntent`, single consumption, and malformed/unsupported links.
-- [ ] Verify representative tab switching preserves the currently intended tab state.
-- [ ] Verify navigation from Search to See All and Movie Detail and from Settings back to the existing graph.
-- [ ] Verify lifecycle guards prevent duplicate navigation from repeated callbacks.
-- [ ] Keep these journeys focused on app assembly; do not duplicate detailed feature UI assertions.
+- [x] Add the minimum Hilt/Compose/navigation test dependencies and runner configuration needed for app-level instrumentation.
+- [x] Verify unauthenticated launch selects Login and authenticated launch selects the tab host.
+- [x] Verify logout returns to Login and prevents navigating back into authenticated content.
+- [x] Verify authenticated movie deep links, `onNewIntent`, single consumption, and malformed/unsupported links.
+- [x] Verify representative tab switching preserves the currently intended tab state.
+- [x] Verify navigation from Search to See All and Movie Detail and from Settings back to the existing graph.
+- [x] Verify lifecycle guards prevent duplicate navigation from repeated callbacks.
+- [x] Keep these journeys focused on app assembly; do not duplicate detailed feature UI assertions.
+
+Phase 7 baseline evidence found that manifest routing restricts external deep links to HTTP(S) TMDB movie URLs while `DeepLinkHandler` accepted any scheme and host when an intent was delivered directly. On 2026-08-14 the intended contract was approved before production changes: direct intent parsing must enforce the same HTTP(S) and TMDB-host boundary as the manifest.
+
+Phase 7 adds ten Hilt/Compose app journeys using deterministic in-memory repository replacements and a dedicated `journeyTest` build type that disables AndroidX Startup and Firebase provider initialization only in the test application. The suite covers authenticated and unauthenticated launch routing, logout back-stack removal, launch and `onNewIntent` deep links, single consumption, malformed and unsupported links, tab-state restoration, Search/See All/Detail navigation, Settings return behavior, and rapid duplicate navigation. All ten tests pass on the API 37 Pixel 9a AVD; app JVM debug/release tests, journey-test assembly, Detekt, and ktlint also pass.
 
 ### Phase 8 — CI Integration and Final Verification
 
@@ -358,14 +372,16 @@ Phase 3 adds 21 direct `FirebaseAuthDataSource` tests and six Robolectric `Googl
     - Raise/lower coverage thresholds to force a desired outcome.
     - Mark FIP-018 tasks complete unless the implemented work fully satisfies them.
 
-- [ ] Run every affected JVM suite from a clean test invocation.
+- [x] Run every affected JVM suite from a clean test invocation.
 - [ ] Run every affected instrumented suite on CI’s API 35 emulator profile.
-- [ ] Add `app`, secure-storage, and any other newly instrumented module tasks explicitly to CI.
-- [ ] Preserve separate reporting for JVM coverage and instrumented behavioral suites.
-- [ ] Run `./gradlew ktlintCheck detekt test assembleDebug` and all adopted explicit verification tasks.
-- [ ] Run `./gradlew :koverXmlReport :koverHtmlReport :koverVerify` and record measured results without changing thresholds.
-- [ ] Confirm reports and logs contain no test token, credential, API key, or sensitive fixture.
-- [ ] Update §10 with exact commands, environment, results, and any skipped validation.
+- [x] Add `app`, secure-storage, and any other newly instrumented module tasks explicitly to CI.
+- [x] Preserve separate reporting for JVM coverage and instrumented behavioral suites.
+- [x] Run `./gradlew ktlintCheck detekt test assembleDebug` and all adopted explicit verification tasks.
+- [x] Run `./gradlew :koverXmlReport :koverHtmlReport :koverVerify` and record measured results without changing thresholds.
+- [x] Confirm reports and logs contain no test token, credential, API key, or sensitive fixture.
+- [x] Update §10 with exact commands, environment, results, and any skipped validation.
+
+The clean affected-module invocation ran debug and release JVM tests for `app`, `core/auth`, `core/database`, `core/network`, `core/sync`, `feature/search-movies/impl`, and `library/secure-storage/impl`; all passed. `./gradlew ktlintCheck detekt test assembleDebug` and `./gradlew :koverXmlReport :koverHtmlReport :koverVerify :koverLog` passed. The adopted instrumented command ran app, database, secure-storage, Watchlist, Movie Detail, and Watched Movies suites successfully on the local API 37 Pixel 9a AVD. GitHub Actions now runs the same instrumented tasks on its API 35 Pixel 6 profile, but that CI execution remains pending.
 
 ---
 
@@ -376,14 +392,14 @@ Phase 3 adds 21 direct `FirebaseAuthDataSource` tests and six Robolectric `Googl
 | Existing baseline suites | ✅ | Affected JVM suites passed; instrumented baseline passed on a local API 37 AVD with 6 database tests and no current secure-storage/app tests |
 | Authentication adapter tests | ✅ | `./gradlew :core:auth:testDebugUnitTest` and `:core:auth:testReleaseUnitTest` passed on 2026-08-10 with 31 tests per variant; module `ktlintCheck` and `detekt` passed |
 | Secure/DataStore persistence tests | ✅ | 7 secure-storage instrumented tests and 8 DataStore JVM tests passed on 2026-08-07; preference files and DataStore directories are isolated and removed after each test |
-| WorkManager scheduler tests | ⏳ | Record test-driver/task result |
-| HTTP contract tests | ⏳ | Confirm loopback-only traffic |
-| Room migration and DAO tests | ⏳ | Record validated source/target versions |
-| App navigation journeys | ⏳ | Record API level and emulator/device |
-| Aggregate Kover verification | ⏳ | Record lines/branches without threshold changes |
-| Static analysis and build | ⏳ | Record exact Gradle command |
-| Sensitive-output review | ⏳ | Confirm fixtures/reports contain no secrets |
-| Real device smoke test | ⏳ | Optional; explain if skipped |
+| WorkManager scheduler tests | ✅ | Three scheduler tests passed in debug and release variants on 2026-08-14; module Detekt and ktlint passed |
+| HTTP contract tests | ✅ | 24 tests passed in debug and release variants on 2026-08-14 using loopback-only MockWebServer traffic; module Detekt and ktlint passed |
+| Room migration and DAO tests | ⚠️ | 21 tests passed on API 37: `2→3`, `3→4`, `4→5`, `2→5`, browse-cache, and MovieDao SQL; v1 validation was explicitly skipped because no trustworthy historical schema exists |
+| App navigation journeys | ✅ | 10 tests passed with `./gradlew :app:connectedJourneyTestAndroidTest` on the local API 37 Pixel 9a AVD; app JVM debug/release tests, journey-test assembly, Detekt, and ktlint passed |
+| Aggregate Kover verification | ✅ | `./gradlew :koverXmlReport :koverHtmlReport :koverVerify :koverLog` passed: 2,658/3,308 lines (80.3507%) and 774/1,046 branches (74.00%); thresholds unchanged |
+| Static analysis and build | ✅ | `./gradlew ktlintCheck detekt test assembleDebug` passed on 2026-08-14 |
+| Sensitive-output review | ✅ | Generated XML, HTML, text, and log output contains none of the synthetic auth/network credential fixtures |
+| Real device smoke test | Skipped | Optional validation was not run; local instrumentation used the API 37 Pixel 9a AVD |
 
 ---
 
@@ -391,8 +407,11 @@ Phase 3 adds 21 direct `FirebaseAuthDataSource` tests and six Robolectric `Googl
 
 | # | Blocker | Raised | Resolved | Impact |
 |---|---------|--------|----------|--------|
-| 1 | Version-1 Room schema is not currently checked in | 2026-08-06 | Open | `MIGRATION_1_2` cannot be claimed as validated until a trustworthy source schema/fixture is established |
+| 1 | Version-1 Room schema is not checked in and history contains incompatible early/late v1 shapes | 2026-08-06 | 2026-08-14 | Validation explicitly skipped because no trustworthy shipped source schema exists; `MIGRATION_1_2` and `1→5` remain unclaimed and the residual upgrade risk is accepted |
 | 2 | No Android device or emulator was connected for the first local baseline attempt | 2026-08-07 | 2026-08-07 | Resolved by starting the available `Pixel_9a` API 37 AVD; CI API 35 execution remains required for final verification |
+| 3 | Authorization is duplicated when already present and debug BODY logging exposes the API key | 2026-08-14 | 2026-08-14 | Approved correction: replace the authorization value and redact the header before logging |
+| 4 | Existing `language` query-parameter behavior was not defined and currently appends a duplicate value | 2026-08-14 | 2026-08-14 | Approved correction: replace it with the current app locale so exactly one value is sent |
+| 5 | Deep-link parser accepted schemes and hosts that the manifest does not support | 2026-08-14 | 2026-08-14 | Approved correction: reject direct intents unless they use HTTP(S) and `themoviedb.org` or `www.themoviedb.org` |
 
 ---
 
@@ -419,6 +438,14 @@ Phase 3 adds 21 direct `FirebaseAuthDataSource` tests and six Robolectric `Googl
 | 6 | Use module-local Robolectric with JUnit 4/Vintage for `GoogleSignInHelperTest` | Mock Android `Bundle` parsing under JUnit 5; move the suite to instrumentation | Real SDK request and token parsing behavior is material to this boundary; the exception is limited to one test class and avoids emulator-only feedback |
 | 7 | Reject credentials whose declared type is not `GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL` | Parse any credential carrying a compatible data bundle | Credential type is part of the SDK boundary contract; accepting mismatched custom credentials bypasses the intended provider check |
 | 8 | Add an internal `CredentialManager` constructor seam while retaining the injected context constructor | Static-mock `CredentialManager.create`; introduce a credential service interface | Static interception failed under Robolectric's classloader before any helper behavior executed; direct manager injection is the smallest deterministic seam and does not change Hilt or runtime behavior |
+| 9 | Characterize the current per-movie upload policy as `REPLACE` | Assert FIP-003's stale `APPEND_OR_REPLACE` note; change production scheduling | Current production and its history use `REPLACE`; FIP-019 tests existing behavior and does not silently redesign scheduling policy |
+| 10 | Replace caller-provided authorization and language values in their interceptors | Preserve or append caller values | Authorization and app locale are cross-cutting request contracts; exactly one authoritative value prevents ambiguous requests and duplicate credentials |
+| 11 | Redact `Authorization` in debug HTTP logs | Disable BODY logging; accept debug-only exposure | Redaction preserves useful request diagnostics without printing API credentials |
+| 12 | Use an internal logging-interceptor factory with an injectable OkHttp logger | Reflect into redaction internals; rely on platform log capture | The provider keeps its runtime contract while tests can behaviorally prove redaction without brittle reflection or Android-specific logging |
+| 13 | Use `givenX_whenY_thenZ` names for instrumented tests | Backtick names required for JVM tests | D8 rejects spaces in Android test method and coroutine-generated class names for the project's target DEX level; descriptive snake-case names preserve the contract and allow instrumentation packaging |
+| 14 | Validate all trustworthy migrations from v2 while retaining the v1 blocker | Hand-author one canonical v1 schema; assume the last v1 source was the only shipped shape | History contains incompatible v1 schemas under one version and distribution provenance is unknown; invented fixtures would provide false migration confidence |
+| 15 | Validate scheme and host inside `DeepLinkHandler` as well as in the manifest | Keep parsing host-agnostic | Directly delivered and `onNewIntent` intents bypass manifest resolution; parser validation keeps the navigation trust boundary consistent |
+| 16 | Skip version-1 migration validation and retain the production migration unchanged | Invent a canonical v1 fixture; block FIP-019 indefinitely | No trustworthy shipped v1 schema exists, so a synthetic fixture would provide false confidence; the residual upgrade risk is explicitly accepted |
 
 ---
 
@@ -427,6 +454,7 @@ Phase 3 adds 21 direct `FirebaseAuthDataSource` tests and six Robolectric `Googl
 - Firebase Auth/Firestore Emulator and repository-owned Firestore security-rule tests.
 - Complete account deletion and per-user local-data isolation.
 - Sync eventual-delivery and signed-out pending-upload redesign.
+- Low priority: introduce a Santoro-owned link domain with verified Android App Links, movie-detail routing, and browser/installation fallback so shared links can open Santoro reliably without depending on TMDB domain ownership.
 - Accessibility, performance, macrobenchmark, and baseline-profile initiatives.
 - Medium-priority breadth tracked in [FIP-020 — Medium-Priority Test Coverage](./FIP-020-medium-priority-test-coverage.md).
 
@@ -450,3 +478,9 @@ Phase 3 adds 21 direct `FirebaseAuthDataSource` tests and six Robolectric `Googl
 | 1.1     | 2026-08-07 | Completed Phase 1 inventory, dependency audit, ownership mapping, and JVM/instrumented baselines |
 | 1.2     | 2026-08-07 | Completed Phase 2 secure-storage and recent-search persistence coverage |
 | 1.3     | 2026-08-10 | Completed Phase 3 Firebase Auth and Credential Manager adapter coverage, including unsupported credential-type rejection |
+| 1.4     | 2026-08-14 | Completed Phase 4 WorkManager request construction and repeated-scheduling coverage |
+| 1.5     | 2026-08-14 | Completed Phase 5 HTTP request contracts and corrected duplicate/redacted credential and locale behavior |
+| 1.6     | 2026-08-14 | Added Phase 6 migration and real-SQL coverage from v2 through v5; retained the unresolved historical v1 provenance blocker |
+| 1.7     | 2026-08-14 | Completed Phase 7 app authentication, deep-link, state-restoration, and navigation journeys; added app and secure-storage instrumented suites to CI |
+| 1.8     | 2026-08-14 | Completed local Phase 8 JVM, quality, build, coverage, instrumented, and sensitive-output verification; CI API 35 execution remains pending |
+| 1.9     | 2026-08-14 | Explicitly skipped unprovable version-1 migration validation while retaining the production migration and documenting the accepted residual risk |

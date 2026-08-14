@@ -68,6 +68,20 @@ class DeepLinkHandlerTest {
     }
 
     @Test
+    fun `GIVEN unsupported scheme WHEN parseMovieIdFromUrl THEN returns null`() {
+        val result = DeepLinkHandler.parseMovieIdFromUrl("custom://www.themoviedb.org/movie/550")
+
+        result shouldBeEqualTo null
+    }
+
+    @Test
+    fun `GIVEN unsupported host WHEN parseMovieIdFromUrl THEN returns null`() {
+        val result = DeepLinkHandler.parseMovieIdFromUrl("https://example.invalid/movie/550")
+
+        result shouldBeEqualTo null
+    }
+
+    @Test
     fun `GIVEN null intent WHEN parseMovieIdFromIntent THEN returns null`() {
         val result = DeepLinkHandler.parseMovieIdFromIntent(null)
 

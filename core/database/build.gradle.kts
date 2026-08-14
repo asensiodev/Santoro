@@ -14,4 +14,5 @@ dependencies {
     implementation(libs.gson)
 
     testImplementation(libs.turbine)
+    androidTestImplementation(libs.room.testing)
 }

@@ -18,4 +18,6 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.androidx.startup)
+
+    testImplementation(libs.mockwebserver)
 }

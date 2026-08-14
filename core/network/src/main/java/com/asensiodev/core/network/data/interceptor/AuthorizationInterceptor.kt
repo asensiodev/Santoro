@@ -15,10 +15,10 @@ class AuthorizationInterceptor
 
             val originalRequest = chain.request()
             val builder = originalRequest.newBuilder()
-            builder.addHeader("Accept", "application/json")
+            builder.header("Accept", "application/json")
 
             if (!apiKey.isNullOrBlank()) {
-                builder.addHeader("Authorization", "Bearer $apiKey")
+                builder.header("Authorization", "Bearer $apiKey")
             }
 
             return chain.proceed(builder.build())

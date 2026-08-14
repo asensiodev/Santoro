@@ -19,7 +19,7 @@ class LanguageInterceptor
             val url =
                 originalRequest.url
                     .newBuilder()
-                    .addQueryParameter(LANGUAGE_PARAM, languageTag)
+                    .setQueryParameter(LANGUAGE_PARAM, languageTag)
                     .build()
 
             val request = originalRequest.newBuilder().url(url).build()
