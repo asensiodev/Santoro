@@ -5,6 +5,7 @@ import app.cash.turbine.test
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.impl.data.repository.StaleDataException
+import com.asensiodev.feature.searchmovies.impl.domain.model.MovieLibraryStatus
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.ClearRecentSearchesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetMoviesByGenreUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetNowPlayingMoviesUseCase
@@ -13,6 +14,7 @@ import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetRecentSearches
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTopRatedMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTrendingMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetUpcomingMoviesUseCase
+import com.asensiodev.feature.searchmovies.impl.domain.usecase.ObserveMovieLibraryStatusesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SaveRecentSearchUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesByQueryAndGenreUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesUseCase
@@ -26,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -54,6 +57,9 @@ class SearchMoviesViewModelTest {
     private val getRecentSearchesUseCase: GetRecentSearchesUseCase = mockk(relaxed = true)
     private val saveRecentSearchUseCase: SaveRecentSearchUseCase = mockk(relaxed = true)
     private val clearRecentSearchesUseCase: ClearRecentSearchesUseCase = mockk(relaxed = true)
+    private val observeMovieLibraryStatusesUseCase: ObserveMovieLibraryStatusesUseCase = mockk()
+    private val libraryStatuses =
+        MutableStateFlow<Result<Map<Int, MovieLibraryStatus>>>(Result.success(emptyMap()))
 
     private lateinit var viewModel: SearchMoviesViewModel
 
@@ -91,6 +97,7 @@ class SearchMoviesViewModelTest {
         every { getTrendingMoviesUseCase(any()) } returns flowOf(Result.success(emptyList()))
         every { getTrendingMoviesUseCase.refresh(any()) } returns flowOf(Result.success(emptyList()))
         every { getRecentSearchesUseCase() } returns flowOf(emptyList())
+        every { observeMovieLibraryStatusesUseCase() } returns libraryStatuses
         coJustRun { saveRecentSearchUseCase(any()) }
         coJustRun { clearRecentSearchesUseCase() }
 
@@ -112,6 +119,7 @@ class SearchMoviesViewModelTest {
                 getRecentSearchesUseCase = getRecentSearchesUseCase,
                 saveRecentSearchUseCase = saveRecentSearchUseCase,
                 clearRecentSearchesUseCase = clearRecentSearchesUseCase,
+                observeMovieLibraryStatusesUseCase = observeMovieLibraryStatusesUseCase,
             )
     }
 

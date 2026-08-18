@@ -1,6 +1,7 @@
 package com.asensiodev.feature.searchmovies.impl.presentation.mapper
 
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.feature.searchmovies.impl.domain.model.MovieLibraryStatus
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.Test
@@ -121,4 +122,48 @@ class MovieUiMapperTest {
 
         result.map { movieUi -> movieUi.id } shouldBeEqualTo listOf(1)
     }
+
+    @Test
+    fun `GIVEN library status WHEN toUi THEN maps exclusive status`() {
+        val movie = movie(1)
+
+        movie.toUi(mapOf(1 to MovieLibraryStatus.Watched)).libraryStatus shouldBeEqualTo
+            MovieLibraryStatus.Watched
+    }
+
+    @Test
+    fun `GIVEN no library status WHEN toUi THEN maps null status`() {
+        movie(1).toUi().libraryStatus shouldBeEqualTo null
+    }
+
+    @Test
+    fun `GIVEN changed statuses WHEN decorating UI list THEN replaces and clears statuses`() {
+        val movies =
+            listOf(
+                movie(1).toUi(mapOf(1 to MovieLibraryStatus.Watched)),
+                movie(2).toUi(),
+            )
+
+        val result = movies.withLibraryStatuses(mapOf(2 to MovieLibraryStatus.Watchlist))
+
+        result.map { movieUi -> movieUi.libraryStatus } shouldBeEqualTo
+            listOf(null, MovieLibraryStatus.Watchlist)
+    }
+
+    private fun movie(id: Int) =
+        Movie(
+            id = id,
+            title = "Movie $id",
+            posterPath = null,
+            backdropPath = null,
+            overview = "Overview",
+            releaseDate = null,
+            popularity = 0.0,
+            voteAverage = 0.0,
+            voteCount = 0,
+            genres = emptyList(),
+            productionCountries = emptyList(),
+            isWatched = false,
+            isInWatchlist = false,
+        )
 }

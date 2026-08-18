@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.impl.data.repository.StaleDataException
+import com.asensiodev.feature.searchmovies.impl.domain.model.MovieLibraryStatus
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.ClearRecentSearchesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetMoviesByGenreUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetNowPlayingMoviesUseCase
@@ -13,10 +14,12 @@ import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetRecentSearches
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTopRatedMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTrendingMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetUpcomingMoviesUseCase
+import com.asensiodev.feature.searchmovies.impl.domain.usecase.ObserveMovieLibraryStatusesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SaveRecentSearchUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesByQueryAndGenreUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.presentation.mapper.toUiList
+import com.asensiodev.feature.searchmovies.impl.presentation.mapper.withLibraryStatuses
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 import com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType
 import com.asensiodev.library.observability.api.NoOpObservabilityTracker
@@ -56,6 +59,7 @@ internal class SearchMoviesViewModel
         private val getRecentSearchesUseCase: GetRecentSearchesUseCase,
         private val saveRecentSearchUseCase: SaveRecentSearchUseCase,
         private val clearRecentSearchesUseCase: ClearRecentSearchesUseCase,
+        private val observeMovieLibraryStatusesUseCase: ObserveMovieLibraryStatusesUseCase,
         private val observabilityTracker: ObservabilityTracker = NoOpObservabilityTracker,
     ) : ViewModel() {
         private var searchJob: Job? = null
@@ -64,6 +68,7 @@ internal class SearchMoviesViewModel
         private var initialized = false
         private var observersSetUp = false
         private var isDashboardStale = false
+        private var libraryStatuses: Map<Int, MovieLibraryStatus> = emptyMap()
         private val restoredQuery = savedStateHandle[SEARCH_QUERY_KEY] ?: ""
         private val _uiState = MutableStateFlow(SearchMoviesUiState(query = restoredQuery))
         val uiState: StateFlow<SearchMoviesUiState> = _uiState.asStateFlow()
@@ -111,6 +116,25 @@ internal class SearchMoviesViewModel
                 getRecentSearchesUseCase().collect { searches ->
                     _uiState.update { it.copy(recentSearches = searches) }
                 }
+            }
+            viewModelScope.launch {
+                observeMovieLibraryStatusesUseCase().collect { result ->
+                    result.onSuccess(::updateLibraryStatuses)
+                }
+            }
+        }
+
+        private fun updateLibraryStatuses(statuses: Map<Int, MovieLibraryStatus>) {
+            libraryStatuses = statuses
+            _uiState.update { state ->
+                state.copy(
+                    nowPlayingMovies = state.nowPlayingMovies.withLibraryStatuses(statuses),
+                    searchMovieResults = state.searchMovieResults.withLibraryStatuses(statuses),
+                    popularMovies = state.popularMovies.withLibraryStatuses(statuses),
+                    topRatedMovies = state.topRatedMovies.withLibraryStatuses(statuses),
+                    upcomingMovies = state.upcomingMovies.withLibraryStatuses(statuses),
+                    trendingMovies = state.trendingMovies.withLibraryStatuses(statuses),
+                )
             }
         }
 
@@ -333,7 +357,7 @@ internal class SearchMoviesViewModel
         ) {
             result.fold(
                 onSuccess = { movies ->
-                    val newMovies = movies.toUiList()
+                    val newMovies = movies.toUiList(libraryStatuses)
 
                     val updatedResults =
                         (
@@ -519,7 +543,7 @@ internal class SearchMoviesViewModel
                 var refreshFailedWithExistingData = false
 
                 _uiState.update { state ->
-                    val movies = results.toUiLists()
+                    val movies = results.toUiLists(libraryStatuses)
                     val finalScreenState =
                         resolveDashboardScreenState(
                             movies.all,
@@ -636,7 +660,7 @@ internal class SearchMoviesViewModel
                     )
                 result.fold(
                     onSuccess = { movies ->
-                        val newMovies = movies.toUiList()
+                        val newMovies = movies.toUiList(libraryStatuses)
                         _uiState.update {
                             it.copy(
                                 isPopularLoadingMore = false,
@@ -686,13 +710,15 @@ private data class DashboardMovies(
         get() = listOf(nowPlaying, popular, topRated, upcoming, trending)
 }
 
-private fun DashboardResults.toUiLists(): DashboardMovies =
+private fun DashboardResults.toUiLists(
+    libraryStatuses: Map<Int, MovieLibraryStatus>,
+): DashboardMovies =
     DashboardMovies(
-        nowPlaying = nowPlaying.getOrDefault(emptyList()).toUiList(),
-        popular = popular.getOrDefault(emptyList()).toUiList(),
-        topRated = topRated.getOrDefault(emptyList()).toUiList(),
-        upcoming = upcoming.getOrDefault(emptyList()).toUiList(),
-        trending = trending.getOrDefault(emptyList()).toUiList(),
+        nowPlaying = nowPlaying.getOrDefault(emptyList()).toUiList(libraryStatuses),
+        popular = popular.getOrDefault(emptyList()).toUiList(libraryStatuses),
+        topRated = topRated.getOrDefault(emptyList()).toUiList(libraryStatuses),
+        upcoming = upcoming.getOrDefault(emptyList()).toUiList(libraryStatuses),
+        trending = trending.getOrDefault(emptyList()).toUiList(libraryStatuses),
     )
 
 private fun shouldKeepExistingDashboard(

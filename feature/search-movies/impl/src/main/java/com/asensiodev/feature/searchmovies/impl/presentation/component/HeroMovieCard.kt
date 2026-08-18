@@ -75,6 +75,14 @@ internal fun HeroMovieCard(
                         .padding(Spacings.spacing16)
                         .fillMaxWidth(),
             )
+            movie.libraryStatus?.let { status ->
+                MovieStatusRibbon(
+                    status = status,
+                    modifier = Modifier.align(Alignment.TopEnd),
+                    tagSize = Size.size64,
+                    iconPadding = Spacings.spacing8 + Size.size2,
+                )
+            }
         }
     }
 }

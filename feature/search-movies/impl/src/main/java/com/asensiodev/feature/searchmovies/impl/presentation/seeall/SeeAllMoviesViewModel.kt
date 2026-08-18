@@ -6,12 +6,15 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.api.navigation.SeeAllMoviesRoute
+import com.asensiodev.feature.searchmovies.impl.domain.model.MovieLibraryStatus
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetPopularMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTopRatedMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTrendingMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetUpcomingMoviesUseCase
+import com.asensiodev.feature.searchmovies.impl.domain.usecase.ObserveMovieLibraryStatusesUseCase
 import com.asensiodev.feature.searchmovies.impl.presentation.collectWithStale
 import com.asensiodev.feature.searchmovies.impl.presentation.mapper.toUiList
+import com.asensiodev.feature.searchmovies.impl.presentation.mapper.withLibraryStatuses
 import com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType
 import com.asensiodev.ui.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -36,6 +39,7 @@ internal class SeeAllMoviesViewModel
         private val getPopularMoviesUseCase: GetPopularMoviesUseCase,
         private val getTopRatedMoviesUseCase: GetTopRatedMoviesUseCase,
         private val getUpcomingMoviesUseCase: GetUpcomingMoviesUseCase,
+        private val observeMovieLibraryStatusesUseCase: ObserveMovieLibraryStatusesUseCase,
     ) : ViewModel() {
         private val sectionType: SectionType =
             SectionType.fromKey(
@@ -51,6 +55,8 @@ internal class SeeAllMoviesViewModel
         private var currentPage = FIRST_PAGE
         private var pageJob: Job? = null
         private var requestId = 0
+        private var observersSetUp = false
+        private var libraryStatuses: Map<Int, MovieLibraryStatus> = emptyMap()
 
         fun process(intent: SeeAllMoviesIntent) {
             when (intent) {
@@ -62,6 +68,7 @@ internal class SeeAllMoviesViewModel
         }
 
         private fun loadInitial(isRefresh: Boolean) {
+            setupObservers()
             pageJob?.cancel()
             currentPage = FIRST_PAGE
             _uiState.update {
@@ -79,6 +86,21 @@ internal class SeeAllMoviesViewModel
                 )
             }
             loadPage(FIRST_PAGE, isInitialLoad = true, isRefresh = isRefresh)
+        }
+
+        private fun setupObservers() {
+            if (observersSetUp) return
+            observersSetUp = true
+            viewModelScope.launch {
+                observeMovieLibraryStatusesUseCase().collect { result ->
+                    result.onSuccess { statuses ->
+                        libraryStatuses = statuses
+                        _uiState.update { state ->
+                            state.copy(movies = state.movies.withLibraryStatuses(statuses))
+                        }
+                    }
+                }
+            }
         }
 
         private fun loadMore() {
@@ -115,7 +137,7 @@ internal class SeeAllMoviesViewModel
                     if (activeRequestId != requestId) return@launch
                     result.fold(
                         onSuccess = { movies ->
-                            val newMovies = movies.toUiList()
+                            val newMovies = movies.toUiList(libraryStatuses)
                             currentPage = page
 
                             _uiState.update { state ->

@@ -84,6 +84,12 @@ internal fun MovieCard(
                     )
                 }
             }
+            movie.libraryStatus?.let { status ->
+                MovieStatusRibbon(
+                    status = status,
+                    modifier = Modifier.align(Alignment.TopEnd),
+                )
+            }
         }
     }
 }

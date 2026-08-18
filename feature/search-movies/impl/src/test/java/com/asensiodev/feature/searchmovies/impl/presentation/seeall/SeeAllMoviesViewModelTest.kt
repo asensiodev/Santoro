@@ -4,10 +4,12 @@ import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.searchmovies.impl.data.repository.StaleDataException
+import com.asensiodev.feature.searchmovies.impl.domain.model.MovieLibraryStatus
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetPopularMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTopRatedMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetTrendingMoviesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetUpcomingMoviesUseCase
+import com.asensiodev.feature.searchmovies.impl.domain.usecase.ObserveMovieLibraryStatusesUseCase
 import com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType
 import io.mockk.every
 import io.mockk.mockk
@@ -16,6 +18,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -36,6 +39,9 @@ class SeeAllMoviesViewModelTest {
     private val getPopularMoviesUseCase: GetPopularMoviesUseCase = mockk(relaxed = true)
     private val getTopRatedMoviesUseCase: GetTopRatedMoviesUseCase = mockk(relaxed = true)
     private val getUpcomingMoviesUseCase: GetUpcomingMoviesUseCase = mockk(relaxed = true)
+    private val observeMovieLibraryStatusesUseCase: ObserveMovieLibraryStatusesUseCase = mockk()
+    private val libraryStatuses =
+        MutableStateFlow<Result<Map<Int, MovieLibraryStatus>>>(Result.success(emptyMap()))
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -62,6 +68,7 @@ class SeeAllMoviesViewModelTest {
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+        every { observeMovieLibraryStatusesUseCase() } returns libraryStatuses
     }
 
     @AfterEach
@@ -79,6 +86,7 @@ class SeeAllMoviesViewModelTest {
                 getPopularMoviesUseCase = getPopularMoviesUseCase,
                 getTopRatedMoviesUseCase = getTopRatedMoviesUseCase,
                 getUpcomingMoviesUseCase = getUpcomingMoviesUseCase,
+                observeMovieLibraryStatusesUseCase = observeMovieLibraryStatusesUseCase,
             )
     }
 
@@ -107,6 +115,59 @@ class SeeAllMoviesViewModelTest {
             state.screenState shouldBeInstanceOf SeeAllScreenState.Content::class
             state.movies.size shouldBeEqualTo 1
             state.movies.first().title shouldBeEqualTo "Inception"
+        }
+
+    @Test
+    fun `GIVEN appended pages WHEN statuses change and fail THEN all content and pagination survive`() =
+        runTest {
+            val secondMovie = sampleMovie.copy(id = 2, title = "Interstellar")
+            every { getTrendingMoviesUseCase(1) } returns
+                flowOf(Result.success(listOf(sampleMovie)))
+            every { getTrendingMoviesUseCase(2) } returns
+                flowOf(Result.success(listOf(secondMovie)))
+            createViewModel(SectionType.TRENDING)
+
+            viewModel.process(SeeAllMoviesIntent.LoadInitial)
+            advanceUntilIdle()
+            viewModel.process(SeeAllMoviesIntent.LoadMore)
+            advanceUntilIdle()
+            libraryStatuses.emit(
+                Result.success(
+                    mapOf(
+                        1 to MovieLibraryStatus.Watched,
+                        2 to MovieLibraryStatus.Watchlist,
+                    ),
+                ),
+            )
+            runCurrent()
+
+            val successfulState = viewModel.uiState.value
+            successfulState.movies.map { movie -> movie.libraryStatus } shouldBeEqualTo
+                listOf(MovieLibraryStatus.Watched, MovieLibraryStatus.Watchlist)
+
+            libraryStatuses.emit(Result.failure(IllegalStateException()))
+            runCurrent()
+
+            viewModel.uiState.value shouldBeEqualTo successfulState
+            verify(exactly = 1) { getTrendingMoviesUseCase(1) }
+            verify(exactly = 1) { getTrendingMoviesUseCase(2) }
+        }
+
+    @Test
+    fun `GIVEN latest statuses before page load WHEN loading THEN page is decorated`() =
+        runTest {
+            every { getTrendingMoviesUseCase(1) } returns
+                flowOf(Result.success(listOf(sampleMovie)))
+            createViewModel(SectionType.TRENDING)
+
+            viewModel.process(SeeAllMoviesIntent.LoadInitial)
+            libraryStatuses.emit(Result.success(mapOf(1 to MovieLibraryStatus.Watched)))
+            advanceUntilIdle()
+
+            viewModel.uiState.value.movies
+                .single()
+                .libraryStatus shouldBeEqualTo
+                MovieLibraryStatus.Watched
         }
 
     @Test

@@ -11,12 +11,16 @@ import com.asensiodev.feature.searchmovies.impl.data.datasource.RemoteSearchMovi
 import com.asensiodev.feature.searchmovies.impl.data.datasource.RoomBrowseCacheDataSource
 import com.asensiodev.feature.searchmovies.impl.data.datasource.SearchMoviesDatasource
 import com.asensiodev.feature.searchmovies.impl.data.repository.CachingSearchMoviesRepository
+import com.asensiodev.feature.searchmovies.impl.data.repository.DefaultMovieLibraryStatusRepository
 import com.asensiodev.feature.searchmovies.impl.data.service.SearchMoviesApiService
+import com.asensiodev.feature.searchmovies.impl.domain.repository.MovieLibraryStatusRepository
 import com.asensiodev.feature.searchmovies.impl.domain.repository.RecentSearchesRepository
 import com.asensiodev.feature.searchmovies.impl.domain.repository.SearchMoviesRepository
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.GetPopularMoviesUseCase
+import com.asensiodev.feature.searchmovies.impl.domain.usecase.ObserveMovieLibraryStatusesUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesUseCase
 import com.asensiodev.santoro.core.database.data.dao.BrowseCacheDao
+import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
@@ -84,6 +88,18 @@ internal object SearchMoviesModule {
         repository: SearchMoviesRepository,
         dispatchers: DispatcherProvider,
     ): GetPopularMoviesUseCase = GetPopularMoviesUseCase(repository, dispatchers)
+
+    @Provides
+    fun provideMovieLibraryStatusRepository(
+        databaseRepository: DatabaseRepository,
+    ): MovieLibraryStatusRepository = DefaultMovieLibraryStatusRepository(databaseRepository)
+
+    @Provides
+    internal fun provideObserveMovieLibraryStatusesUseCase(
+        repository: MovieLibraryStatusRepository,
+        dispatchers: DispatcherProvider,
+    ): ObserveMovieLibraryStatusesUseCase =
+        ObserveMovieLibraryStatusesUseCase(repository, dispatchers)
 
     @Provides
     @Singleton
