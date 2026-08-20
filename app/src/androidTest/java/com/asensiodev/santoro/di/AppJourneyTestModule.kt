@@ -13,7 +13,9 @@ import com.asensiodev.auth.domain.repository.AuthRepository
 import com.asensiodev.core.domain.repository.UserPreferencesRepository
 import com.asensiodev.feature.moviedetail.impl.di.MovieDetailModule
 import com.asensiodev.feature.moviedetail.impl.domain.repository.MovieDetailRepository
+import com.asensiodev.feature.searchmovies.impl.data.repository.DefaultMovieLibraryStatusRepository
 import com.asensiodev.feature.searchmovies.impl.di.SearchMoviesModule
+import com.asensiodev.feature.searchmovies.impl.domain.repository.MovieLibraryStatusRepository
 import com.asensiodev.feature.searchmovies.impl.domain.repository.RecentSearchesRepository
 import com.asensiodev.feature.searchmovies.impl.domain.repository.SearchMoviesRepository
 import com.asensiodev.library.observability.api.NoOpObservabilityTracker
@@ -92,6 +94,11 @@ object AppJourneyTestModule {
     @Singleton
     fun provideSearchMoviesRepository(fake: FakeSearchMoviesRepository): SearchMoviesRepository =
         fake
+
+    @Provides
+    fun provideMovieLibraryStatusRepository(
+        databaseRepository: DatabaseRepository,
+    ): MovieLibraryStatusRepository = DefaultMovieLibraryStatusRepository(databaseRepository)
 
     @Provides
     @Singleton
