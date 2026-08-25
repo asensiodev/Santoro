@@ -4,9 +4,9 @@
 
 | Field        | Value                          |
 |--------------|--------------------------------|
-| **Version**  | 2.0                            |
+| **Version**  | 2.4                            |
 | **Status**   | ✅ Current                     |
-| **Date**     | 2026-03-08                     |
+| **Date**     | 2026-08-25                     |
 | **Author**   | @asensiodev                    |
 | **Platform** | Android (Native)               |
 
@@ -206,7 +206,7 @@ Entry: Profile → App Settings.
 - **Appearance** (theme toggle — Light/Dark/System) via [FIP-005](../plan/FIP-005-theme-toggle.md).
 - **Language selection** via [FIP-007](../plan/FIP-007-language-selector.md).
 - **Privacy Policy** link opens in the browser.
-- **Delete Account** with confirmation dialog — clears local Room DB + deletes Firebase Auth user.
+- **Delete Account** with confirmation dialog — reauthenticates with Google, deletes the user's Firestore movie data, deletes the Firebase Auth user, then clears local Room data.
 - **TMDB Attribution** — "Powered by TMDB" logo + link in footer.
 
 ---
@@ -320,10 +320,10 @@ Features approved for a future release. Each will get a FIP before implementatio
 | **Scope**   | All feature ViewModels across the project |
 | **Pattern** | MVI — `Intent → State → Effect` replacing the current `StateFlow + direct update` approach |
 | **Rationale** | As the app grows, the current ViewModel pattern mixes state updates with side-effect logic. MVI enforces a single unidirectional data flow, making state transitions deterministic and testable |
-| **Key changes** | Introduce `UiIntent` sealed classes per feature · ViewModels expose a single `process(intent: UiIntent)` entry point · One-time side effects (navigation, toasts) handled via a dedicated `UiEffect` channel (`Channel<UiEffect>`) · `UiState` becomes the sole source of truth |
+| **Key changes** | Introduce `UiIntent` sealed classes per feature · ViewModels expose a single `process(intent: UiIntent)` entry point · `UiState` is the source of truth for durable outcomes · Non-replay effects are reserved for transient actions |
 | **Migration strategy** | Feature-by-feature migration. Start with `search-movies` (most complex), then `movie-detail`, `watchlist`, `watched-movies`, `settings`. No big-bang rewrite |
 | **Scope of FIP** | One FIP per feature module migrated, or a single umbrella FIP with one phase per feature |
-| **Notes** | No new external library required. Pattern implemented with plain Kotlin `sealed interface` + `Channel`. Existing test patterns (GIVEN/WHEN/THEN) remain unchanged |
+| **Notes** | No MVI framework required. Transient effects use non-replay `SharedFlow`; navigation is collected in `RESUMED`, other effects in `STARTED`, and outcomes requiring acknowledgement remain in state |
 
 ### F-15 — Movie Detail: Tagline Display
 
@@ -458,15 +458,15 @@ Features approved for a future release. Each will get a FIP before implementatio
 | **Behaviour** | Align the swipe delete icon with the drag direction and allow expected gesture dismissal for the welcome bottom sheet if it does not conflict with onboarding requirements |
 | **Rationale** | Small interaction polish that makes existing shipped flows feel more native and predictable |
 
-### F-28 — Local Data Isolation Per User
+### F-28 — Single Active Account Local Isolation
 
 | Attribute   | Detail |
 |-------------|--------|
-| **Status**  | 📋 Planned |
-| **Scope**   | Room movie state, sync merge, and all local list queries |
-| **Current state** | Room stores movie user state locally without a per-user partition. Normal logout no longer clears local data to avoid losing watched/watchlist state, but same-device multi-account switching can expose stale local state until sync corrects it |
-| **Behaviour** | Persist watched/watchlist state per `userId` and filter all local user-state queries by the active account |
-| **Rationale** | Preserves the safer logout behavior while preventing account cross-contamination on shared devices |
+| **Status**  | 🟡 Draft — [FIP-023](../plan/FIP-023-single-active-account-isolation.md) |
+| **Scope**   | Ownership of the shared Room movie state, authenticated app entry, and sync account guards |
+| **Current state** | Room has one unowned movie dataset. A different Firebase UID can therefore see or synchronize data retained by the previous account |
+| **Behaviour** | Keep one active local dataset, persist its owner UID, and block authenticated content until a UID change clears the previous owner's movies before new sync starts |
+| **Rationale** | Prevents cross-account exposure without adding account switching UI or partitioning every Room query by user |
 
 ---
 
@@ -488,3 +488,4 @@ Features approved for a future release. Each will get a FIP before implementatio
 | 2.1     | 2026-03-08 | F-23 Deep Link added and marked ✅ Shipped — FIP-014 |
 | 2.2     | 2026-03-08 | F-18 See All Navigation marked ✅ Shipped — FIP-015 |
 | 2.3     | 2026-05-27 | Add F-24 through F-28 from closed testing follow-ups |
+| 2.4     | 2026-08-25 | Replace F-28 per-user Room partitioning with single-active-account isolation via FIP-023 and align F-09 effect-delivery guidance. |
