@@ -47,3 +47,9 @@ Android app using Kotlin, Jetpack Compose, Clean Architecture, pragmatic MVI, Hi
 - Planning-only work modifies documentation, not production code.
 - Do not commit or push unless the user explicitly requests it.
 - Never modify unrelated user changes or `.DS_Store` files.
+
+## Implementation Summaries
+
+- After completing an implementation, explain every changed production and test class, what changed in it, and why the change was necessary.
+- Group supporting resource, build, and documentation files when appropriate, but still explain their purpose.
+- Report the validation commands and results, plus any remaining manual checks, risks, or incomplete work.
