@@ -5,8 +5,8 @@
 | Field                  | Value                                                       |
 |------------------------|-------------------------------------------------------------|
 | **FIP ID**             | FIP-022                                                     |
-| **Version**            | 1.1                                                         |
-| **Status**             | 🔵 In Progress                                              |
+| **Version**            | 1.2                                                         |
+| **Status**             | ✅ Done                                                     |
 | **PRD ref**            | [PRD.md](../prd/PRD.md) — §3.7 Settings                    |
 | **Feature**            | Delete account data from Android before deleting Auth       |
 | **Date**               | 2026-08-24                                                  |
@@ -29,13 +29,14 @@ This version fixes the incorrect deletion claim entirely from Android using the 
 - Delete all Firestore movie documents owned by the authenticated UID.
 - Delete Firebase Auth only after Firestore succeeds.
 - Clear Room only after both remote operations succeed.
+- Persist a local-cleanup marker before Auth deletion and recover it before exposing app content.
 - Preserve coroutine cancellation and expose failures through the existing localized Settings error.
 - Cover the new ordering and failure boundaries with existing MockK/Kluent test patterns.
 
 ## 3. Non-Goals And Accepted Limits
 
 - No Cloud Functions, TypeScript, Blaze plan, App Check, server locks, or new CI stack.
-- No DataStore marker, operation ID, process-death recovery, or global recovery UI.
+- No operation history, remote deletion job, or cross-device recovery state.
 - No per-user Room partitioning, account switching redesign, or F-28 implementation.
 - No recent-search deletion; recent searches are device-local and not tied to the Firebase UID.
 - No WorkManager redesign or guarantee against an already-running upload.
@@ -49,8 +50,10 @@ Confirm deletion
     → request Google credential
     → reauthenticate current Firebase user
     → delete users/{uid}/movies documents from Firestore
+    → persist local cleanup pending
     → delete Firebase Auth user
-    → clear Room user data
+    → app-level recovery clears Room user data
+    → clear local cleanup pending
     → existing auth-state navigation returns to Login
 ```
 
@@ -64,8 +67,12 @@ SettingsViewModel
     └─ DeleteAccountUseCase
           ├─ AuthRepository.reauthenticateWithGoogle
           ├─ SyncRepository.deleteUserData
+          ├─ AccountDeletionRecoveryRepository.markLocalCleanupPending
           ├─ AuthRepository.deleteAccount
-          └─ DatabaseRepository.clearAllUserData
+
+MainActivityViewModel
+    ├─ AccountDeletionRecoveryRepository.isLocalCleanupPending
+    └─ DatabaseRepository.clearAllUserData
 ```
 
 `core/sync` owns Firestore deletion because it already owns the `users/{uid}/movies` schema. Settings must not import Firestore SDK classes.
@@ -73,8 +80,11 @@ SettingsViewModel
 ## 6. Modules Affected
 
 - `core/auth`
+- `core/domain`
+- `core/string-resources`
 - `core/sync`
 - `feature/settings/impl`
+- `app`
 - `docs/prd`
 
 ## 7. Phases & Tasks
@@ -122,13 +132,31 @@ SettingsViewModel
 
 - [x] Request the Google credential only after account-deletion confirmation.
 - [x] Prevent duplicate deletion jobs while credential/deletion work is active.
-- [x] Change `DeleteAccountUseCase` ordering to reauthenticate → Firestore → Auth → Room.
+- [x] Change `DeleteAccountUseCase` ordering to reauthenticate → Firestore → cleanup marker → Auth.
 - [x] Return immediately on each failure and never execute a later step.
-- [x] Check and propagate the Room cleanup result.
+- [x] Delegate post-Auth Room cleanup to app-level recovery.
 - [x] Keep existing auth-state-driven navigation after successful Auth deletion.
 - [x] Update Settings and use-case tests for success, credential failure, and every operation boundary.
 
-### Phase 4 — Documentation And Validation
+### Phase 4 — Persistent Local Cleanup Recovery
+
+**Data sources**
+- A persisted boolean marker written after Firestore deletion and before Firebase Auth deletion.
+- Current Firebase auth state observed by `MainActivityViewModel`.
+- Existing Room user data accessed through `DatabaseRepository`.
+
+**Side effects**
+- ✅ Allowed: persist or clear the cleanup marker, block app entry, clear Room, and retry local cleanup.
+- ❌ Forbidden: retry remote deletion without a fresh credential, expose Login or authenticated content while cleanup is pending, or use WorkManager for the immediate Room operation.
+
+- [x] Add `AccountDeletionRecoveryRepository` with durable checked writes and an observable pending state.
+- [x] Mark cleanup pending before Auth deletion and clear the marker when Auth returns a normal failure.
+- [x] Move post-Auth Room cleanup to the app-level lifecycle so Settings removal cannot cancel it.
+- [x] Recover a marker found at process start before exposing authenticated content or Login.
+- [x] Keep the marker and show a blocking localized Retry UI when Room cleanup or marker clearing fails.
+- [x] Add repository, use-case, MainActivity ViewModel, cancellation, failure, and race-boundary tests.
+
+### Phase 5 — Documentation And Validation
 
 - [x] Update PRD §3.7 to describe Firestore, Auth, and Room deletion ordering.
 - [x] Run affected Auth, Sync, and Settings tests.
@@ -136,6 +164,7 @@ SettingsViewModel
 - [x] Run `./gradlew assembleDebug assembleRelease`.
 - [x] Validate successful deletion and one failure path on a real device.
 - [x] Record validation results below.
+- [x] Validate navigation-triggered cleanup and process-restart recovery on a real device.
 
 ## 8. Validation
 
@@ -147,6 +176,7 @@ SettingsViewModel
 | Full unit/static/coverage validation | ✅ | `./gradlew test detekt ktlintCheck koverVerify assembleDebug assembleRelease` completed successfully. |
 | Debug and release builds | ✅ | Both variants assembled successfully; Kotlin daemon failures used Gradle's successful fallback compiler strategy. |
 | Real-device deletion | ✅ | Successful deletion and credential-cancellation path validated on a Pixel 9a debug build on 2026-08-30. |
+| Persistent cleanup recovery | ✅ | Navigation-triggered cleanup and a persisted pending marker across process restart passed on a Pixel 9a debug build on 2026-08-30. |
 
 ## 9. Decisions
 
@@ -156,6 +186,8 @@ SettingsViewModel
 | 2 | Reauthenticate before Firestore deletion. | Minimizes the chance that Auth later rejects the destructive action for stale login. |
 | 3 | Clear Room last. | Remote failure must not erase the only local copy before the account is deleted. |
 | 4 | Accept process-death and cross-device race limitations. | The product requested a small release rather than distributed deletion infrastructure. |
+| 5 | Persist local cleanup before Auth deletion and recover at app entry. | Navigation or process death must not expose retained Room data after destructive remote work. |
+| 6 | Use direct app-level recovery instead of WorkManager. | Room cleanup is immediate; the persisted marker already provides restart recovery without deferred scheduling. |
 
 ## 10. Changelog
 
@@ -163,3 +195,4 @@ SettingsViewModel
 |---------|------------|---------|
 | 1.0     | 2026-08-24 | Initial client-only deletion plan. |
 | 1.1     | 2026-08-30 | Record successful real-device deletion and cancellation validation. |
+| 1.2     | 2026-08-30 | Add persistent local-cleanup recovery before production release. |

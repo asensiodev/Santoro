@@ -172,6 +172,7 @@
     <string name="error_message_retry">Ups! An error occurred, please tap to retry</string>
     <string name="error_message_retry_button">Retry</string>
     <string name="error_content_button">Try Again</string>
+    <string name="account_deletion_recovery_error">We couldn’t finish removing local account data. Try again before continuing.</string>
 
     <!-- Search Suggestions -->
     <string name="search_suggestions_recent_title">Recent searches</string>

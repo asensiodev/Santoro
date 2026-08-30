@@ -3,19 +3,27 @@ package com.asensiodev.santoro
 import com.asensiodev.auth.domain.usecase.ObserveAuthStateUseCase
 import com.asensiodev.core.domain.model.SantoroUser
 import com.asensiodev.core.domain.model.ThemeOption
+import com.asensiodev.core.domain.repository.AccountDeletionRecoveryRepository
 import com.asensiodev.core.domain.usecase.ObserveHasSeenGuestOnboardingUseCase
 import com.asensiodev.core.domain.usecase.ObserveThemeUseCase
 import com.asensiodev.core.domain.usecase.SetHasSeenGuestOnboardingUseCase
 import com.asensiodev.core.testing.extension.CoroutineTestExtension
+import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.BeforeEach
@@ -32,6 +40,9 @@ class MainActivityViewModelTest {
     private val observeThemeUseCase: ObserveThemeUseCase = mockk()
     private val setHasSeenGuestOnboardingUseCase: SetHasSeenGuestOnboardingUseCase = mockk()
     private val syncScheduler: WorkManagerSyncScheduler = mockk(relaxed = true)
+    private val recoveryRepository: AccountDeletionRecoveryRepository = mockk()
+    private val databaseRepository: DatabaseRepository = mockk()
+    private val isLocalCleanupPending = MutableStateFlow(false)
 
     private lateinit var sut: MainActivityViewModel
 
@@ -57,6 +68,12 @@ class MainActivityViewModelTest {
     fun setUp() {
         every { observeHasSeenGuestOnboardingUseCase() } returns flowOf(false)
         every { observeThemeUseCase() } returns flowOf(ThemeOption.SYSTEM)
+        every { recoveryRepository.isLocalCleanupPending } returns isLocalCleanupPending
+        coEvery { databaseRepository.clearAllUserData() } returns Result.success(Unit)
+        coEvery { recoveryRepository.clearLocalCleanupPending() } coAnswers {
+            isLocalCleanupPending.value = false
+            Result.success(Unit)
+        }
     }
 
     private fun buildViewModel() {
@@ -67,6 +84,8 @@ class MainActivityViewModelTest {
                 observeThemeUseCase = observeThemeUseCase,
                 setHasSeenGuestOnboardingUseCase = setHasSeenGuestOnboardingUseCase,
                 syncScheduler = syncScheduler,
+                recoveryRepository = recoveryRepository,
+                databaseRepository = databaseRepository,
             )
     }
 
@@ -88,6 +107,7 @@ class MainActivityViewModelTest {
             every { observeAuthStateUseCase() } returns flowOf(null)
 
             buildViewModel()
+            backgroundScope.launch { sut.uiState.collect {} }
             advanceUntilIdle()
 
             verify(exactly = 0) { syncScheduler.schedulePeriodicSync() }
@@ -151,5 +171,79 @@ class MainActivityViewModelTest {
             advanceUntilIdle()
 
             values.last() shouldBeEqualTo ThemeOption.DARK
+        }
+
+    @Test
+    fun `GIVEN cleanup pending at startup WHEN recovery succeeds THEN clears data before Login`() =
+        runTest {
+            isLocalCleanupPending.value = true
+            every { observeAuthStateUseCase() } returns flowOf(null)
+
+            buildViewModel()
+            backgroundScope.launch { sut.uiState.collect {} }
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { databaseRepository.clearAllUserData() }
+            coVerify(exactly = 1) { recoveryRepository.clearLocalCleanupPending() }
+            sut.uiState.value shouldBeEqualTo MainActivityUiState.Unauthenticated
+        }
+
+    @Test
+    fun `GIVEN deletion marker WHEN Auth becomes null THEN blocks Login until cleanup finishes`() =
+        runTest {
+            val authState = MutableStateFlow<SantoroUser?>(googleUser)
+            val cleanupResult = CompletableDeferred<Result<Unit>>()
+            every { observeAuthStateUseCase() } returns authState
+            coEvery { databaseRepository.clearAllUserData() } coAnswers { cleanupResult.await() }
+            buildViewModel()
+            backgroundScope.launch { sut.uiState.collect {} }
+            advanceUntilIdle()
+
+            isLocalCleanupPending.value = true
+            authState.value = null
+            runCurrent()
+
+            sut.uiState.value shouldBeEqualTo MainActivityUiState.Loading
+
+            cleanupResult.complete(Result.success(Unit))
+            advanceUntilIdle()
+
+            sut.uiState.value shouldBeEqualTo MainActivityUiState.Unauthenticated
+        }
+
+    @Test
+    fun `GIVEN cleanup fails WHEN retry succeeds THEN keeps app blocked until marker clears`() =
+        runTest {
+            isLocalCleanupPending.value = true
+            every { observeAuthStateUseCase() } returns flowOf(null)
+            coEvery { databaseRepository.clearAllUserData() } returnsMany
+                listOf(Result.failure(Exception("Room")), Result.success(Unit))
+            buildViewModel()
+            backgroundScope.launch { sut.uiState.collect {} }
+            advanceUntilIdle()
+
+            sut.uiState.value shouldBeEqualTo MainActivityUiState.AccountDeletionRecoveryError
+            isLocalCleanupPending.value shouldBeEqualTo true
+
+            sut.retryAccountDeletionRecovery()
+            advanceUntilIdle()
+
+            sut.uiState.value shouldBeEqualTo MainActivityUiState.Unauthenticated
+            coVerify(exactly = 2) { databaseRepository.clearAllUserData() }
+        }
+
+    @Test
+    fun `GIVEN cleanup is cancelled WHEN recovering THEN marker is retained`() =
+        runTest {
+            val cancellation = CancellationException("cancelled")
+            isLocalCleanupPending.value = true
+            every { observeAuthStateUseCase() } returns flowOf(null)
+            coEvery { databaseRepository.clearAllUserData() } returns Result.failure(cancellation)
+
+            buildViewModel()
+            runCurrent()
+
+            isLocalCleanupPending.value shouldBeEqualTo true
+            coVerify(exactly = 0) { recoveryRepository.clearLocalCleanupPending() }
         }
 }

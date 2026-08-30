@@ -1,8 +1,8 @@
 package com.asensiodev.settings.impl.domain.usecase
 
 import com.asensiodev.auth.domain.repository.AuthRepository
+import com.asensiodev.core.domain.repository.AccountDeletionRecoveryRepository
 import com.asensiodev.core.domain.result.rethrowCancellation
-import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import com.asensiodev.santoro.core.sync.domain.repository.SyncRepository
 import javax.inject.Inject
 
@@ -11,7 +11,7 @@ internal class DeleteAccountUseCase
     constructor(
         private val authRepository: AuthRepository,
         private val syncRepository: SyncRepository,
-        private val databaseRepository: DatabaseRepository,
+        private val recoveryRepository: AccountDeletionRecoveryRepository,
     ) {
         suspend operator fun invoke(
             uid: String,
@@ -31,21 +31,32 @@ internal class DeleteAccountUseCase
                     reauthenticationResult
                 }
 
-            val authDeletionResult =
+            val markerResult =
                 if (firestoreDeletionResult.isSuccess) {
-                    authRepository
-                        .deleteAccount(uid)
+                    recoveryRepository
+                        .markLocalCleanupPending()
                         .rethrowCancellation()
                 } else {
                     firestoreDeletionResult
                 }
 
-            return if (authDeletionResult.isSuccess) {
-                databaseRepository
-                    .clearAllUserData()
-                    .rethrowCancellation()
-            } else {
-                authDeletionResult
+            val authDeletionResult =
+                if (markerResult.isSuccess) {
+                    authRepository
+                        .deleteAccount(uid)
+                        .rethrowCancellation()
+                } else {
+                    markerResult
+                }
+
+            if (markerResult.isSuccess && authDeletionResult.isFailure) {
+                val markerClearResult =
+                    recoveryRepository
+                        .clearLocalCleanupPending()
+                        .rethrowCancellation()
+                if (markerClearResult.isFailure) return markerClearResult
             }
+
+            return authDeletionResult
         }
     }

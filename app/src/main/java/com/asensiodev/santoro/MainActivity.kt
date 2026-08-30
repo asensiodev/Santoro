@@ -21,6 +21,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -28,6 +30,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.asensiodev.api.navigation.LoginRoute
+import com.asensiodev.core.designsystem.PreviewContentFullSize
+import com.asensiodev.core.designsystem.component.errorContent.ErrorContent
 import com.asensiodev.core.designsystem.theme.SantoroTheme
 import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.feature.moviedetail.impl.presentation.navigation.movieDetailRoute
@@ -41,6 +45,7 @@ import com.asensiodev.santoro.presentation.onboarding.GuestOnboardingBottomSheet
 import com.asensiodev.settings.impl.presentation.navigation.settingsRoute
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.drop
+import com.asensiodev.santoro.core.stringresources.R as SR
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -75,28 +80,35 @@ class MainActivity : AppCompatActivity() {
 
             SantoroTheme(darkTheme = isDark) {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    if (uiState !is MainActivityUiState.Loading) {
-                        val isAuthenticated = uiState is MainActivityUiState.Authenticated
-                        val startDestination =
-                            if (isAuthenticated) {
-                                TabHost
-                            } else {
-                                LoginRoute
-                            }
-
-                        SantoroApp(
-                            startDestination = startDestination,
-                            isAuthenticated = isAuthenticated,
-                            deepLinkMovieId = if (isAuthenticated) pendingDeepLinkMovieId else null,
-                            onDeepLinkConsumed = { pendingDeepLinkMovieId = null },
-                        )
-
-                        if (uiState is MainActivityUiState.Authenticated &&
-                            (uiState as MainActivityUiState.Authenticated).showGuestOnboarding
-                        ) {
-                            GuestOnboardingBottomSheet(
-                                onDismissRequest = viewModel::dismissGuestOnboarding,
+                    when (val state = uiState) {
+                        is MainActivityUiState.Loading -> Unit
+                        is MainActivityUiState.AccountDeletionRecoveryError -> {
+                            AccountDeletionRecoveryError(
+                                onRetry = viewModel::retryAccountDeletionRecovery,
                             )
+                        }
+
+                        is MainActivityUiState.Authenticated,
+                        is MainActivityUiState.Unauthenticated,
+                        -> {
+                            val isAuthenticated = state is MainActivityUiState.Authenticated
+                            val startDestination = if (isAuthenticated) TabHost else LoginRoute
+
+                            SantoroApp(
+                                startDestination = startDestination,
+                                isAuthenticated = isAuthenticated,
+                                deepLinkMovieId =
+                                    if (isAuthenticated) pendingDeepLinkMovieId else null,
+                                onDeepLinkConsumed = { pendingDeepLinkMovieId = null },
+                            )
+
+                            if (state is MainActivityUiState.Authenticated &&
+                                state.showGuestOnboarding
+                            ) {
+                                GuestOnboardingBottomSheet(
+                                    onDismissRequest = viewModel::dismissGuestOnboarding,
+                                )
+                            }
                         }
                     }
                 }
@@ -252,3 +264,19 @@ fun SantoroApp(
 }
 
 private const val NAV_ANIMATION_DURATION = 300
+
+@Composable
+private fun AccountDeletionRecoveryError(onRetry: () -> Unit) {
+    ErrorContent(
+        message = stringResource(SR.string.account_deletion_recovery_error),
+        onRetry = onRetry,
+    )
+}
+
+@PreviewLightDark
+@Composable
+private fun AccountDeletionRecoveryErrorPreview() {
+    PreviewContentFullSize {
+        AccountDeletionRecoveryError(onRetry = {})
+    }
+}

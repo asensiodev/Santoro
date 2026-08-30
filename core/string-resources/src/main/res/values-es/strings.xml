@@ -172,6 +172,7 @@
     <string name="error_message_retry">¡Ups! Ocurrió un error, toca para reintentar</string>
     <string name="error_message_retry_button">Reintentar</string>
     <string name="error_content_button">Intentar de nuevo</string>
+    <string name="account_deletion_recovery_error">No pudimos terminar de eliminar los datos locales de la cuenta. Inténtalo de nuevo antes de continuar.</string>
 
     <!-- Search Suggestions -->
     <string name="search_suggestions_recent_title">Búsquedas recientes</string>
