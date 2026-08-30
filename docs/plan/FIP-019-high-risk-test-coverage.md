@@ -5,8 +5,8 @@
 | Field                  | Value                                                                    |
 |------------------------|--------------------------------------------------------------------------|
 | **FIP ID**             | FIP-019                                                                  |
-| **Version**            | 1.0                                                                      |
-| **Status**             | 🔵 In Progress                                                           |
+| **Version**            | 2.0                                                                      |
+| **Status**             | ✅ Done                                                                  |
 | **PRD ref**            | Internal quality initiative — no PRD feature                             |
 | **Feature**            | Behavioral coverage for high-risk Android and service boundaries        |
 | **Date**               | 2026-08-06                                                               |
@@ -373,7 +373,7 @@ Phase 7 adds ten Hilt/Compose app journeys using deterministic in-memory reposit
     - Mark FIP-018 tasks complete unless the implemented work fully satisfies them.
 
 - [x] Run every affected JVM suite from a clean test invocation.
-- [ ] Run every affected instrumented suite on CI’s API 35 emulator profile.
+- [x] Run every affected instrumented suite on CI’s API 35 emulator profile.
 - [x] Add `app`, secure-storage, and any other newly instrumented module tasks explicitly to CI.
 - [x] Preserve separate reporting for JVM coverage and instrumented behavioral suites.
 - [x] Run `./gradlew ktlintCheck detekt test assembleDebug` and all adopted explicit verification tasks.
@@ -381,7 +381,7 @@ Phase 7 adds ten Hilt/Compose app journeys using deterministic in-memory reposit
 - [x] Confirm reports and logs contain no test token, credential, API key, or sensitive fixture.
 - [x] Update §10 with exact commands, environment, results, and any skipped validation.
 
-The clean affected-module invocation ran debug and release JVM tests for `app`, `core/auth`, `core/database`, `core/network`, `core/sync`, `feature/search-movies/impl`, and `library/secure-storage/impl`; all passed. `./gradlew ktlintCheck detekt test assembleDebug` and `./gradlew :koverXmlReport :koverHtmlReport :koverVerify :koverLog` passed. The adopted instrumented command ran app, database, secure-storage, Watchlist, Movie Detail, and Watched Movies suites successfully on the local API 37 Pixel 9a AVD. GitHub Actions now runs the same instrumented tasks on its API 35 Pixel 6 profile, but that CI execution remains pending.
+The clean affected-module invocation ran debug and release JVM tests for `app`, `core/auth`, `core/database`, `core/network`, `core/sync`, `feature/search-movies/impl`, and `library/secure-storage/impl`; all passed. `./gradlew ktlintCheck detekt test assembleDebug` and `./gradlew :koverXmlReport :koverHtmlReport :koverVerify :koverLog` passed. The adopted instrumented command ran app, database, secure-storage, Watchlist, Movie Detail, and Watched Movies suites successfully on the local API 37 Pixel 9a AVD. GitHub Actions run `31823938280`, job `95444360577`, passed the same suites on the API 35 Pixel 6 profile; run `33316555035`, job `99272447476`, passed them again on 2026-08-30.
 
 ---
 
@@ -398,6 +398,7 @@ The clean affected-module invocation ran debug and release JVM tests for `app`, 
 | App navigation journeys | ✅ | 10 tests passed with `./gradlew :app:connectedJourneyTestAndroidTest` on the local API 37 Pixel 9a AVD; app JVM debug/release tests, journey-test assembly, Detekt, and ktlint passed |
 | Aggregate Kover verification | ✅ | `./gradlew :koverXmlReport :koverHtmlReport :koverVerify :koverLog` passed: 2,658/3,308 lines (80.3507%) and 774/1,046 branches (74.00%); thresholds unchanged |
 | Static analysis and build | ✅ | `./gradlew ktlintCheck detekt test assembleDebug` passed on 2026-08-14 |
+| CI API 35 instrumentation | ✅ | GitHub Actions run `31823938280`, job `95444360577`, passed all adopted boundary and journey suites; run `33316555035`, job `99272447476`, reconfirmed them on 2026-08-30 |
 | Sensitive-output review | ✅ | Generated XML, HTML, text, and log output contains none of the synthetic auth/network credential fixtures |
 | Real device smoke test | Skipped | Optional validation was not run; local instrumentation used the API 37 Pixel 9a AVD |
 
@@ -408,7 +409,7 @@ The clean affected-module invocation ran debug and release JVM tests for `app`, 
 | # | Blocker | Raised | Resolved | Impact |
 |---|---------|--------|----------|--------|
 | 1 | Version-1 Room schema is not checked in and history contains incompatible early/late v1 shapes | 2026-08-06 | 2026-08-14 | Validation explicitly skipped because no trustworthy shipped source schema exists; `MIGRATION_1_2` and `1→5` remain unclaimed and the residual upgrade risk is accepted |
-| 2 | No Android device or emulator was connected for the first local baseline attempt | 2026-08-07 | 2026-08-07 | Resolved by starting the available `Pixel_9a` API 37 AVD; CI API 35 execution remains required for final verification |
+| 2 | No Android device or emulator was connected for the first local baseline attempt | 2026-08-07 | 2026-08-07 | Resolved locally with the `Pixel_9a` API 37 AVD; run `31823938280` later passed on the CI API 35 Pixel 6 profile |
 | 3 | Authorization is duplicated when already present and debug BODY logging exposes the API key | 2026-08-14 | 2026-08-14 | Approved correction: replace the authorization value and redact the header before logging |
 | 4 | Existing `language` query-parameter behavior was not defined and currently appends a duplicate value | 2026-08-14 | 2026-08-14 | Approved correction: replace it with the current app locale so exactly one value is sent |
 | 5 | Deep-link parser accepted schemes and hosts that the manifest does not support | 2026-08-14 | 2026-08-14 | Approved correction: reject direct intents unless they use HTTP(S) and `themoviedb.org` or `www.themoviedb.org` |
@@ -484,3 +485,4 @@ The clean affected-module invocation ran debug and release JVM tests for `app`, 
 | 1.7     | 2026-08-14 | Completed Phase 7 app authentication, deep-link, state-restoration, and navigation journeys; added app and secure-storage instrumented suites to CI |
 | 1.8     | 2026-08-14 | Completed local Phase 8 JVM, quality, build, coverage, instrumented, and sensitive-output verification; CI API 35 execution remains pending |
 | 1.9     | 2026-08-14 | Explicitly skipped unprovable version-1 migration validation while retaining the production migration and documenting the accepted residual risk |
+| 2.0     | 2026-08-30 | Confirmed the adopted instrumented suites on CI API 35 and completed the FIP |
