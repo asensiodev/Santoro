@@ -7,4 +7,5 @@ interface SyncRepository {
     ): Result<Unit>
     suspend fun uploadPendingChanges(uid: String): Result<Unit>
     suspend fun downloadAndMerge(uid: String): Result<Unit>
+    suspend fun deleteUserData(uid: String): Result<Unit>
 }

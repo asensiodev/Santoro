@@ -41,12 +41,17 @@ class FakeAuthRepository : AuthRepository {
     override suspend fun linkWithGoogle(idToken: String): Result<SantoroUser> =
         Result.success(AppJourneyTestData.authenticatedUser)
 
+    override suspend fun reauthenticateWithGoogle(
+        expectedUid: String,
+        idToken: String,
+    ): Result<Unit> = Result.success(Unit)
+
     override suspend fun signOut() {
         signOutCalls.incrementAndGet()
         userState.value = null
     }
 
-    override suspend fun deleteAccount(): Result<Unit> {
+    override suspend fun deleteAccount(expectedUid: String): Result<Unit> {
         userState.value = null
         return Result.success(Unit)
     }
@@ -264,6 +269,8 @@ class FakeSyncRepository : SyncRepository {
     }
 
     override suspend fun downloadAndMerge(uid: String): Result<Unit> = Result.success(Unit)
+
+    override suspend fun deleteUserData(uid: String): Result<Unit> = Result.success(Unit)
 
     fun reset() {
         pendingUploadUserIds.clear()

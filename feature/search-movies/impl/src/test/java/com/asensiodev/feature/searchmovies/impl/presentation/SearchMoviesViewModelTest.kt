@@ -316,7 +316,7 @@ class SearchMoviesViewModelTest {
             testDispatcher.scheduler.advanceTimeBy(600)
             advanceUntilIdle()
 
-            viewModel.effect.test {
+            viewModel.effects.feedback.test {
                 viewModel.process(SearchMoviesIntent.Refresh)
                 advanceUntilIdle()
 
@@ -606,7 +606,7 @@ class SearchMoviesViewModelTest {
             viewModel.process(SearchMoviesIntent.LoadInitialData)
             advanceUntilIdle()
 
-            viewModel.effect.test {
+            viewModel.effects.navigation.test {
                 viewModel.process(
                     SearchMoviesIntent.SeeAllClicked(
                         com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType.POPULAR,
@@ -614,8 +614,8 @@ class SearchMoviesViewModelTest {
                 )
 
                 val effect = awaitItem()
-                effect shouldBeInstanceOf SearchMoviesEffect.NavigateToSeeAll::class
-                (effect as SearchMoviesEffect.NavigateToSeeAll).sectionType shouldBeEqualTo
+                effect shouldBeInstanceOf SearchMoviesNavigationEffect.NavigateToSeeAll::class
+                (effect as SearchMoviesNavigationEffect.NavigateToSeeAll).sectionType shouldBeEqualTo
                     com.asensiodev.feature.searchmovies.impl.presentation.model.SectionType.POPULAR
             }
         }
@@ -741,7 +741,7 @@ class SearchMoviesViewModelTest {
             viewModel.process(SearchMoviesIntent.MovieClicked(42))
             advanceUntilIdle()
 
-            viewModel.effect.test {
+            viewModel.effects.navigation.test {
                 expectNoEvents()
             }
         }
@@ -749,11 +749,11 @@ class SearchMoviesViewModelTest {
     @Test
     fun `GIVEN active collector WHEN navigation effect is emitted THEN it is delivered`() =
         runTest {
-            viewModel.effect.test {
+            viewModel.effects.navigation.test {
                 viewModel.process(SearchMoviesIntent.MovieClicked(42))
                 runCurrent()
 
-                awaitItem() shouldBeEqualTo SearchMoviesEffect.NavigateToDetail(42)
+                awaitItem() shouldBeEqualTo SearchMoviesNavigationEffect.NavigateToDetail(42)
             }
         }
 }

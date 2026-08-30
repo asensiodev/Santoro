@@ -64,15 +64,28 @@ internal class DefaultAuthRepository
                     observabilityTracker.recordError(AUTH_LINK_GOOGLE_FAILED, exception)
                 }
 
+        override suspend fun reauthenticateWithGoogle(
+            expectedUid: String,
+            idToken: String,
+        ): Result<Unit> =
+            dataSource
+                .reauthenticateWithGoogle(expectedUid, idToken)
+                .rethrowCancellation()
+                .onSuccess {
+                    observabilityTracker.trackAction(AUTH_REAUTHENTICATE_GOOGLE)
+                }.onFailure { exception ->
+                    observabilityTracker.recordError(AUTH_REAUTHENTICATE_GOOGLE_FAILED, exception)
+                }
+
         override suspend fun signOut() {
             dataSource.signOut()
             observabilityTracker.trackAction(AUTH_SIGN_OUT)
             observabilityTracker.clearUser()
         }
 
-        override suspend fun deleteAccount(): Result<Unit> =
+        override suspend fun deleteAccount(expectedUid: String): Result<Unit> =
             dataSource
-                .deleteAccount()
+                .deleteAccount(expectedUid)
                 .rethrowCancellation()
                 .onSuccess {
                     observabilityTracker.trackAction(AUTH_DELETE_ACCOUNT)
@@ -89,6 +102,8 @@ internal class DefaultAuthRepository
             const val AUTH_SIGN_IN_FAILED = "auth_sign_in_failed"
             const val AUTH_LINK_GOOGLE = "auth_link_google"
             const val AUTH_LINK_GOOGLE_FAILED = "auth_link_google_failed"
+            const val AUTH_REAUTHENTICATE_GOOGLE = "auth_reauthenticate_google"
+            const val AUTH_REAUTHENTICATE_GOOGLE_FAILED = "auth_reauthenticate_google_failed"
             const val AUTH_SIGN_OUT = "auth_sign_out"
             const val AUTH_DELETE_ACCOUNT = "auth_delete_account"
             const val AUTH_DELETE_ACCOUNT_FAILED = "auth_delete_account_failed"

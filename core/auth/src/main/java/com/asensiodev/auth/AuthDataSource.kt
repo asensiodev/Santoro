@@ -8,6 +8,10 @@ interface AuthDataSource {
     suspend fun signInAnonymously(): Result<SantoroUser>
     suspend fun signInWithGoogle(idToken: String): Result<SantoroUser>
     suspend fun linkWithGoogle(idToken: String): Result<SantoroUser>
+    suspend fun reauthenticateWithGoogle(
+        expectedUid: String,
+        idToken: String,
+    ): Result<Unit>
     suspend fun signOut()
-    suspend fun deleteAccount(): Result<Unit>
+    suspend fun deleteAccount(expectedUid: String): Result<Unit>
 }

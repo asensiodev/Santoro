@@ -2,7 +2,10 @@ package com.asensiodev.auth
 
 import app.cash.turbine.test
 import com.asensiodev.auth.domain.exception.AccountCollisionException
+import com.asensiodev.auth.domain.exception.AuthenticatedUserMismatchException
+import com.asensiodev.auth.domain.exception.NoAuthenticatedUserException
 import com.asensiodev.core.domain.model.SantoroUser
+import com.asensiodev.core.testing.verifyNever
 import com.asensiodev.core.testing.verifyOnce
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.AuthResult
@@ -148,7 +151,7 @@ class FirebaseAuthDataSourceTest {
 
             val failure = sut.linkWithGoogle(TEST_ID_TOKEN).exceptionOrNull()
 
-            failure.shouldBeInstanceOf<IllegalStateException>()
+            failure.shouldBeInstanceOf<NoAuthenticatedUserException>()
         }
 
     @Test
@@ -171,6 +174,64 @@ class FirebaseAuthDataSourceTest {
             every { currentUser.linkWithCredential(any()) } returns Tasks.forException(cancellation)
 
             captureCancellation { sut.linkWithGoogle(TEST_ID_TOKEN) } shouldBeEqualTo cancellation
+        }
+
+    @Test
+    fun `GIVEN current user WHEN reauthenticating with Google THEN user is reauthenticated`() =
+        runTest {
+            val currentUser = firebaseUser()
+            every { firebaseAuth.currentUser } returns currentUser
+            every { currentUser.reauthenticate(any()) } returns Tasks.forResult(null)
+
+            sut.reauthenticateWithGoogle(USER_ID, TEST_ID_TOKEN) shouldBeEqualTo Result.success(Unit)
+
+            verifyOnce { currentUser.reauthenticate(any()) }
+        }
+
+    @Test
+    fun `GIVEN no current user WHEN reauthenticating with Google THEN missing-user failure is returned`() =
+        runTest {
+            every { firebaseAuth.currentUser } returns null
+
+            val failure = sut.reauthenticateWithGoogle(USER_ID, TEST_ID_TOKEN).exceptionOrNull()
+
+            failure.shouldBeInstanceOf<NoAuthenticatedUserException>()
+        }
+
+    @Test
+    fun `GIVEN reauthentication failure WHEN reauthenticating with Google THEN failure is returned`() =
+        runTest {
+            val currentUser = firebaseUser()
+            val failure = IllegalStateException("Synthetic reauthentication failure")
+            every { firebaseAuth.currentUser } returns currentUser
+            every { currentUser.reauthenticate(any()) } returns Tasks.forException(failure)
+
+            sut.reauthenticateWithGoogle(USER_ID, TEST_ID_TOKEN).exceptionOrNull() shouldBeEqualTo failure
+        }
+
+    @Test
+    fun `GIVEN current user UID differs WHEN reauthenticating THEN failure is returned without reauthentication`() =
+        runTest {
+            val currentUser = firebaseUser()
+            every { firebaseAuth.currentUser } returns currentUser
+
+            val failure = sut.reauthenticateWithGoogle("different-user", TEST_ID_TOKEN).exceptionOrNull()
+
+            failure.shouldBeInstanceOf<AuthenticatedUserMismatchException>()
+            verifyNever { currentUser.reauthenticate(any()) }
+        }
+
+    @Test
+    fun `GIVEN reauthentication cancellation WHEN reauthenticating with Google THEN cancellation propagates`() =
+        runTest {
+            val currentUser = firebaseUser()
+            val cancellation = CancellationException("cancelled")
+            every { firebaseAuth.currentUser } returns currentUser
+            every { currentUser.reauthenticate(any()) } returns Tasks.forException(cancellation)
+
+            captureCancellation {
+                sut.reauthenticateWithGoogle(USER_ID, TEST_ID_TOKEN)
+            } shouldBeEqualTo cancellation
         }
 
     @Test
@@ -208,7 +269,7 @@ class FirebaseAuthDataSourceTest {
             every { firebaseAuth.currentUser } returns user
             every { user.delete() } returns Tasks.forResult(null)
 
-            sut.deleteAccount() shouldBeEqualTo Result.success(Unit)
+            sut.deleteAccount(USER_ID) shouldBeEqualTo Result.success(Unit)
             verifyOnce { user.delete() }
         }
 
@@ -217,9 +278,9 @@ class FirebaseAuthDataSourceTest {
         runTest {
             every { firebaseAuth.currentUser } returns null
 
-            val failure = sut.deleteAccount().exceptionOrNull()
+            val failure = sut.deleteAccount(USER_ID).exceptionOrNull()
 
-            failure.shouldBeInstanceOf<IllegalStateException>()
+            failure.shouldBeInstanceOf<NoAuthenticatedUserException>()
         }
 
     @Test
@@ -230,7 +291,19 @@ class FirebaseAuthDataSourceTest {
             every { firebaseAuth.currentUser } returns user
             every { user.delete() } returns Tasks.forException(failure)
 
-            sut.deleteAccount().exceptionOrNull() shouldBeEqualTo failure
+            sut.deleteAccount(USER_ID).exceptionOrNull() shouldBeEqualTo failure
+        }
+
+    @Test
+    fun `GIVEN current user UID differs WHEN deleting account THEN failure is returned without deletion`() =
+        runTest {
+            val user = firebaseUser()
+            every { firebaseAuth.currentUser } returns user
+
+            val failure = sut.deleteAccount("different-user").exceptionOrNull()
+
+            failure.shouldBeInstanceOf<AuthenticatedUserMismatchException>()
+            verifyNever { user.delete() }
         }
 
     @Test
@@ -241,7 +314,7 @@ class FirebaseAuthDataSourceTest {
             every { firebaseAuth.currentUser } returns user
             every { user.delete() } returns Tasks.forException(cancellation)
 
-            captureCancellation { sut.deleteAccount() } shouldBeEqualTo cancellation
+            captureCancellation { sut.deleteAccount(USER_ID) } shouldBeEqualTo cancellation
         }
 
     private fun successfulAuthTask(user: FirebaseUser? = firebaseUser()) =

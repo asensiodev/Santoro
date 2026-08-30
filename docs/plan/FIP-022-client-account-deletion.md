@@ -5,7 +5,7 @@
 | Field                  | Value                                                       |
 |------------------------|-------------------------------------------------------------|
 | **FIP ID**             | FIP-022                                                     |
-| **Version**            | 1.0                                                         |
+| **Version**            | 1.1                                                         |
 | **Status**             | 🔵 In Progress                                              |
 | **PRD ref**            | [PRD.md](../prd/PRD.md) — §3.7 Settings                    |
 | **Feature**            | Delete account data from Android before deleting Auth       |
@@ -104,7 +104,7 @@ SettingsViewModel
 - ✅ Allowed: read and delete documents only below the supplied user's `movies` collection and delete the empty parent user document.
 - ❌ Forbidden: delete other collections, change Firestore rules, add server state, or clear local data.
 
-- [x] Add `deleteUserData(uid)` to `FirestoreMovieDataSource` and `SyncRepository`.
+- [x] Add `deleteUserData(uid)` to `MovieSyncRemoteDataSource` and `SyncRepository`.
 - [x] Fetch all movie document references from `Source.SERVER` and delete them in batches of at most 500 writes.
 - [x] Delete the parent `users/{uid}` document after all movie batches succeed.
 - [x] Preserve cancellation and stop on the first failed batch.
@@ -134,7 +134,7 @@ SettingsViewModel
 - [x] Run affected Auth, Sync, and Settings tests.
 - [x] Run `./gradlew test detekt ktlintCheck koverVerify`.
 - [x] Run `./gradlew assembleDebug assembleRelease`.
-- [ ] Validate successful deletion and one failure path on a real device.
+- [x] Validate successful deletion and one failure path on a real device.
 - [x] Record validation results below.
 
 ## 8. Validation
@@ -146,7 +146,7 @@ SettingsViewModel
 | Settings tests | ✅ | Passed with the affected-module test command. |
 | Full unit/static/coverage validation | ✅ | `./gradlew test detekt ktlintCheck koverVerify assembleDebug assembleRelease` completed successfully. |
 | Debug and release builds | ✅ | Both variants assembled successfully; Kotlin daemon failures used Gradle's successful fallback compiler strategy. |
-| Real-device deletion | ⏳ | Scheduled for 2026-08-25. |
+| Real-device deletion | ✅ | Successful deletion and credential-cancellation path validated on a Pixel 9a debug build on 2026-08-30. |
 
 ## 9. Decisions
 
@@ -162,3 +162,4 @@ SettingsViewModel
 | Version | Date       | Summary |
 |---------|------------|---------|
 | 1.0     | 2026-08-24 | Initial client-only deletion plan. |
+| 1.1     | 2026-08-30 | Record successful real-device deletion and cancellation validation. |

@@ -12,13 +12,14 @@ import kotlinx.coroutines.flow.Flow
 @Composable
 fun <T> CollectEffectWithLifecycle(
     effect: Flow<T>,
+    minActiveState: Lifecycle.State = Lifecycle.State.STARTED,
     onEffect: suspend (T) -> Unit,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val currentOnEffect by rememberUpdatedState(onEffect)
 
-    LaunchedEffect(effect, lifecycleOwner) {
-        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+    LaunchedEffect(effect, lifecycleOwner, minActiveState) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(minActiveState) {
             effect.collect { value -> currentOnEffect(value) }
         }
     }

@@ -1,11 +1,13 @@
 package com.asensiodev.settings.impl.presentation.settings
 
+import android.content.Context
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asensiodev.auth.domain.usecase.ObserveAuthStateUseCase
 import com.asensiodev.auth.domain.usecase.SignOutUseCase
+import com.asensiodev.auth.helper.GoogleSignInHelper
 import com.asensiodev.core.domain.model.AppLanguage
 import com.asensiodev.core.domain.model.SantoroUser
 import com.asensiodev.core.domain.model.ThemeOption
@@ -17,13 +19,12 @@ import com.asensiodev.ui.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import com.asensiodev.santoro.core.stringresources.R as SR
 
@@ -37,18 +38,17 @@ internal class SettingsViewModel
         private val observeThemeUseCase: ObserveThemeUseCase,
         private val setThemeUseCase: SetThemeUseCase,
         private val syncRepository: SyncRepository,
+        private val googleSignInHelper: GoogleSignInHelper,
     ) : ViewModel() {
         private var currentUser: SantoroUser? = null
         private var isObservingAuth = false
         private var isObservingTheme = false
         private var accountActionJob: Job? = null
+        private val nextMessageId = AtomicLong(0L)
 
         private val _uiState =
             MutableStateFlow(SettingsUiState(currentLanguage = resolveCurrentLanguage()))
         val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
-
-        private val _effect = MutableSharedFlow<SettingsEffect>(extraBufferCapacity = 1)
-        val effect = _effect.asSharedFlow()
 
         fun process(intent: SettingsIntent) {
             when (intent) {
@@ -62,8 +62,9 @@ internal class SettingsViewModel
                 is SettingsIntent.DismissLanguagePicker -> dismissLanguagePicker()
                 is SettingsIntent.OnLogoutClicked -> onLogoutClicked()
                 is SettingsIntent.OnDeleteAccountClicked -> onDeleteAccountClicked()
-                is SettingsIntent.ConfirmDeleteAccount -> confirmDeleteAccount()
+                is SettingsIntent.ConfirmDeleteAccount -> confirmDeleteAccount(intent.context)
                 is SettingsIntent.DismissDeleteAccountDialog -> dismissDeleteAccountDialog()
+                is SettingsIntent.ErrorShown -> onErrorShown(intent.messageId)
             }
         }
 
@@ -160,16 +161,21 @@ internal class SettingsViewModel
             _uiState.update { it.copy(showDeleteAccountDialog = false) }
         }
 
-        private fun confirmDeleteAccount() {
+        private fun confirmDeleteAccount(context: Context) {
             if (accountActionJob?.isActive == true) return
             _uiState.update { it.copy(showDeleteAccountDialog = false, isLoading = true) }
             accountActionJob =
                 viewModelScope.launch {
                     try {
-                        val result = deleteAccountUseCase()
-                        val error = result.exceptionOrNull()
-                        if (error != null) {
+                        val idToken = googleSignInHelper.signIn(context).getOrNull()
+                        val user = currentUser
+                        if (idToken == null || user == null || user.isAnonymous) {
                             showError(SR.string.settings_delete_account_error)
+                        } else {
+                            deleteAccountUseCase(user.uid, idToken)
+                                .onFailure {
+                                    showError(SR.string.settings_delete_account_error)
+                                }
                         }
                     } catch (exception: CancellationException) {
                         throw exception
@@ -181,8 +187,25 @@ internal class SettingsViewModel
                 }
         }
 
-        private suspend fun showError(messageRes: Int) {
-            _effect.emit(SettingsEffect.ShowError(UiText.StringResource(messageRes)))
+        private fun showError(messageRes: Int) {
+            val pendingMessage =
+                SettingsPendingMessage(
+                    id = nextMessageId.incrementAndGet(),
+                    message = UiText.StringResource(messageRes),
+                )
+            _uiState.update { state ->
+                state.copy(pendingMessage = pendingMessage)
+            }
+        }
+
+        private fun onErrorShown(messageId: Long) {
+            _uiState.update { state ->
+                if (state.pendingMessage?.id == messageId) {
+                    state.copy(pendingMessage = null)
+                } else {
+                    state
+                }
+            }
         }
 
         companion object {

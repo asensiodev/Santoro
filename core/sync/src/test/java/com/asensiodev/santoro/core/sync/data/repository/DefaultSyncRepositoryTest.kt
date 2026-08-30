@@ -2,7 +2,7 @@ package com.asensiodev.santoro.core.sync.data.repository
 
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import com.asensiodev.santoro.core.sync.SyncMockUtils
-import com.asensiodev.santoro.core.sync.data.datasource.FirestoreMovieDataSource
+import com.asensiodev.santoro.core.sync.data.datasource.MovieSyncRemoteDataSource
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class DefaultSyncRepositoryTest {
-    private val firestoreDataSource: FirestoreMovieDataSource = mockk()
+    private val firestoreDataSource: MovieSyncRemoteDataSource = mockk()
     private val databaseRepository: DatabaseRepository = mockk()
 
     private lateinit var sut: DefaultSyncRepository
@@ -509,6 +509,17 @@ class DefaultSyncRepositoryTest {
             }
             coVerify(exactly = 0) {
                 databaseRepository.upsertMovieFromSync(any(), any(), any(), any(), any(), any(), any(), any(), any())
+            }
+        }
+
+    @Test
+    fun `GIVEN Firestore deletion is cancelled WHEN deleteUserData THEN cancellation propagates`() =
+        runTest {
+            val cancellation = CancellationException("cancelled")
+            coEvery { firestoreDataSource.deleteUserData("uid123") } returns Result.failure(cancellation)
+
+            assertCancellation(cancellation) {
+                sut.deleteUserData("uid123")
             }
         }
 

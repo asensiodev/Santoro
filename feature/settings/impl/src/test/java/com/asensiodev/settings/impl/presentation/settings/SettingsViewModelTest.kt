@@ -1,10 +1,11 @@
 package com.asensiodev.settings.impl.presentation.settings
 
+import android.content.Context
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
-import app.cash.turbine.test
 import com.asensiodev.auth.domain.usecase.ObserveAuthStateUseCase
 import com.asensiodev.auth.domain.usecase.SignOutUseCase
+import com.asensiodev.auth.helper.GoogleSignInHelper
 import com.asensiodev.core.domain.model.AppLanguage
 import com.asensiodev.core.domain.model.SantoroUser
 import com.asensiodev.core.domain.model.ThemeOption
@@ -48,6 +49,8 @@ class SettingsViewModelTest {
     private val observeThemeUseCase: ObserveThemeUseCase = mockk()
     private val setThemeUseCase: SetThemeUseCase = mockk(relaxed = true)
     private val syncRepository: SyncRepository = mockk(relaxed = true)
+    private val googleSignInHelper: GoogleSignInHelper = mockk()
+    private val context: Context = mockk(relaxed = true)
 
     private lateinit var sut: SettingsViewModel
 
@@ -59,6 +62,7 @@ class SettingsViewModelTest {
         every { observeThemeUseCase() } returns flowOf(ThemeOption.SYSTEM)
         every { observeAuthStateUseCase() } returns flowOf(null)
         coEvery { syncRepository.uploadPendingChanges(any()) } returns Result.success(Unit)
+        coEvery { googleSignInHelper.signIn(context) } returns Result.success(ID_TOKEN)
         sut =
             SettingsViewModel(
                 observeAuthStateUseCase = observeAuthStateUseCase,
@@ -67,6 +71,7 @@ class SettingsViewModelTest {
                 observeThemeUseCase = observeThemeUseCase,
                 setThemeUseCase = setThemeUseCase,
                 syncRepository = syncRepository,
+                googleSignInHelper = googleSignInHelper,
             )
     }
 
@@ -251,13 +256,30 @@ class SettingsViewModelTest {
 
             sut.process(SettingsIntent.OnLogoutClicked)
             sut.process(SettingsIntent.OnLogoutClicked)
-            sut.process(SettingsIntent.ConfirmDeleteAccount)
+            sut.process(SettingsIntent.ConfirmDeleteAccount(context))
             runCurrent()
 
             coVerify(exactly = 1) { syncRepository.uploadPendingChanges("uid123") }
-            coVerify(exactly = 0) { deleteAccountUseCase() }
+            coVerify(exactly = 0) { deleteAccountUseCase(any(), any()) }
 
             releaseSync.complete(Unit)
+            advanceUntilIdle()
+        }
+
+    @Test
+    fun `GIVEN credential request is pending WHEN deletion repeats THEN credential work runs once`() =
+        runTest {
+            val releaseCredential = CompletableDeferred<Result<String>>()
+            coEvery { googleSignInHelper.signIn(context) } coAnswers { releaseCredential.await() }
+
+            sut.process(SettingsIntent.ConfirmDeleteAccount(context))
+            sut.process(SettingsIntent.ConfirmDeleteAccount(context))
+            runCurrent()
+
+            coVerify(exactly = 1) { googleSignInHelper.signIn(context) }
+            coVerify(exactly = 0) { deleteAccountUseCase(any(), any()) }
+
+            releaseCredential.complete(Result.failure(Exception()))
             advanceUntilIdle()
         }
 
@@ -265,17 +287,21 @@ class SettingsViewModelTest {
     fun `GIVEN account deletion is pending WHEN destructive intents repeat THEN destructive work runs once`() =
         runTest {
             val releaseDeletion = CompletableDeferred<Unit>()
-            coEvery { deleteAccountUseCase() } coAnswers {
+            every { observeAuthStateUseCase() } returns flowOf(GOOGLE_USER)
+            coEvery { deleteAccountUseCase(UID, ID_TOKEN) } coAnswers {
                 releaseDeletion.await()
                 Result.success(Unit)
             }
+            sut.process(SettingsIntent.ObserveAuth)
+            advanceUntilIdle()
 
-            sut.process(SettingsIntent.ConfirmDeleteAccount)
-            sut.process(SettingsIntent.ConfirmDeleteAccount)
+            sut.process(SettingsIntent.ConfirmDeleteAccount(context))
+            sut.process(SettingsIntent.ConfirmDeleteAccount(context))
             sut.process(SettingsIntent.OnLogoutClicked)
             runCurrent()
 
-            coVerify(exactly = 1) { deleteAccountUseCase() }
+            coVerify(exactly = 1) { googleSignInHelper.signIn(context) }
+            coVerify(exactly = 1) { deleteAccountUseCase(UID, ID_TOKEN) }
             coVerify(exactly = 0) { signOutUseCase() }
 
             releaseDeletion.complete(Unit)
@@ -283,35 +309,37 @@ class SettingsViewModelTest {
         }
 
     @Test
-    fun `GIVEN active effect collector WHEN logout fails THEN emits localized ShowError`() =
-        runTest {
-            coEvery { signOutUseCase() } throws Exception()
-
-            sut.effect.test {
-                sut.process(SettingsIntent.OnLogoutClicked)
-                advanceUntilIdle()
-
-                val effect = awaitItem() as SettingsEffect.ShowError
-                (effect.message as UiText.StringResource).resId shouldBeEqualTo
-                    SR.string.settings_logout_error
-            }
-        }
-
-    @Test
-    fun `GIVEN no effect collector WHEN logout fails THEN error is dropped`() =
+    fun `GIVEN logout fails WHEN work ends THEN sets localized pending message`() =
         runTest {
             coEvery { signOutUseCase() } throws Exception()
 
             sut.process(SettingsIntent.OnLogoutClicked)
             advanceUntilIdle()
 
-            sut.effect.test {
-                expectNoEvents()
-            }
+            pendingMessageResId() shouldBeEqualTo SR.string.settings_logout_error
         }
 
     @Test
-    fun `GIVEN logout is cancelled WHEN work ends THEN loading resets without error effect`() =
+    fun `GIVEN deletion fails WHEN error is acknowledged THEN pending message is cleared`() =
+        runTest {
+            every { observeAuthStateUseCase() } returns flowOf(GOOGLE_USER)
+            coEvery { deleteAccountUseCase(UID, ID_TOKEN) } returns Result.failure(Exception())
+            sut.process(SettingsIntent.ObserveAuth)
+            advanceUntilIdle()
+
+            sut.process(SettingsIntent.ConfirmDeleteAccount(context))
+            advanceUntilIdle()
+
+            val pendingMessage = requireNotNull(sut.uiState.value.pendingMessage)
+            pendingMessageResId() shouldBeEqualTo SR.string.settings_delete_account_error
+
+            sut.process(SettingsIntent.ErrorShown(pendingMessage.id))
+
+            sut.uiState.value.pendingMessage shouldBeEqualTo null
+        }
+
+    @Test
+    fun `GIVEN logout is cancelled WHEN work ends THEN loading resets without pending message`() =
         runTest {
             coEvery { signOutUseCase() } throws CancellationException()
 
@@ -319,9 +347,7 @@ class SettingsViewModelTest {
             advanceUntilIdle()
 
             sut.uiState.value.isLoading shouldBeEqualTo false
-            sut.effect.test {
-                expectNoEvents()
-            }
+            sut.uiState.value.pendingMessage shouldBeEqualTo null
         }
 
     @Test
@@ -344,61 +370,125 @@ class SettingsViewModelTest {
     @Test
     fun `GIVEN ConfirmDeleteAccount WHEN process THEN dialog is dismissed and loading starts`() =
         runTest {
-            // GIVEN
-            coEvery { deleteAccountUseCase() } returns Result.success(Unit)
+            every { observeAuthStateUseCase() } returns flowOf(GOOGLE_USER)
+            coEvery { deleteAccountUseCase(UID, ID_TOKEN) } returns Result.success(Unit)
+            sut.process(SettingsIntent.ObserveAuth)
+            advanceUntilIdle()
             sut.process(SettingsIntent.OnDeleteAccountClicked)
 
-            // WHEN
-            sut.process(SettingsIntent.ConfirmDeleteAccount)
+            sut.process(SettingsIntent.ConfirmDeleteAccount(context))
 
-            // THEN
             sut.uiState.value.showDeleteAccountDialog shouldBeEqualTo false
             sut.uiState.value.isLoading shouldBeEqualTo true
         }
 
     @Test
-    fun `GIVEN ConfirmDeleteAccount WHEN success THEN isLoading is false and no error`() =
+    fun `GIVEN Google user and credential WHEN confirmed THEN delegates uid and token`() =
         runTest {
-            // GIVEN
-            coEvery { deleteAccountUseCase() } returns Result.success(Unit)
-
-            // WHEN
-            sut.process(SettingsIntent.ConfirmDeleteAccount)
+            every { observeAuthStateUseCase() } returns flowOf(GOOGLE_USER)
+            coEvery { deleteAccountUseCase(UID, ID_TOKEN) } returns Result.success(Unit)
+            sut.process(SettingsIntent.ObserveAuth)
             advanceUntilIdle()
 
-            // THEN
+            sut.process(SettingsIntent.ConfirmDeleteAccount(context))
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { googleSignInHelper.signIn(context) }
+            coVerify(exactly = 1) { deleteAccountUseCase(UID, ID_TOKEN) }
             sut.uiState.value.isLoading shouldBeEqualTo false
         }
 
     @Test
-    fun `GIVEN ConfirmDeleteAccount WHEN success THEN delegates to use case`() =
+    fun `GIVEN credential request fails WHEN confirmed THEN sets deletion error and does not delete`() =
         runTest {
-            // GIVEN
-            coEvery { deleteAccountUseCase() } returns Result.success(Unit)
-
-            // WHEN
-            sut.process(SettingsIntent.ConfirmDeleteAccount)
+            every { observeAuthStateUseCase() } returns flowOf(GOOGLE_USER)
+            coEvery { googleSignInHelper.signIn(context) } returns Result.failure(Exception())
+            sut.process(SettingsIntent.ObserveAuth)
             advanceUntilIdle()
 
-            // THEN
-            coVerify(exactly = 1) { deleteAccountUseCase() }
+            sut.process(SettingsIntent.ConfirmDeleteAccount(context))
+            advanceUntilIdle()
+
+            pendingMessageResId() shouldBeEqualTo SR.string.settings_delete_account_error
+            coVerify(exactly = 0) { deleteAccountUseCase(any(), any()) }
         }
 
     @Test
-    fun `GIVEN ConfirmDeleteAccount WHEN failure THEN isLoading is false and ShowError is emitted`() =
+    fun `GIVEN current user is missing WHEN credential succeeds THEN sets deletion error and does not delete`() =
         runTest {
-            coEvery { deleteAccountUseCase() } returns Result.failure(Exception("error"))
+            sut.process(SettingsIntent.ConfirmDeleteAccount(context))
+            advanceUntilIdle()
 
-            sut.effect.test {
-                sut.process(SettingsIntent.ConfirmDeleteAccount)
-                advanceUntilIdle()
-
-                sut.uiState.value.isLoading shouldBeEqualTo false
-                val effect = awaitItem() as SettingsEffect.ShowError
-                (effect.message as UiText.StringResource).resId shouldBeEqualTo
-                    SR.string.settings_delete_account_error
-            }
+            pendingMessageResId() shouldBeEqualTo SR.string.settings_delete_account_error
+            coVerify(exactly = 1) { googleSignInHelper.signIn(context) }
+            coVerify(exactly = 0) { deleteAccountUseCase(any(), any()) }
         }
+
+    @Test
+    fun `GIVEN current user is anonymous WHEN credential succeeds THEN does not delete`() =
+        runTest {
+            every { observeAuthStateUseCase() } returns flowOf(ANONYMOUS_USER)
+            sut.process(SettingsIntent.ObserveAuth)
+            advanceUntilIdle()
+
+            sut.process(SettingsIntent.ConfirmDeleteAccount(context))
+            advanceUntilIdle()
+
+            pendingMessageResId() shouldBeEqualTo SR.string.settings_delete_account_error
+            coVerify(exactly = 0) { deleteAccountUseCase(any(), any()) }
+        }
+
+    @Test
+    fun `GIVEN deletion fails WHEN confirmed THEN loading resets and deletion error is pending`() =
+        runTest {
+            every { observeAuthStateUseCase() } returns flowOf(GOOGLE_USER)
+            coEvery { deleteAccountUseCase(UID, ID_TOKEN) } returns Result.failure(Exception("error"))
+            sut.process(SettingsIntent.ObserveAuth)
+            advanceUntilIdle()
+
+            sut.process(SettingsIntent.ConfirmDeleteAccount(context))
+            advanceUntilIdle()
+
+            sut.uiState.value.isLoading shouldBeEqualTo false
+            pendingMessageResId() shouldBeEqualTo SR.string.settings_delete_account_error
+        }
+
+    @Test
+    fun `GIVEN deletion is cancelled WHEN confirmed THEN loading resets without error`() =
+        runTest {
+            every { observeAuthStateUseCase() } returns flowOf(GOOGLE_USER)
+            coEvery { deleteAccountUseCase(UID, ID_TOKEN) } throws CancellationException()
+            sut.process(SettingsIntent.ObserveAuth)
+            advanceUntilIdle()
+
+            sut.process(SettingsIntent.ConfirmDeleteAccount(context))
+            advanceUntilIdle()
+
+            sut.uiState.value.isLoading shouldBeEqualTo false
+            sut.uiState.value.pendingMessage shouldBeEqualTo null
+        }
+
+    @Test
+    fun `GIVEN newer pending error WHEN older error is acknowledged THEN newer error remains`() =
+        runTest {
+            coEvery { signOutUseCase() } throws Exception()
+            sut.process(SettingsIntent.OnLogoutClicked)
+            advanceUntilIdle()
+            val firstMessage = requireNotNull(sut.uiState.value.pendingMessage)
+
+            sut.process(SettingsIntent.ErrorShown(firstMessage.id))
+
+            sut.process(SettingsIntent.OnLogoutClicked)
+            advanceUntilIdle()
+            val secondMessage = requireNotNull(sut.uiState.value.pendingMessage)
+
+            sut.process(SettingsIntent.ErrorShown(firstMessage.id))
+
+            sut.uiState.value.pendingMessage shouldBeEqualTo secondMessage
+        }
+
+    private fun pendingMessageResId(): Int =
+        (requireNotNull(sut.uiState.value.pendingMessage).message as UiText.StringResource).resId
 
     @Nested
     inner class ResolveCurrentLanguageTest {
@@ -475,5 +565,12 @@ class SettingsViewModelTest {
             result shouldBeEqualTo AppLanguage.ENGLISH
             Locale.setDefault(original)
         }
+    }
+
+    private companion object {
+        const val UID = "uid123"
+        const val ID_TOKEN = "id-token"
+        val GOOGLE_USER = SantoroUser(UID, "test@email.com", null, null, false)
+        val ANONYMOUS_USER = SantoroUser(UID, null, null, null, true)
     }
 }

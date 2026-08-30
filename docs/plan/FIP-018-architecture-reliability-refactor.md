@@ -5,11 +5,11 @@
 | Field                  | Value                                                                 |
 |------------------------|-----------------------------------------------------------------------|
 | **FIP ID**             | FIP-018                                                               |
-| **Version**            | 1.0                                                                   |
+| **Version**            | 1.4                                                                   |
 | **Status**             | 🔵 In Progress                                                        |
 | **PRD ref**            | Internal refactor — no PRD feature                                    |
 | **Feature**            | Correctness, lifecycle, SOLID, and quality-enforcement improvements   |
-| **Date**               | 2026-07-12                                                            |
+| **Date**               | 2026-08-25                                                            |
 | **Author**             | @asensiodev                                                           |
 | **Definition of Done** | All checkboxes in all phases marked `[x]` and validation completed    |
 
@@ -327,7 +327,7 @@ No new feature, API, implementation, or layer module is planned.
     - Converting all effects into state mechanically.
     - Standardizing direct navigation callbacks solely for stylistic consistency when no bug exists.
 
-- [ ] Inventory every feature effect and classify it as navigation, platform action, user feedback, or durable state transition.
+- [x] Inventory every feature effect and classify it as navigation, platform action, user feedback, or durable state transition.
 - [x] Define drop, buffer, replay, and acknowledgement semantics for each category.
 - [x] Introduce or reuse one lifecycle-aware effect collection pattern.
 - [x] Migrate Search, Watchlist, and Movie Detail effect collection first.
@@ -595,7 +595,7 @@ _Fill after implementation. A phase is not considered validated solely because i
 
 | # | Question | Resolution |
 |---|----------|------------|
-| 1 | Should transient effects be dropped while inactive or buffered until STARTED? | Drop transient navigation, platform-action, and snackbar effects while inactive; do not replay them on return |
+| 1 | Should transient effects be dropped while inactive or buffered until STARTED? | Drop transient effects while inactive; collect navigation in `RESUMED` and other transient effects in `STARTED`. Model outcomes that require acknowledgement as durable state |
 | 2 | Should failed movie mutations be pessimistic or optimistic with rollback? | Use pessimistic, mutually exclusive mutations because Room writes are fast and rollback complexity is unnecessary |
 | 3 | Which Search responsibilities merit extraction rather than private functions? | Resolve in Phase 8 using independent lifecycle/cancellation/test complexity as criteria |
 | 4 | Which state values materially need process-death restoration? | Resolve in Phase 9; default to reloading derived data |
@@ -618,7 +618,7 @@ _Fill after implementation. A phase is not considered validated solely because i
 | 8 | Use one query-driven Watchlist pipeline with `flatMapLatest` and one replaceable Movie Detail fetch job | Independent coroutine launches; strict serialized MVI store | The latest query/fetch is authoritative without changing the established MVI-style architecture |
 | 9 | Use pessimistic, mutually exclusive local movie mutations | Optimistic updates with rollback; queued repeated taps | Room writes are fast, current behavior is already pessimistic, and disabling conflicting actions avoids rollback and stale-state complexity |
 | 10 | Rethrow `CancellationException` from affected repository, data-source, and authentication boundaries | Convert cancellation to `Result.failure`; catch all exceptions uniformly | Cancellation is control flow and must remain visible to structured concurrency |
-| 11 | Collect transient effects only while STARTED and use non-replay `SharedFlow` producers | Buffered channels; replayed flows; durable state for every effect | Navigation, platform actions, and snackbar feedback should not execute after their screen becomes inactive |
+| 11 | Use non-replay `SharedFlow` for transient effects, collect navigation in `RESUMED`, and use acknowledged state for durable outcomes | Buffered channels; replayed flows; durable state for every effect | Navigation and platform actions must not execute after their destination becomes inactive, while important failures must remain visible until handled |
 | 12 | Represent Movie Detail mutation errors with localized `UiText` and render them as snackbar feedback | Raw exception text; silent effects; blocking screen error state | Mutation failure is non-blocking, must be localized, and should preserve loaded content |
 
 ---
@@ -656,3 +656,4 @@ _Fill after implementation. A phase is not considered validated solely because i
 | 1.1     | 2026-07-12 | Started execution of Phases 1–2 |
 | 1.2     | 2026-07-12 | Completed the urgent duplicate-collector and latest-result subset of Phases 1–2 |
 | 1.3     | 2026-07-12 | Completed Phase 3 pessimistic mutation consistency and regression tests |
+| 1.4     | 2026-08-25 | Audited effect delivery, separated Search navigation from feedback, added lifecycle thresholds/tests, and moved Settings account errors to acknowledged state |

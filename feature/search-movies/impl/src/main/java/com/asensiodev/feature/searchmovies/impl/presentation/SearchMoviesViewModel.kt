@@ -18,6 +18,8 @@ import com.asensiodev.feature.searchmovies.impl.domain.usecase.ObserveMovieLibra
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SaveRecentSearchUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesByQueryAndGenreUseCase
 import com.asensiodev.feature.searchmovies.impl.domain.usecase.SearchMoviesUseCase
+import com.asensiodev.feature.searchmovies.impl.presentation.SearchMoviesNavigationEffect.NavigateToDetail
+import com.asensiodev.feature.searchmovies.impl.presentation.SearchMoviesNavigationEffect.NavigateToSeeAll
 import com.asensiodev.feature.searchmovies.impl.presentation.mapper.toUiList
 import com.asensiodev.feature.searchmovies.impl.presentation.mapper.withLibraryStatuses
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
@@ -33,10 +35,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -73,8 +73,8 @@ internal class SearchMoviesViewModel
         private val _uiState = MutableStateFlow(SearchMoviesUiState(query = restoredQuery))
         val uiState: StateFlow<SearchMoviesUiState> = _uiState.asStateFlow()
 
-        private val _effect = MutableSharedFlow<SearchMoviesEffect>(extraBufferCapacity = 1)
-        val effect = _effect.asSharedFlow()
+        private val mutableEffects = MutableSearchMoviesEffects()
+        val effects: SearchMoviesEffects = mutableEffects
 
         fun process(intent: SearchMoviesIntent) {
             when (intent) {
@@ -388,7 +388,7 @@ internal class SearchMoviesViewModel
                         )
                     }
                     if (isFromRefresh && !isStale) {
-                        _effect.emit(SearchMoviesEffect.ShowRefreshSuccess)
+                        mutableEffects.emitFeedback(SearchMoviesEffect.ShowRefreshSuccess)
                     }
                 },
                 onFailure = { exception ->
@@ -482,7 +482,7 @@ internal class SearchMoviesViewModel
                 viewModelScope.launch { saveRecentSearchUseCase(query) }
             }
             viewModelScope.launch {
-                _effect.emit(SearchMoviesEffect.NavigateToDetail(movieId))
+                mutableEffects.emitNavigation(NavigateToDetail(movieId))
             }
         }
 
@@ -522,7 +522,7 @@ internal class SearchMoviesViewModel
                 ),
             )
             viewModelScope.launch {
-                _effect.emit(SearchMoviesEffect.NavigateToSeeAll(sectionType))
+                mutableEffects.emitNavigation(NavigateToSeeAll(sectionType))
             }
         }
 
@@ -565,7 +565,7 @@ internal class SearchMoviesViewModel
                 }
                 isDashboardStale = isStale || refreshFailedWithExistingData
                 if (fromRefresh && !refreshFailedWithExistingData && !isStale) {
-                    _effect.emit(SearchMoviesEffect.ShowRefreshSuccess)
+                    mutableEffects.emitFeedback(SearchMoviesEffect.ShowRefreshSuccess)
                 }
             } catch (exception: CancellationException) {
                 throw exception

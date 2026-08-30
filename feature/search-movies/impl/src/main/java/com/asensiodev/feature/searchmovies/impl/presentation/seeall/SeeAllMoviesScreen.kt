@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asensiodev.core.designsystem.PreviewContentFullSize
 import com.asensiodev.core.designsystem.component.errorContent.ErrorContent
@@ -54,7 +55,10 @@ internal fun SeeAllMoviesRoute(
         viewModel.process(SeeAllMoviesIntent.LoadInitial)
     }
 
-    CollectEffectWithLifecycle(viewModel.effect) { effect ->
+    CollectEffectWithLifecycle(
+        effect = viewModel.effect,
+        minActiveState = Lifecycle.State.RESUMED,
+    ) { effect ->
         when (effect) {
             is SeeAllMoviesEffect.NavigateToDetail -> onMovieClick(effect.movieId)
         }

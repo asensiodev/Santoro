@@ -1,5 +1,6 @@
 package com.asensiodev.settings.impl.presentation.settings
 
+import android.content.Context
 import com.asensiodev.core.domain.model.AppLanguage
 import com.asensiodev.core.domain.model.ThemeOption
 
@@ -18,6 +19,11 @@ internal sealed interface SettingsIntent {
     data object DismissLanguagePicker : SettingsIntent
     data object OnLogoutClicked : SettingsIntent
     data object OnDeleteAccountClicked : SettingsIntent
-    data object ConfirmDeleteAccount : SettingsIntent
+    data class ConfirmDeleteAccount(
+        val context: Context,
+    ) : SettingsIntent
     data object DismissDeleteAccountDialog : SettingsIntent
+    data class ErrorShown(
+        val messageId: Long,
+    ) : SettingsIntent
 }

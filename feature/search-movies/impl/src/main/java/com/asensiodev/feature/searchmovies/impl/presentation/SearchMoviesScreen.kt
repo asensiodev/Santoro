@@ -64,6 +64,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asensiodev.core.designsystem.PreviewContentFullSize
 import com.asensiodev.core.designsystem.component.errorContent.ErrorContent
@@ -100,7 +101,7 @@ internal fun SearchMoviesRoute(
         viewModel.process(SearchMoviesIntent.LoadInitialData)
     }
 
-    CollectEffectWithLifecycle(viewModel.effect) { effect ->
+    CollectEffectWithLifecycle(viewModel.effects.feedback) { effect ->
         when (effect) {
             is SearchMoviesEffect.ShowRefreshSuccess -> {
                 snackbarHostState.showSnackbar(
@@ -108,12 +109,19 @@ internal fun SearchMoviesRoute(
                     duration = SnackbarDuration.Short,
                 )
             }
+        }
+    }
 
-            is SearchMoviesEffect.NavigateToDetail -> {
+    CollectEffectWithLifecycle(
+        effect = viewModel.effects.navigation,
+        minActiveState = Lifecycle.State.RESUMED,
+    ) { effect ->
+        when (effect) {
+            is SearchMoviesNavigationEffect.NavigateToDetail -> {
                 onMovieClick(effect.movieId)
             }
 
-            is SearchMoviesEffect.NavigateToSeeAll -> {
+            is SearchMoviesNavigationEffect.NavigateToSeeAll -> {
                 onSeeAllClick(effect.sectionType.key)
             }
         }

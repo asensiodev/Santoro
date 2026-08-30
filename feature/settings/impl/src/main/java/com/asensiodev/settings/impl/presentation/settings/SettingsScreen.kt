@@ -38,7 +38,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import com.asensiodev.core.designsystem.component.loadingIndicator.LoadingIndicator
 import com.asensiodev.core.designsystem.component.topbar.SantoroAppBar
 import com.asensiodev.core.designsystem.theme.AppIcons
@@ -46,7 +49,6 @@ import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.settings.impl.presentation.component.LanguagePickerBottomSheet
 import com.asensiodev.settings.impl.presentation.component.SettingsItem
 import com.asensiodev.settings.impl.presentation.component.ThemePickerBottomSheet
-import com.asensiodev.ui.CollectEffectWithLifecycle
 import com.asensiodev.santoro.core.designsystem.R as DR
 import com.asensiodev.santoro.core.stringresources.R as SR
 
@@ -58,6 +60,7 @@ internal fun SettingsScreenRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val unknownFallback = stringResource(SR.string.unknown_value)
     val versionName =
         remember(context) {
@@ -79,10 +82,12 @@ internal fun SettingsScreenRoute(
         viewModel.process(SettingsIntent.ObserveTheme)
     }
 
-    CollectEffectWithLifecycle(viewModel.effect) { effect ->
-        when (effect) {
-            is SettingsEffect.ShowError -> {
-                snackbarHostState.showSnackbar(effect.message.asString(context))
+    val pendingMessage = uiState.pendingMessage
+    LaunchedEffect(pendingMessage, lifecycleOwner, viewModel) {
+        if (pendingMessage != null) {
+            lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                snackbarHostState.showSnackbar(pendingMessage.message.asString(context))
+                viewModel.process(SettingsIntent.ErrorShown(pendingMessage.id))
             }
         }
     }
@@ -135,7 +140,7 @@ internal fun SettingsScreenRoute(
 
         if (uiState.showDeleteAccountDialog) {
             DeleteAccountConfirmationDialog(
-                onConfirm = { viewModel.process(SettingsIntent.ConfirmDeleteAccount) },
+                onConfirm = { viewModel.process(SettingsIntent.ConfirmDeleteAccount(context)) },
                 onDismiss = { viewModel.process(SettingsIntent.DismissDeleteAccountDialog) },
             )
         }

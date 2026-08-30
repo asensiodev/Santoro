@@ -2,6 +2,8 @@ package com.asensiodev.auth
 
 import com.asensiodev.auth.data.mapper.toSantoroUser
 import com.asensiodev.auth.domain.exception.AccountCollisionException
+import com.asensiodev.auth.domain.exception.AuthenticatedUserMismatchException
+import com.asensiodev.auth.domain.exception.NoAuthenticatedUserException
 import com.asensiodev.core.domain.model.SantoroUser
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
@@ -58,7 +60,7 @@ internal class FirebaseAuthDataSource
         override suspend fun linkWithGoogle(idToken: String): Result<SantoroUser> =
             try {
                 val credential = GoogleAuthProvider.getCredential(idToken, null)
-                val currentUser = firebaseAuth.currentUser ?: error("No user logged in")
+                val currentUser = firebaseAuth.currentUser ?: throw NoAuthenticatedUserException()
                 val authResult = currentUser.linkWithCredential(credential).await()
                 val user = authResult.user!!.toSantoroUser()
                 Result.success(user)
@@ -75,13 +77,32 @@ internal class FirebaseAuthDataSource
                 Result.failure(e)
             }
 
+        override suspend fun reauthenticateWithGoogle(
+            expectedUid: String,
+            idToken: String,
+        ): Result<Unit> =
+            try {
+                val credential = GoogleAuthProvider.getCredential(idToken, null)
+                val currentUser = firebaseAuth.currentUser ?: throw NoAuthenticatedUserException()
+                if (currentUser.uid != expectedUid) {
+                    throw AuthenticatedUserMismatchException()
+                }
+                currentUser.reauthenticate(credential).await()
+                Result.success(Unit)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                Result.failure(exception)
+            }
+
         override suspend fun signOut() {
             firebaseAuth.signOut()
         }
 
-        override suspend fun deleteAccount(): Result<Unit> =
+        override suspend fun deleteAccount(expectedUid: String): Result<Unit> =
             try {
-                val user = firebaseAuth.currentUser ?: error("No user logged in")
+                val user = firebaseAuth.currentUser ?: throw NoAuthenticatedUserException()
+                if (user.uid != expectedUid) throw AuthenticatedUserMismatchException()
                 user.delete().await()
                 Result.success(Unit)
             } catch (exception: CancellationException) {

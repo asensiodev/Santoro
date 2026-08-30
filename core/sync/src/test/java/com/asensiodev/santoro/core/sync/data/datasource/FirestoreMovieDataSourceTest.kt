@@ -7,10 +7,13 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.Source
 import com.google.firebase.firestore.Transaction
+import com.google.firebase.firestore.WriteBatch
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import io.mockk.verifyOrder
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
@@ -18,7 +21,7 @@ import org.amshove.kluent.shouldBeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-class FirestoreMovieDataSourceImplTest {
+class FirestoreMovieDataSourceTest {
     private val firestore: FirebaseFirestore = mockk()
     private val usersCollection: CollectionReference = mockk()
     private val userDocument: DocumentReference = mockk()
@@ -27,11 +30,11 @@ class FirestoreMovieDataSourceImplTest {
     private val transaction: Transaction = mockk()
     private val remoteDocument: DocumentSnapshot = mockk()
 
-    private lateinit var sut: FirestoreMovieDataSourceImpl
+    private lateinit var sut: FirestoreMovieDataSource
 
     @BeforeEach
     fun setUp() {
-        sut = FirestoreMovieDataSourceImpl(firestore)
+        sut = FirestoreMovieDataSource(firestore)
 
         every { firestore.collection("users") } returns usersCollection
         every { usersCollection.document(any()) } returns userDocument
@@ -247,5 +250,161 @@ class FirestoreMovieDataSourceImplTest {
 
             result.isSuccess.shouldBeTrue()
             result.getOrThrow().size shouldBeEqualTo 0
+        }
+
+    @Test
+    fun `GIVEN no movie documents WHEN deleteUserData THEN deletes only parent document`() =
+        runTest {
+            val querySnapshot: QuerySnapshot = mockk()
+            every { moviesCollection.get(Source.SERVER) } returns Tasks.forResult(querySnapshot)
+            every { querySnapshot.documents } returns emptyList()
+            every { userDocument.delete() } returns Tasks.forResult(null)
+
+            sut.deleteUserData("uid123") shouldBeEqualTo Result.success(Unit)
+
+            verify(exactly = 0) { firestore.batch() }
+            verify(exactly = 1) { userDocument.delete() }
+        }
+
+    @Test
+    fun `GIVEN one movie document WHEN deleteUserData THEN commits deletion before parent`() =
+        runTest {
+            val querySnapshot: QuerySnapshot = mockk()
+            val documentSnapshot: DocumentSnapshot = mockk()
+            val documentReference: DocumentReference = mockk()
+            val batch: WriteBatch = mockk()
+            every { moviesCollection.get(Source.SERVER) } returns Tasks.forResult(querySnapshot)
+            every { querySnapshot.documents } returns listOf(documentSnapshot)
+            every { documentSnapshot.reference } returns documentReference
+            every { firestore.batch() } returns batch
+            every { batch.delete(documentReference) } returns batch
+            every { batch.commit() } returns Tasks.forResult(null)
+            every { userDocument.delete() } returns Tasks.forResult(null)
+
+            sut.deleteUserData("uid123") shouldBeEqualTo Result.success(Unit)
+
+            verify(exactly = 1) { batch.delete(documentReference) }
+            verify(exactly = 1) { batch.commit() }
+            verify(exactly = 1) { userDocument.delete() }
+            verifyOrder {
+                batch.commit()
+                userDocument.delete()
+            }
+        }
+
+    @Test
+    fun `GIVEN 501 movie documents WHEN deleteUserData THEN commits two bounded batches`() =
+        runTest {
+            val querySnapshot: QuerySnapshot = mockk()
+            val documentReferences = List(501) { mockk<DocumentReference>() }
+            val documentSnapshots =
+                documentReferences.map { reference ->
+                    mockk<DocumentSnapshot> {
+                        every { this@mockk.reference } returns reference
+                    }
+                }
+            val firstBatch: WriteBatch = mockk()
+            val secondBatch: WriteBatch = mockk()
+            every { moviesCollection.get(Source.SERVER) } returns Tasks.forResult(querySnapshot)
+            every { querySnapshot.documents } returns documentSnapshots
+            every { firestore.batch() } returnsMany listOf(firstBatch, secondBatch)
+            every { firstBatch.delete(any()) } returns firstBatch
+            every { secondBatch.delete(any()) } returns secondBatch
+            every { firstBatch.commit() } returns Tasks.forResult(null)
+            every { secondBatch.commit() } returns Tasks.forResult(null)
+            every { userDocument.delete() } returns Tasks.forResult(null)
+
+            sut.deleteUserData("uid123") shouldBeEqualTo Result.success(Unit)
+
+            verify(exactly = 500) { firstBatch.delete(any()) }
+            verify(exactly = 1) { secondBatch.delete(any()) }
+            verify(exactly = 1) { firstBatch.commit() }
+            verify(exactly = 1) { secondBatch.commit() }
+            verify(exactly = 1) { userDocument.delete() }
+            verifyOrder {
+                firstBatch.commit()
+                secondBatch.commit()
+                userDocument.delete()
+            }
+        }
+
+    @Test
+    fun `GIVEN a failed movie batch WHEN deleteUserData THEN stops before later batches and parent`() =
+        runTest {
+            val querySnapshot: QuerySnapshot = mockk()
+            val documentSnapshots =
+                List(1001) {
+                    mockk<DocumentSnapshot> {
+                        every { reference } returns mockk()
+                    }
+                }
+            val firstBatch: WriteBatch = mockk()
+            val failedBatch: WriteBatch = mockk()
+            val uncommittedBatch: WriteBatch = mockk()
+            val failure = IllegalStateException("batch failed")
+            every { moviesCollection.get(Source.SERVER) } returns Tasks.forResult(querySnapshot)
+            every { querySnapshot.documents } returns documentSnapshots
+            every { firestore.batch() } returnsMany listOf(firstBatch, failedBatch, uncommittedBatch)
+            every { firstBatch.delete(any()) } returns firstBatch
+            every { failedBatch.delete(any()) } returns failedBatch
+            every { firstBatch.commit() } returns Tasks.forResult(null)
+            every { failedBatch.commit() } returns Tasks.forException(failure)
+
+            sut.deleteUserData("uid123").exceptionOrNull() shouldBeEqualTo failure
+
+            verify(exactly = 1) { firstBatch.commit() }
+            verify(exactly = 1) { failedBatch.commit() }
+            verify(exactly = 0) { uncommittedBatch.commit() }
+            verify(exactly = 0) { userDocument.delete() }
+        }
+
+    @Test
+    fun `GIVEN server movie query failure WHEN deleteUserData THEN returns failure without deleting parent`() =
+        runTest {
+            val failure = IllegalStateException("query failed")
+            every { moviesCollection.get(Source.SERVER) } returns Tasks.forException(failure)
+
+            sut.deleteUserData("uid123").exceptionOrNull() shouldBeEqualTo failure
+
+            verify(exactly = 0) { firestore.batch() }
+            verify(exactly = 0) { userDocument.delete() }
+        }
+
+    @Test
+    fun `GIVEN parent deletion failure WHEN deleteUserData THEN returns failure`() =
+        runTest {
+            val querySnapshot: QuerySnapshot = mockk()
+            val failure = IllegalStateException("parent deletion failed")
+            every { moviesCollection.get(Source.SERVER) } returns Tasks.forResult(querySnapshot)
+            every { querySnapshot.documents } returns emptyList()
+            every { userDocument.delete() } returns Tasks.forException(failure)
+
+            sut.deleteUserData("uid123").exceptionOrNull() shouldBeEqualTo failure
+        }
+
+    @Test
+    fun `GIVEN batch cancellation WHEN deleteUserData THEN cancellation propagates without deleting parent`() =
+        runTest {
+            val querySnapshot: QuerySnapshot = mockk()
+            val documentSnapshot: DocumentSnapshot = mockk()
+            val batch: WriteBatch = mockk()
+            val cancellation = CancellationException("cancelled")
+            every { moviesCollection.get(Source.SERVER) } returns Tasks.forResult(querySnapshot)
+            every { querySnapshot.documents } returns listOf(documentSnapshot)
+            every { documentSnapshot.reference } returns movieDocument
+            every { firestore.batch() } returns batch
+            every { batch.delete(movieDocument) } returns batch
+            every { batch.commit() } returns Tasks.forException(cancellation)
+
+            val thrown =
+                try {
+                    sut.deleteUserData("uid123")
+                    null
+                } catch (exception: CancellationException) {
+                    exception
+                }
+
+            thrown shouldBeEqualTo cancellation
+            verify(exactly = 0) { userDocument.delete() }
         }
 }

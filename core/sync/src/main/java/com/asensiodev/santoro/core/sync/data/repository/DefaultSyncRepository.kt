@@ -3,7 +3,7 @@ package com.asensiodev.santoro.core.sync.data.repository
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.result.rethrowCancellation
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
-import com.asensiodev.santoro.core.sync.data.datasource.FirestoreMovieDataSource
+import com.asensiodev.santoro.core.sync.data.datasource.MovieSyncRemoteDataSource
 import com.asensiodev.santoro.core.sync.data.model.MovieSyncEntity
 import com.asensiodev.santoro.core.sync.domain.repository.SyncRepository
 import com.google.gson.Gson
@@ -12,7 +12,7 @@ import javax.inject.Inject
 internal class DefaultSyncRepository
     @Inject
     constructor(
-        private val firestoreDataSource: FirestoreMovieDataSource,
+        private val firestoreDataSource: MovieSyncRemoteDataSource,
         private val databaseRepository: DatabaseRepository,
     ) : SyncRepository {
         private val gson = Gson()
@@ -84,6 +84,9 @@ internal class DefaultSyncRepository
             }
             return mergeWithLocalMovies(downloadResult.getOrDefault(emptyList()))
         }
+
+        override suspend fun deleteUserData(uid: String): Result<Unit> =
+            firestoreDataSource.deleteUserData(uid).rethrowCancellation()
 
         private suspend fun mergeWithLocalMovies(
             remoteMovies: List<MovieSyncEntity>,

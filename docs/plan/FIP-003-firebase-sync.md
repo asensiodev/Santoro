@@ -112,7 +112,7 @@ Only fields needed for sync are stored. Full movie metadata (cast, crew, genres)
 
 | Module | Change |
 |---|---|
-| `core/sync` (new) | `SyncRepository`, `FirestoreMovieDataSource`, `SyncWorker`, `UploadWorker`, DI module |
+| `core/sync` (new) | `SyncRepository`, `MovieSyncRemoteDataSource`, `SyncWorker`, `UploadWorker`, DI module |
 | `core/database` | Add `updatedAt: Long` field to `MovieEntity`, new DAO queries for sync |
 | `feature/movie-detail/impl` | Enqueue `UploadWorker` after `UpdateMovieStateUseCase` |
 | `feature/watchlist/impl` | Enqueue `UploadWorker` after `RemoveFromWatchlistUseCase` |
@@ -135,10 +135,10 @@ Only fields needed for sync are stored. Full movie metadata (cast, crew, genres)
 
 - [x] Create `core/sync` module with `build.gradle.kts` (depends on `core/database`, `core/auth`, firebase-firestore)
 - [x] Create `MovieSyncEntity` data class — mirrors the Firestore document fields
-- [x] Create `FirestoreMovieDataSource` interface:
+- [x] Create `MovieSyncRemoteDataSource` interface:
   - `uploadMovie(uid: String, entity: MovieSyncEntity): Result<Unit>`
   - `downloadUserMovies(uid: String): Result<List<MovieSyncEntity>>`
-- [x] Implement `FirestoreMovieDataSourceImpl` using `firebase-firestore-ktx` coroutine extensions (`.await()`)
+- [x] Implement `FirestoreMovieDataSource` using `firebase-firestore-ktx` coroutine extensions (`.await()`)
 - [x] Create `SyncRepository` interface:
   - `uploadPendingChanges(uid: String): Result<Unit>`
   - `downloadAndMerge(uid: String): Result<Unit>`
@@ -188,7 +188,7 @@ Only fields needed for sync are stored. Full movie metadata (cast, crew, genres)
 
 - [x] Unit: `DefaultSyncRepository.downloadAndMerge` — Firestore newer → Room updated; Room newer → Room unchanged; movie not in Room → upserted
 - [x] Unit: `DefaultSyncRepository.uploadPendingChanges` — uploads all, empty list → no-ops, mid-batch failure stops early, correct movieId sent
-- [x] Unit: `FirestoreMovieDataSourceImpl` — success path, Firestore exception → failure, missing movieId skipped, empty collection → empty list
+- [x] Unit: `FirestoreMovieDataSource` — success path, Firestore exception → failure, missing movieId skipped, empty collection → empty list
 - [x] Unit: `UploadWorker` — no uid → success no-op; upload ok → success; network error → retry
 - [x] Unit: `SyncWorker` — no uid → success no-op; download+merge ok → success; network error → retry
 - [x] Unit: `MovieDetailViewModel` — toggleWatched/toggleWatchlist success → enqueueUpload; failure → no enqueue
