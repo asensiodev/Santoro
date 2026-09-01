@@ -4,9 +4,9 @@
 
 | Field        | Value                          |
 |--------------|--------------------------------|
-| **Version**  | 2.4                            |
+| **Version**  | 2.5                            |
 | **Status**   | ✅ Current                     |
-| **Date**     | 2026-08-25                     |
+| **Date**     | 2026-09-01                     |
 | **Author**   | @asensiodev                    |
 | **Platform** | Android (Native)               |
 
@@ -462,10 +462,10 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
-| **Status**  | 🟡 Draft — [FIP-023](../plan/FIP-023-single-active-account-isolation.md) |
+| **Status**  | 🟡 Implemented — In validation via [FIP-023](../plan/FIP-023-single-active-account-isolation.md) |
 | **Scope**   | Ownership of the shared Room movie state, authenticated app entry, and sync account guards |
-| **Current state** | Room has one unowned movie dataset. A different Firebase UID can therefore see or synchronize data retained by the previous account |
-| **Behaviour** | Keep one active local dataset, persist its owner UID, and block authenticated content until a UID change clears the previous owner's movies before new sync starts |
+| **Current state** | Room schema 6 keeps one movie dataset under a fixed private owner UID and monotonic generation. Automated validation passes; CI API 35, real-device, signed Internal artifact, and staged Production validation remain pending |
+| **Behaviour** | Bind authenticated work and UI to owner plus generation; block authenticated entry until the latest UID owns the prepared dataset; clear a previous owner before exposure; and clear movies, owner, and explicit logout confirmation after completed logout. If pre-logout sync fails, offer Retry, Sign out anyway, or Cancel |
 | **Rationale** | Prevents cross-account exposure without adding account switching UI or partitioning every Room query by user |
 
 ---
@@ -489,3 +489,4 @@ Features approved for a future release. Each will get a FIP before implementatio
 | 2.2     | 2026-03-08 | F-18 See All Navigation marked ✅ Shipped — FIP-015 |
 | 2.3     | 2026-05-27 | Add F-24 through F-28 from closed testing follow-ups |
 | 2.4     | 2026-08-25 | Replace F-28 per-user Room partitioning with single-active-account isolation via FIP-023 and align F-09 effect-delivery guidance. |
+| 2.5     | 2026-09-01 | Mark F-28 implemented/in validation and document owner-generation isolation, blocked authenticated entry, explicit logout clearing, and sync-failure choices. |
