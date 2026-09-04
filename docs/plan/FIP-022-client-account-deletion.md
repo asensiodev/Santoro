@@ -5,7 +5,7 @@
 | Field                  | Value                                                       |
 |------------------------|-------------------------------------------------------------|
 | **FIP ID**             | FIP-022                                                     |
-| **Version**            | 1.2                                                         |
+| **Version**            | 1.3                                                         |
 | **Status**             | ✅ Done                                                     |
 | **PRD ref**            | [PRD.md](../prd/PRD.md) — §3.7 Settings                    |
 | **Feature**            | Delete account data from Android before deleting Auth       |
@@ -180,6 +180,10 @@ MainActivityViewModel
 
 ## 9. Decisions
 
+### FIP-023 Compatibility — 2026-09-01
+
+FIP-022 account-deletion cleanup retains strict priority over FIP-023 logout recovery, account preparation, scheduling, and app entry. It clears any explicit logout confirmation, uses the idempotent local movie/owner cleanup path, and remains covered by focused deletion/recovery and combined app-orchestration tests.
+
 | # | Decision | Rationale |
 |---|----------|-----------|
 | 1 | Delete directly with the Android Firestore SDK. | Avoids a new backend language, billing plan, deployment, and operational ownership. |
@@ -196,3 +200,4 @@ MainActivityViewModel
 | 1.0     | 2026-08-24 | Initial client-only deletion plan. |
 | 1.1     | 2026-08-30 | Record successful real-device deletion and cancellation validation. |
 | 1.2     | 2026-08-30 | Add persistent local-cleanup recovery before production release. |
+| 1.3     | 2026-09-01 | Record tested FIP-023 compatibility, cleanup priority, explicit logout confirmation clearing, and idempotent local cleanup. |
