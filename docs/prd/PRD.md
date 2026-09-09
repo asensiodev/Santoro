@@ -4,9 +4,9 @@
 
 | Field        | Value                          |
 |--------------|--------------------------------|
-| **Version**  | 2.5                            |
+| **Version**  | 2.14                           |
 | **Status**   | ✅ Current                     |
-| **Date**     | 2026-09-01                     |
+| **Date**     | 2026-09-05                     |
 | **Author**   | @asensiodev                    |
 | **Platform** | Android (Native)               |
 
@@ -462,11 +462,11 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
-| **Status**  | 🟡 Implemented — In validation via [FIP-023](../plan/FIP-023-single-active-account-isolation.md) |
-| **Scope**   | Ownership of the shared Room movie state, authenticated app entry, and sync account guards |
-| **Current state** | Room schema 6 keeps one movie dataset under a fixed private owner UID and monotonic generation. Automated validation passes; CI API 35, real-device, signed Internal artifact, and staged Production validation remain pending |
-| **Behaviour** | Bind authenticated work and UI to owner plus generation; block authenticated entry until the latest UID owns the prepared dataset; clear a previous owner before exposure; and clear movies, owner, and explicit logout confirmation after completed logout. If pre-logout sync fails, offer Retry, Sign out anyway, or Cancel |
-| **Rationale** | Prevents cross-account exposure without adding account switching UI or partitioning every Room query by user |
+| **Status**  | 🟢 Local Validation Complete / External Validation Pending via [FIP-023](../plan/FIP-023-single-active-account-isolation.md) v4.0 |
+| **Scope**   | Identity-boundary cleanup for the shared Room movie state, authenticated app entry, and sync authority |
+| **Current state** | Owner UID, schema 6, owner-scoped outcomes, assisted feature ViewModels, expected-UID work data, upgrade-cleanup state, and logout snapshot/state machinery have been removed. The final 2447-task aggregate gate passes with tests, detekt, ktlint, Kover, Debug, and Release builds. Pixel_9a API 37 passes Database 25/25, Movie Detail 1/1, Watchlist 2/2, and final app journeys 10/10. CI API 35, manual product flows, Internal artifact, and release remain pending. |
+| **Behaviour** | Keep one schema-5 Room movie dataset and trust that an upgrade retains the same Firebase account, preserving and syncing its local rows. Clear movies before Login after Auth null, again on the following login, and before publishing a directly observed replacement UID. Same-UID process recreation retains rows; duplicate same-UID Auth updates in place. Logout directly signs out the captured expected UID and relies on Auth-null cleanup. WorkManager stores no UID and uses current Auth at execution; deletion-blocked work is a terminal no-op. Sync rechecks Auth/FIP-022 before Firestore and inside the Room merge transaction. FIP-022 remains the only durable cleanup marker. Firestore skips malformed documents independently and malformed genre JSON becomes an empty genre list. |
+| **Rationale** | Prevents practical cross-account exposure with controlled cleanup instead of per-user persistence architecture. |
 
 ---
 
@@ -490,3 +490,12 @@ Features approved for a future release. Each will get a FIP before implementatio
 | 2.3     | 2026-05-27 | Add F-24 through F-28 from closed testing follow-ups |
 | 2.4     | 2026-08-25 | Replace F-28 per-user Room partitioning with single-active-account isolation via FIP-023 and align F-09 effect-delivery guidance. |
 | 2.5     | 2026-09-01 | Mark F-28 implemented/in validation and document owner-generation isolation, blocked authenticated entry, explicit logout clearing, and sync-failure choices. |
+| 2.6     | 2026-09-05 | Replace F-28's unshipped owner-generation/durable-logout design with owner-only latest-wins isolation, Auth-null cleanup, expected-UID work, best-effort logout, and FIP-022 as the only durable recovery marker; return status to In Progress pending revalidation. |
+| 2.7     | 2026-09-05 | Mark F-28 locally implemented with validation pending; record owner-only schema 6, process-local Compose entry identity, the FIP-022 same-UID lease blocker exception, and strict expected-UID worker/repository boundaries. |
+| 2.8     | 2026-09-05 | Mark F-28 local validation complete after the full Gradle gate, coverage verification, and API 37 Room/app/feature instrumentation passed; retain CI, physical-device, manual modal, Internal, rollout, and publication gates. |
+| 2.9     | 2026-09-05 | Record direct preparation-disposition return and one-boundary Firestore decoding; retain focused checks as passed but reopen final aggregate/instrumented validation because v3.2 evidence predates these edits. |
+| 2.10    | 2026-09-05 | Restore F-28 Local Validation Complete after current v3.3 aggregate, coverage, Paparazzi, and API 37 instrumentation passed; retain CI, physical/manual, Internal, release, and publication gates. |
+| 2.11    | 2026-09-05 | Record the final F-28 trim: `Unit` owner preparation, simpler replaying latest-wins Auth orchestration, in-place duplicate-UID updates, removal of obsolete preparation/request/entry/observability machinery, focused checks passed, and aggregate/instrumented revalidation reopened. |
+| 2.12    | 2026-09-05 | Restore F-28 Local Validation Complete after the post-v3.5 aggregate gate, 82.4502% line coverage, current Paparazzi, and Pixel_9a API 37 Room/app/feature instrumentation passed; retain external/manual/release/publication gates. |
+| 2.13    | 2026-09-05 | Record approved Settings-owned single-attempt logout, removal of app-level/three-action logout machinery, DAO extension cleanup, and focused validation; reopen architecture, aggregate, and instrumented validation while retaining v2.12 results as historical. |
+| 2.14    | 2026-09-05 | Replace the unshipped owner-only design with FIP-023 v4.0 controlled runtime cleanup, trusted same-account upgrades, current-Auth workers, and transactional merge authority. |
