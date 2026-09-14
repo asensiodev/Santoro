@@ -42,6 +42,8 @@ Android app using Kotlin, Jetpack Compose, Clean Architecture, pragmatic MVI, Hi
 ## Planning
 
 - Read the relevant PRD, brief, FIP, and guide before implementation.
+- Make technical decisions with product judgment: prioritize realistic user flows and proportional risk, and do not add complexity for theoretically possible cases without credible product impact.
+- Before hardening a corner case, state how a real user reaches it, how likely it is, and what user-visible harm it causes; prefer an explicit accepted limitation when the mitigation costs more than the risk.
 - Execute FIPs phase by phase; check tasks only after implementation and validation.
 - Stop and ask when requirements, data sources, side effects, migration behavior, or failure UX are ambiguous.
 - Planning-only work modifies documentation, not production code.

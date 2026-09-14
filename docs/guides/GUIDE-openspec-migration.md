@@ -61,8 +61,8 @@ openspec/changes/<change>/
 ## Phase 0. Close The Current Work
 
 - Finish FIP-023 under the existing FIP workflow.
-- Resolve the release-blocking sync authority issue in `docs/FIXES-2026-09-06.md`.
-- Resolve the onboarding preference ordering issue.
+- Preserve the accepted unsupported direct-account-replacement limitation recorded in `docs/FIXES-2026-09-06.md`; reopen session authority before introducing direct account switching.
+- Retain the onboarding preference-ordering regression coverage and complete the remaining manual product checks.
 - Do not migrate FIP-023 while implementation or validation is active.
 
 ## Phase 1. Repair The Documentation Baseline

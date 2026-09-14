@@ -4,7 +4,7 @@
 
 | Field        | Value                          |
 |--------------|--------------------------------|
-| **Version**  | 2.14                           |
+| **Version**  | 2.15                           |
 | **Status**   | ✅ Current                     |
 | **Date**     | 2026-09-05                     |
 | **Author**   | @asensiodev                    |
@@ -61,9 +61,9 @@ A minimal, polished personal movie companion — fast to browse, friction-free t
 
 **User flows:**
 1. First launch → Login screen → `Sign in with Google` → authenticated → Home.
-2. First launch → Login screen → `Continue as Guest` → anonymous session → Home.
+2. First launch → Login screen → `Continue as Guest` → confirm guest-data notice → anonymous session → Home. Cancelling the notice keeps the user on Login without authenticating.
 3. Settings → Sign out → Login screen.
-4. Profile → `Link Google Account` → Google sign-in → account merged.
+4. Profile → `Link Google Account` → Google credential → link to the same UID and retain lists. If Google already belongs to another Santoro account, offer cancellation or sign-out and return to Login; lists are not merged.
 
 **States handled:** Loading · Success · Error (banner) · Account collision dialog.
 
@@ -185,7 +185,7 @@ Entry: bottom navigation tab "Profile" (or Settings → Profile).
 - Anonymous users see a prompt to **link a Google account**.
 - `Link Google Account` action triggers Google One Tap / Sign-In flow.
 - Success triggers a **bottom sheet** confirmation.
-- Account collision (email already linked to another UID) triggers an **alert dialog** with merge/cancel option.
+- Account collision (Google account already linked to another UID) triggers an **alert dialog** explaining that guest lists will be lost and will not be merged. Confirming signs out the guest and returns to Login; cancelling preserves the guest session.
 - Links to App Settings screen.
 - **Help & Legal** opens the privacy policy / legal page in the browser.
 
@@ -462,10 +462,10 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
-| **Status**  | 🟢 Local Validation Complete / External Validation Pending via [FIP-023](../plan/FIP-023-single-active-account-isolation.md) v4.0 |
+| **Status**  | 🟢 Local Validation Complete / External Validation Pending via [FIP-023](../plan/FIP-023-single-active-account-isolation.md) v4.1 |
 | **Scope**   | Identity-boundary cleanup for the shared Room movie state, authenticated app entry, and sync authority |
-| **Current state** | Owner UID, schema 6, owner-scoped outcomes, assisted feature ViewModels, expected-UID work data, upgrade-cleanup state, and logout snapshot/state machinery have been removed. The final 2447-task aggregate gate passes with tests, detekt, ktlint, Kover, Debug, and Release builds. Pixel_9a API 37 passes Database 25/25, Movie Detail 1/1, Watchlist 2/2, and final app journeys 10/10. CI API 35, manual product flows, Internal artifact, and release remain pending. |
-| **Behaviour** | Keep one schema-5 Room movie dataset and trust that an upgrade retains the same Firebase account, preserving and syncing its local rows. Clear movies before Login after Auth null, again on the following login, and before publishing a directly observed replacement UID. Same-UID process recreation retains rows; duplicate same-UID Auth updates in place. Logout directly signs out the captured expected UID and relies on Auth-null cleanup. WorkManager stores no UID and uses current Auth at execution; deletion-blocked work is a terminal no-op. Sync rechecks Auth/FIP-022 before Firestore and inside the Room merge transaction. FIP-022 remains the only durable cleanup marker. Firestore skips malformed documents independently and malformed genre JSON becomes an empty genre list. |
+| **Current state** | Owner UID, schema 6, owner-scoped outcomes, assisted feature ViewModels, expected-UID work data, upgrade-cleanup state, and logout snapshot/state machinery have been removed. The current 2447-task aggregate gate passes with tests, detekt, ktlint, Kover, Debug, and Release builds. Pixel_9a API 37 passes Database 25/25, Movie Detail 1/1, Watchlist 2/2, Watched 1/1, and final app journeys 10/10. Delayed guest-onboarding preferences now update the existing session without cleanup or duplicate sync scheduling. CI API 35, manual product flows, Internal artifact, and release remain pending. |
+| **Behaviour** | Keep one schema-5 Room movie dataset and trust that an upgrade retains the same Firebase account, preserving and syncing its local rows. Clear movies before Login after Auth null, again on the following login, and before publishing a directly observed replacement UID. Same-UID process recreation retains rows; duplicate same-UID Auth updates in place. Logout directly signs out the captured expected UID and relies on Auth-null cleanup. WorkManager stores no UID and uses current Auth at execution; deletion-blocked work is a terminal no-op. Sync rechecks Auth/FIP-022 before Firestore and inside the Room merge transaction. FIP-022 remains the only durable cleanup marker. Firestore skips malformed documents independently and malformed genre JSON becomes an empty genre list. Direct switching between authenticated UIDs is not exposed or supported; introducing it requires reopening local-session authority before release. |
 | **Rationale** | Prevents practical cross-account exposure with controlled cleanup instead of per-user persistence architecture. |
 
 ---
@@ -499,3 +499,4 @@ Features approved for a future release. Each will get a FIP before implementatio
 | 2.12    | 2026-09-05 | Restore F-28 Local Validation Complete after the post-v3.5 aggregate gate, 82.4502% line coverage, current Paparazzi, and Pixel_9a API 37 Room/app/feature instrumentation passed; retain external/manual/release/publication gates. |
 | 2.13    | 2026-09-05 | Record approved Settings-owned single-attempt logout, removal of app-level/three-action logout machinery, DAO extension cleanup, and focused validation; reopen architecture, aggregate, and instrumented validation while retaining v2.12 results as historical. |
 | 2.14    | 2026-09-05 | Replace the unshipped owner-only design with FIP-023 v4.0 controlled runtime cleanup, trusted same-account upgrades, current-Auth workers, and transactional merge authority. |
+| 2.15    | 2026-09-06 | Record FIP-023 v4.1 delayed-onboarding correction and explicitly scope direct authenticated account replacement out of the supported product. |

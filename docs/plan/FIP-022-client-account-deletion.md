@@ -5,7 +5,7 @@
 | Field                  | Value                                                       |
 |------------------------|-------------------------------------------------------------|
 | **FIP ID**             | FIP-022                                                     |
-| **Version**            | 1.3                                                         |
+| **Version**            | 1.5                                                         |
 | **Status**             | ✅ Done                                                     |
 | **PRD ref**            | [PRD.md](../prd/PRD.md) — §3.7 Settings                    |
 | **Feature**            | Delete account data from Android before deleting Auth       |
@@ -49,6 +49,8 @@ This version fixes the incorrect deletion claim entirely from Android using the 
 Confirm deletion
     → request Google credential
     → reauthenticate current Firebase user
+    → acquire in-memory remote-deletion lease
+    → recheck expected current UID
     → delete users/{uid}/movies documents from Firestore
     → persist local cleanup pending
     → delete Firebase Auth user
@@ -59,6 +61,8 @@ Confirm deletion
 
 Credential cancellation, wrong-account reauthentication, Firestore failure, Auth failure, and Room failure use the existing deletion error feedback. No raw SDK error is displayed.
 
+`SettingsViewModel` owns the deletion coroutine. While its remote lease is active and the same UID remains current, app entry retains the authenticated composition so destroying Settings cannot cancel deletion. A full-screen non-dismissible modal blocks all visuals, pointer input, keyboard/D-pad input, back, and accessibility access to that graph. Auth `null` or a different UID unmounts it immediately.
+
 ## 5. Architecture
 
 ```text
@@ -66,13 +70,15 @@ SettingsViewModel
     ├─ GoogleSignInHelper
     └─ DeleteAccountUseCase
           ├─ AuthRepository.reauthenticateWithGoogle
+          ├─ AccountDeletionRecoveryRepository remote lease
+          ├─ AuthRepository.currentUser expected-UID recheck
           ├─ SyncRepository.deleteUserData
           ├─ AccountDeletionRecoveryRepository.markLocalCleanupPending
           ├─ AuthRepository.deleteAccount
 
 MainActivityViewModel
     ├─ AccountDeletionRecoveryRepository.isLocalCleanupPending
-    └─ DatabaseRepository.clearAllUserData
+    └─ MovieMutationRepository.clearMovies
 ```
 
 `core/sync` owns Firestore deletion because it already owns the `users/{uid}/movies` schema. Settings must not import Firestore SDK classes.
@@ -101,7 +107,7 @@ MainActivityViewModel
 
 - [x] Add `reauthenticateWithGoogle(expectedUid, idToken)` and `deleteAccount(expectedUid)` to Auth datasource/repository contracts.
 - [x] Implement reauthentication with `FirebaseUser.reauthenticate(GoogleAuthProvider.getCredential(...))`.
-- [x] Verify the current Firebase UID immediately before reauthentication and deletion, preserve cancellation, and return `Result.failure` for missing user, wrong account, or SDK failure.
+- [x] Verify the current Firebase UID before reauthentication and again after reauthentication immediately before `deleteUserData`; preserve cancellation and return `Result.failure` for missing user, wrong account, or SDK failure.
 - [x] Add/update Auth unit tests.
 
 ### Phase 2 — Firestore User Data Deletion
@@ -143,7 +149,7 @@ MainActivityViewModel
 **Data sources**
 - A persisted boolean marker written after Firestore deletion and before Firebase Auth deletion.
 - Current Firebase auth state observed by `MainActivityViewModel`.
-- Existing Room user data accessed through `DatabaseRepository`.
+- Existing Room user data accessed through `MovieMutationRepository`.
 
 **Side effects**
 - ✅ Allowed: persist or clear the cleanup marker, block app entry, clear Room, and retry local cleanup.
@@ -155,6 +161,8 @@ MainActivityViewModel
 - [x] Recover a marker found at process start before exposing authenticated content or Login.
 - [x] Keep the marker and show a blocking localized Retry UI when Room cleanup or marker clearing fails.
 - [x] Add repository, use-case, MainActivity ViewModel, cancellation, failure, and race-boundary tests.
+
+The durable marker remains authoritative once written. The in-memory remote lease covers the earlier remote deletion window and is always released in `finally`. Marker recovery waits for lease completion rather than clearing local state while Firestore deletion is still active.
 
 ### Phase 5 — Documentation And Validation
 
@@ -177,12 +185,17 @@ MainActivityViewModel
 | Debug and release builds | ✅ | Both variants assembled successfully; Kotlin daemon failures used Gradle's successful fallback compiler strategy. |
 | Real-device deletion | ✅ | Successful deletion and credential-cancellation path validated on a Pixel 9a debug build on 2026-08-30. |
 | Persistent cleanup recovery | ✅ | Navigation-triggered cleanup and a persisted pending marker across process restart passed on a Pixel 9a debug build on 2026-08-30. |
+| FIP-023 v4.1 compatibility | 🟢 Automated validation complete / manual validation pending | Account deletion still owns the only durable cleanup marker. Room cleanup uses `MovieMutationRepository`; no Auth, marker, and transient lease all make queued sync a terminal no-op. Repository checks prevent normal Firestore/merge work while deletion is active. Aggregate and instrumentation evidence is recorded in FIP-023; manual deletion-blocker validation remains pending. |
 
 ## 9. Decisions
 
-### FIP-023 Compatibility — 2026-09-01
+### FIP-023 Compatibility - 2026-09-05
 
-FIP-022 account-deletion cleanup retains strict priority over FIP-023 logout recovery, account preparation, scheduling, and app entry. It clears any explicit logout confirmation, uses the idempotent local movie/owner cleanup path, and remains covered by focused deletion/recovery and combined app-orchestration tests.
+FIP-022 remains the only durable recovery marker. Its persisted marker and in-memory remote-deletion lease do not authorize FIP-023 session preparation, explicit logout, or Firestore sync.
+
+The same-UID graph-retention modal is a lifecycle exception, not an authority exception. It preserves the Settings-owned deletion coroutine while making the retained graph non-interactive and inaccessible. Null/different Auth unmounts immediately. Marker recovery waits until the lease ends.
+
+No normal Firestore sync starts or continues past a sync-repository request/chunk boundary while marker or lease is active. A retained feature job may enqueue WorkManager, but workers treat both deletion states as terminal no-ops. Preserving movie uploads has no product value once the user starts deleting the account, including after a failed attempt. The repository rechecks before each Firestore operation/chunk and before transactional merge. A request already accepted by Firebase remains non-revocable.
 
 | # | Decision | Rationale |
 |---|----------|-----------|
@@ -192,6 +205,8 @@ FIP-022 account-deletion cleanup retains strict priority over FIP-023 logout rec
 | 4 | Accept process-death and cross-device race limitations. | The product requested a small release rather than distributed deletion infrastructure. |
 | 5 | Persist local cleanup before Auth deletion and recover at app entry. | Navigation or process death must not expose retained Room data after destructive remote work. |
 | 6 | Use direct app-level recovery instead of WorkManager. | Room cleanup is immediate; the persisted marker already provides restart recovery without deferred scheduling. |
+| 7 | Retain the same-UID graph behind a non-dismissible modal during the remote lease. | `SettingsViewModel` owns the coroutine; unmounting it would cancel deletion before the durable marker exists. |
+| 8 | Recheck expected current UID after reauthentication immediately before Firestore deletion. | Fresh credentials do not prove that the same app-controlled Auth user remains current after suspension. |
 
 ## 10. Changelog
 
@@ -201,3 +216,5 @@ FIP-022 account-deletion cleanup retains strict priority over FIP-023 logout rec
 | 1.1     | 2026-08-30 | Record successful real-device deletion and cancellation validation. |
 | 1.2     | 2026-08-30 | Add persistent local-cleanup recovery before production release. |
 | 1.3     | 2026-09-01 | Record tested FIP-023 compatibility, cleanup priority, explicit logout confirmation clearing, and idempotent local cleanup. |
+| 1.4     | 2026-09-05 | Align compatibility wording with FIP-023 v3.0: FIP-022 is the only durable marker, and its marker plus in-memory deletion lease block session, logout, and sync. |
+| 1.5     | 2026-09-05 | Document the Settings-owned deletion lifecycle, same-UID full-screen lease blocker, deferred marker recovery, post-reauth expected-UID check, and strict worker/repository Firestore boundaries. |
