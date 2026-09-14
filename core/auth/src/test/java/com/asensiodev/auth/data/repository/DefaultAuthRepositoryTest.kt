@@ -1,6 +1,8 @@
 package com.asensiodev.auth.data.repository
 
 import com.asensiodev.auth.AuthDataSource
+import com.asensiodev.auth.domain.model.ExpectedUserSignOutOutcome
+import com.asensiodev.core.domain.model.SantoroUser
 import com.asensiodev.library.observability.api.ObservabilityTracker
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -38,6 +40,23 @@ class DefaultAuthRepositoryTest {
         }
 
     @Test
+    fun `GIVEN successful sign in WHEN tracking user THEN records only account category`() =
+        runTest {
+            val user = SantoroUser("raw-firebase-uid", null, null, null, true)
+            coEvery { dataSource.signInAnonymously() } returns Result.success(user)
+
+            sut.signInAnonymously()
+
+            verify(exactly = 1) { observabilityTracker.setUser(true) }
+            verify(exactly = 0) {
+                observabilityTracker.trackAction(
+                    any(),
+                    match { values -> values.values.contains("raw-firebase-uid") },
+                )
+            }
+        }
+
+    @Test
     fun `GIVEN wrapped cancellation WHEN signing in with Google THEN cancellation propagates without logging`() =
         runTest {
             val cancellation = CancellationException("cancelled")
@@ -53,12 +72,68 @@ class DefaultAuthRepositoryTest {
     fun `GIVEN wrapped cancellation WHEN linking Google THEN cancellation propagates without logging`() =
         runTest {
             val cancellation = CancellationException("cancelled")
-            coEvery { dataSource.linkWithGoogle("token") } returns Result.failure(cancellation)
+            coEvery { dataSource.linkWithGoogle("uid", "token") } returns Result.failure(cancellation)
 
-            val thrown = captureCancellation { sut.linkWithGoogle("token") }
+            val thrown = captureCancellation { sut.linkWithGoogle("uid", "token") }
 
             thrown shouldBeEqualTo cancellation
             verify(exactly = 0) { observabilityTracker.recordError(any(), any(), any()) }
+        }
+
+    @Test
+    fun `GIVEN sign-out succeeds WHEN signing out expected user THEN success is tracked and user is cleared`() =
+        runTest {
+            coEvery { dataSource.signOut("uid") } returns ExpectedUserSignOutOutcome.SignedOut
+
+            sut.signOut("uid") shouldBeEqualTo ExpectedUserSignOutOutcome.SignedOut
+
+            verify(exactly = 1) { observabilityTracker.trackAction("auth_sign_out") }
+            verify(exactly = 1) { observabilityTracker.clearUser() }
+        }
+
+    @Test
+    fun `GIVEN stale sign-out WHEN signing out expected user THEN outcome is not tracked as sign-out`() =
+        runTest {
+            coEvery {
+                dataSource.signOut("uid")
+            } returns ExpectedUserSignOutOutcome.AuthenticatedUserMismatch
+
+            sut.signOut("uid") shouldBeEqualTo ExpectedUserSignOutOutcome.AuthenticatedUserMismatch
+
+            verify(exactly = 0) { observabilityTracker.trackAction("auth_sign_out") }
+            verify(exactly = 0) { observabilityTracker.clearUser() }
+        }
+
+    @Test
+    fun `GIVEN no-user sign-out WHEN signing out expected user THEN no-user outcome is not tracked`() =
+        runTest {
+            coEvery {
+                dataSource.signOut("uid")
+            } returns ExpectedUserSignOutOutcome.NoAuthenticatedUser
+
+            sut.signOut("uid") shouldBeEqualTo ExpectedUserSignOutOutcome.NoAuthenticatedUser
+
+            verify(exactly = 0) { observabilityTracker.trackAction("auth_sign_out") }
+            verify(exactly = 0) { observabilityTracker.clearUser() }
+        }
+
+    @Test
+    fun `GIVEN sign-out cancellation WHEN signing out expected user THEN cancellation propagates`() =
+        runTest {
+            val cancellation = CancellationException("cancelled")
+            coEvery { dataSource.signOut("uid") } throws cancellation
+
+            val thrown =
+                try {
+                    sut.signOut("uid")
+                    null
+                } catch (exception: CancellationException) {
+                    exception
+                }
+
+            thrown shouldBeEqualTo cancellation
+            verify(exactly = 0) { observabilityTracker.trackAction(any()) }
+            verify(exactly = 0) { observabilityTracker.clearUser() }
         }
 
     @Test

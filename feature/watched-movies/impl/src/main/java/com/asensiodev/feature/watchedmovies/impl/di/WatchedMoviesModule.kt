@@ -1,7 +1,6 @@
 package com.asensiodev.feature.watchedmovies.impl.di
 
 import com.asensiodev.core.domain.dispatcher.DispatcherProvider
-import com.asensiodev.feature.watchedmovies.impl.domain.usecase.AddWatchedMovieUseCase
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchedMoviesUseCase
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchedStatsUseCase
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.SearchWatchedMoviesUseCase
@@ -21,13 +20,6 @@ internal object WatchedMoviesModule {
         repository: DatabaseRepository,
         dispatchers: DispatcherProvider,
     ): GetWatchedMoviesUseCase = GetWatchedMoviesUseCase(repository, dispatchers)
-
-    @Provides
-    @Singleton
-    internal fun provideAddWatchedMovieUseCase(
-        repository: DatabaseRepository,
-        dispatchers: DispatcherProvider,
-    ): AddWatchedMovieUseCase = AddWatchedMovieUseCase(repository, dispatchers)
 
     @Provides
     @Singleton

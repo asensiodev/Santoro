@@ -1,540 +1,256 @@
 package com.asensiodev.santoro.core.sync.data.repository
 
-import com.asensiodev.santoro.core.database.domain.DatabaseRepository
+import com.asensiodev.auth.domain.repository.AuthRepository
+import com.asensiodev.core.domain.model.Genre
+import com.asensiodev.core.domain.model.MovieSyncData
+import com.asensiodev.core.domain.model.SantoroUser
+import com.asensiodev.core.domain.repository.AccountDeletionRecoveryRepository
+import com.asensiodev.core.domain.repository.SyncStore
 import com.asensiodev.santoro.core.sync.SyncMockUtils
 import com.asensiodev.santoro.core.sync.data.datasource.MovieSyncRemoteDataSource
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class DefaultSyncRepositoryTest {
-    private val firestoreDataSource: MovieSyncRemoteDataSource = mockk()
-    private val databaseRepository: DatabaseRepository = mockk()
-
+    private val remoteDataSource: MovieSyncRemoteDataSource = mockk()
+    private val syncStore: SyncStore = mockk()
+    private val authRepository: AuthRepository = mockk()
+    private val deletionRecoveryRepository: AccountDeletionRecoveryRepository = mockk()
+    private val currentUser = MutableStateFlow<SantoroUser?>(user(UID))
+    private val deletionPending = MutableStateFlow(false)
+    private val remoteDeletionInFlight = MutableStateFlow(false)
     private lateinit var sut: DefaultSyncRepository
 
     @BeforeEach
     fun setUp() {
-        sut = DefaultSyncRepository(firestoreDataSource, databaseRepository)
+        every { authRepository.currentUser } returns currentUser
+        every { deletionRecoveryRepository.isLocalCleanupPending } returns deletionPending
+        every { deletionRecoveryRepository.isRemoteDeletionInFlight } returns remoteDeletionInFlight
+        currentUser.value = user(UID)
+        deletionPending.value = false
+        remoteDeletionInFlight.value = false
+        sut =
+            DefaultSyncRepository(
+                remoteDataSource,
+                syncStore,
+                authRepository,
+                deletionRecoveryRepository,
+            )
     }
 
     @Test
-    fun `GIVEN movies in Room WHEN uploadPendingChanges THEN uploads all to Firestore`() =
+    fun `GIVEN movie snapshot WHEN upload movie THEN maps and uploads it`() =
         runTest {
-            val movies =
-                listOf(
-                    SyncMockUtils.createMovie(id = 1, isWatched = true),
-                    SyncMockUtils.createMovie(id = 2, isInWatchlist = true),
-                )
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(movies)
-            coEvery { firestoreDataSource.uploadMovies(any(), any()) } returns Result.success(Unit)
+            coEvery { syncStore.getMovieForUpload(42) } returns
+                Result.success(movie(42, listOf(Genre(1, "Drama"))))
+            coEvery { remoteDataSource.uploadMovie(any(), any()) } returns Result.success(Unit)
 
-            val result = sut.uploadPendingChanges(uid = "uid123")
+            sut.uploadMovie(UID, 42) shouldBeEqualTo Result.success(Unit)
 
-            result.isSuccess shouldBeEqualTo true
-            coVerify(exactly = 1) {
-                firestoreDataSource.uploadMovies(any(), match { it.size == 2 })
-            }
-        }
-
-    @Test
-    fun `GIVEN getMoviesForSync fails WHEN uploadPendingChanges THEN returns error without uploading`() =
-        runTest {
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.failure(Exception("db error"))
-
-            val result = sut.uploadPendingChanges(uid = "uid123")
-
-            result.isFailure shouldBeEqualTo true
-            coVerify(exactly = 0) { firestoreDataSource.uploadMovies(any(), any()) }
-        }
-
-    @Test
-    fun `GIVEN getMoviesForSync returns cancellation WHEN uploadPendingChanges THEN cancellation propagates`() =
-        runTest {
-            val cancellation = CancellationException("cancelled")
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.failure(cancellation)
-
-            assertCancellation(cancellation) {
-                sut.uploadPendingChanges(uid = "uid123")
-            }
-            coVerify(exactly = 0) { firestoreDataSource.uploadMovies(any(), any()) }
-        }
-
-    @Test
-    fun `GIVEN no movies in Room WHEN uploadPendingChanges THEN uploads nothing and returns success`() =
-        runTest {
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(emptyList())
-
-            val result = sut.uploadPendingChanges(uid = "uid123")
-
-            result.isSuccess shouldBeEqualTo true
-            coVerify(exactly = 0) { firestoreDataSource.uploadMovies(any(), any()) }
-        }
-
-    @Test
-    fun `GIVEN movie WHEN uploadPendingChanges THEN uploads with correct movieId`() =
-        runTest {
-            val movie = SyncMockUtils.createMovie(id = 42, isWatched = true)
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(listOf(movie))
-            coEvery { firestoreDataSource.uploadMovies(any(), any()) } returns Result.success(Unit)
-
-            sut.uploadPendingChanges(uid = "uid123")
-
-            coVerify(exactly = 1) {
-                firestoreDataSource.uploadMovies("uid123", match { it.single().movieId == 42 })
-            }
-        }
-
-    @Test
-    fun `GIVEN locally unmarked movie WHEN uploadPendingChanges THEN uploads false state`() =
-        runTest {
-            val movie =
-                SyncMockUtils.createMovie(
-                    id = 42,
-                    isWatched = false,
-                    isInWatchlist = false,
-                    updatedAt = 2000L,
-                )
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(listOf(movie))
-            coEvery { firestoreDataSource.uploadMovies(any(), any()) } returns Result.success(Unit)
-
-            sut.uploadPendingChanges(uid = "uid123")
-
-            coVerify(exactly = 1) {
-                firestoreDataSource.uploadMovies(
-                    "uid123",
-                    match {
-                        val entity = it.single()
-                        entity.movieId == 42 &&
-                            !entity.isWatched &&
-                            !entity.isInWatchlist &&
-                            entity.updatedAt == 2000L
-                    },
+            coVerify {
+                remoteDataSource.uploadMovie(
+                    UID,
+                    match { it.movieId == 42 && it.genres.contains("Drama") },
                 )
             }
         }
 
     @Test
-    fun `GIVEN upload fails WHEN uploadPendingChanges THEN returns error`() =
+    fun `GIVEN missing movie WHEN upload movie THEN succeeds without remote access`() =
         runTest {
-            val movies =
-                listOf(
-                    SyncMockUtils.createMovie(id = 1, isWatched = true),
-                    SyncMockUtils.createMovie(id = 2, isWatched = true),
-                )
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(movies)
-            coEvery { firestoreDataSource.uploadMovies(any(), any()) } returns
-                Result.failure(Exception("network"))
+            coEvery { syncStore.getMovieForUpload(42) } returns Result.success(null)
 
-            val result = sut.uploadPendingChanges(uid = "uid123")
+            sut.uploadMovie(UID, 42) shouldBeEqualTo Result.success(Unit)
 
-            result.isFailure shouldBeEqualTo true
-            coVerify(exactly = 1) { firestoreDataSource.uploadMovies("uid123", any()) }
+            coVerify(exactly = 0) { remoteDataSource.uploadMovie(any(), any()) }
         }
 
     @Test
-    fun `GIVEN upload returns cancellation WHEN uploadPendingChanges THEN cancellation propagates`() =
+    fun `GIVEN auth changes while reading movie WHEN upload starts THEN no remote call starts`() =
         runTest {
-            val cancellation = CancellationException("cancelled")
-            coEvery { databaseRepository.getMoviesForSync() } returns
-                Result.success(listOf(SyncMockUtils.createMovie()))
-            coEvery { firestoreDataSource.uploadMovies(any(), any()) } returns Result.failure(cancellation)
-
-            assertCancellation(cancellation) {
-                sut.uploadPendingChanges(uid = "uid123")
+            coEvery { syncStore.getMovieForUpload(42) } coAnswers {
+                currentUser.value = user("other-uid")
+                Result.success(movie(42))
             }
+
+            sut.uploadMovie(UID, 42) shouldBeEqualTo Result.success(Unit)
+
+            coVerify(exactly = 0) { remoteDataSource.uploadMovie(any(), any()) }
         }
 
     @Test
-    fun `GIVEN requested movie exists WHEN uploadMovie THEN uploads only that movie`() =
+    fun `GIVEN deletion starts while reading snapshot WHEN upload starts THEN no remote call starts`() =
         runTest {
-            val movie = SyncMockUtils.createMovie(id = 42, isWatched = true)
-            coEvery { databaseRepository.getMovieById(42) } returns Result.success(movie)
-            coEvery { firestoreDataSource.uploadMovie(any(), any()) } returns Result.success(Unit)
+            coEvery { syncStore.getMoviesForUpload() } coAnswers {
+                deletionPending.value = true
+                Result.success(listOf(movie(1)))
+            }
 
-            val result = sut.uploadMovie(uid = "uid123", movieId = 42)
+            sut.uploadLocalSnapshot(UID) shouldBeEqualTo Result.success(Unit)
 
-            result.isSuccess shouldBeEqualTo true
+            coVerify(exactly = 0) { remoteDataSource.uploadMovies(any(), any()) }
+        }
+
+    @Test
+    fun `GIVEN auth changes after accepted chunk WHEN next chunk starts THEN upload stops`() =
+        runTest {
+            coEvery { syncStore.getMoviesForUpload() } returns
+                Result.success((1..501).map(::movie))
+            coEvery { remoteDataSource.uploadMovies(UID, any()) } coAnswers {
+                currentUser.value = user("other-uid")
+                Result.success(Unit)
+            }
+
+            sut.uploadLocalSnapshot(UID) shouldBeEqualTo Result.success(Unit)
+
             coVerify(exactly = 1) {
-                firestoreDataSource.uploadMovie("uid123", match { it.movieId == 42 })
-            }
-            coVerify(exactly = 0) { databaseRepository.getMoviesForSync() }
-            coVerify(exactly = 0) { firestoreDataSource.uploadMovies(any(), any()) }
-        }
-
-    @Test
-    fun `GIVEN requested movie is missing WHEN uploadMovie THEN returns success without uploading`() =
-        runTest {
-            coEvery { databaseRepository.getMovieById(42) } returns Result.success(null)
-
-            val result = sut.uploadMovie(uid = "uid123", movieId = 42)
-
-            result.isSuccess shouldBeEqualTo true
-            coVerify(exactly = 0) { firestoreDataSource.uploadMovie(any(), any()) }
-        }
-
-    @Test
-    fun `GIVEN requested movie read fails WHEN uploadMovie THEN returns failure`() =
-        runTest {
-            coEvery {
-                databaseRepository.getMovieById(42)
-            } returns Result.failure(Exception("db error"))
-
-            val result = sut.uploadMovie(uid = "uid123", movieId = 42)
-
-            result.isFailure shouldBeEqualTo true
-            coVerify(exactly = 0) { firestoreDataSource.uploadMovie(any(), any()) }
-        }
-
-    @Test
-    fun `GIVEN Firestore newer WHEN downloadAndMerge THEN upserts into Room`() =
-        runTest {
-            val remoteEntity = SyncMockUtils.createSyncEntity(movieId = 1, updatedAt = 2000L)
-            val localMovie = SyncMockUtils.createMovie(id = 1, updatedAt = 1000L)
-
-            coEvery {
-                firestoreDataSource.downloadUserMovies(any())
-            } returns Result.success(listOf(remoteEntity))
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(listOf(localMovie))
-            coEvery {
-                databaseRepository.updateMovieSyncState(any(), any(), any(), any(), any())
-            } returns Result.success(Unit)
-
-            val result = sut.downloadAndMerge(uid = "uid123")
-
-            result.isSuccess shouldBeEqualTo true
-            coVerify(exactly = 1) {
-                databaseRepository.updateMovieSyncState(1, any(), any(), any(), 2000L)
+                remoteDataSource.uploadMovies(UID, match { entities -> entities.size == 500 })
             }
         }
 
     @Test
-    fun `GIVEN Room newer WHEN downloadAndMerge THEN does NOT upsert`() =
+    fun `GIVEN empty snapshot WHEN upload starts THEN succeeds without remote access`() =
         runTest {
-            val remoteEntity = SyncMockUtils.createSyncEntity(movieId = 1, updatedAt = 500L)
-            val localMovie = SyncMockUtils.createMovie(id = 1, updatedAt = 1000L)
+            coEvery { syncStore.getMoviesForUpload() } returns Result.success(emptyList())
 
-            coEvery {
-                firestoreDataSource.downloadUserMovies(any())
-            } returns Result.success(listOf(remoteEntity))
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(listOf(localMovie))
+            sut.uploadLocalSnapshot(UID) shouldBeEqualTo Result.success(Unit)
 
-            val result = sut.downloadAndMerge(uid = "uid123")
+            coVerify(exactly = 0) { remoteDataSource.uploadMovies(any(), any()) }
+        }
 
-            result.isSuccess shouldBeEqualTo true
-            coVerify(exactly = 0) {
-                databaseRepository.updateMovieSyncState(any(), any(), any(), any(), any())
+    @Test
+    fun `GIVEN no auth WHEN download starts THEN succeeds without remote access`() =
+        runTest {
+            currentUser.value = null
+
+            sut.downloadAndMerge(UID) shouldBeEqualTo Result.success(Unit)
+
+            coVerify(exactly = 0) { remoteDataSource.downloadUserMovies(any()) }
+            coVerify(exactly = 0) { syncStore.completeDownloadedMerge(any(), any()) }
+        }
+
+    @Test
+    fun `GIVEN auth changes during download WHEN response arrives THEN merge does not start`() =
+        runTest {
+            coEvery { remoteDataSource.downloadUserMovies(UID) } coAnswers {
+                currentUser.value = user("other-uid")
+                Result.success(listOf(SyncMockUtils.createSyncEntity(9)))
             }
+
+            sut.downloadAndMerge(UID) shouldBeEqualTo Result.success(Unit)
+
+            coVerify(exactly = 0) { syncStore.completeDownloadedMerge(any(), any()) }
         }
 
     @Test
-    fun `GIVEN movie not in Room WHEN downloadAndMerge THEN upserts it from Firestore`() =
+    fun `GIVEN deletion starts during download WHEN response arrives THEN merge does not start`() =
         runTest {
-            val remoteEntity = SyncMockUtils.createSyncEntity(movieId = 99, updatedAt = 5000L)
-
-            coEvery {
-                firestoreDataSource.downloadUserMovies(any())
-            } returns Result.success(listOf(remoteEntity))
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(emptyList())
-            coEvery { databaseRepository.getMovieById(99) } returns Result.success(null)
-            coEvery {
-                databaseRepository.upsertMovieFromSync(any(), any(), any(), any(), any(), any(), any(), any(), any())
-            } returns Result.success(Unit)
-
-            val result = sut.downloadAndMerge(uid = "uid123")
-
-            result.isSuccess shouldBeEqualTo true
-            coVerify(exactly = 1) {
-                databaseRepository.upsertMovieFromSync(99, "Test Movie", null, "", null, false, false, null, 5000L)
+            coEvery { remoteDataSource.downloadUserMovies(UID) } coAnswers {
+                remoteDeletionInFlight.value = true
+                Result.success(listOf(SyncMockUtils.createSyncEntity(9)))
             }
-            coVerify(exactly = 0) {
-                databaseRepository.updateMovieSyncState(any(), any(), any(), any(), any())
-            }
+
+            sut.downloadAndMerge(UID) shouldBeEqualTo Result.success(Unit)
+
+            coVerify(exactly = 0) { syncStore.completeDownloadedMerge(any(), any()) }
         }
 
     @Test
-    fun `GIVEN Firestore download fails WHEN downloadAndMerge THEN returns error`() =
+    fun `GIVEN downloaded movies WHEN auth remains current THEN maps and merges them`() =
         runTest {
-            coEvery {
-                firestoreDataSource.downloadUserMovies(any())
-            } returns Result.failure(Exception("network error"))
+            val remote = SyncMockUtils.createSyncEntity(9, genres = "[{\"id\":1,\"name\":\"Drama\"}]")
+            coEvery { remoteDataSource.downloadUserMovies(UID) } returns Result.success(listOf(remote))
+            coEvery { syncStore.completeDownloadedMerge(any(), any()) } returns Result.success(Unit)
 
-            val result = sut.downloadAndMerge(uid = "uid123")
+            sut.downloadAndMerge(UID) shouldBeEqualTo Result.success(Unit)
 
-            result.isFailure shouldBeEqualTo true
-        }
-
-    @Test
-    fun `GIVEN download returns cancellation WHEN downloadAndMerge THEN cancellation propagates`() =
-        runTest {
-            val cancellation = CancellationException("cancelled")
-            coEvery { firestoreDataSource.downloadUserMovies(any()) } returns Result.failure(cancellation)
-
-            assertCancellation(cancellation) {
-                sut.downloadAndMerge(uid = "uid123")
-            }
-        }
-
-    @Test
-    fun `GIVEN getMoviesForSync fails WHEN downloadAndMerge THEN returns error`() =
-        runTest {
-            coEvery {
-                firestoreDataSource.downloadUserMovies(any())
-            } returns Result.success(emptyList())
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.failure(Exception("db error"))
-
-            val result = sut.downloadAndMerge(uid = "uid123")
-
-            result.isFailure shouldBeEqualTo true
-        }
-
-    @Test
-    fun `GIVEN local movies return cancellation WHEN downloadAndMerge THEN cancellation propagates`() =
-        runTest {
-            val cancellation = CancellationException("cancelled")
-            coEvery { firestoreDataSource.downloadUserMovies(any()) } returns Result.success(emptyList())
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.failure(cancellation)
-
-            assertCancellation(cancellation) {
-                sut.downloadAndMerge(uid = "uid123")
-            }
-        }
-
-    @Test
-    fun `GIVEN getMovieById fails WHEN movie missing from sync list THEN returns error`() =
-        runTest {
-            val remoteEntity = SyncMockUtils.createSyncEntity(movieId = 99, updatedAt = 5000L)
-
-            coEvery {
-                firestoreDataSource.downloadUserMovies(any())
-            } returns Result.success(listOf(remoteEntity))
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(emptyList())
-            coEvery { databaseRepository.getMovieById(99) } returns Result.failure(Exception("db error"))
-
-            val result = sut.downloadAndMerge(uid = "uid123")
-
-            result.isFailure shouldBeEqualTo true
-            coVerify(exactly = 0) {
-                databaseRepository.upsertMovieFromSync(any(), any(), any(), any(), any(), any(), any(), any(), any())
-            }
-            coVerify(exactly = 0) {
-                databaseRepository.updateMovieSyncState(any(), any(), any(), any(), any())
-            }
-        }
-
-    @Test
-    fun `GIVEN getMovieById returns cancellation WHEN merging missing movie THEN cancellation propagates`() =
-        runTest {
-            val cancellation = CancellationException("cancelled")
-            val remoteEntity = SyncMockUtils.createSyncEntity(movieId = 99)
-            coEvery { firestoreDataSource.downloadUserMovies(any()) } returns Result.success(listOf(remoteEntity))
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(emptyList())
-            coEvery { databaseRepository.getMovieById(99) } returns Result.failure(cancellation)
-
-            assertCancellation(cancellation) {
-                sut.downloadAndMerge(uid = "uid123")
-            }
-        }
-
-    @Test
-    fun `GIVEN upsert fails WHEN downloadAndMerge THEN returns error`() =
-        runTest {
-            val remoteEntity = SyncMockUtils.createSyncEntity(movieId = 1, updatedAt = 2000L)
-            val localMovie = SyncMockUtils.createMovie(id = 1, updatedAt = 1000L)
-
-            coEvery {
-                firestoreDataSource.downloadUserMovies(any())
-            } returns Result.success(listOf(remoteEntity))
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(listOf(localMovie))
-            coEvery {
-                databaseRepository.updateMovieSyncState(any(), any(), any(), any(), any())
-            } returns Result.failure(Exception("db error"))
-
-            val result = sut.downloadAndMerge(uid = "uid123")
-
-            result.isFailure shouldBeEqualTo true
-        }
-
-    @Test
-    fun `GIVEN update returns cancellation WHEN merging newer remote movie THEN cancellation propagates`() =
-        runTest {
-            val cancellation = CancellationException("cancelled")
-            val remoteEntity = SyncMockUtils.createSyncEntity(movieId = 1, updatedAt = 2000L)
-            val localMovie = SyncMockUtils.createMovie(id = 1, updatedAt = 1000L)
-            coEvery { firestoreDataSource.downloadUserMovies(any()) } returns Result.success(listOf(remoteEntity))
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(listOf(localMovie))
-            coEvery {
-                databaseRepository.updateMovieSyncState(any(), any(), any(), any(), any())
-            } returns Result.failure(cancellation)
-
-            assertCancellation(cancellation) {
-                sut.downloadAndMerge(uid = "uid123")
-            }
-        }
-
-    @Test
-    fun `GIVEN upsert returns cancellation WHEN merging missing movie THEN cancellation propagates`() =
-        runTest {
-            val cancellation = CancellationException("cancelled")
-            val remoteEntity = SyncMockUtils.createSyncEntity(movieId = 99)
-            coEvery { firestoreDataSource.downloadUserMovies(any()) } returns Result.success(listOf(remoteEntity))
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(emptyList())
-            coEvery { databaseRepository.getMovieById(99) } returns Result.success(null)
-            coEvery {
-                databaseRepository.upsertMovieFromSync(any(), any(), any(), any(), any(), any(), any(), any(), any())
-            } returns Result.failure(cancellation)
-
-            assertCancellation(cancellation) {
-                sut.downloadAndMerge(uid = "uid123")
-            }
-        }
-
-    @Test
-    fun `GIVEN remote in watchlist AND removed locally newer WHEN downloadAndMerge THEN does NOT restore movie`() =
-        runTest {
-            val remoteEntity =
-                SyncMockUtils.createSyncEntity(movieId = 10, isInWatchlist = true, updatedAt = 500L)
-            val localRemovedMovie =
-                SyncMockUtils.createMovie(
-                    id = 10,
-                    isInWatchlist = false,
-                    isWatched = false,
-                    updatedAt = 1000L,
-                )
-
-            coEvery {
-                firestoreDataSource.downloadUserMovies(any())
-            } returns Result.success(listOf(remoteEntity))
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(emptyList())
-            coEvery { databaseRepository.getMovieById(10) } returns Result.success(localRemovedMovie)
-
-            val result = sut.downloadAndMerge(uid = "uid123")
-
-            result.isSuccess shouldBeEqualTo true
-            coVerify(exactly = 0) {
-                databaseRepository.upsertMovieFromSync(
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
+            coVerify {
+                syncStore.completeDownloadedMerge(
+                    match { it.single().movieId == 9 && it.single().genres == listOf(Genre(1, "Drama")) },
                     any(),
                 )
             }
-            coVerify(exactly = 0) {
-                databaseRepository.updateMovieSyncState(any(), any(), any(), any(), any())
-            }
         }
 
     @Test
-    fun `GIVEN remote in watchlist AND removed locally older WHEN downloadAndMerge THEN applies remote state`() =
+    fun `GIVEN auth changes before merge transaction WHEN authority is checked THEN merge is rejected`() =
         runTest {
-            val remoteEntity =
-                SyncMockUtils.createSyncEntity(movieId = 10, isInWatchlist = true, updatedAt = 2000L)
-            val localRemovedMovie =
-                SyncMockUtils.createMovie(
-                    id = 10,
-                    isInWatchlist = false,
-                    isWatched = false,
-                    updatedAt = 500L,
-                )
-
-            coEvery {
-                firestoreDataSource.downloadUserMovies(any())
-            } returns Result.success(listOf(remoteEntity))
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(emptyList())
-            coEvery { databaseRepository.getMovieById(10) } returns Result.success(localRemovedMovie)
-            coEvery {
-                databaseRepository.updateMovieSyncState(any(), any(), any(), any(), any())
-            } returns Result.success(Unit)
-
-            val result = sut.downloadAndMerge(uid = "uid123")
-
-            result.isSuccess shouldBeEqualTo true
-            coVerify(exactly = 1) {
-                databaseRepository.updateMovieSyncState(10, false, true, null, 2000L)
+            val remote = SyncMockUtils.createSyncEntity(9)
+            var canMerge = true
+            coEvery { remoteDataSource.downloadUserMovies(UID) } returns Result.success(listOf(remote))
+            coEvery { syncStore.completeDownloadedMerge(any(), any()) } coAnswers {
+                currentUser.value = user("other-uid")
+                canMerge = secondArg<suspend () -> Boolean>().invoke()
+                Result.success(Unit)
             }
+
+            sut.downloadAndMerge(UID) shouldBeEqualTo Result.success(Unit)
+
+            canMerge shouldBeEqualTo false
         }
 
     @Test
-    fun `GIVEN remote has movie AND movie does not exist locally WHEN downloadAndMerge THEN upserts from Firestore`() =
+    fun `GIVEN local or remote failure WHEN syncing THEN failure is preserved`() =
         runTest {
-            val remoteEntity =
-                SyncMockUtils.createSyncEntity(movieId = 77, isInWatchlist = true, updatedAt = 3000L)
+            val localFailure = IllegalStateException("local")
+            val remoteFailure = IllegalStateException("remote")
+            coEvery { syncStore.getMovieForUpload(42) } returns Result.failure(localFailure)
+            coEvery { remoteDataSource.downloadUserMovies(UID) } returns Result.failure(remoteFailure)
 
-            coEvery {
-                firestoreDataSource.downloadUserMovies(any())
-            } returns Result.success(listOf(remoteEntity))
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(emptyList())
-            coEvery { databaseRepository.getMovieById(77) } returns Result.success(null)
-            coEvery {
-                databaseRepository.upsertMovieFromSync(any(), any(), any(), any(), any(), any(), any(), any(), any())
-            } returns Result.success(Unit)
-
-            val result = sut.downloadAndMerge(uid = "uid123")
-
-            result.isSuccess shouldBeEqualTo true
-            coVerify(exactly = 1) {
-                databaseRepository.upsertMovieFromSync(77, any(), any(), any(), any(), any(), true, any(), 3000L)
-            }
+            sut.uploadMovie(UID, 42).exceptionOrNull() shouldBeEqualTo localFailure
+            sut.downloadAndMerge(UID).exceptionOrNull() shouldBeEqualTo remoteFailure
         }
 
     @Test
-    fun `GIVEN movie in watchlist on both devices AND same updatedAt WHEN downloadAndMerge THEN does not update`() =
-        runTest {
-            val sameTimestamp = 1000L
-            val remoteEntity =
-                SyncMockUtils.createSyncEntity(movieId = 5, isInWatchlist = true, updatedAt = sameTimestamp)
-            val localMovie =
-                SyncMockUtils.createMovie(id = 5, isInWatchlist = true, updatedAt = sameTimestamp)
-
-            coEvery {
-                firestoreDataSource.downloadUserMovies(any())
-            } returns Result.success(listOf(remoteEntity))
-            coEvery { databaseRepository.getMoviesForSync() } returns Result.success(listOf(localMovie))
-
-            val result = sut.downloadAndMerge(uid = "uid123")
-
-            result.isSuccess shouldBeEqualTo true
-            coVerify(exactly = 0) {
-                databaseRepository.updateMovieSyncState(any(), any(), any(), any(), any())
-            }
-            coVerify(exactly = 0) {
-                databaseRepository.upsertMovieFromSync(any(), any(), any(), any(), any(), any(), any(), any(), any())
-            }
-        }
-
-    @Test
-    fun `GIVEN Firestore deletion is cancelled WHEN deleteUserData THEN cancellation propagates`() =
+    fun `GIVEN cancellation WHEN syncing THEN cancellation propagates`() =
         runTest {
             val cancellation = CancellationException("cancelled")
-            coEvery { firestoreDataSource.deleteUserData("uid123") } returns Result.failure(cancellation)
+            coEvery { syncStore.getMoviesForUpload() } returns Result.failure(cancellation)
 
-            assertCancellation(cancellation) {
-                sut.deleteUserData("uid123")
-            }
+            runCatching { sut.uploadLocalSnapshot(UID) }.exceptionOrNull() shouldBeEqualTo cancellation
+
+            coEvery { remoteDataSource.downloadUserMovies(UID) } returns Result.failure(cancellation)
+            runCatching { sut.downloadAndMerge(UID) }.exceptionOrNull() shouldBeEqualTo cancellation
         }
 
-    private suspend fun assertCancellation(
-        expected: CancellationException,
-        block: suspend () -> Unit,
-    ) {
-        val actual =
-            try {
-                block()
-                null
-            } catch (exception: CancellationException) {
-                exception
-            }
+    @Test
+    fun `GIVEN deletion gates active WHEN deleting user data THEN remote deletion remains ungated`() =
+        runTest {
+            deletionPending.value = true
+            remoteDeletionInFlight.value = true
+            coEvery { remoteDataSource.deleteUserData(UID) } returns Result.success(Unit)
 
-        actual shouldBeEqualTo expected
+            sut.deleteUserData(UID) shouldBeEqualTo Result.success(Unit)
+
+            coVerify(exactly = 1) { remoteDataSource.deleteUserData(UID) }
+        }
+
+    private fun movie(
+        movieId: Int,
+        genres: List<Genre> = emptyList(),
+    ) = MovieSyncData(
+        movieId = movieId,
+        title = "Movie $movieId",
+        posterPath = null,
+        genres = genres,
+        runtime = null,
+        isWatched = true,
+        isInWatchlist = false,
+        watchedAt = null,
+        updatedAt = 1000L,
+    )
+
+    private fun user(uid: String) = SantoroUser(uid, null, null, null, true)
+
+    private companion object {
+        const val UID = "uid123"
     }
 }

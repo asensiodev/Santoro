@@ -16,14 +16,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -78,6 +83,7 @@ internal fun LoginScreen(
     onGoogleLoginClicked: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var showGuestConfirmation by rememberSaveable { mutableStateOf(false) }
     Scaffold(modifier = modifier.fillMaxSize()) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
             Image(
@@ -103,9 +109,37 @@ internal fun LoginScreen(
                             ),
                         ),
             )
-            LoginContent(paddingValues, uiState, onGoogleLoginClicked, onAnonymousLoginClicked)
+            LoginContent(
+                paddingValues,
+                uiState,
+                onGoogleLoginClicked,
+                onAnonymousLoginClicked = { showGuestConfirmation = true },
+            )
             LoadingContent(uiState)
         }
+    }
+    if (showGuestConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showGuestConfirmation = false },
+            title = { Text(stringResource(SR.string.login_guest_confirmation_title)) },
+            text = { Text(stringResource(SR.string.login_guest_data_notice)) },
+            confirmButton = {
+                TextButton(
+                    enabled = !uiState.isLoading,
+                    onClick = {
+                        showGuestConfirmation = false
+                        onAnonymousLoginClicked()
+                    },
+                ) {
+                    Text(stringResource(SR.string.login_anonymous_login_button))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showGuestConfirmation = false }) {
+                    Text(stringResource(SR.string.login_guest_confirmation_cancel))
+                }
+            },
+        )
     }
 }
 

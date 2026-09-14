@@ -4,9 +4,11 @@ import app.cash.turbine.test
 import com.asensiodev.auth.domain.exception.AccountCollisionException
 import com.asensiodev.auth.domain.exception.AuthenticatedUserMismatchException
 import com.asensiodev.auth.domain.exception.NoAuthenticatedUserException
+import com.asensiodev.auth.domain.model.ExpectedUserSignOutOutcome
 import com.asensiodev.core.domain.model.SantoroUser
 import com.asensiodev.core.testing.verifyNever
 import com.asensiodev.core.testing.verifyOnce
+import com.google.android.gms.tasks.TaskCompletionSource
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
@@ -15,41 +17,96 @@ import com.google.firebase.auth.FirebaseUser
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import io.mockk.verifyOrder
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldBeInstanceOf
 import org.amshove.kluent.shouldBeNull
 import org.junit.jupiter.api.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class FirebaseAuthDataSourceTest {
-    private val firebaseAuth: FirebaseAuth = mockk()
-    private val sut = FirebaseAuthDataSource(firebaseAuth)
+    private val firebaseAuth: FirebaseAuth = mockk(relaxed = true)
+    private val sut =
+        FirebaseAuthDataSource(
+            firebaseAuth,
+            CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
+        )
 
     @Test
-    fun `GIVEN signed-out and signed-in states WHEN observing auth THEN values emit and listener is removed`() =
+    fun `GIVEN auth changes WHEN observing auth THEN values emit from one application listener`() =
         runTest {
+            val auth: FirebaseAuth = mockk()
             val listener = slot<FirebaseAuth.AuthStateListener>()
             val firebaseUser = firebaseUser()
             var currentUser: FirebaseUser? = null
-            every { firebaseAuth.currentUser } answers { currentUser }
-            every { firebaseAuth.addAuthStateListener(capture(listener)) } answers {
-                listener.captured.onAuthStateChanged(firebaseAuth)
+            every { auth.currentUser } answers { currentUser }
+            every { auth.addAuthStateListener(capture(listener)) } answers {
+                listener.captured.onAuthStateChanged(auth)
             }
-            every { firebaseAuth.removeAuthStateListener(any()) } returns Unit
+            every { auth.removeAuthStateListener(any()) } returns Unit
+            val applicationScope = CoroutineScope(coroutineContext + SupervisorJob())
+            val source = FirebaseAuthDataSource(auth, applicationScope)
+            runCurrent()
 
-            sut.currentUser.test {
+            source.currentUser.test {
                 awaitItem().shouldBeNull()
 
                 currentUser = firebaseUser
-                listener.captured.onAuthStateChanged(firebaseAuth)
+                listener.captured.onAuthStateChanged(auth)
 
                 awaitItem() shouldBeEqualTo expectedUser()
                 cancelAndIgnoreRemainingEvents()
             }
 
-            verifyOnce { firebaseAuth.addAuthStateListener(listener.captured) }
-            verifyOnce { firebaseAuth.removeAuthStateListener(listener.captured) }
+            verifyOnce { auth.addAuthStateListener(listener.captured) }
+            verifyNever { auth.removeAuthStateListener(any()) }
+            applicationScope.cancel()
+            runCurrent()
+            verifyOnce { auth.removeAuthStateListener(listener.captured) }
+        }
+
+    @Test
+    fun `GIVEN no collectors WHEN auth changes THEN reused collection has latest replay and one listener`() =
+        runTest {
+            val auth: FirebaseAuth = mockk()
+            val listener = slot<FirebaseAuth.AuthStateListener>()
+            val firebaseUser = firebaseUser()
+            var currentUser: FirebaseUser? = null
+            every { auth.currentUser } answers { currentUser }
+            every { auth.addAuthStateListener(capture(listener)) } answers {
+                listener.captured.onAuthStateChanged(auth)
+            }
+            every { auth.removeAuthStateListener(any()) } returns Unit
+            val applicationScope = CoroutineScope(coroutineContext + SupervisorJob())
+            val source = FirebaseAuthDataSource(auth, applicationScope)
+            runCurrent()
+
+            source.currentUser.test {
+                awaitItem().shouldBeNull()
+                cancelAndIgnoreRemainingEvents()
+            }
+            currentUser = firebaseUser
+            listener.captured.onAuthStateChanged(auth)
+            runCurrent()
+            source.currentUser.test {
+                awaitItem() shouldBeEqualTo expectedUser()
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            verifyOnce { auth.addAuthStateListener(listener.captured) }
+            verifyNever { auth.removeAuthStateListener(any()) }
+            applicationScope.cancel()
         }
 
     @Test
@@ -127,7 +184,7 @@ class FirebaseAuthDataSourceTest {
             every { firebaseAuth.currentUser } returns currentUser
             every { currentUser.linkWithCredential(any()) } returns successfulAuthTask()
 
-            sut.linkWithGoogle(TEST_ID_TOKEN) shouldBeEqualTo Result.success(expectedUser())
+            sut.linkWithGoogle(USER_ID, TEST_ID_TOKEN) shouldBeEqualTo Result.success(expectedUser())
         }
 
     @Test
@@ -138,7 +195,7 @@ class FirebaseAuthDataSourceTest {
             every { firebaseAuth.currentUser } returns currentUser
             every { currentUser.linkWithCredential(any()) } returns Tasks.forException(collision)
 
-            val failure = sut.linkWithGoogle(TEST_ID_TOKEN).exceptionOrNull()
+            val failure = sut.linkWithGoogle(USER_ID, TEST_ID_TOKEN).exceptionOrNull()
 
             failure.shouldBeInstanceOf<AccountCollisionException>()
             failure?.cause shouldBeEqualTo collision
@@ -149,7 +206,7 @@ class FirebaseAuthDataSourceTest {
         runTest {
             every { firebaseAuth.currentUser } returns null
 
-            val failure = sut.linkWithGoogle(TEST_ID_TOKEN).exceptionOrNull()
+            val failure = sut.linkWithGoogle(USER_ID, TEST_ID_TOKEN).exceptionOrNull()
 
             failure.shouldBeInstanceOf<NoAuthenticatedUserException>()
         }
@@ -162,7 +219,7 @@ class FirebaseAuthDataSourceTest {
             every { firebaseAuth.currentUser } returns currentUser
             every { currentUser.linkWithCredential(any()) } returns Tasks.forException(failure)
 
-            sut.linkWithGoogle(TEST_ID_TOKEN).exceptionOrNull() shouldBeEqualTo failure
+            sut.linkWithGoogle(USER_ID, TEST_ID_TOKEN).exceptionOrNull() shouldBeEqualTo failure
         }
 
     @Test
@@ -173,7 +230,79 @@ class FirebaseAuthDataSourceTest {
             every { firebaseAuth.currentUser } returns currentUser
             every { currentUser.linkWithCredential(any()) } returns Tasks.forException(cancellation)
 
-            captureCancellation { sut.linkWithGoogle(TEST_ID_TOKEN) } shouldBeEqualTo cancellation
+            captureCancellation {
+                sut.linkWithGoogle(USER_ID, TEST_ID_TOKEN)
+            } shouldBeEqualTo cancellation
+        }
+
+    @Test
+    fun `GIVEN current user UID differs WHEN linking Google THEN mismatch fails before link starts`() =
+        runTest {
+            val currentUser = firebaseUser()
+            every { firebaseAuth.currentUser } returns currentUser
+
+            val failure = sut.linkWithGoogle("different-user", TEST_ID_TOKEN).exceptionOrNull()
+
+            failure.shouldBeInstanceOf<AuthenticatedUserMismatchException>()
+            verifyNever { currentUser.linkWithCredential(any()) }
+        }
+
+    @Test
+    fun `GIVEN linked result UID differs WHEN linking Google THEN mismatch failure is returned`() =
+        runTest {
+            val currentUser = firebaseUser()
+            every { firebaseAuth.currentUser } returns currentUser
+            every { currentUser.linkWithCredential(any()) } returns
+                successfulAuthTask(firebaseUser(uid = "different-user"))
+
+            val failure = sut.linkWithGoogle(USER_ID, TEST_ID_TOKEN).exceptionOrNull()
+
+            failure.shouldBeInstanceOf<AuthenticatedUserMismatchException>()
+        }
+
+    @Test
+    fun `GIVEN linked result user A but current Auth B after suspension WHEN linking THEN mismatch fails`() =
+        runTest {
+            val userA = firebaseUser()
+            val userB = firebaseUser(uid = "different-user")
+            val taskSource = TaskCompletionSource<AuthResult>()
+            var currentUser = userA
+            every { firebaseAuth.currentUser } answers { currentUser }
+            every { userA.linkWithCredential(any()) } returns taskSource.task
+
+            val result = async { sut.linkWithGoogle(USER_ID, TEST_ID_TOKEN) }
+            runCurrent()
+            currentUser = userB
+            taskSource.setResult(authResult(userA))
+
+            result.await().exceptionOrNull().shouldBeInstanceOf<AuthenticatedUserMismatchException>()
+        }
+
+    @Test
+    fun `GIVEN accepted link task WHEN caller is cancelled THEN task may settle later`() =
+        runTest {
+            val currentUser = firebaseUser()
+            val taskSource = TaskCompletionSource<AuthResult>()
+            var cancellation: CancellationException? = null
+            every { firebaseAuth.currentUser } returns currentUser
+            every { currentUser.linkWithCredential(any()) } returns taskSource.task
+
+            val caller =
+                launch {
+                    try {
+                        sut.linkWithGoogle(USER_ID, TEST_ID_TOKEN)
+                    } catch (exception: CancellationException) {
+                        cancellation = exception
+                    }
+                }
+            testScheduler.runCurrent()
+
+            caller.cancelAndJoin()
+            taskSource.setResult(authResult(firebaseUser()))
+
+            cancellation.shouldBeInstanceOf<CancellationException>()
+            taskSource.task.isSuccessful shouldBeEqualTo true
+            verifyOnce { currentUser.linkWithCredential(any()) }
         }
 
     @Test
@@ -237,29 +366,55 @@ class FirebaseAuthDataSourceTest {
     @Test
     fun `GIVEN Firebase sign-out succeeds WHEN signing out THEN Firebase is invoked once`() =
         runTest {
+            every { firebaseAuth.currentUser } returns firebaseUser()
             every { firebaseAuth.signOut() } returns Unit
 
-            sut.signOut()
+            sut.signOut(USER_ID) shouldBeEqualTo ExpectedUserSignOutOutcome.SignedOut
 
-            verifyOnce { firebaseAuth.signOut() }
+            verifyOrder {
+                firebaseAuth.currentUser
+                firebaseAuth.signOut()
+            }
         }
 
     @Test
     fun `GIVEN Firebase sign-out failure WHEN signing out THEN failure propagates`() =
         runTest {
             val failure = IllegalStateException("Synthetic sign-out failure")
+            every { firebaseAuth.currentUser } returns firebaseUser()
             every { firebaseAuth.signOut() } throws failure
 
-            captureFailure { sut.signOut() } shouldBeEqualTo failure
+            captureFailure { sut.signOut(USER_ID) } shouldBeEqualTo failure
         }
 
     @Test
     fun `GIVEN Firebase sign-out cancellation WHEN signing out THEN cancellation propagates`() =
         runTest {
             val cancellation = CancellationException("cancelled")
+            every { firebaseAuth.currentUser } returns firebaseUser()
             every { firebaseAuth.signOut() } throws cancellation
 
-            captureCancellation { sut.signOut() } shouldBeEqualTo cancellation
+            captureCancellation { sut.signOut(USER_ID) } shouldBeEqualTo cancellation
+        }
+
+    @Test
+    fun `GIVEN no authenticated user WHEN signing out THEN no-user outcome does not invoke Firebase sign-out`() =
+        runTest {
+            every { firebaseAuth.currentUser } returns null
+
+            sut.signOut(USER_ID) shouldBeEqualTo ExpectedUserSignOutOutcome.NoAuthenticatedUser
+
+            verifyNever { firebaseAuth.signOut() }
+        }
+
+    @Test
+    fun `GIVEN authenticated UID differs WHEN signing out THEN mismatch outcome does not invoke Firebase sign-out`() =
+        runTest {
+            every { firebaseAuth.currentUser } returns firebaseUser(uid = "different-user")
+
+            sut.signOut(USER_ID) shouldBeEqualTo ExpectedUserSignOutOutcome.AuthenticatedUserMismatch
+
+            verifyNever { firebaseAuth.signOut() }
         }
 
     @Test
@@ -317,16 +472,16 @@ class FirebaseAuthDataSourceTest {
             captureCancellation { sut.deleteAccount(USER_ID) } shouldBeEqualTo cancellation
         }
 
-    private fun successfulAuthTask(user: FirebaseUser? = firebaseUser()) =
-        Tasks.forResult<AuthResult>(
-            mockk {
-                every { this@mockk.user } returns user
-            },
-        )
+    private fun successfulAuthTask(user: FirebaseUser? = firebaseUser()) = Tasks.forResult(authResult(user))
 
-    private fun firebaseUser(): FirebaseUser =
+    private fun authResult(user: FirebaseUser?): AuthResult =
         mockk {
-            every { uid } returns USER_ID
+            every { this@mockk.user } returns user
+        }
+
+    private fun firebaseUser(uid: String = USER_ID): FirebaseUser =
+        mockk {
+            every { this@mockk.uid } returns uid
             every { email } returns USER_EMAIL
             every { displayName } returns USER_DISPLAY_NAME
             every { photoUrl } returns null

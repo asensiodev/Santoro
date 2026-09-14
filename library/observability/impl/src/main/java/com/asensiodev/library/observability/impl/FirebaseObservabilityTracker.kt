@@ -14,14 +14,11 @@ class FirebaseObservabilityTracker
         private val analytics: FirebaseAnalytics,
         private val crashlytics: FirebaseCrashlytics,
     ) : ObservabilityTracker {
-        override fun setUser(
-            userId: String,
-            isAnonymous: Boolean,
-        ) {
+        override fun setUser(isAnonymous: Boolean) {
             val userType = if (isAnonymous) USER_TYPE_ANONYMOUS else USER_TYPE_REGISTERED
-            analytics.setUserId(userId)
+            analytics.setUserId(null)
             analytics.setUserProperty(USER_TYPE, userType)
-            crashlytics.setUserId(userId)
+            crashlytics.setUserId(EMPTY_VALUE)
             crashlytics.setCustomKey(USER_TYPE, userType)
         }
 
@@ -64,7 +61,7 @@ class FirebaseObservabilityTracker
                     value,
                 )
             }
-            crashlytics.recordException(throwable)
+            crashlytics.recordException(SanitizedApplicationException())
         }
 
         private fun Map<String, String>.toBundle(): Bundle =
@@ -91,9 +88,12 @@ class FirebaseObservabilityTracker
             const val EMPTY_VALUE = ""
             const val ERROR_EVENT = "app_error"
             const val ERROR_NAME = "error_name"
+            const val SANITIZED_ERROR_MESSAGE = "Sanitized application error"
             const val UNDERSCORE = "_"
             const val FALLBACK_NAME = "unknown"
             const val MAX_PARAM_NAME_LENGTH = 40
             const val MAX_PARAM_VALUE_LENGTH = 100
         }
+
+        private class SanitizedApplicationException : Exception(SANITIZED_ERROR_MESSAGE)
     }

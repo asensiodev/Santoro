@@ -11,7 +11,6 @@ dependencies {
     implementation(projects.feature.movieDetail.api)
     implementation(projects.core.data)
     implementation(projects.core.database)
-    implementation(projects.core.sync)
     implementation(projects.core.ui)
     implementation(projects.library.observability.api)
 

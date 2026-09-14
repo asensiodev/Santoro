@@ -3,13 +3,12 @@ package com.asensiodev.santoro.core.database.data.repository
 import app.cash.turbine.test
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.santoro.core.database.data.MockUtils
+import com.asensiodev.santoro.core.database.data.SantoroRoomDatabase
 import com.asensiodev.santoro.core.database.data.dao.MovieDao
 import com.asensiodev.santoro.core.database.data.mapper.toDomain
 import io.mockk.coEvery
 import io.mockk.every
-import io.mockk.just
 import io.mockk.mockk
-import io.mockk.runs
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -20,13 +19,15 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class RoomDatabaseRepositoryTest {
+    private val database: SantoroRoomDatabase = mockk()
     private val movieDao: MovieDao = mockk()
 
     private lateinit var repository: RoomDatabaseRepository
 
     @BeforeEach
     fun setUp() {
-        repository = RoomDatabaseRepository(movieDao)
+        every { database.movieDao() } returns movieDao
+        repository = RoomDatabaseRepository(database)
     }
 
     @Test
@@ -172,122 +173,5 @@ class RoomDatabaseRepositoryTest {
                 awaitItem() shouldBeEqualTo Result.success(emptyList<Movie>())
                 awaitComplete()
             }
-        }
-
-    @Test
-    fun `GIVEN a movie to update WHEN updateMovieState THEN returns true`() =
-        runTest {
-            coEvery { movieDao.insertOrUpdateMovie(any()) } just runs
-            val domainMovie =
-                Movie(
-                    id = 400,
-                    title = "UpdateMe",
-                    overview = "Updated",
-                    posterPath = null,
-                    backdropPath = null,
-                    releaseDate = null,
-                    popularity = 8.9,
-                    voteAverage = 10.11,
-                    voteCount = 2964,
-                    genres = listOf(),
-                    productionCountries = listOf(),
-                    isWatched = false,
-                    isInWatchlist = false,
-                )
-            val result = repository.updateMovieState(domainMovie)
-            result shouldBeEqualTo Result.success(true)
-        }
-
-    @Test
-    fun `GIVEN update movie throws exception WHEN updateMovieState THEN returns error`() =
-        runTest {
-            coEvery { movieDao.insertOrUpdateMovie(any()) } throws RuntimeException("DB error")
-            val domainMovie =
-                Movie(
-                    id = 401,
-                    title = "UpdateMe",
-                    overview = "Updated",
-                    posterPath = null,
-                    backdropPath = null,
-                    releaseDate = null,
-                    popularity = 8.9,
-                    voteAverage = 10.11,
-                    voteCount = 2964,
-                    genres = listOf(),
-                    productionCountries = listOf(),
-                    isWatched = false,
-                    isInWatchlist = false,
-                )
-            val result = repository.updateMovieState(domainMovie)
-            result.isFailure shouldBeEqualTo true
-            result.exceptionOrNull().shouldBeInstanceOf<RuntimeException>()
-        }
-
-    @Test
-    fun `GIVEN dao cancels WHEN updateMovieState THEN cancellation propagates`() =
-        runTest {
-            coEvery { movieDao.insertOrUpdateMovie(any()) } throws CancellationException()
-            val domainMovie = MockUtils.createTestMovieEntity(id = 402).toDomain()
-
-            val exception =
-                try {
-                    repository.updateMovieState(domainMovie)
-                    null
-                } catch (exception: CancellationException) {
-                    exception
-                }
-
-            exception.shouldBeInstanceOf<CancellationException>()
-        }
-
-    @Test
-    fun `GIVEN a movie id WHEN removeFromWatchlist THEN delegates to dao and returns success`() =
-        runTest {
-            coEvery { movieDao.removeFromWatchlist(any(), any()) } just runs
-
-            val result = repository.removeFromWatchlist(1)
-
-            result shouldBeEqualTo Result.success(true)
-        }
-
-    @Test
-    fun `GIVEN a movie id WHEN removeFromWatchlist THEN passes non-zero updatedAt to dao`() =
-        runTest {
-            var capturedUpdatedAt: Long? = null
-            coEvery { movieDao.removeFromWatchlist(any(), any()) } answers {
-                capturedUpdatedAt = secondArg()
-            }
-
-            repository.removeFromWatchlist(42)
-
-            val captured = capturedUpdatedAt ?: throw AssertionError("updatedAt was not passed to DAO")
-            (captured > 0L) shouldBeEqualTo true
-        }
-
-    @Test
-    fun `GIVEN dao throws exception WHEN removeFromWatchlist THEN returns error`() =
-        runTest {
-            coEvery { movieDao.removeFromWatchlist(any(), any()) } throws RuntimeException("DB error")
-
-            val result = repository.removeFromWatchlist(1)
-
-            result.isFailure shouldBeEqualTo true
-            result.exceptionOrNull().shouldBeInstanceOf<RuntimeException>()
-        }
-
-    @Test
-    fun `GIVEN dao cancels WHEN removeFromWatchlist THEN cancellation propagates`() =
-        runTest {
-            coEvery { movieDao.removeFromWatchlist(any(), any()) } throws CancellationException()
-
-            val exception =
-                try {
-                    repository.removeFromWatchlist(1)
-                    null
-                } catch (exception: CancellationException) {
-                    exception
-                }
-
-            exception.shouldBeInstanceOf<CancellationException>()
         }
 }

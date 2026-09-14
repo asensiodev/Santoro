@@ -32,8 +32,21 @@ class SharedPreferencesAccountDeletionRecoveryRepositoryTest {
 
             result.isSuccess shouldBeEqualTo true
             sut.isLocalCleanupPending.first() shouldBeEqualTo true
+            sut.isRemoteDeletionInFlight.first() shouldBeEqualTo false
             verify(exactly = 1) { editor.putBoolean("local_cleanup_pending", true) }
             verify(exactly = 1) { editor.commit() }
+        }
+
+    @Test
+    fun `GIVEN remote deletion completes WHEN lease is released THEN durable marker remains pending`() =
+        runTest {
+            sut.beginRemoteDeletion()
+            sut.markLocalCleanupPending()
+
+            sut.completeRemoteDeletion()
+
+            sut.isRemoteDeletionInFlight.first() shouldBeEqualTo false
+            sut.isLocalCleanupPending.first() shouldBeEqualTo true
         }
 
     @Test

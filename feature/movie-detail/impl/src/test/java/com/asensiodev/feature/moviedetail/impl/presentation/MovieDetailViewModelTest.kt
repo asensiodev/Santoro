@@ -2,14 +2,14 @@ package com.asensiodev.feature.moviedetail.impl.presentation
 
 import app.cash.turbine.test
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.core.domain.repository.MovieMutationRepository
+import com.asensiodev.core.domain.repository.SyncScheduler
 import com.asensiodev.core.domain.usecase.ObserveHasSeenDetailTooltipUseCase
 import com.asensiodev.core.domain.usecase.SetDetailTooltipSeenUseCase
 import com.asensiodev.core.testing.coVerifyOnce
 import com.asensiodev.core.testing.extension.CoroutineTestExtension
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseCase
-import com.asensiodev.feature.moviedetail.impl.domain.usecase.UpdateMovieStateUseCase
 import com.asensiodev.feature.moviedetail.impl.presentation.mapper.toUi
-import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import com.asensiodev.ui.UiText
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -42,8 +42,8 @@ class MovieDetailViewModelTest {
     val coroutineTestExtension = CoroutineTestExtension()
 
     private val getMovieDetailUseCase: GetMovieDetailUseCase = mockk()
-    private val updateMovieStateUseCase: UpdateMovieStateUseCase = mockk()
-    private val syncScheduler: WorkManagerSyncScheduler = mockk(relaxed = true)
+    private val movieMutationRepository: MovieMutationRepository = mockk()
+    private val syncScheduler: SyncScheduler = mockk(relaxed = true)
     private val observeHasSeenDetailTooltipUseCase: ObserveHasSeenDetailTooltipUseCase = mockk()
     private val setDetailTooltipSeenUseCase: SetDetailTooltipSeenUseCase = mockk(relaxed = true)
     private val testMovie = createTestMovie()
@@ -56,7 +56,7 @@ class MovieDetailViewModelTest {
         viewModel =
             MovieDetailViewModel(
                 getMovieDetailUseCase = getMovieDetailUseCase,
-                updateMovieStateUseCase = updateMovieStateUseCase,
+                movieMutationRepository = movieMutationRepository,
                 syncScheduler = syncScheduler,
                 observeHasSeenDetailTooltipUseCase = observeHasSeenDetailTooltipUseCase,
                 setDetailTooltipSeenUseCase = setDetailTooltipSeenUseCase,
@@ -217,7 +217,7 @@ class MovieDetailViewModelTest {
         fun `GIVEN movie WHEN ToggleWatchlist intent succeeds THEN update movie watchlist state`() =
             runTest {
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
-                coEvery { updateMovieStateUseCase(any()) } returns Result.success(true)
+                coEvery { movieMutationRepository.updateMovieState(any()) } returns Result.success(Unit)
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
@@ -230,7 +230,11 @@ class MovieDetailViewModelTest {
                     cancelAndConsumeRemainingEvents()
                 }
 
-                coVerify { updateMovieStateUseCase(testMovie.copy(isInWatchlist = true)) }
+                coVerify {
+                    movieMutationRepository.updateMovieState(
+                        testMovie.copy(isInWatchlist = true),
+                    )
+                }
             }
 
         @Test
@@ -239,7 +243,7 @@ class MovieDetailViewModelTest {
                 val watchedAt = 1_712_345_678_000L
                 val watchedMovie = testMovie.copy(isWatched = true, watchedAt = watchedAt)
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(watchedMovie))
-                coEvery { updateMovieStateUseCase(any()) } returns Result.success(true)
+                coEvery { movieMutationRepository.updateMovieState(any()) } returns Result.success(Unit)
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
@@ -254,7 +258,7 @@ class MovieDetailViewModelTest {
                         watchedAt = null,
                     )
                 coVerifyOnce {
-                    updateMovieStateUseCase(
+                    movieMutationRepository.updateMovieState(
                         match { updatedMovie ->
                             updatedMovie.id == watchedMovie.id &&
                                 updatedMovie.isWatched == false &&
@@ -270,7 +274,8 @@ class MovieDetailViewModelTest {
             runTest {
                 val errorMessage = "Failed to update watchlist"
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
-                coEvery { updateMovieStateUseCase(any()) } returns Result.failure(Exception(errorMessage))
+                coEvery { movieMutationRepository.updateMovieState(any()) } returns
+                    Result.failure(Exception(errorMessage))
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
@@ -287,7 +292,7 @@ class MovieDetailViewModelTest {
         fun `GIVEN movie WHEN ToggleWatchlist intent succeeds THEN enqueues upload`() =
             runTest {
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
-                coEvery { updateMovieStateUseCase(any()) } returns Result.success(true)
+                coEvery { movieMutationRepository.updateMovieState(any()) } returns Result.success(Unit)
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
@@ -301,7 +306,8 @@ class MovieDetailViewModelTest {
         fun `GIVEN movie WHEN ToggleWatchlist intent fails THEN does not enqueue upload`() =
             runTest {
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
-                coEvery { updateMovieStateUseCase(any()) } returns Result.failure(Exception("error"))
+                coEvery { movieMutationRepository.updateMovieState(any()) } returns
+                    Result.failure(Exception("error"))
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
@@ -314,9 +320,9 @@ class MovieDetailViewModelTest {
         @Test
         fun `GIVEN movie state update pending WHEN toggles repeat THEN updates movie once`() =
             runTest {
-                val update = CompletableDeferred<Result<Boolean>>()
+                val update = CompletableDeferred<Result<Unit>>()
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
-                coEvery { updateMovieStateUseCase(any()) } coAnswers { update.await() }
+                coEvery { movieMutationRepository.updateMovieState(any()) } coAnswers { update.await() }
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
@@ -326,9 +332,9 @@ class MovieDetailViewModelTest {
                 runCurrent()
 
                 viewModel.uiState.value.isMovieStateUpdatePending shouldBeEqualTo true
-                coVerify(exactly = 1) { updateMovieStateUseCase(any()) }
+                coVerify(exactly = 1) { movieMutationRepository.updateMovieState(any()) }
 
-                update.complete(Result.success(true))
+                update.complete(Result.success(Unit))
                 advanceUntilIdle()
 
                 viewModel.uiState.value.isMovieStateUpdatePending shouldBeEqualTo false
@@ -342,8 +348,9 @@ class MovieDetailViewModelTest {
         fun `GIVEN local update succeeds WHEN upload scheduling fails THEN movie state remains updated`() =
             runTest {
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
-                coEvery { updateMovieStateUseCase(any()) } returns Result.success(true)
-                every { syncScheduler.enqueueUpload(testMovie.id) } throws IllegalStateException()
+                coEvery { movieMutationRepository.updateMovieState(any()) } returns Result.success(Unit)
+                every { syncScheduler.enqueueUpload(testMovie.id) } throws
+                    IllegalStateException()
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
@@ -359,7 +366,9 @@ class MovieDetailViewModelTest {
         fun `GIVEN movie state update is cancelled WHEN operation ends THEN pending state is cleared`() =
             runTest {
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
-                coEvery { updateMovieStateUseCase(any()) } throws CancellationException()
+                coEvery {
+                    movieMutationRepository.updateMovieState(any())
+                } throws CancellationException()
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
@@ -375,7 +384,9 @@ class MovieDetailViewModelTest {
         fun `GIVEN mutation use case throws cancellation WHEN operation runs THEN cancellation is preserved`() =
             runTest {
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
-                coEvery { updateMovieStateUseCase(any()) } throws CancellationException()
+                coEvery {
+                    movieMutationRepository.updateMovieState(any())
+                } throws CancellationException()
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
@@ -395,11 +406,13 @@ class MovieDetailViewModelTest {
         fun `GIVEN old mutation ignores cancellation WHEN a new movie loads THEN it cannot update or upload`() =
             runTest {
                 val newMovie = testMovie.copy(id = 2, title = "Arrival")
-                val mutationResult = CompletableDeferred<Result<Boolean>>()
+                val mutationResult = CompletableDeferred<Result<Unit>>()
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
                 coEvery { getMovieDetailUseCase(newMovie.id) } returns flowOf(Result.success(newMovie))
-                coEvery { updateMovieStateUseCase(any()) } coAnswers {
-                    withContext(NonCancellable) { mutationResult.await() }
+                coEvery { movieMutationRepository.updateMovieState(any()) } coAnswers {
+                    withContext(NonCancellable) {
+                        mutationResult.await()
+                    }
                 }
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
@@ -408,7 +421,7 @@ class MovieDetailViewModelTest {
                 runCurrent()
                 viewModel.process(MovieDetailIntent.FetchDetails(newMovie.id))
                 runCurrent()
-                mutationResult.complete(Result.success(true))
+                mutationResult.complete(Result.success(Unit))
                 advanceUntilIdle()
 
                 viewModel.uiState.value.movie shouldBeEqualTo newMovie.toUi()
@@ -423,7 +436,7 @@ class MovieDetailViewModelTest {
         fun `GIVEN movie WHEN ToggleWatched intent succeeds THEN update movie watched state`() =
             runTest {
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
-                coEvery { updateMovieStateUseCase(any()) } returns Result.success(true)
+                coEvery { movieMutationRepository.updateMovieState(any()) } returns Result.success(Unit)
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
@@ -445,7 +458,7 @@ class MovieDetailViewModelTest {
                     cancelAndConsumeRemainingEvents()
                 }
 
-                coVerify { updateMovieStateUseCase(any()) }
+                coVerify { movieMutationRepository.updateMovieState(any()) }
             }
 
         @Test
@@ -453,7 +466,7 @@ class MovieDetailViewModelTest {
             runTest {
                 val watchlistMovie = testMovie.copy(isInWatchlist = true)
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(watchlistMovie))
-                coEvery { updateMovieStateUseCase(any()) } returns Result.success(true)
+                coEvery { movieMutationRepository.updateMovieState(any()) } returns Result.success(Unit)
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
@@ -468,7 +481,7 @@ class MovieDetailViewModelTest {
                     throw AssertionError("watchedAt should not be null when moved to watched")
                 }
                 coVerifyOnce {
-                    updateMovieStateUseCase(
+                    movieMutationRepository.updateMovieState(
                         match { updatedMovie ->
                             updatedMovie.id == watchlistMovie.id &&
                                 updatedMovie.isWatched &&
@@ -484,7 +497,8 @@ class MovieDetailViewModelTest {
             runTest {
                 val errorMessage = "Failed to update watched status"
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
-                coEvery { updateMovieStateUseCase(any()) } returns Result.failure(Exception(errorMessage))
+                coEvery { movieMutationRepository.updateMovieState(any()) } returns
+                    Result.failure(Exception(errorMessage))
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
@@ -501,7 +515,7 @@ class MovieDetailViewModelTest {
         fun `GIVEN movie WHEN ToggleWatched intent succeeds THEN enqueues upload`() =
             runTest {
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
-                coEvery { updateMovieStateUseCase(any()) } returns Result.success(true)
+                coEvery { movieMutationRepository.updateMovieState(any()) } returns Result.success(Unit)
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()
@@ -515,7 +529,8 @@ class MovieDetailViewModelTest {
         fun `GIVEN movie WHEN ToggleWatched intent fails THEN does not enqueue upload`() =
             runTest {
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
-                coEvery { updateMovieStateUseCase(any()) } returns Result.failure(Exception("error"))
+                coEvery { movieMutationRepository.updateMovieState(any()) } returns
+                    Result.failure(Exception("error"))
 
                 viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
                 advanceUntilIdle()

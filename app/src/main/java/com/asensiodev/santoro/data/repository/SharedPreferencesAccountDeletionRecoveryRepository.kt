@@ -24,10 +24,20 @@ internal class SharedPreferencesAccountDeletionRecoveryRepository internal const
     private val _isLocalCleanupPending =
         MutableStateFlow(preferences.getBoolean(KEY_LOCAL_CLEANUP_PENDING, false))
     override val isLocalCleanupPending: Flow<Boolean> = _isLocalCleanupPending.asStateFlow()
-
+    private val _isRemoteDeletionInFlight = MutableStateFlow(false)
+    override val isRemoteDeletionInFlight: Flow<Boolean> =
+        _isRemoteDeletionInFlight.asStateFlow()
     override suspend fun markLocalCleanupPending(): Result<Unit> = updatePendingState(true)
 
     override suspend fun clearLocalCleanupPending(): Result<Unit> = updatePendingState(false)
+
+    override fun beginRemoteDeletion() {
+        _isRemoteDeletionInFlight.value = true
+    }
+
+    override fun completeRemoteDeletion() {
+        _isRemoteDeletionInFlight.value = false
+    }
 
     private fun updatePendingState(isPending: Boolean): Result<Unit> =
         runCatching {

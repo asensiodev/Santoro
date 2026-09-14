@@ -63,8 +63,6 @@ class MainActivityAuthenticationJourneyTest : BaseAppJourneyTest() {
                 string(SR.string.login_anonymous_login_button),
             ).assertIsDisplayed()
         authRepository.signOutCalls.get() shouldBeEqualTo 1
-        syncRepository.pendingUploadUserIds shouldBeEqualTo
-            listOf(AppJourneyTestData.authenticatedUser.uid)
         scenario.onActivity { activity -> activity.onBackPressedDispatcher.onBackPressed() }
         composeRule.onNodeWithText(profile).assertDoesNotExist()
     }

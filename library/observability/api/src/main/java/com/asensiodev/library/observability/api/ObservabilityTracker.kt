@@ -1,10 +1,7 @@
 package com.asensiodev.library.observability.api
 
 interface ObservabilityTracker {
-    fun setUser(
-        userId: String,
-        isAnonymous: Boolean,
-    )
+    fun setUser(isAnonymous: Boolean)
 
     fun clearUser()
 
@@ -23,10 +20,7 @@ interface ObservabilityTracker {
 }
 
 object NoOpObservabilityTracker : ObservabilityTracker {
-    override fun setUser(
-        userId: String,
-        isAnonymous: Boolean,
-    ) = Unit
+    override fun setUser(isAnonymous: Boolean) = Unit
 
     override fun clearUser() = Unit
 

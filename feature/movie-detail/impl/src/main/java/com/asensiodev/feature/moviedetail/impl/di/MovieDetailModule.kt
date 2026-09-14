@@ -8,7 +8,6 @@ import com.asensiodev.feature.moviedetail.impl.data.repository.DefaultMovieDetai
 import com.asensiodev.feature.moviedetail.impl.data.service.MovieDetailApiService
 import com.asensiodev.feature.moviedetail.impl.domain.repository.MovieDetailRepository
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseCase
-import com.asensiodev.feature.moviedetail.impl.domain.usecase.UpdateMovieStateUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -48,11 +47,4 @@ internal object MovieDetailModule {
         repository: MovieDetailRepository,
         dispatchers: DispatcherProvider,
     ): GetMovieDetailUseCase = GetMovieDetailUseCase(repository, dispatchers)
-
-    @Provides
-    @Singleton
-    fun provideUpdateMovieStateUseCase(
-        repository: MovieDetailRepository,
-        dispatchers: DispatcherProvider,
-    ): UpdateMovieStateUseCase = UpdateMovieStateUseCase(repository, dispatchers)
 }

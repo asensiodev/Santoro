@@ -4,24 +4,27 @@ import com.asensiodev.auth.domain.usecase.ObserveAuthStateUseCase
 import com.asensiodev.core.domain.model.SantoroUser
 import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.core.domain.repository.AccountDeletionRecoveryRepository
+import com.asensiodev.core.domain.repository.MovieMutationRepository
+import com.asensiodev.core.domain.repository.SyncScheduler
 import com.asensiodev.core.domain.usecase.ObserveHasSeenGuestOnboardingUseCase
 import com.asensiodev.core.domain.usecase.ObserveThemeUseCase
 import com.asensiodev.core.domain.usecase.SetHasSeenGuestOnboardingUseCase
 import com.asensiodev.core.testing.extension.CoroutineTestExtension
-import com.asensiodev.santoro.core.database.domain.DatabaseRepository
-import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import io.mockk.coEvery
+import io.mockk.coJustRun
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -38,212 +41,322 @@ class MainActivityViewModelTest {
     private val observeAuthStateUseCase: ObserveAuthStateUseCase = mockk()
     private val observeHasSeenGuestOnboardingUseCase: ObserveHasSeenGuestOnboardingUseCase = mockk()
     private val observeThemeUseCase: ObserveThemeUseCase = mockk()
-    private val setHasSeenGuestOnboardingUseCase: SetHasSeenGuestOnboardingUseCase = mockk()
-    private val syncScheduler: WorkManagerSyncScheduler = mockk(relaxed = true)
-    private val recoveryRepository: AccountDeletionRecoveryRepository = mockk()
-    private val databaseRepository: DatabaseRepository = mockk()
-    private val isLocalCleanupPending = MutableStateFlow(false)
-
+    private val setHasSeenGuestOnboardingUseCase: SetHasSeenGuestOnboardingUseCase = mockk(relaxed = true)
+    private val syncScheduler: SyncScheduler = mockk(relaxed = true)
+    private val movieMutationRepository: MovieMutationRepository = mockk()
+    private val deletionRecoveryRepository: AccountDeletionRecoveryRepository = mockk()
+    private val authState = MutableSharedFlow<SantoroUser?>(replay = 1, extraBufferCapacity = 16)
+    private val deletionPending = MutableStateFlow(false)
+    private val remoteDeletionInFlight = MutableStateFlow(false)
     private lateinit var sut: MainActivityViewModel
-
-    private val anonymousUser =
-        SantoroUser(
-            uid = "anon123",
-            email = null,
-            displayName = null,
-            photoUrl = null,
-            isAnonymous = true,
-        )
-
-    private val googleUser =
-        SantoroUser(
-            uid = "google456",
-            email = "test@gmail.com",
-            displayName = "Test",
-            photoUrl = null,
-            isAnonymous = false,
-        )
 
     @BeforeEach
     fun setUp() {
+        authState.tryEmit(null)
+        every { observeAuthStateUseCase() } returns authState
         every { observeHasSeenGuestOnboardingUseCase() } returns flowOf(false)
         every { observeThemeUseCase() } returns flowOf(ThemeOption.SYSTEM)
-        every { recoveryRepository.isLocalCleanupPending } returns isLocalCleanupPending
-        coEvery { databaseRepository.clearAllUserData() } returns Result.success(Unit)
-        coEvery { recoveryRepository.clearLocalCleanupPending() } coAnswers {
-            isLocalCleanupPending.value = false
+        every { deletionRecoveryRepository.isLocalCleanupPending } returns deletionPending
+        every { deletionRecoveryRepository.isRemoteDeletionInFlight } returns remoteDeletionInFlight
+        coJustRun { movieMutationRepository.clearMovies() }
+        coEvery { deletionRecoveryRepository.clearLocalCleanupPending() } coAnswers {
+            deletionPending.value = false
             Result.success(Unit)
         }
     }
 
-    private fun buildViewModel() {
-        sut =
-            MainActivityViewModel(
-                observeAuthStateUseCase = observeAuthStateUseCase,
-                observeHasSeenGuestOnboardingUseCase = observeHasSeenGuestOnboardingUseCase,
-                observeThemeUseCase = observeThemeUseCase,
-                setHasSeenGuestOnboardingUseCase = setHasSeenGuestOnboardingUseCase,
-                syncScheduler = syncScheduler,
-                recoveryRepository = recoveryRepository,
-                databaseRepository = databaseRepository,
-            )
-    }
-
     @Test
-    fun `GIVEN user becomes authenticated WHEN uiState emits Authenticated THEN schedules sync`() =
+    fun `initial authenticated session retains movies and schedules sync`() =
         runTest {
-            every { observeAuthStateUseCase() } returns flowOf(anonymousUser)
+            authState.tryEmit(USER_A)
 
             buildViewModel()
             advanceUntilIdle()
 
+            sut.uiState.value shouldBeEqualTo authenticated(USER_A)
+            coVerify(exactly = 0) { movieMutationRepository.clearMovies() }
             verify(exactly = 1) { syncScheduler.schedulePeriodicSync() }
             verify(exactly = 1) { syncScheduler.scheduleImmediateSync() }
         }
 
     @Test
-    fun `GIVEN user is not authenticated WHEN uiState emits Unauthenticated THEN does not schedule sync`() =
+    fun `auth null clears movies before publishing login`() =
         runTest {
-            every { observeAuthStateUseCase() } returns flowOf(null)
+            val clearMovies = CompletableDeferred<Unit>()
+            coEvery { movieMutationRepository.clearMovies() } coAnswers { clearMovies.await() }
 
             buildViewModel()
-            backgroundScope.launch { sut.uiState.collect {} }
+            runCurrent()
+
+            sut.uiState.value shouldBeEqualTo MainActivityUiState.Loading
+            clearMovies.complete(Unit)
             advanceUntilIdle()
 
+            sut.uiState.value shouldBeEqualTo MainActivityUiState.Unauthenticated
+            coVerify(exactly = 1) { movieMutationRepository.clearMovies() }
+        }
+
+    @Test
+    fun `login after observed null clears movies a second time`() =
+        runTest {
+            buildViewModel()
+            advanceUntilIdle()
+            val secondClear = CompletableDeferred<Unit>()
+            coEvery { movieMutationRepository.clearMovies() } coAnswers { secondClear.await() }
+
+            authState.emit(USER_B)
+            runCurrent()
+
+            sut.uiState.value shouldBeEqualTo MainActivityUiState.Loading
             verify(exactly = 0) { syncScheduler.schedulePeriodicSync() }
             verify(exactly = 0) { syncScheduler.scheduleImmediateSync() }
-        }
 
-    @Test
-    fun `GIVEN already authenticated WHEN auth state re-emits same UID THEN schedules sync only once`() =
-        runTest {
-            every { observeAuthStateUseCase() } returns flowOf(anonymousUser, anonymousUser)
-
-            buildViewModel()
+            secondClear.complete(Unit)
             advanceUntilIdle()
 
+            sut.uiState.value shouldBeEqualTo authenticated(USER_B)
+            coVerify(exactly = 2) { movieMutationRepository.clearMovies() }
             verify(exactly = 1) { syncScheduler.schedulePeriodicSync() }
             verify(exactly = 1) { syncScheduler.scheduleImmediateSync() }
         }
 
     @Test
-    fun `GIVEN anonymous user WHEN UID changes to Google user THEN schedules sync again`() =
+    fun `direct UID change clears movies before publishing replacement session`() =
         runTest {
-            every { observeAuthStateUseCase() } returns flowOf(anonymousUser, googleUser)
+            authenticateA()
+            val clearMovies = CompletableDeferred<Unit>()
+            coEvery { movieMutationRepository.clearMovies() } coAnswers { clearMovies.await() }
 
-            buildViewModel()
+            authState.emit(USER_B)
+            runCurrent()
+
+            sut.uiState.value shouldBeEqualTo MainActivityUiState.Loading
+            verify(exactly = 1) { syncScheduler.schedulePeriodicSync() }
+            verify(exactly = 1) { syncScheduler.scheduleImmediateSync() }
+
+            clearMovies.complete(Unit)
             advanceUntilIdle()
 
+            sut.uiState.value shouldBeEqualTo authenticated(USER_B)
+            coVerify(exactly = 1) { movieMutationRepository.clearMovies() }
             verify(exactly = 2) { syncScheduler.schedulePeriodicSync() }
             verify(exactly = 2) { syncScheduler.scheduleImmediateSync() }
         }
 
     @Test
-    fun `GIVEN scheduler fails WHEN a later user authenticates THEN schedules sync again`() =
+    fun `A to B to A cancels intermediate transition and publishes latest A`() =
         runTest {
-            val authState = MutableSharedFlow<SantoroUser?>()
-            every { observeAuthStateUseCase() } returns authState
-            every { syncScheduler.schedulePeriodicSync() } throws IllegalStateException() andThen Unit
+            authenticateA()
+            var clearCalls = 0
+            coEvery { movieMutationRepository.clearMovies() } coAnswers {
+                clearCalls += 1
+                if (clearCalls == 1) awaitCancellation()
+            }
 
-            buildViewModel()
-            advanceUntilIdle()
-            authState.emit(anonymousUser)
-            advanceUntilIdle()
-            authState.emit(googleUser)
+            authState.emit(USER_B)
+            runCurrent()
+            authState.emit(USER_A)
             advanceUntilIdle()
 
+            sut.uiState.value shouldBeEqualTo authenticated(USER_A)
+            coVerify(exactly = 2) { movieMutationRepository.clearMovies() }
             verify(exactly = 2) { syncScheduler.schedulePeriodicSync() }
+            verify(exactly = 2) { syncScheduler.scheduleImmediateSync() }
+        }
+
+    @Test
+    fun `duplicate same UID updates user without clear or reschedule`() =
+        runTest {
+            authenticateA()
+            val updatedUser = USER_A.copy(displayName = "Updated")
+
+            authState.emit(updatedUser)
+            advanceUntilIdle()
+
+            sut.uiState.value shouldBeEqualTo authenticated(updatedUser)
+            coVerify(exactly = 0) { movieMutationRepository.clearMovies() }
+            verify(exactly = 1) { syncScheduler.schedulePeriodicSync() }
             verify(exactly = 1) { syncScheduler.scheduleImmediateSync() }
         }
 
     @Test
-    fun `GIVEN repo emits DARK WHEN themeOption collected THEN StateFlow emits DARK`() =
+    fun `guest onboarding dismissal updates UI and persists preference`() =
         runTest {
-            every { observeAuthStateUseCase() } returns flowOf(null)
-            every { observeThemeUseCase() } returns flowOf(ThemeOption.DARK)
-
+            authState.tryEmit(GUEST_USER)
             buildViewModel()
-
-            val values = mutableListOf<ThemeOption>()
-            backgroundScope.launch {
-                sut.themeOption.collect { values.add(it) }
-            }
             advanceUntilIdle()
 
-            values.last() shouldBeEqualTo ThemeOption.DARK
+            sut.uiState.value shouldBeEqualTo authenticated(GUEST_USER)
+
+            sut.process(MainActivityIntent.DismissGuestOnboarding)
+            advanceUntilIdle()
+
+            sut.uiState.value shouldBeEqualTo
+                authenticated(GUEST_USER).copy(showGuestOnboarding = false)
+            coVerify(exactly = 1) { setHasSeenGuestOnboardingUseCase(true) }
         }
 
     @Test
-    fun `GIVEN cleanup pending at startup WHEN recovery succeeds THEN clears data before Login`() =
+    fun `persisted guest onboarding state updates without restarting session`() =
         runTest {
-            isLocalCleanupPending.value = true
-            every { observeAuthStateUseCase() } returns flowOf(null)
-
+            val onboardingState = MutableStateFlow(false)
+            every { observeHasSeenGuestOnboardingUseCase() } returns onboardingState
+            authState.tryEmit(GUEST_USER)
             buildViewModel()
-            backgroundScope.launch { sut.uiState.collect {} }
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { databaseRepository.clearAllUserData() }
-            coVerify(exactly = 1) { recoveryRepository.clearLocalCleanupPending() }
+            sut.uiState.value shouldBeEqualTo authenticated(GUEST_USER)
+
+            onboardingState.value = true
+            advanceUntilIdle()
+
+            sut.uiState.value shouldBeEqualTo
+                authenticated(GUEST_USER).copy(showGuestOnboarding = false)
+            coVerify(exactly = 0) { movieMutationRepository.clearMovies() }
+            verify(exactly = 1) { syncScheduler.schedulePeriodicSync() }
+            verify(exactly = 1) { syncScheduler.scheduleImmediateSync() }
+        }
+
+    @Test
+    fun `cleanup failure remains fail closed and retry succeeds`() =
+        runTest {
+            coEvery { movieMutationRepository.clearMovies() } throws
+                IllegalStateException("database") andThen Unit
+            buildViewModel()
+            advanceUntilIdle()
+
+            sut.uiState.value shouldBeEqualTo MainActivityUiState.LocalCleanupError
+            sut.process(MainActivityIntent.RetryAccountRecovery)
+            advanceUntilIdle()
+
             sut.uiState.value shouldBeEqualTo MainActivityUiState.Unauthenticated
+            coVerify(exactly = 2) { movieMutationRepository.clearMovies() }
         }
 
     @Test
-    fun `GIVEN deletion marker WHEN Auth becomes null THEN blocks Login until cleanup finishes`() =
+    fun `cleanup cancellation keeps graph hidden`() =
         runTest {
-            val authState = MutableStateFlow<SantoroUser?>(googleUser)
-            val cleanupResult = CompletableDeferred<Result<Unit>>()
-            every { observeAuthStateUseCase() } returns authState
-            coEvery { databaseRepository.clearAllUserData() } coAnswers { cleanupResult.await() }
-            buildViewModel()
-            backgroundScope.launch { sut.uiState.collect {} }
-            advanceUntilIdle()
+            coEvery { movieMutationRepository.clearMovies() } throws CancellationException()
 
-            isLocalCleanupPending.value = true
-            authState.value = null
-            runCurrent()
+            buildViewModel()
+            advanceUntilIdle()
 
             sut.uiState.value shouldBeEqualTo MainActivityUiState.Loading
-
-            cleanupResult.complete(Result.success(Unit))
-            advanceUntilIdle()
-
-            sut.uiState.value shouldBeEqualTo MainActivityUiState.Unauthenticated
+            verify(exactly = 0) { syncScheduler.schedulePeriodicSync() }
         }
 
     @Test
-    fun `GIVEN cleanup fails WHEN retry succeeds THEN keeps app blocked until marker clears`() =
+    fun `FIP 022 marker clears movies before marker and session publication`() =
         runTest {
-            isLocalCleanupPending.value = true
-            every { observeAuthStateUseCase() } returns flowOf(null)
-            coEvery { databaseRepository.clearAllUserData() } returnsMany
-                listOf(Result.failure(Exception("Room")), Result.success(Unit))
+            authState.tryEmit(USER_A)
+            deletionPending.value = true
+
             buildViewModel()
-            backgroundScope.launch { sut.uiState.collect {} }
+            advanceUntilIdle()
+
+            coVerifyOrder {
+                movieMutationRepository.clearMovies()
+                deletionRecoveryRepository.clearLocalCleanupPending()
+            }
+            sut.uiState.value shouldBeEqualTo authenticated(USER_A)
+            verify(exactly = 1) { syncScheduler.scheduleImmediateSync() }
+        }
+
+    @Test
+    fun `FIP 022 cleanup failure retains marker and supports retry`() =
+        runTest {
+            authState.tryEmit(USER_A)
+            deletionPending.value = true
+            coEvery { movieMutationRepository.clearMovies() } throws
+                IllegalStateException("database") andThen Unit
+            buildViewModel()
             advanceUntilIdle()
 
             sut.uiState.value shouldBeEqualTo MainActivityUiState.AccountDeletionRecoveryError
-            isLocalCleanupPending.value shouldBeEqualTo true
-
-            sut.retryAccountDeletionRecovery()
+            deletionPending.value shouldBeEqualTo true
+            sut.process(MainActivityIntent.RetryAccountRecovery)
             advanceUntilIdle()
 
-            sut.uiState.value shouldBeEqualTo MainActivityUiState.Unauthenticated
-            coVerify(exactly = 2) { databaseRepository.clearAllUserData() }
+            deletionPending.value shouldBeEqualTo false
+            sut.uiState.value shouldBeEqualTo authenticated(USER_A)
         }
 
     @Test
-    fun `GIVEN cleanup is cancelled WHEN recovering THEN marker is retained`() =
+    fun `FIP 022 marker clear failure remains blocked and supports retry`() =
         runTest {
-            val cancellation = CancellationException("cancelled")
-            isLocalCleanupPending.value = true
-            every { observeAuthStateUseCase() } returns flowOf(null)
-            coEvery { databaseRepository.clearAllUserData() } returns Result.failure(cancellation)
+            authState.tryEmit(USER_A)
+            deletionPending.value = true
+            coEvery { deletionRecoveryRepository.clearLocalCleanupPending() } returns
+                Result.failure(IllegalStateException("preferences")) andThenAnswer {
+                    deletionPending.value = false
+                    Result.success(Unit)
+                }
 
             buildViewModel()
+            advanceUntilIdle()
+
+            sut.uiState.value shouldBeEqualTo MainActivityUiState.AccountDeletionRecoveryError
+            deletionPending.value shouldBeEqualTo true
+
+            sut.process(MainActivityIntent.RetryAccountRecovery)
+            advanceUntilIdle()
+
+            deletionPending.value shouldBeEqualTo false
+            sut.uiState.value shouldBeEqualTo authenticated(USER_A)
+            coVerify(exactly = 2) { movieMutationRepository.clearMovies() }
+        }
+
+    @Test
+    fun `FIP 022 marker during remote lease preserves graph and defers cleanup`() =
+        runTest {
+            authenticateA()
+
+            remoteDeletionInFlight.value = true
+            deletionPending.value = true
             runCurrent()
 
-            isLocalCleanupPending.value shouldBeEqualTo true
-            coVerify(exactly = 0) { recoveryRepository.clearLocalCleanupPending() }
+            sut.isRemoteAccountDeletionInProgress.value shouldBeEqualTo true
+            sut.uiState.value shouldBeEqualTo authenticated(USER_A)
+            coVerify(exactly = 0) { movieMutationRepository.clearMovies() }
+
+            remoteDeletionInFlight.value = false
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { movieMutationRepository.clearMovies() }
+            coVerify(exactly = 1) { deletionRecoveryRepository.clearLocalCleanupPending() }
+            sut.isRemoteAccountDeletionInProgress.value shouldBeEqualTo false
+            sut.uiState.value shouldBeEqualTo authenticated(USER_A)
         }
+
+    private suspend fun TestScope.authenticateA() {
+        authState.tryEmit(USER_A)
+        buildViewModel()
+        advanceUntilIdle()
+        sut.uiState.value shouldBeEqualTo authenticated(USER_A)
+    }
+
+    private fun buildViewModel() {
+        sut =
+            MainActivityViewModel(
+                observeAuthStateUseCase,
+                observeHasSeenGuestOnboardingUseCase,
+                observeThemeUseCase,
+                setHasSeenGuestOnboardingUseCase,
+                syncScheduler,
+                movieMutationRepository,
+                deletionRecoveryRepository,
+            )
+    }
+
+    private fun authenticated(user: SantoroUser) =
+        MainActivityUiState.Authenticated(
+            user = user,
+            showGuestOnboarding = user.isAnonymous,
+        )
+
+    private companion object {
+        val USER_A = SantoroUser("account-a", "a@example.com", "A", null, false)
+        val USER_B = SantoroUser("account-b", "b@example.com", "B", null, false)
+        val GUEST_USER = SantoroUser("guest", null, null, null, true)
+    }
 }

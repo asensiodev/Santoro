@@ -135,7 +135,7 @@
     <string name="settings_delete_account_confirm">Eliminar</string>
     <string name="settings_delete_account_cancel">Cancelar</string>
     <string name="settings_delete_account_error">Hubo un problema al eliminar tu cuenta. Por favor, inténtalo de nuevo.</string>
-    <string name="settings_logout_error">Hubo un problema al sincronizar tus datos antes de cerrar sesión. Por favor, inténtalo de nuevo.</string>
+    <string name="settings_logout_error">Hubo un problema al cerrar tu sesión. Por favor, inténtalo de nuevo.</string>
     <string name="settings_tmdb_attribution">Powered by TMDB</string>
     <string name="settings_tmdb_url">https://www.themoviedb.org</string>
     <string name="settings_privacy_policy">Política de privacidad</string>
@@ -148,8 +148,8 @@
     <string name="settings_account_linked_description">Tus listas ahora están respaldadas en la nube. Puedes acceder a ellas desde cualquier dispositivo.</string>
     <string name="settings_account_linked_button">¡Genial!</string>
     <string name="settings_account_collision_title">La cuenta ya existe</string>
-    <string name="settings_account_collision_message">Esta cuenta de Google ya está vinculada a otro usuario. ¿Quieres cambiar a esa cuenta? Nota: tus datos actuales como invitado se perderán.</string>
-    <string name="settings_account_collision_confirm">Cambiar cuenta</string>
+    <string name="settings_account_collision_message">Esta cuenta de Google ya tiene una cuenta en Santoro. Si continúas, perderás las listas de esta sesión de invitado. No se fusionarán con las de esa cuenta. Después tendrás que iniciar sesión con Google.</string>
+    <string name="settings_account_collision_confirm">Ir a iniciar sesión</string>
     <string name="settings_account_collision_cancel">Cancelar</string>
 
     <!-- Profile Screen -->
@@ -163,7 +163,10 @@
 
     <!-- Guest Onboarding -->
     <string name="guest_onboarding_title">¡Bienvenido a Santoro!</string>
-    <string name="guest_onboarding_description">Estás navegando como <b>invitado</b>. Tienes acceso completo para buscar películas, añadirlas a tu lista de películas que quieres ver y marcarlas como vistas.\n\n<b>Nota:</b> Tus listas se guardan solo en este dispositivo. Si cambias de móvil o desinstalas la app, tus datos se perderán a menos que vincules una cuenta de Google más adelante.</string>
+    <string name="guest_onboarding_description">Como <b>invitado</b> puedes buscar películas, guardarlas en tu lista y marcarlas como vistas.\n\nPara conservar el acceso a tus listas al cambiar de móvil o desinstalar la app, vincula Google antes. La vinculación conserva tus listas si esa cuenta de Google aún no tiene una cuenta en Santoro.\n\n<b>Si ya tienes otra cuenta en Santoro:</b> cambiar a ella elimina las listas de esta sesión de invitado. Las listas no se fusionan y te pediremos confirmación antes de cambiar.</string>
+    <string name="login_guest_data_notice">Puedes conservar tus listas de invitado al vincular Google. Si ya tienes otra cuenta en Santoro, cambiar a ella elimina las listas del invitado; no se fusionan.</string>
+    <string name="login_guest_confirmation_title">¿Continuar como invitado?</string>
+    <string name="login_guest_confirmation_cancel">Cancelar</string>
     <string name="guest_onboarding_button">¡Entendido, a explorar!</string>
 
     <!-- Generic -->

@@ -8,17 +8,16 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.asensiodev.core.designsystem.theme.SantoroTheme
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.core.domain.repository.MovieMutationRepository
+import com.asensiodev.core.domain.repository.SyncScheduler
 import com.asensiodev.core.testing.dispatcher.TestDispatcherProvider
 import com.asensiodev.feature.watchlist.impl.domain.usecase.GetWatchlistMoviesUseCase
-import com.asensiodev.feature.watchlist.impl.domain.usecase.RemoveFromWatchlistUseCase
 import com.asensiodev.feature.watchlist.impl.domain.usecase.SearchWatchlistMoviesUseCase
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
-import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -55,15 +54,8 @@ class WatchlistFeatureTest {
                         repository,
                         dispatchers,
                     ),
-                removeFromWatchlistUseCase =
-                    RemoveFromWatchlistUseCase(
-                        repository,
-                        dispatchers,
-                    ),
-                syncScheduler =
-                    WorkManagerSyncScheduler(
-                        ApplicationProvider.getApplicationContext(),
-                    ),
+                movieMutationRepository = repository,
+                syncScheduler = NoOpSyncScheduler,
             )
     }
 
@@ -130,7 +122,8 @@ class WatchlistFeatureTest {
 
 private class FakeDatabaseRepository(
     movies: List<Movie>,
-) : DatabaseRepository {
+) : DatabaseRepository,
+    MovieMutationRepository {
     private val movies = MutableStateFlow(movies)
 
     override fun getWatchedMovies(): Flow<Result<List<Movie>>> =
@@ -162,43 +155,31 @@ private class FakeDatabaseRepository(
             )
         }
 
-    override suspend fun updateMovieState(movie: Movie): Result<Boolean> {
-        movies.value = movies.value.map { if (it.id == movie.id) movie else it }
-        return Result.success(true)
+    override suspend fun updateMovieState(movie: Movie): Result<Unit> {
+        movies.value =
+            movies.value.map { existing ->
+                if (existing.id == movie.id) movie else existing
+            }
+        return Result.success(Unit)
     }
 
-    override suspend fun removeFromWatchlist(movieId: Int): Result<Boolean> {
+    override suspend fun removeFromWatchlist(movieId: Int): Result<Unit> {
         movies.value =
             movies.value.map { movie ->
                 if (movie.id == movieId) movie.copy(isInWatchlist = false) else movie
             }
-        return Result.success(true)
-    }
-
-    override suspend fun getMoviesForSync(): Result<List<Movie>> = Result.success(movies.value)
-
-    override suspend fun upsertMovieFromSync(
-        movieId: Int,
-        title: String,
-        posterPath: String?,
-        genres: String,
-        runtime: Int?,
-        isWatched: Boolean,
-        isInWatchlist: Boolean,
-        watchedAt: Long?,
-        updatedAt: Long,
-    ): Result<Unit> = Result.success(Unit)
-
-    override suspend fun updateMovieSyncState(
-        movieId: Int,
-        isWatched: Boolean,
-        isInWatchlist: Boolean,
-        watchedAt: Long?,
-        updatedAt: Long,
-    ): Result<Unit> = Result.success(Unit)
-
-    override suspend fun clearAllUserData(): Result<Unit> {
-        movies.value = emptyList()
         return Result.success(Unit)
     }
+
+    override suspend fun clearMovies() {
+        movies.value = emptyList()
+    }
+}
+
+private object NoOpSyncScheduler : SyncScheduler {
+    override fun schedulePeriodicSync() = Unit
+
+    override fun scheduleImmediateSync() = Unit
+
+    override fun enqueueUpload(movieId: Int) = Unit
 }

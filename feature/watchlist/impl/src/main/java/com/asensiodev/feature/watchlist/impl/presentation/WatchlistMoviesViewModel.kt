@@ -3,12 +3,12 @@ package com.asensiodev.feature.watchlist.impl.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.core.domain.repository.MovieMutationRepository
+import com.asensiodev.core.domain.repository.SyncScheduler
 import com.asensiodev.feature.watchlist.impl.domain.usecase.GetWatchlistMoviesUseCase
-import com.asensiodev.feature.watchlist.impl.domain.usecase.RemoveFromWatchlistUseCase
 import com.asensiodev.feature.watchlist.impl.domain.usecase.SearchWatchlistMoviesUseCase
 import com.asensiodev.feature.watchlist.impl.presentation.mapper.toUiList
 import com.asensiodev.feature.watchlist.impl.presentation.model.MovieUi
-import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,8 +31,8 @@ internal class WatchlistMoviesViewModel
     constructor(
         private val getWatchlistMoviesUseCase: GetWatchlistMoviesUseCase,
         private val searchWatchlistMoviesUseCase: SearchWatchlistMoviesUseCase,
-        private val removeFromWatchlistUseCase: RemoveFromWatchlistUseCase,
-        private val syncScheduler: WorkManagerSyncScheduler,
+        private val movieMutationRepository: MovieMutationRepository,
+        private val syncScheduler: SyncScheduler,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(WatchlistMoviesUiState())
         val uiState: StateFlow<WatchlistMoviesUiState> = _uiState.asStateFlow()
@@ -159,7 +159,8 @@ internal class WatchlistMoviesViewModel
             _uiState.update { it.copy(isRemovingMovie = true, hasRemoveError = false) }
             viewModelScope.launch {
                 try {
-                    removeFromWatchlistUseCase(movie.id)
+                    movieMutationRepository
+                        .removeFromWatchlist(movie.id)
                         .onSuccess {
                             _uiState.update { it.copy(movieToRemove = null) }
                             try {

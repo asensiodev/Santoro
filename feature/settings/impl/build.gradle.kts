@@ -13,7 +13,6 @@ dependencies {
     implementation(projects.core.auth)
     implementation(projects.core.database)
     implementation(projects.core.domain)
-    implementation(projects.core.sync)
     implementation(projects.core.ui)
 
     implementation(libs.androidx.appcompat)

@@ -1,6 +1,7 @@
 package com.asensiodev.auth.data.repository
 
 import com.asensiodev.auth.AuthDataSource
+import com.asensiodev.auth.domain.model.ExpectedUserSignOutOutcome
 import com.asensiodev.auth.domain.repository.AuthRepository
 import com.asensiodev.core.domain.model.SantoroUser
 import com.asensiodev.core.domain.result.rethrowCancellation
@@ -26,7 +27,7 @@ internal class DefaultAuthRepository
                         AUTH_SIGN_IN,
                         mapOf(AUTH_PROVIDER to AUTH_PROVIDER_ANONYMOUS),
                     )
-                    observabilityTracker.setUser(user.uid, user.isAnonymous)
+                    observabilityTracker.setUser(user.isAnonymous)
                 }.onFailure { exception ->
                     observabilityTracker.recordError(
                         AUTH_SIGN_IN_FAILED,
@@ -44,7 +45,7 @@ internal class DefaultAuthRepository
                         AUTH_SIGN_IN,
                         mapOf(AUTH_PROVIDER to AUTH_PROVIDER_GOOGLE),
                     )
-                    observabilityTracker.setUser(user.uid, user.isAnonymous)
+                    observabilityTracker.setUser(user.isAnonymous)
                 }.onFailure { exception ->
                     observabilityTracker.recordError(
                         AUTH_SIGN_IN_FAILED,
@@ -53,13 +54,16 @@ internal class DefaultAuthRepository
                     )
                 }
 
-        override suspend fun linkWithGoogle(idToken: String): Result<SantoroUser> =
+        override suspend fun linkWithGoogle(
+            expectedUid: String,
+            idToken: String,
+        ): Result<SantoroUser> =
             dataSource
-                .linkWithGoogle(idToken)
+                .linkWithGoogle(expectedUid, idToken)
                 .rethrowCancellation()
                 .onSuccess { user ->
                     observabilityTracker.trackAction(AUTH_LINK_GOOGLE)
-                    observabilityTracker.setUser(user.uid, user.isAnonymous)
+                    observabilityTracker.setUser(user.isAnonymous)
                 }.onFailure { exception ->
                     observabilityTracker.recordError(AUTH_LINK_GOOGLE_FAILED, exception)
                 }
@@ -77,11 +81,13 @@ internal class DefaultAuthRepository
                     observabilityTracker.recordError(AUTH_REAUTHENTICATE_GOOGLE_FAILED, exception)
                 }
 
-        override suspend fun signOut() {
-            dataSource.signOut()
-            observabilityTracker.trackAction(AUTH_SIGN_OUT)
-            observabilityTracker.clearUser()
-        }
+        override suspend fun signOut(expectedUid: String): ExpectedUserSignOutOutcome =
+            dataSource.signOut(expectedUid).also { outcome ->
+                if (outcome == ExpectedUserSignOutOutcome.SignedOut) {
+                    observabilityTracker.trackAction(AUTH_SIGN_OUT)
+                    observabilityTracker.clearUser()
+                }
+            }
 
         override suspend fun deleteAccount(expectedUid: String): Result<Unit> =
             dataSource

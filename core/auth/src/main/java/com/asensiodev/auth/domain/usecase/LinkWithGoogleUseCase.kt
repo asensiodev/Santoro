@@ -9,6 +9,8 @@ class LinkWithGoogleUseCase
     constructor(
         private val authRepository: AuthRepository,
     ) {
-        suspend operator fun invoke(idToken: String): Result<SantoroUser> =
-            authRepository.linkWithGoogle(idToken)
+        suspend operator fun invoke(
+            expectedUid: String,
+            idToken: String,
+        ): Result<SantoroUser> = authRepository.linkWithGoogle(expectedUid, idToken)
     }

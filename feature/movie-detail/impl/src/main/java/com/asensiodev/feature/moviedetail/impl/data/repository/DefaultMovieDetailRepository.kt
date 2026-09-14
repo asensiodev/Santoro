@@ -55,7 +55,4 @@ internal class DefaultMovieDetailRepository
                 emit(Result.failure(UnexpectedErrorException(exception)))
             }
         }
-
-        override suspend fun updateMovieState(movie: Movie): Result<Boolean> =
-            localDataSource.updateMovieState(movie)
     }

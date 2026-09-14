@@ -2,12 +2,12 @@ package com.asensiodev.feature.watchlist.impl.presentation
 
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.core.domain.repository.MovieMutationRepository
+import com.asensiodev.core.domain.repository.SyncScheduler
 import com.asensiodev.core.testing.coVerifyOnce
 import com.asensiodev.feature.watchlist.impl.domain.usecase.GetWatchlistMoviesUseCase
-import com.asensiodev.feature.watchlist.impl.domain.usecase.RemoveFromWatchlistUseCase
 import com.asensiodev.feature.watchlist.impl.domain.usecase.SearchWatchlistMoviesUseCase
 import com.asensiodev.feature.watchlist.impl.presentation.model.MovieUi
-import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -37,8 +37,8 @@ import org.junit.jupiter.api.Test
 class WatchlistMoviesViewModelTest {
     private val getWatchlistMoviesUseCase: GetWatchlistMoviesUseCase = mockk(relaxed = true)
     private val searchWatchlistMoviesUseCase: SearchWatchlistMoviesUseCase = mockk(relaxed = true)
-    private val removeFromWatchlistUseCase: RemoveFromWatchlistUseCase = mockk(relaxed = true)
-    private val syncScheduler: WorkManagerSyncScheduler = mockk(relaxed = true)
+    private val movieMutationRepository: MovieMutationRepository = mockk(relaxed = true)
+    private val syncScheduler: SyncScheduler = mockk(relaxed = true)
 
     private lateinit var viewModel: WatchlistMoviesViewModel
 
@@ -62,7 +62,7 @@ class WatchlistMoviesViewModelTest {
             WatchlistMoviesViewModel(
                 getWatchlistMoviesUseCase = getWatchlistMoviesUseCase,
                 searchWatchlistMoviesUseCase = searchWatchlistMoviesUseCase,
-                removeFromWatchlistUseCase = removeFromWatchlistUseCase,
+                movieMutationRepository = movieMutationRepository,
                 syncScheduler = syncScheduler,
             )
     }
@@ -97,7 +97,7 @@ class WatchlistMoviesViewModelTest {
     @Test
     fun `GIVEN movieToRemove set WHEN ConfirmRemove intent THEN calls use case and clears movieToRemove`() =
         runTest {
-            coEvery { removeFromWatchlistUseCase(inceptionMovieUi.id) } returns Result.success(true)
+            coEvery { movieMutationRepository.removeFromWatchlist(inceptionMovieUi.id) } returns Result.success(Unit)
             advanceUntilIdle()
 
             viewModel.process(WatchlistIntent.RequestRemove(inceptionMovieUi))
@@ -106,7 +106,7 @@ class WatchlistMoviesViewModelTest {
 
             viewModel.uiState.value.movieToRemove
                 .shouldBeNull()
-            coVerifyOnce { removeFromWatchlistUseCase(inceptionMovieUi.id) }
+            coVerifyOnce { movieMutationRepository.removeFromWatchlist(inceptionMovieUi.id) }
         }
 
     @Test
@@ -124,7 +124,7 @@ class WatchlistMoviesViewModelTest {
     @Test
     fun `GIVEN movieToRemove set WHEN ConfirmRemove intent THEN enqueues upload for that movie`() =
         runTest {
-            coEvery { removeFromWatchlistUseCase(inceptionMovieUi.id) } returns Result.success(true)
+            coEvery { movieMutationRepository.removeFromWatchlist(inceptionMovieUi.id) } returns Result.success(Unit)
             advanceUntilIdle()
 
             viewModel.process(WatchlistIntent.RequestRemove(inceptionMovieUi))
@@ -138,7 +138,7 @@ class WatchlistMoviesViewModelTest {
     fun `GIVEN remove fails WHEN ConfirmRemove intent THEN does not enqueue upload`() =
         runTest {
             coEvery {
-                removeFromWatchlistUseCase(inceptionMovieUi.id)
+                movieMutationRepository.removeFromWatchlist(inceptionMovieUi.id)
             } returns Result.failure(Exception("db error"))
             advanceUntilIdle()
 
@@ -155,8 +155,10 @@ class WatchlistMoviesViewModelTest {
     @Test
     fun `GIVEN removal pending WHEN ConfirmRemove repeats THEN removes movie once`() =
         runTest {
-            val removal = CompletableDeferred<Result<Boolean>>()
-            coEvery { removeFromWatchlistUseCase(inceptionMovieUi.id) } coAnswers { removal.await() }
+            val removal = CompletableDeferred<Result<Unit>>()
+            coEvery {
+                movieMutationRepository.removeFromWatchlist(inceptionMovieUi.id)
+            } coAnswers { removal.await() }
 
             viewModel.process(WatchlistIntent.RequestRemove(inceptionMovieUi))
             viewModel.process(WatchlistIntent.ConfirmRemove)
@@ -164,9 +166,11 @@ class WatchlistMoviesViewModelTest {
             runCurrent()
 
             viewModel.uiState.value.isRemovingMovie shouldBeEqualTo true
-            coVerify(exactly = 1) { removeFromWatchlistUseCase(inceptionMovieUi.id) }
+            coVerify(exactly = 1) {
+                movieMutationRepository.removeFromWatchlist(inceptionMovieUi.id)
+            }
 
-            removal.complete(Result.success(true))
+            removal.complete(Result.success(Unit))
             advanceUntilIdle()
 
             viewModel.uiState.value.movieToRemove
@@ -177,8 +181,9 @@ class WatchlistMoviesViewModelTest {
     @Test
     fun `GIVEN local removal succeeds WHEN upload scheduling fails THEN removal remains successful`() =
         runTest {
-            coEvery { removeFromWatchlistUseCase(inceptionMovieUi.id) } returns Result.success(true)
-            every { syncScheduler.enqueueUpload(inceptionMovieUi.id) } throws IllegalStateException()
+            coEvery { movieMutationRepository.removeFromWatchlist(inceptionMovieUi.id) } returns Result.success(Unit)
+            every { syncScheduler.enqueueUpload(inceptionMovieUi.id) } throws
+                IllegalStateException()
 
             viewModel.process(WatchlistIntent.RequestRemove(inceptionMovieUi))
             viewModel.process(WatchlistIntent.ConfirmRemove)
@@ -193,7 +198,9 @@ class WatchlistMoviesViewModelTest {
     @Test
     fun `GIVEN removal is cancelled WHEN operation ends THEN pending state is cleared`() =
         runTest {
-            coEvery { removeFromWatchlistUseCase(inceptionMovieUi.id) } throws CancellationException()
+            coEvery {
+                movieMutationRepository.removeFromWatchlist(inceptionMovieUi.id)
+            } throws CancellationException()
 
             viewModel.process(WatchlistIntent.RequestRemove(inceptionMovieUi))
             viewModel.process(WatchlistIntent.ConfirmRemove)
@@ -209,7 +216,7 @@ class WatchlistMoviesViewModelTest {
     fun `GIVEN removal use case throws cancellation WHEN operation ends THEN failure state is not created`() =
         runTest {
             coEvery {
-                removeFromWatchlistUseCase(inceptionMovieUi.id)
+                movieMutationRepository.removeFromWatchlist(inceptionMovieUi.id)
             } throws CancellationException()
 
             viewModel.process(WatchlistIntent.RequestRemove(inceptionMovieUi))
@@ -234,15 +241,15 @@ class WatchlistMoviesViewModelTest {
                     genres = null,
                     rating = 7.0,
                 )
-            coEvery { removeFromWatchlistUseCase(inceptionMovieUi.id) } returns Result.success(true)
+            coEvery { movieMutationRepository.removeFromWatchlist(inceptionMovieUi.id) } returns Result.success(Unit)
             advanceUntilIdle()
 
             viewModel.process(WatchlistIntent.RequestRemove(inceptionMovieUi))
             viewModel.process(WatchlistIntent.ConfirmRemove)
             advanceUntilIdle()
 
-            coVerifyOnce { removeFromWatchlistUseCase(inceptionMovieUi.id) }
-            coVerify(exactly = 0) { removeFromWatchlistUseCase(otherMovie.id) }
+            coVerifyOnce { movieMutationRepository.removeFromWatchlist(inceptionMovieUi.id) }
+            coVerify(exactly = 0) { movieMutationRepository.removeFromWatchlist(otherMovie.id) }
         }
 
     @Test
@@ -277,7 +284,7 @@ class WatchlistMoviesViewModelTest {
                 WatchlistMoviesViewModel(
                     getWatchlistMoviesUseCase = getWatchlistMoviesUseCase,
                     searchWatchlistMoviesUseCase = searchWatchlistMoviesUseCase,
-                    removeFromWatchlistUseCase = removeFromWatchlistUseCase,
+                    movieMutationRepository = movieMutationRepository,
                     syncScheduler = syncScheduler,
                 )
 
@@ -298,7 +305,7 @@ class WatchlistMoviesViewModelTest {
                 WatchlistMoviesViewModel(
                     getWatchlistMoviesUseCase = getWatchlistMoviesUseCase,
                     searchWatchlistMoviesUseCase = searchWatchlistMoviesUseCase,
-                    removeFromWatchlistUseCase = removeFromWatchlistUseCase,
+                    movieMutationRepository = movieMutationRepository,
                     syncScheduler = syncScheduler,
                 )
 
@@ -329,7 +336,7 @@ class WatchlistMoviesViewModelTest {
                 WatchlistMoviesViewModel(
                     getWatchlistMoviesUseCase = getWatchlistMoviesUseCase,
                     searchWatchlistMoviesUseCase = searchWatchlistMoviesUseCase,
-                    removeFromWatchlistUseCase = removeFromWatchlistUseCase,
+                    movieMutationRepository = movieMutationRepository,
                     syncScheduler = syncScheduler,
                 )
 

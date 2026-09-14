@@ -6,8 +6,6 @@ import com.asensiodev.feature.moviedetail.impl.data.datasource.LocalMovieDetailD
 import com.asensiodev.feature.moviedetail.impl.data.datasource.RemoteMovieDetailDataSource
 import com.asensiodev.feature.moviedetail.impl.data.repository.DefaultMovieDetailRepository
 import com.asensiodev.feature.moviedetail.impl.data.repository.MovieNotFoundException
-import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CancellationException
@@ -236,65 +234,6 @@ class DefaultMovieDetailRepositoryTest {
             repository.getMovieDetail(movieId).test {
                 awaitError().shouldBeInstanceOf<CancellationException>()
             }
-        }
-
-    @Test
-    fun `GIVEN local and remote data WHEN updateMovieState THEN updates state and returns success`() =
-        runTest {
-            val movie =
-                Movie(
-                    id = 8,
-                    title = "Updated Movie",
-                    overview = "Updated Overview",
-                    posterPath = null,
-                    backdropPath = null,
-                    releaseDate = null,
-                    popularity = 25.0,
-                    voteAverage = 9.5,
-                    voteCount = 250,
-                    genres = listOf(),
-                    productionCountries = listOf(),
-                    cast = listOf(),
-                    isWatched = true,
-                    isInWatchlist = true,
-                )
-
-            coEvery { localDataSource.updateMovieState(movie) } returns Result.success(true)
-
-            val result = repository.updateMovieState(movie)
-
-            result shouldBeEqualTo Result.success(true)
-            coVerify(exactly = 1) { localDataSource.updateMovieState(movie) }
-        }
-
-    @Test
-    fun `GIVEN error updating movie state WHEN updateMovieState THEN returns error`() =
-        runTest {
-            val movie =
-                Movie(
-                    id = 9,
-                    title = "Failed Update Movie",
-                    overview = "Failed Overview",
-                    posterPath = null,
-                    backdropPath = null,
-                    releaseDate = null,
-                    popularity = 5.0,
-                    voteAverage = 5.0,
-                    voteCount = 50,
-                    genres = listOf(),
-                    productionCountries = listOf(),
-                    cast = listOf(),
-                    isWatched = false,
-                    isInWatchlist = false,
-                )
-            val updateException = Exception("Update failed")
-
-            coEvery { localDataSource.updateMovieState(movie) } returns Result.failure(updateException)
-
-            val result = repository.updateMovieState(movie)
-
-            result shouldBeEqualTo Result.failure(updateException)
-            coVerify(exactly = 1) { localDataSource.updateMovieState(movie) }
         }
 
     @Test

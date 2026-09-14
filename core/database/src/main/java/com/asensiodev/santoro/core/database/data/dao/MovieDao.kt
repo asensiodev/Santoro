@@ -9,6 +9,7 @@ import com.asensiodev.santoro.core.database.data.model.MovieEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
+@Suppress("TooManyFunctions")
 interface MovieDao {
     @Query("SELECT * FROM movies WHERE isWatched = 1 ORDER BY watchedAt DESC")
     fun getWatchedMovies(): Flow<List<MovieEntity>>
@@ -50,27 +51,6 @@ interface MovieDao {
     suspend fun getMoviesForSync(): List<MovieEntity>
 
     @Query(
-        """INSERT OR REPLACE INTO movies
-           (id, title, overview, posterPath, releaseDate,
-            popularity, voteAverage, voteCount, genres, productionCountries,
-            runtime, isWatched, isInWatchlist, watchedAt, updatedAt)
-           VALUES (:movieId, :title, '', :posterPath, NULL,
-            0.0, 0.0, 0, :genres, '',
-            :runtime, :isWatched, :isInWatchlist, :watchedAt, :updatedAt)""",
-    )
-    suspend fun upsertMovieFromSync(
-        movieId: Int,
-        title: String,
-        posterPath: String?,
-        genres: String,
-        runtime: Int?,
-        isWatched: Boolean,
-        isInWatchlist: Boolean,
-        watchedAt: Long?,
-        updatedAt: Long,
-    )
-
-    @Query(
         """UPDATE movies
            SET isWatched = :isWatched,
                isInWatchlist = :isInWatchlist,
@@ -87,5 +67,5 @@ interface MovieDao {
     )
 
     @Query("DELETE FROM movies")
-    suspend fun clearAllUserData()
+    suspend fun clearMovies()
 }

@@ -5,11 +5,15 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.asensiodev.auth.domain.repository.AuthRepository
+import com.asensiodev.core.domain.repository.AccountDeletionRecoveryRepository
+import com.asensiodev.core.domain.repository.SyncRepository
+import com.asensiodev.core.domain.result.rethrowCancellation
 import com.asensiodev.library.observability.api.NoOpObservabilityTracker
 import com.asensiodev.library.observability.api.ObservabilityTracker
-import com.asensiodev.santoro.core.sync.domain.repository.SyncRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 
 @HiltWorker
@@ -19,28 +23,54 @@ internal class UploadWorker
         @Assisted context: Context,
         @Assisted params: WorkerParameters,
         private val authRepository: AuthRepository,
+        private val accountDeletionRecoveryRepository: AccountDeletionRecoveryRepository,
         private val syncRepository: SyncRepository,
         private val observabilityTracker: ObservabilityTracker = NoOpObservabilityTracker,
     ) : CoroutineWorker(context, params) {
-        override suspend fun doWork(): Result {
-            val movieId = inputData.getInt(MOVIE_ID_KEY, INVALID_MOVIE_ID)
-            val uid = authRepository.currentUser.firstOrNull()?.uid ?: return Result.success()
-            val syncResult =
-                if (movieId == INVALID_MOVIE_ID) {
-                    syncRepository.uploadPendingChanges(uid)
-                } else {
-                    syncRepository.uploadMovie(uid, movieId)
+        override suspend fun doWork(): Result =
+            try {
+                val movieId = inputData.getInt(MOVIE_ID_KEY, INVALID_MOVIE_ID)
+                when {
+                    movieId <= 0 -> Result.success()
+                    accountDeletionRecoveryRepository.isLocalCleanupPending.first() ->
+                        Result.success()
+                    accountDeletionRecoveryRepository.isRemoteDeletionInFlight.first() ->
+                        Result.success()
+                    else -> {
+                        val uid = currentUid()
+                        if (uid == null) Result.success() else upload(uid, movieId)
+                    }
                 }
-            return syncResult.fold(
-                onSuccess = {
-                    observabilityTracker.trackAction(SYNC_UPLOAD_SUCCESS)
-                    Result.success()
-                },
-                onFailure = { exception ->
-                    observabilityTracker.recordError(SYNC_UPLOAD_FAILED, exception)
-                    Result.retry()
-                },
-            )
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                retry(exception)
+            }
+
+        private suspend fun currentUid(): String? =
+            authRepository.currentUser
+                .firstOrNull()
+                ?.uid
+                ?.takeIf(String::isNotBlank)
+
+        private suspend fun upload(
+            uid: String,
+            movieId: Int,
+        ): Result =
+            syncRepository
+                .uploadMovie(uid, movieId)
+                .rethrowCancellation()
+                .fold(
+                    onSuccess = {
+                        observabilityTracker.trackAction(SYNC_UPLOAD_SUCCESS)
+                        Result.success()
+                    },
+                    onFailure = ::retry,
+                )
+
+        private fun retry(exception: Throwable): Result {
+            observabilityTracker.recordError(SYNC_UPLOAD_FAILED, exception)
+            return Result.retry()
         }
 
         companion object {

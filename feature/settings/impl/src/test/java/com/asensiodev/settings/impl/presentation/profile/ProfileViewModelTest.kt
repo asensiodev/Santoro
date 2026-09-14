@@ -1,21 +1,26 @@
 package com.asensiodev.settings.impl.presentation.profile
 
 import com.asensiodev.auth.domain.exception.AccountCollisionException
+import com.asensiodev.auth.domain.model.ExpectedUserSignOutOutcome
 import com.asensiodev.auth.domain.usecase.LinkWithGoogleUseCase
 import com.asensiodev.auth.domain.usecase.ObserveAuthStateUseCase
-import com.asensiodev.auth.domain.usecase.SignInWithGoogleUseCase
+import com.asensiodev.auth.domain.usecase.SignOutUseCase
 import com.asensiodev.auth.helper.GoogleSignInHelper
 import com.asensiodev.core.domain.model.SantoroUser
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -33,8 +38,8 @@ import org.junit.jupiter.api.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProfileViewModelTest {
     private val observeAuthStateUseCase: ObserveAuthStateUseCase = mockk()
-    private val signInWithGoogleUseCase: SignInWithGoogleUseCase = mockk(relaxed = true)
     private val linkWithGoogleUseCase: LinkWithGoogleUseCase = mockk(relaxed = true)
+    private val signOutUseCase: SignOutUseCase = mockk(relaxed = true)
     private val googleSignInHelper: GoogleSignInHelper = mockk(relaxed = true)
 
     private lateinit var sut: ProfileViewModel
@@ -66,8 +71,8 @@ class ProfileViewModelTest {
         sut =
             ProfileViewModel(
                 observeAuthStateUseCase = observeAuthStateUseCase,
-                signInWithGoogleUseCase = signInWithGoogleUseCase,
                 linkWithGoogleUseCase = linkWithGoogleUseCase,
+                signOutUseCase = signOutUseCase,
                 googleSignInHelper = googleSignInHelper,
             )
     }
@@ -144,7 +149,8 @@ class ProfileViewModelTest {
             runTest {
                 every { observeAuthStateUseCase() } returns flowOf(anonymousUser)
                 coEvery { googleSignInHelper.signIn(any()) } returns Result.success("id-token")
-                coEvery { linkWithGoogleUseCase(any()) } returns Result.success(googleUser)
+                coEvery { linkWithGoogleUseCase(any(), any()) } returns
+                    Result.success(anonymousUser.copy(isAnonymous = false))
 
                 sut.process(ProfileIntent.ObserveAuth)
                 advanceUntilIdle()
@@ -158,6 +164,7 @@ class ProfileViewModelTest {
                     .shouldBeFalse()
                 sut.uiState.value.error
                     .shouldBeNull()
+                coVerify(exactly = 1) { linkWithGoogleUseCase("uid-anon", "id-token") }
             }
 
         @Test
@@ -165,7 +172,9 @@ class ProfileViewModelTest {
             runTest {
                 every { observeAuthStateUseCase() } returns flowOf(anonymousUser)
                 coEvery { googleSignInHelper.signIn(any()) } returns Result.success("id-token")
-                coEvery { linkWithGoogleUseCase(any()) } returns Result.failure(AccountCollisionException())
+                coEvery {
+                    linkWithGoogleUseCase(any(), any())
+                } returns Result.failure(AccountCollisionException())
 
                 sut.process(ProfileIntent.ObserveAuth)
                 advanceUntilIdle()
@@ -180,9 +189,49 @@ class ProfileViewModelTest {
             }
 
         @Test
+        fun `GIVEN link returns a different uid WHEN OnLinkGoogleClicked THEN linking is not successful`() =
+            runTest {
+                every { observeAuthStateUseCase() } returns flowOf(anonymousUser)
+                coEvery { googleSignInHelper.signIn(any()) } returns Result.success("id-token")
+                coEvery { linkWithGoogleUseCase(any(), any()) } returns Result.success(googleUser)
+                sut.process(ProfileIntent.ObserveAuth)
+                advanceUntilIdle()
+
+                sut.process(ProfileIntent.OnLinkGoogleClicked(mockk(relaxed = true)))
+                advanceUntilIdle()
+
+                sut.uiState.value.isLinkAccountSuccessful
+                    .shouldBeFalse()
+                (sut.uiState.value.error != null).shouldBeTrue()
+            }
+
+        @Test
+        fun `GIVEN auth changes while credential is pending WHEN linking starts THEN original uid is required`() =
+            runTest {
+                val auth = MutableStateFlow<SantoroUser?>(anonymousUser)
+                val credential = CompletableDeferred<Result<String>>()
+                every { observeAuthStateUseCase() } returns auth
+                coEvery { googleSignInHelper.signIn(any()) } coAnswers { credential.await() }
+                coEvery { linkWithGoogleUseCase(any(), any()) } returns Result.failure(Exception())
+                sut.process(ProfileIntent.ObserveAuth)
+                advanceUntilIdle()
+
+                sut.process(ProfileIntent.OnLinkGoogleClicked(mockk(relaxed = true)))
+                runCurrent()
+                auth.value = anonymousUser.copy(uid = "replacement-uid")
+                runCurrent()
+                credential.complete(Result.success("id-token"))
+                advanceUntilIdle()
+
+                coVerify(exactly = 1) { linkWithGoogleUseCase("uid-anon", "id-token") }
+            }
+
+        @Test
         fun `GIVEN sign-in failure WHEN OnLinkGoogleClicked intent THEN error is set and loading is false`() =
             runTest {
                 coEvery { googleSignInHelper.signIn(any()) } returns Result.failure(Exception("Sign-in failed"))
+                sut.process(ProfileIntent.ObserveAuth)
+                advanceUntilIdle()
 
                 sut.process(ProfileIntent.OnLinkGoogleClicked(mockk(relaxed = true)))
                 advanceUntilIdle()
@@ -196,6 +245,8 @@ class ProfileViewModelTest {
         fun `GIVEN sign-in producer throws cancellation WHEN OnLinkGoogleClicked THEN loading resets without error`() =
             runTest {
                 coEvery { googleSignInHelper.signIn(any()) } throws CancellationException("cancelled")
+                sut.process(ProfileIntent.ObserveAuth)
+                advanceUntilIdle()
 
                 sut.process(ProfileIntent.OnLinkGoogleClicked(mockk(relaxed = true)))
 
@@ -214,7 +265,9 @@ class ProfileViewModelTest {
             runTest {
                 every { observeAuthStateUseCase() } returns flowOf(anonymousUser)
                 coEvery { googleSignInHelper.signIn(any()) } returns Result.success("id-token")
-                coEvery { linkWithGoogleUseCase(any()) } throws CancellationException("cancelled")
+                coEvery {
+                    linkWithGoogleUseCase(any(), any())
+                } throws CancellationException("cancelled")
 
                 sut.process(ProfileIntent.ObserveAuth)
                 advanceUntilIdle()
@@ -237,7 +290,8 @@ class ProfileViewModelTest {
             runTest {
                 every { observeAuthStateUseCase() } returns flowOf(anonymousUser)
                 coEvery { googleSignInHelper.signIn(any()) } returns Result.success("id-token")
-                coEvery { linkWithGoogleUseCase(any()) } returns Result.success(googleUser)
+                coEvery { linkWithGoogleUseCase(any(), any()) } returns
+                    Result.success(anonymousUser.copy(isAnonymous = false))
 
                 sut.process(ProfileIntent.ObserveAuth)
                 advanceUntilIdle()
@@ -255,7 +309,9 @@ class ProfileViewModelTest {
             runTest {
                 every { observeAuthStateUseCase() } returns flowOf(anonymousUser)
                 coEvery { googleSignInHelper.signIn(any()) } returns Result.success("id-token")
-                coEvery { linkWithGoogleUseCase(any()) } returns Result.failure(AccountCollisionException())
+                coEvery {
+                    linkWithGoogleUseCase(any(), any())
+                } returns Result.failure(AccountCollisionException())
 
                 sut.process(ProfileIntent.ObserveAuth)
                 advanceUntilIdle()
@@ -272,12 +328,14 @@ class ProfileViewModelTest {
     @Nested
     inner class ConfirmAccountCollision {
         @Test
-        fun `GIVEN pending token WHEN ConfirmAccountCollision intent succeeds THEN isLoading is false and no error`() =
+        fun `GIVEN collision with anonymous user WHEN confirmed THEN signs out expected uid`() =
             runTest {
                 every { observeAuthStateUseCase() } returns flowOf(anonymousUser)
                 coEvery { googleSignInHelper.signIn(any()) } returns Result.success("id-token")
-                coEvery { linkWithGoogleUseCase(any()) } returns Result.failure(AccountCollisionException())
-                coEvery { signInWithGoogleUseCase(any()) } returns Result.success(googleUser)
+                coEvery {
+                    linkWithGoogleUseCase(any(), any())
+                } returns Result.failure(AccountCollisionException())
+                coEvery { signOutUseCase("uid-anon") } returns ExpectedUserSignOutOutcome.SignedOut
 
                 sut.process(ProfileIntent.ObserveAuth)
                 advanceUntilIdle()
@@ -291,15 +349,58 @@ class ProfileViewModelTest {
                     .shouldBeFalse()
                 sut.uiState.value.error
                     .shouldBeNull()
+                coVerify(exactly = 1) { signOutUseCase("uid-anon") }
+                coVerify(exactly = 1) { linkWithGoogleUseCase("uid-anon", "id-token") }
             }
 
         @Test
-        fun `GIVEN no pending token WHEN ConfirmAccountCollision intent THEN no action taken`() =
+        fun `GIVEN no collision uid WHEN ConfirmAccountCollision intent THEN no action taken`() =
             runTest {
                 sut.process(ProfileIntent.ConfirmAccountCollision)
                 advanceUntilIdle()
 
                 sut.uiState.value shouldBeEqualTo ProfileUiState()
+                coVerify(exactly = 0) { signOutUseCase(any()) }
             }
+
+        @Test
+        fun `GIVEN collision signout mismatch WHEN confirmed THEN linking error is shown`() =
+            runTest {
+                showCollision()
+                coEvery { signOutUseCase("uid-anon") } returns
+                    ExpectedUserSignOutOutcome.AuthenticatedUserMismatch
+
+                sut.process(ProfileIntent.ConfirmAccountCollision)
+                advanceUntilIdle()
+
+                (sut.uiState.value.error != null).shouldBeTrue()
+                sut.uiState.value.isLoading
+                    .shouldBeFalse()
+            }
+
+        @Test
+        fun `GIVEN collision signout is cancelled WHEN confirmed THEN loading resets without error`() =
+            runTest {
+                showCollision()
+                coEvery { signOutUseCase("uid-anon") } throws CancellationException()
+
+                sut.process(ProfileIntent.ConfirmAccountCollision)
+                advanceUntilIdle()
+
+                sut.uiState.value.error
+                    .shouldBeNull()
+                sut.uiState.value.isLoading
+                    .shouldBeFalse()
+            }
+    }
+
+    private suspend fun TestScope.showCollision() {
+        every { observeAuthStateUseCase() } returns flowOf(anonymousUser)
+        coEvery { googleSignInHelper.signIn(any()) } returns Result.success("id-token")
+        coEvery { linkWithGoogleUseCase(any(), any()) } returns Result.failure(AccountCollisionException())
+        sut.process(ProfileIntent.ObserveAuth)
+        advanceUntilIdle()
+        sut.process(ProfileIntent.OnLinkGoogleClicked(mockk(relaxed = true)))
+        advanceUntilIdle()
     }
 }

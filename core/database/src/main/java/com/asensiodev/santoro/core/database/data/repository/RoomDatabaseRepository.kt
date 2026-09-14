@@ -1,10 +1,16 @@
 package com.asensiodev.santoro.core.database.data.repository
 
 import android.database.sqlite.SQLiteException
+import androidx.room.withTransaction
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.core.domain.model.MovieSyncData
+import com.asensiodev.core.domain.repository.MovieMutationRepository
+import com.asensiodev.core.domain.repository.SyncStore
+import com.asensiodev.santoro.core.database.data.SantoroRoomDatabase
 import com.asensiodev.santoro.core.database.data.dao.MovieDao
 import com.asensiodev.santoro.core.database.data.mapper.toDomain
 import com.asensiodev.santoro.core.database.data.mapper.toEntity
+import com.asensiodev.santoro.core.database.data.mapper.toSyncData
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
@@ -13,12 +19,19 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Suppress("TooManyFunctions")
+@Singleton
 class RoomDatabaseRepository
     @Inject
     constructor(
-        private val movieDao: MovieDao,
-    ) : DatabaseRepository {
+        private val database: SantoroRoomDatabase,
+    ) : DatabaseRepository,
+        MovieMutationRepository,
+        SyncStore {
+        private val movieDao: MovieDao = database.movieDao()
+
         override fun getWatchedMovies(): Flow<Result<List<Movie>>> =
             flow {
                 emitAll(
@@ -85,106 +98,60 @@ class RoomDatabaseRepository
                 )
             }
 
-        override suspend fun updateMovieState(movie: Movie): Result<Boolean> =
-            try {
+        override suspend fun updateMovieState(movie: Movie): Result<Unit> =
+            transactionResult {
                 movieDao.insertOrUpdateMovie(movie.toEntity())
-                Result.success(true)
-            } catch (exception: CancellationException) {
-                throw exception
-            } catch (e: SQLiteException) {
-                Result.failure(e)
-            } catch (e: Exception) {
-                Result.failure(e)
             }
 
-        override suspend fun removeFromWatchlist(movieId: Int): Result<Boolean> =
-            try {
+        override suspend fun removeFromWatchlist(movieId: Int): Result<Unit> =
+            transactionResult {
                 movieDao.removeFromWatchlist(movieId, System.currentTimeMillis())
-                Result.success(true)
-            } catch (exception: CancellationException) {
-                throw exception
-            } catch (e: SQLiteException) {
-                Result.failure(e)
-            } catch (e: Exception) {
-                Result.failure(e)
             }
 
-        override suspend fun getMoviesForSync(): Result<List<Movie>> =
-            try {
-                Result.success(movieDao.getMoviesForSync().map { it.toDomain() })
-            } catch (exception: CancellationException) {
-                throw exception
-            } catch (e: SQLiteException) {
-                Result.failure(e)
-            } catch (e: Exception) {
-                Result.failure(e)
+        override suspend fun clearMovies() {
+            database.withTransaction { movieDao.clearMovies() }
+        }
+
+        override suspend fun getMovieForUpload(movieId: Int): Result<MovieSyncData?> =
+            transactionResult {
+                movieDao.getMovieById(movieId)?.toSyncData()
             }
 
-        override suspend fun upsertMovieFromSync(
-            movieId: Int,
-            title: String,
-            posterPath: String?,
-            genres: String,
-            runtime: Int?,
-            isWatched: Boolean,
-            isInWatchlist: Boolean,
-            watchedAt: Long?,
-            updatedAt: Long,
+        override suspend fun getMoviesForUpload(): Result<List<MovieSyncData>> =
+            transactionResult {
+                movieDao.getMoviesForSync().map { movie -> movie.toSyncData() }
+            }
+
+        override suspend fun completeDownloadedMerge(
+            movies: List<MovieSyncData>,
+            canMerge: suspend () -> Boolean,
         ): Result<Unit> =
-            try {
-                movieDao.upsertMovieFromSync(
-                    movieId,
-                    title,
-                    posterPath,
-                    genres,
-                    runtime,
-                    isWatched,
-                    isInWatchlist,
-                    watchedAt,
-                    updatedAt,
-                )
-                Result.success(Unit)
-            } catch (exception: CancellationException) {
-                throw exception
-            } catch (e: SQLiteException) {
-                Result.failure(e)
-            } catch (e: Exception) {
-                Result.failure(e)
+            transactionResult {
+                if (!canMerge()) return@transactionResult
+                movies.forEach { remote ->
+                    val local = movieDao.getMovieById(remote.movieId)
+                    when {
+                        local == null -> movieDao.insertOrUpdateMovie(remote.toEntity())
+                        remote.updatedAt > local.updatedAt ->
+                            movieDao.updateMovieSyncState(
+                                movieId = remote.movieId,
+                                isWatched = remote.isWatched,
+                                isInWatchlist = remote.isInWatchlist,
+                                watchedAt = remote.watchedAt,
+                                updatedAt = remote.updatedAt,
+                            )
+                    }
+                }
             }
 
-        override suspend fun updateMovieSyncState(
-            movieId: Int,
-            isWatched: Boolean,
-            isInWatchlist: Boolean,
-            watchedAt: Long?,
-            updatedAt: Long,
-        ): Result<Unit> =
+        private suspend fun <T> transactionResult(operation: suspend () -> T): Result<T> =
             try {
-                movieDao.updateMovieSyncState(
-                    movieId,
-                    isWatched,
-                    isInWatchlist,
-                    watchedAt,
-                    updatedAt,
-                )
-                Result.success(Unit)
+                Result.success(database.withTransaction { operation() })
             } catch (exception: CancellationException) {
                 throw exception
-            } catch (e: SQLiteException) {
-                Result.failure(e)
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
-
-        override suspend fun clearAllUserData(): Result<Unit> =
-            try {
-                movieDao.clearAllUserData()
-                Result.success(Unit)
-            } catch (exception: CancellationException) {
-                throw exception
-            } catch (e: SQLiteException) {
-                Result.failure(e)
-            } catch (e: Exception) {
-                Result.failure(e)
+            } catch (exception: SQLiteException) {
+                Result.failure(exception)
+            } catch (exception: Exception) {
+                Result.failure(exception)
             }
     }

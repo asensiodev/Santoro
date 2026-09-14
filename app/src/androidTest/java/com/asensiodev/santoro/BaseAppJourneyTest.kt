@@ -9,7 +9,6 @@ import com.asensiodev.santoro.fake.FakeAuthRepository
 import com.asensiodev.santoro.fake.FakeDatabaseRepository
 import com.asensiodev.santoro.fake.FakeMovieDetailRepository
 import com.asensiodev.santoro.fake.FakeRecentSearchesRepository
-import com.asensiodev.santoro.fake.FakeSyncRepository
 import com.asensiodev.santoro.fake.FakeUserPreferencesRepository
 import dagger.hilt.android.testing.HiltAndroidRule
 import org.junit.After
@@ -39,9 +38,6 @@ abstract class BaseAppJourneyTest {
     @Inject
     lateinit var recentSearchesRepository: FakeRecentSearchesRepository
 
-    @Inject
-    lateinit var syncRepository: FakeSyncRepository
-
     private val scenarios = mutableListOf<ActivityScenario<MainActivity>>()
 
     @Before
@@ -52,7 +48,6 @@ abstract class BaseAppJourneyTest {
         databaseRepository.reset()
         detailRepository.reset()
         recentSearchesRepository.reset()
-        syncRepository.reset()
     }
 
     @After

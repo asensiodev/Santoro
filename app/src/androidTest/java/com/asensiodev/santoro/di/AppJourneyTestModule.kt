@@ -10,6 +10,9 @@ package com.asensiodev.santoro.di
 import com.asensiodev.auth.di.AuthDataModule
 import com.asensiodev.auth.di.FirebaseModule
 import com.asensiodev.auth.domain.repository.AuthRepository
+import com.asensiodev.core.domain.repository.MovieMutationRepository
+import com.asensiodev.core.domain.repository.SyncRepository
+import com.asensiodev.core.domain.repository.SyncScheduler
 import com.asensiodev.core.domain.repository.UserPreferencesRepository
 import com.asensiodev.feature.moviedetail.impl.di.MovieDetailModule
 import com.asensiodev.feature.moviedetail.impl.domain.repository.MovieDetailRepository
@@ -28,7 +31,6 @@ import com.asensiodev.santoro.core.data.di.RepositoryModule
 import com.asensiodev.santoro.core.database.di.DatabaseModule
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import com.asensiodev.santoro.core.sync.di.SyncModule
-import com.asensiodev.santoro.core.sync.domain.repository.SyncRepository
 import com.asensiodev.santoro.fake.FakeAuthRepository
 import com.asensiodev.santoro.fake.FakeDatabaseRepository
 import com.asensiodev.santoro.fake.FakeMovieDetailRepository
@@ -36,6 +38,7 @@ import com.asensiodev.santoro.fake.FakeRecentSearchesRepository
 import com.asensiodev.santoro.fake.FakeRemoteConfigProvider
 import com.asensiodev.santoro.fake.FakeSearchMoviesRepository
 import com.asensiodev.santoro.fake.FakeSyncRepository
+import com.asensiodev.santoro.fake.FakeSyncScheduler
 import com.asensiodev.santoro.fake.FakeUserPreferencesRepository
 import dagger.Module
 import dagger.Provides
@@ -87,6 +90,9 @@ object AppJourneyTestModule {
     fun provideDatabaseRepository(fake: FakeDatabaseRepository): DatabaseRepository = fake
 
     @Provides
+    fun provideMovieMutationRepository(fake: FakeDatabaseRepository): MovieMutationRepository = fake
+
+    @Provides
     @Singleton
     fun provideFakeSearchMoviesRepository() = FakeSearchMoviesRepository()
 
@@ -125,6 +131,10 @@ object AppJourneyTestModule {
     @Provides
     @Singleton
     fun provideSyncRepository(fake: FakeSyncRepository): SyncRepository = fake
+
+    @Provides
+    @Singleton
+    fun provideSyncScheduler(): SyncScheduler = FakeSyncScheduler()
 
     @Provides
     @Singleton

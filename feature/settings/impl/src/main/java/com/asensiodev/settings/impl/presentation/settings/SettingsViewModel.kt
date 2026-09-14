@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.asensiodev.auth.domain.model.ExpectedUserSignOutOutcome
 import com.asensiodev.auth.domain.usecase.ObserveAuthStateUseCase
 import com.asensiodev.auth.domain.usecase.SignOutUseCase
 import com.asensiodev.auth.helper.GoogleSignInHelper
@@ -13,7 +14,6 @@ import com.asensiodev.core.domain.model.SantoroUser
 import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.core.domain.usecase.ObserveThemeUseCase
 import com.asensiodev.core.domain.usecase.SetThemeUseCase
-import com.asensiodev.santoro.core.sync.domain.repository.SyncRepository
 import com.asensiodev.settings.impl.domain.usecase.DeleteAccountUseCase
 import com.asensiodev.ui.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,7 +37,6 @@ internal class SettingsViewModel
         private val deleteAccountUseCase: DeleteAccountUseCase,
         private val observeThemeUseCase: ObserveThemeUseCase,
         private val setThemeUseCase: SetThemeUseCase,
-        private val syncRepository: SyncRepository,
         private val googleSignInHelper: GoogleSignInHelper,
     ) : ViewModel() {
         private var currentUser: SantoroUser? = null
@@ -126,22 +125,22 @@ internal class SettingsViewModel
 
         private fun onLogoutClicked() {
             if (accountActionJob?.isActive == true) return
+            val user = currentUser
+            if (user == null || user.isAnonymous) {
+                showError(SR.string.settings_logout_error)
+                return
+            }
+            val expectedUid = user.uid
             _uiState.update { it.copy(isLoading = true) }
             accountActionJob =
                 viewModelScope.launch {
-                    val user = currentUser
                     try {
-                        val syncResult =
-                            if (user != null && !user.isAnonymous) {
-                                syncRepository.uploadPendingChanges(user.uid)
-                            } else {
-                                Result.success(Unit)
-                            }
-                        val syncError = syncResult.exceptionOrNull()
-                        if (syncError == null) {
-                            signOutUseCase()
-                        } else {
-                            showError(SR.string.settings_logout_error)
+                        when (signOutUseCase(expectedUid)) {
+                            ExpectedUserSignOutOutcome.SignedOut,
+                            ExpectedUserSignOutOutcome.NoAuthenticatedUser,
+                            -> Unit
+                            ExpectedUserSignOutOutcome.AuthenticatedUserMismatch ->
+                                showError(SR.string.settings_logout_error)
                         }
                     } catch (exception: CancellationException) {
                         throw exception

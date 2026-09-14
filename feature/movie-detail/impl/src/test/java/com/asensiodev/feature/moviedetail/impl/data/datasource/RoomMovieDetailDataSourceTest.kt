@@ -48,29 +48,4 @@ class RoomMovieDetailDataSourceTest {
                 awaitComplete()
             }
         }
-
-    @Test
-    fun `GIVEN movie update succeeds WHEN updateMovieState THEN returns success`() =
-        runTest {
-            val movie = mockk<Movie>()
-
-            coEvery { databaseRepository.updateMovieState(movie) } returns Result.success(true)
-
-            val result = dataSource.updateMovieState(movie)
-
-            result shouldBeEqualTo Result.success(true)
-        }
-
-    @Test
-    fun `GIVEN movie update fails WHEN updateMovieState THEN returns error`() =
-        runTest {
-            val movie = mockk<Movie>()
-            val exception = RuntimeException("Update error")
-
-            coEvery { databaseRepository.updateMovieState(movie) } returns Result.failure(exception)
-
-            val result = dataSource.updateMovieState(movie)
-
-            result.isFailure shouldBeEqualTo true
-        }
 }

@@ -2,10 +2,14 @@
 
 package com.asensiodev.santoro.fake
 
+import com.asensiodev.auth.domain.model.ExpectedUserSignOutOutcome
 import com.asensiodev.auth.domain.repository.AuthRepository
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.SantoroUser
 import com.asensiodev.core.domain.model.ThemeOption
+import com.asensiodev.core.domain.repository.MovieMutationRepository
+import com.asensiodev.core.domain.repository.SyncRepository
+import com.asensiodev.core.domain.repository.SyncScheduler
 import com.asensiodev.core.domain.repository.UserPreferencesRepository
 import com.asensiodev.feature.moviedetail.impl.domain.repository.MovieDetailRepository
 import com.asensiodev.feature.searchmovies.impl.domain.model.FetchPolicy
@@ -15,7 +19,6 @@ import com.asensiodev.library.remoteconfig.api.RemoteConfigName
 import com.asensiodev.library.remoteconfig.api.RemoteConfigProvider
 import com.asensiodev.santoro.AppJourneyTestData
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
-import com.asensiodev.santoro.core.sync.domain.repository.SyncRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
@@ -38,18 +41,26 @@ class FakeAuthRepository : AuthRepository {
     override suspend fun signInWithGoogle(idToken: String): Result<SantoroUser> =
         Result.success(AppJourneyTestData.authenticatedUser)
 
-    override suspend fun linkWithGoogle(idToken: String): Result<SantoroUser> =
-        Result.success(AppJourneyTestData.authenticatedUser)
+    override suspend fun linkWithGoogle(
+        expectedUid: String,
+        idToken: String,
+    ): Result<SantoroUser> = Result.success(AppJourneyTestData.authenticatedUser)
 
     override suspend fun reauthenticateWithGoogle(
         expectedUid: String,
         idToken: String,
     ): Result<Unit> = Result.success(Unit)
 
-    override suspend fun signOut() {
-        signOutCalls.incrementAndGet()
-        userState.value = null
-    }
+    override suspend fun signOut(expectedUid: String): ExpectedUserSignOutOutcome =
+        when (userState.value?.uid) {
+            null -> ExpectedUserSignOutOutcome.NoAuthenticatedUser
+            expectedUid -> {
+                signOutCalls.incrementAndGet()
+                userState.value = null
+                ExpectedUserSignOutOutcome.SignedOut
+            }
+            else -> ExpectedUserSignOutOutcome.AuthenticatedUserMismatch
+        }
 
     override suspend fun deleteAccount(expectedUid: String): Result<Unit> {
         userState.value = null
@@ -172,14 +183,14 @@ class FakeMovieDetailRepository : MovieDetailRepository {
         )
     }
 
-    override suspend fun updateMovieState(movie: Movie): Result<Boolean> = Result.success(true)
-
     fun reset() {
         requestedMovieIds.clear()
     }
 }
 
-class FakeDatabaseRepository : DatabaseRepository {
+class FakeDatabaseRepository :
+    DatabaseRepository,
+    MovieMutationRepository {
     private val movies = MutableStateFlow(AppJourneyTestData.databaseMovies)
 
     override fun getWatchedMovies(): Flow<Result<List<Movie>>> =
@@ -209,45 +220,22 @@ class FakeDatabaseRepository : DatabaseRepository {
             )
         }
 
-    override suspend fun updateMovieState(movie: Movie): Result<Boolean> {
+    override suspend fun updateMovieState(movie: Movie): Result<Unit> {
         movies.value =
             movies.value.map { existing -> if (existing.id == movie.id) movie else existing }
-        return Result.success(true)
+        return Result.success(Unit)
     }
 
-    override suspend fun removeFromWatchlist(movieId: Int): Result<Boolean> {
+    override suspend fun removeFromWatchlist(movieId: Int): Result<Unit> {
         movies.value =
             movies.value.map { movie ->
                 if (movie.id == movieId) movie.copy(isInWatchlist = false) else movie
             }
-        return Result.success(true)
+        return Result.success(Unit)
     }
 
-    override suspend fun getMoviesForSync(): Result<List<Movie>> = Result.success(movies.value)
-
-    override suspend fun upsertMovieFromSync(
-        movieId: Int,
-        title: String,
-        posterPath: String?,
-        genres: String,
-        runtime: Int?,
-        isWatched: Boolean,
-        isInWatchlist: Boolean,
-        watchedAt: Long?,
-        updatedAt: Long,
-    ): Result<Unit> = Result.success(Unit)
-
-    override suspend fun updateMovieSyncState(
-        movieId: Int,
-        isWatched: Boolean,
-        isInWatchlist: Boolean,
-        watchedAt: Long?,
-        updatedAt: Long,
-    ): Result<Unit> = Result.success(Unit)
-
-    override suspend fun clearAllUserData(): Result<Unit> {
+    override suspend fun clearMovies() {
         movies.value = emptyList()
-        return Result.success(Unit)
     }
 
     fun reset() {
@@ -256,25 +244,24 @@ class FakeDatabaseRepository : DatabaseRepository {
 }
 
 class FakeSyncRepository : SyncRepository {
-    val pendingUploadUserIds = CopyOnWriteArrayList<String>()
-
     override suspend fun uploadMovie(
         uid: String,
         movieId: Int,
     ): Result<Unit> = Result.success(Unit)
 
-    override suspend fun uploadPendingChanges(uid: String): Result<Unit> {
-        pendingUploadUserIds += uid
-        return Result.success(Unit)
-    }
+    override suspend fun uploadLocalSnapshot(uid: String): Result<Unit> = Result.success(Unit)
 
     override suspend fun downloadAndMerge(uid: String): Result<Unit> = Result.success(Unit)
 
     override suspend fun deleteUserData(uid: String): Result<Unit> = Result.success(Unit)
+}
 
-    fun reset() {
-        pendingUploadUserIds.clear()
-    }
+class FakeSyncScheduler : SyncScheduler {
+    override fun schedulePeriodicSync() = Unit
+
+    override fun scheduleImmediateSync() = Unit
+
+    override fun enqueueUpload(movieId: Int) = Unit
 }
 
 class FakeRemoteConfigProvider : RemoteConfigProvider {

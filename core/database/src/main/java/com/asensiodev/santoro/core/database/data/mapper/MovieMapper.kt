@@ -2,6 +2,7 @@ package com.asensiodev.santoro.core.database.data.mapper
 
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.core.domain.model.MovieSyncData
 import com.asensiodev.core.domain.model.ProductionCountry
 import com.asensiodev.santoro.core.database.data.model.MovieEntity
 import com.google.gson.Gson
@@ -70,7 +71,7 @@ fun Movie.toEntity(): MovieEntity {
         popularity = popularity,
         voteAverage = voteAverage,
         voteCount = voteCount,
-        genres = gson.toJson(genres.mapNotNull { genre -> genre.toStoredGenre() }),
+        genres = genres.toStoredGenres(),
         productionCountries = gson.toJson(productionCountries),
         tagline = tagline,
         runtime = runtime,
@@ -80,6 +81,42 @@ fun Movie.toEntity(): MovieEntity {
         updatedAt = System.currentTimeMillis(),
     )
 }
+
+fun MovieSyncData.toEntity(): MovieEntity =
+    MovieEntity(
+        id = movieId,
+        title = title,
+        overview = "",
+        posterPath = posterPath,
+        releaseDate = null,
+        popularity = 0.0,
+        voteAverage = 0.0,
+        voteCount = 0,
+        genres = genres.toStoredGenres(),
+        productionCountries = "",
+        tagline = null,
+        runtime = runtime,
+        isWatched = isWatched,
+        isInWatchlist = isInWatchlist,
+        watchedAt = watchedAt,
+        updatedAt = updatedAt,
+    )
+
+fun MovieEntity.toSyncData(): MovieSyncData =
+    MovieSyncData(
+        movieId = id,
+        title = title,
+        posterPath = posterPath,
+        genres = genres.toGenres(),
+        runtime = runtime,
+        isWatched = isWatched,
+        isInWatchlist = isInWatchlist,
+        watchedAt = watchedAt,
+        updatedAt = updatedAt,
+    )
+
+fun List<Genre>.toStoredGenres(): String =
+    Gson().toJson(mapNotNull { genre -> genre.toStoredGenre() })
 
 private data class StoredGenre(
     @SerializedName("id") val id: Int?,

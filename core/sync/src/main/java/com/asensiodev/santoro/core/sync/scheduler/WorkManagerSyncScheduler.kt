@@ -9,6 +9,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
+import com.asensiodev.core.domain.repository.SyncScheduler
 import com.asensiodev.santoro.core.sync.worker.SyncWorker
 import com.asensiodev.santoro.core.sync.worker.UploadWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -26,14 +27,14 @@ class WorkManagerSyncScheduler
     @Inject
     constructor(
         @ApplicationContext private val context: Context,
-    ) {
+    ) : SyncScheduler {
         private val networkConstraints =
             Constraints
                 .Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
                 .build()
 
-        fun schedulePeriodicSync() {
+        override fun schedulePeriodicSync() {
             val request =
                 PeriodicWorkRequestBuilder<SyncWorker>(
                     SYNC_INTERVAL_HOURS,
@@ -43,16 +44,20 @@ class WorkManagerSyncScheduler
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 PERIODIC_SYNC_WORK_NAME,
-                ExistingPeriodicWorkPolicy.KEEP,
+                ExistingPeriodicWorkPolicy.UPDATE,
                 request,
             )
         }
 
-        fun scheduleImmediateSync() {
+        override fun scheduleImmediateSync() {
             val request =
                 OneTimeWorkRequestBuilder<SyncWorker>()
                     .setConstraints(networkConstraints)
-                    .build()
+                    .setInputData(
+                        workDataOf(
+                            SyncWorker.UPLOAD_LOCAL_SNAPSHOT_KEY to true,
+                        ),
+                    ).build()
 
             WorkManager.getInstance(context).enqueueUniqueWork(
                 IMMEDIATE_SYNC_WORK_NAME,
@@ -61,12 +66,15 @@ class WorkManagerSyncScheduler
             )
         }
 
-        fun enqueueUpload(movieId: Int) {
+        override fun enqueueUpload(movieId: Int) {
             val request =
                 OneTimeWorkRequestBuilder<UploadWorker>()
                     .setConstraints(networkConstraints)
-                    .setInputData(workDataOf(UploadWorker.MOVIE_ID_KEY to movieId))
-                    .addTag("$UPLOAD_WORK_NAME_PREFIX$movieId")
+                    .setInputData(
+                        workDataOf(
+                            UploadWorker.MOVIE_ID_KEY to movieId,
+                        ),
+                    ).addTag("$UPLOAD_WORK_NAME_PREFIX$movieId")
                     .build()
 
             WorkManager.getInstance(context).enqueueUniqueWork(

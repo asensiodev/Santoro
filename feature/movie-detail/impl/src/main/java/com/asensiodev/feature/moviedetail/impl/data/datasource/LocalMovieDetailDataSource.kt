@@ -5,5 +5,4 @@ import kotlinx.coroutines.flow.Flow
 
 internal interface LocalMovieDetailDataSource {
     fun getMovieDetail(id: Int): Flow<Result<Movie?>>
-    suspend fun updateMovieState(movie: Movie): Result<Boolean>
 }

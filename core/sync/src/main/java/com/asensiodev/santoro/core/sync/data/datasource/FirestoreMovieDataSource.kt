@@ -1,6 +1,7 @@
 package com.asensiodev.santoro.core.sync.data.datasource
 
 import com.asensiodev.santoro.core.sync.data.model.MovieSyncEntity
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Source
 import kotlinx.coroutines.CancellationException
@@ -104,30 +105,41 @@ internal class FirestoreMovieDataSource
                         .get()
                         .await()
                         .documents
-                        .mapNotNull { doc ->
-                            val movieId =
-                                (doc.getLong(FIELD_MOVIE_ID) ?: return@mapNotNull null).toInt()
-                            val title =
-                                doc
-                                    .getString(FIELD_TITLE)
-                                    .takeUnless { it.isNullOrEmpty() } ?: return@mapNotNull null
-                            MovieSyncEntity(
-                                movieId = movieId,
-                                title = title,
-                                posterPath = doc.getString(FIELD_POSTER_PATH),
-                                genres = doc.getString(FIELD_GENRES).orEmpty(),
-                                runtime = doc.getLong(FIELD_RUNTIME)?.toInt(),
-                                isWatched = doc.getBoolean(FIELD_IS_WATCHED) ?: false,
-                                isInWatchlist = doc.getBoolean(FIELD_IS_IN_WATCHLIST) ?: false,
-                                watchedAt = doc.getLong(FIELD_WATCHED_AT),
-                                updatedAt = doc.getLong(FIELD_UPDATED_AT) ?: 0L,
-                            )
-                        }
+                        .mapNotNull { document -> document.toSyncEntityOrNull() }
                 Result.success(movies)
             } catch (exception: CancellationException) {
                 throw exception
             } catch (exception: Exception) {
                 Result.failure(exception)
+            }
+
+        private fun DocumentSnapshot.toSyncEntityOrNull(): MovieSyncEntity? =
+            try {
+                val remoteMovieId = getLong(FIELD_MOVIE_ID)
+                val title = getString(FIELD_TITLE)?.takeIf(String::isNotBlank)
+                if (
+                    remoteMovieId == null ||
+                    remoteMovieId !in 1..Int.MAX_VALUE.toLong() ||
+                    title == null
+                ) {
+                    null
+                } else {
+                    MovieSyncEntity(
+                        movieId = remoteMovieId.toInt(),
+                        title = title,
+                        posterPath = getString(FIELD_POSTER_PATH),
+                        genres = getString(FIELD_GENRES).orEmpty(),
+                        runtime = getLong(FIELD_RUNTIME)?.toInt(),
+                        isWatched = getBoolean(FIELD_IS_WATCHED) ?: false,
+                        isInWatchlist = getBoolean(FIELD_IS_IN_WATCHLIST) ?: false,
+                        watchedAt = getLong(FIELD_WATCHED_AT),
+                        updatedAt = getLong(FIELD_UPDATED_AT) ?: 0L,
+                    )
+                }
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (_: Exception) {
+                null
             }
 
         override suspend fun deleteUserData(uid: String): Result<Unit> =

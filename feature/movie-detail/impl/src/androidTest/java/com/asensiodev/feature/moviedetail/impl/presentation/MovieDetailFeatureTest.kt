@@ -6,20 +6,19 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.asensiodev.core.designsystem.theme.SantoroTheme
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.ThemeOption
+import com.asensiodev.core.domain.repository.MovieMutationRepository
+import com.asensiodev.core.domain.repository.SyncScheduler
 import com.asensiodev.core.domain.repository.UserPreferencesRepository
 import com.asensiodev.core.domain.usecase.ObserveHasSeenDetailTooltipUseCase
 import com.asensiodev.core.domain.usecase.SetDetailTooltipSeenUseCase
 import com.asensiodev.core.testing.dispatcher.TestDispatcherProvider
 import com.asensiodev.feature.moviedetail.impl.domain.repository.MovieDetailRepository
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseCase
-import com.asensiodev.feature.moviedetail.impl.domain.usecase.UpdateMovieStateUseCase
-import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
@@ -46,11 +45,16 @@ class MovieDetailFeatureTest {
         viewModel =
             MovieDetailViewModel(
                 getMovieDetailUseCase = GetMovieDetailUseCase(repository, dispatchers),
-                updateMovieStateUseCase = UpdateMovieStateUseCase(repository, dispatchers),
-                syncScheduler =
-                    WorkManagerSyncScheduler(
-                        ApplicationProvider.getApplicationContext(),
-                    ),
+                movieMutationRepository =
+                    object : MovieMutationRepository {
+                        override suspend fun updateMovieState(movie: Movie) = Result.success(Unit)
+
+                        override suspend fun removeFromWatchlist(movieId: Int) =
+                            Result.success(Unit)
+
+                        override suspend fun clearMovies() = Unit
+                    },
+                syncScheduler = NoOpSyncScheduler,
                 observeHasSeenDetailTooltipUseCase =
                     ObserveHasSeenDetailTooltipUseCase(preferencesRepository),
                 setDetailTooltipSeenUseCase =
@@ -102,6 +106,14 @@ class MovieDetailFeatureTest {
     }
 }
 
+private object NoOpSyncScheduler : SyncScheduler {
+    override fun schedulePeriodicSync() = Unit
+
+    override fun scheduleImmediateSync() = Unit
+
+    override fun enqueueUpload(movieId: Int) = Unit
+}
+
 private class RetryMovieDetailRepository(
     private val movie: Movie,
 ) : MovieDetailRepository {
@@ -116,8 +128,6 @@ private class RetryMovieDetailRepository(
                 emit(Result.success(movie))
             }
         }
-
-    override suspend fun updateMovieState(movie: Movie): Result<Boolean> = Result.success(true)
 }
 
 private class FakeUserPreferencesRepository : UserPreferencesRepository {

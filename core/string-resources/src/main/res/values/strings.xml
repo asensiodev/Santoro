@@ -135,7 +135,7 @@
     <string name="settings_delete_account_confirm">Delete</string>
     <string name="settings_delete_account_cancel">Cancel</string>
     <string name="settings_delete_account_error">There was a problem deleting your account. Please try again.</string>
-    <string name="settings_logout_error">There was a problem syncing your data before logout. Please try again.</string>
+    <string name="settings_logout_error">There was a problem signing you out. Please try again.</string>
     <string name="settings_tmdb_attribution">Powered by TMDB</string>
     <string name="settings_tmdb_url">https://www.themoviedb.org</string>
     <string name="settings_privacy_policy">Privacy Policy</string>
@@ -148,8 +148,8 @@
     <string name="settings_account_linked_description">Your watchlist and watched movies are now backed up in the cloud. You can access them from any device.</string>
     <string name="settings_account_linked_button">Great!</string>
     <string name="settings_account_collision_title">Account already exists</string>
-    <string name="settings_account_collision_message">This Google account is already linked to another user. Do you want to switch to that account? Note: Your current guest data will be lost.</string>
-    <string name="settings_account_collision_confirm">Switch Account</string>
+    <string name="settings_account_collision_message">This Google account already has a Santoro account. Continuing will delete the lists from this guest session. They will not be merged with that account. You will then need to sign in with Google.</string>
+    <string name="settings_account_collision_confirm">Continue to Login</string>
     <string name="settings_account_collision_cancel">Cancel</string>
 
     <!-- Profile Screen -->
@@ -163,7 +163,10 @@
 
     <!-- Guest Onboarding -->
     <string name="guest_onboarding_title">Welcome to Santoro!</string>
-    <string name="guest_onboarding_description">You are browsing as a <b>guest</b>. You have full access to search for movies, add them to your Watchlist and mark them as watched.\n\n<b>Note:</b> Your lists are saved on this device only. If you change phones or uninstall the app, your data will be lost unless you link a Google account later.</string>
+    <string name="guest_onboarding_description">As a <b>guest</b>, you can search for movies, save them to your Watchlist and mark them as watched.\n\nTo keep access to your lists when changing phones or uninstalling the app, link Google first. Linking preserves your lists if that Google account does not already have a Santoro account.\n\n<b>If you already have another Santoro account:</b> switching to it deletes the lists from this guest session. Lists are not merged, and we will ask you to confirm before switching.</string>
+    <string name="login_guest_data_notice">You can keep your guest lists by linking Google. If you already have another Santoro account, switching to it deletes your guest lists; they are not merged.</string>
+    <string name="login_guest_confirmation_title">Continue as a guest?</string>
+    <string name="login_guest_confirmation_cancel">Cancel</string>
     <string name="guest_onboarding_button">Got it, let\'s explore!</string>
 
     <!-- Generic -->

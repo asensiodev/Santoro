@@ -292,43 +292,6 @@ class MovieDaoTest {
     }
 
     @Test
-    fun givenRemoteMovie_whenSyncUpserted_thenFieldsAndSqlDefaultsStored() {
-        runBlocking {
-            movieDao.upsertMovieFromSync(
-                movieId = 601,
-                title = "Synced",
-                posterPath = "/synced.jpg",
-                genres = "[\"Drama\"]",
-                runtime = 140,
-                isWatched = true,
-                isInWatchlist = false,
-                watchedAt = 900L,
-                updatedAt = 1_000L,
-            )
-
-            movieDao.getMovieById(601) shouldBeEqualTo
-                com.asensiodev.santoro.core.database.data.model.MovieEntity(
-                    id = 601,
-                    title = "Synced",
-                    overview = "",
-                    posterPath = "/synced.jpg",
-                    releaseDate = null,
-                    popularity = 0.0,
-                    voteAverage = 0.0,
-                    voteCount = 0,
-                    genres = "[\"Drama\"]",
-                    productionCountries = "",
-                    tagline = null,
-                    runtime = 140,
-                    isWatched = true,
-                    isInWatchlist = false,
-                    watchedAt = 900L,
-                    updatedAt = 1_000L,
-                )
-        }
-    }
-
-    @Test
     fun givenRichMovie_whenSyncStateUpdated_thenContentFieldsRemainUnchanged() {
         runBlocking {
             val movie =
@@ -387,7 +350,7 @@ class MovieDaoTest {
             movieDao.insertOrUpdateMovie(MockUtils.createTestMovieEntity(902, isInWatchlist = true))
             movieDao.insertOrUpdateMovie(MockUtils.createTestMovieEntity(903))
 
-            movieDao.clearAllUserData()
+            movieDao.clearMovies()
 
             movieDao.getWatchedMovies().first().isEmpty() shouldBeEqualTo true
             movieDao.getWatchlistMovies().first().isEmpty() shouldBeEqualTo true

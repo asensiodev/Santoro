@@ -52,20 +52,22 @@ class WorkManagerSyncSchedulerTest {
     }
 
     @Test
-    fun `GIVEN periodic sync scheduled twice WHEN inspected THEN connected six-hour work is retained`() {
+    fun `GIVEN periodic sync scheduled twice WHEN inspected THEN connected work is updated without input`() {
         sut.schedulePeriodicSync()
 
         val first = uniqueWork(PERIODIC_SYNC_WORK_NAME).single()
 
         sut.schedulePeriodicSync()
 
-        val retained = uniqueWork(PERIODIC_SYNC_WORK_NAME).single()
-        retained.id shouldBeEqualTo first.id
-        retained.state shouldBeEqualTo WorkInfo.State.ENQUEUED
-        workSpecWorkerClassName(retained) shouldBeEqualTo SyncWorker::class.java.name
-        retained.constraints.requiredNetworkType shouldBeEqualTo NetworkType.CONNECTED
-        retained.periodicityInfo?.repeatIntervalMillis shouldBeEqualTo TimeUnit.HOURS.toMillis(6)
-        retained.periodicityInfo?.flexIntervalMillis shouldBeEqualTo TimeUnit.HOURS.toMillis(6)
+        val updated = uniqueWork(PERIODIC_SYNC_WORK_NAME).single()
+        updated.id shouldBeEqualTo first.id
+        updated.state shouldBeEqualTo WorkInfo.State.ENQUEUED
+        workSpecWorkerClassName(updated) shouldBeEqualTo SyncWorker::class.java.name
+        updated.constraints.requiredNetworkType shouldBeEqualTo NetworkType.CONNECTED
+        updated.periodicityInfo?.repeatIntervalMillis shouldBeEqualTo TimeUnit.HOURS.toMillis(6)
+        updated.periodicityInfo?.flexIntervalMillis shouldBeEqualTo TimeUnit.HOURS.toMillis(6)
+        workSpecInput(updated)?.getBoolean(SyncWorker.UPLOAD_LOCAL_SNAPSHOT_KEY, false) shouldBeEqualTo false
+        workSpecInput(updated)?.keyValueMap?.size shouldBeEqualTo 0
     }
 
     @Test
@@ -81,6 +83,8 @@ class WorkManagerSyncSchedulerTest {
         replacement.state shouldBeEqualTo WorkInfo.State.ENQUEUED
         workSpecWorkerClassName(replacement) shouldBeEqualTo SyncWorker::class.java.name
         replacement.constraints.requiredNetworkType shouldBeEqualTo NetworkType.CONNECTED
+        workSpecInput(replacement)?.getBoolean(SyncWorker.UPLOAD_LOCAL_SNAPSHOT_KEY, false) shouldBeEqualTo true
+        workSpecInput(replacement)?.keyValueMap?.size shouldBeEqualTo 1
     }
 
     @Test
@@ -103,6 +107,8 @@ class WorkManagerSyncSchedulerTest {
         independent.tags.contains(uploadWorkName(SECOND_MOVIE_ID)) shouldBeEqualTo true
         workSpecInput(replacement)?.getInt(UploadWorker.MOVIE_ID_KEY, -1) shouldBeEqualTo FIRST_MOVIE_ID
         workSpecInput(independent)?.getInt(UploadWorker.MOVIE_ID_KEY, -1) shouldBeEqualTo SECOND_MOVIE_ID
+        workSpecInput(replacement)?.keyValueMap?.size shouldBeEqualTo 1
+        workSpecInput(independent)?.keyValueMap?.size shouldBeEqualTo 1
     }
 
     private fun uniqueWork(name: String): List<WorkInfo> = workManager.getWorkInfosForUniqueWork(name).get()

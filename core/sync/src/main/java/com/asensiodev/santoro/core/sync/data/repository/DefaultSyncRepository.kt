@@ -1,70 +1,116 @@
 package com.asensiodev.santoro.core.sync.data.repository
 
-import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.auth.domain.repository.AuthRepository
+import com.asensiodev.core.domain.model.Genre
+import com.asensiodev.core.domain.model.MovieSyncData
+import com.asensiodev.core.domain.repository.AccountDeletionRecoveryRepository
+import com.asensiodev.core.domain.repository.SyncRepository
+import com.asensiodev.core.domain.repository.SyncStore
 import com.asensiodev.core.domain.result.rethrowCancellation
-import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import com.asensiodev.santoro.core.sync.data.datasource.MovieSyncRemoteDataSource
 import com.asensiodev.santoro.core.sync.data.model.MovieSyncEntity
-import com.asensiodev.santoro.core.sync.domain.repository.SyncRepository
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 internal class DefaultSyncRepository
     @Inject
     constructor(
         private val firestoreDataSource: MovieSyncRemoteDataSource,
-        private val databaseRepository: DatabaseRepository,
+        private val syncStore: SyncStore,
+        private val authRepository: AuthRepository,
+        private val accountDeletionRecoveryRepository: AccountDeletionRecoveryRepository,
     ) : SyncRepository {
         private val gson = Gson()
 
         override suspend fun uploadMovie(
             uid: String,
             movieId: Int,
-        ): Result<Unit> {
-            val movieResult = databaseRepository.getMovieById(movieId).rethrowCancellation()
-            val movie = movieResult.getOrNull()
-            return when {
-                movieResult.isFailure ->
-                    Result.failure(
-                        movieResult.exceptionOrNull() ?: Exception("Failed to get movie for sync"),
-                    )
-
-                movie == null -> Result.success(Unit)
-                else ->
-                    firestoreDataSource
-                        .uploadMovie(
-                            uid,
-                            movie.toSyncEntity(),
-                        ).rethrowCancellation()
-            }
-        }
-
-        override suspend fun uploadPendingChanges(uid: String): Result<Unit> {
-            val moviesResult = databaseRepository.getMoviesForSync().rethrowCancellation()
-            if (moviesResult.isFailure) {
-                return Result.failure(
-                    moviesResult.exceptionOrNull() ?: Exception("Failed to get movies for sync"),
+        ): Result<Unit> =
+            syncStore
+                .getMovieForUpload(movieId)
+                .rethrowCancellation()
+                .fold(
+                    onSuccess = { movie -> uploadMovie(uid, movie) },
+                    onFailure = Result.Companion::failure,
                 )
-            }
 
-            return uploadMovies(uid, moviesResult.getOrThrow())
-        }
+        override suspend fun uploadLocalSnapshot(uid: String): Result<Unit> =
+            syncStore
+                .getMoviesForUpload()
+                .rethrowCancellation()
+                .fold(
+                    onSuccess = { movies -> uploadMovies(uid, movies) },
+                    onFailure = Result.Companion::failure,
+                )
 
         private suspend fun uploadMovies(
             uid: String,
-            movies: List<Movie>,
+            movies: List<MovieSyncData>,
         ): Result<Unit> {
-            if (movies.isEmpty()) {
-                return Result.success(Unit)
+            val chunks =
+                movies
+                    .map { movie -> movie.toSyncEntity() }
+                    .chunked(FULL_SNAPSHOT_UPLOAD_CHUNK_SIZE)
+                    .iterator()
+            var result = Result.success(Unit)
+            while (chunks.hasNext() && result.isSuccess && uid.canAccessFirestore()) {
+                result = firestoreDataSource.uploadMovies(uid, chunks.next()).rethrowCancellation()
             }
-            val entities =
-                movies.map { movie -> movie.toSyncEntity() }
-            return firestoreDataSource.uploadMovies(uid, entities).rethrowCancellation()
+            return result
         }
 
-        private fun Movie.toSyncEntity() =
+        private suspend fun uploadMovie(
+            uid: String,
+            movie: MovieSyncData?,
+        ): Result<Unit> {
+            val entity = movie?.toSyncEntity() ?: return Result.success(Unit)
+            return if (uid.canAccessFirestore()) {
+                firestoreDataSource.uploadMovie(uid, entity).rethrowCancellation()
+            } else {
+                Result.success(Unit)
+            }
+        }
+
+        override suspend fun downloadAndMerge(uid: String): Result<Unit> {
+            if (!uid.canAccessFirestore()) return Result.success(Unit)
+            return firestoreDataSource
+                .downloadUserMovies(uid)
+                .rethrowCancellation()
+                .fold(
+                    onSuccess = { remoteMovies -> mergeDownloaded(uid, remoteMovies) },
+                    onFailure = Result.Companion::failure,
+                )
+        }
+
+        private suspend fun mergeDownloaded(
+            uid: String,
+            remoteMovies: List<MovieSyncEntity>,
+        ): Result<Unit> =
+            try {
+                val movies = remoteMovies.map { movie -> movie.toSyncData() }
+                if (uid.canAccessFirestore()) {
+                    syncStore
+                        .completeDownloadedMerge(movies) { uid.canAccessFirestore() }
+                        .rethrowCancellation()
+                } else {
+                    Result.success(Unit)
+                }
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                Result.failure(exception)
+            }
+
+        override suspend fun deleteUserData(uid: String): Result<Unit> =
+            firestoreDataSource.deleteUserData(uid).rethrowCancellation()
+
+        private fun MovieSyncData.toSyncEntity() =
             MovieSyncEntity(
-                movieId = id,
+                movieId = movieId,
                 title = title,
                 posterPath = posterPath,
                 genres = gson.toJson(genres),
@@ -75,106 +121,43 @@ internal class DefaultSyncRepository
                 updatedAt = updatedAt,
             )
 
-        override suspend fun downloadAndMerge(uid: String): Result<Unit> {
-            val downloadResult = firestoreDataSource.downloadUserMovies(uid).rethrowCancellation()
-            if (downloadResult.isFailure) {
-                return Result.failure(
-                    downloadResult.exceptionOrNull() ?: Exception("Download failed"),
-                )
-            }
-            return mergeWithLocalMovies(downloadResult.getOrDefault(emptyList()))
-        }
-
-        override suspend fun deleteUserData(uid: String): Result<Unit> =
-            firestoreDataSource.deleteUserData(uid).rethrowCancellation()
-
-        private suspend fun mergeWithLocalMovies(
-            remoteMovies: List<MovieSyncEntity>,
-        ): Result<Unit> {
-            val localMoviesResult = databaseRepository.getMoviesForSync().rethrowCancellation()
-            if (localMoviesResult.isFailure) {
-                return Result.failure(
-                    localMoviesResult.exceptionOrNull() ?: Exception("Failed to get local movies"),
-                )
-            }
-            return mergeMovies(
-                remoteMovies = remoteMovies,
-                localMoviesById = localMoviesResult.getOrThrow().associateBy { it.id },
+        private fun MovieSyncEntity.toSyncData(): MovieSyncData {
+            val parsedGenres =
+                if (genres.isBlank()) {
+                    emptyList()
+                } else {
+                    try {
+                        gson.fromJson<List<Genre>?>(genres, GENRES_TYPE).orEmpty()
+                    } catch (_: Exception) {
+                        emptyList()
+                    }
+                }
+            return MovieSyncData(
+                movieId = movieId,
+                title = title,
+                posterPath = posterPath,
+                genres = parsedGenres,
+                runtime = runtime,
+                isWatched = isWatched,
+                isInWatchlist = isInWatchlist,
+                watchedAt = watchedAt,
+                updatedAt = updatedAt,
             )
         }
 
-        private suspend fun mergeMovies(
-            remoteMovies: List<MovieSyncEntity>,
-            localMoviesById: Map<Int, Movie>,
-        ): Result<Unit> {
-            remoteMovies.forEach { remote ->
-                val localMovie = localMoviesById[remote.movieId]
-                val result =
-                    when {
-                        localMovie != null && remote.updatedAt > localMovie.updatedAt -> {
-                            databaseRepository.updateMovieSyncState(
-                                movieId = remote.movieId,
-                                isWatched = remote.isWatched,
-                                isInWatchlist = remote.isInWatchlist,
-                                watchedAt = remote.watchedAt,
-                                updatedAt = remote.updatedAt,
-                            )
-                        }
-
-                        localMovie != null -> {
-                            Result.success(Unit)
-                        }
-
-                        else -> {
-                            mergeMissingFromSyncLocalMovie(remote)
-                        }
-                    }
-                result.rethrowCancellation()
-                if (result.isFailure) {
-                    return Result.failure(
-                        result.exceptionOrNull() ?: Exception("Merge failed"),
-                    )
-                }
-            }
-            return Result.success(Unit)
+        private suspend fun String.canAccessFirestore(): Boolean {
+            val uid = this
+            return combine(
+                accountDeletionRecoveryRepository.isLocalCleanupPending,
+                accountDeletionRecoveryRepository.isRemoteDeletionInFlight,
+                authRepository.currentUser,
+            ) { marker, remoteDeletionInFlight, currentUser ->
+                !marker && !remoteDeletionInFlight && uid.isNotBlank() && currentUser?.uid == uid
+            }.first()
         }
 
-        private suspend fun mergeMissingFromSyncLocalMovie(remote: MovieSyncEntity): Result<Unit> {
-            val savedLocallyResult =
-                databaseRepository
-                    .getMovieById(remote.movieId)
-                    .rethrowCancellation()
-            if (savedLocallyResult.isFailure) {
-                return Result.failure(
-                    savedLocallyResult.exceptionOrNull() ?: Exception("Failed to get local movie"),
-                )
-            }
-
-            val savedLocally = savedLocallyResult.getOrNull()
-            return when {
-                savedLocally == null ->
-                    databaseRepository.upsertMovieFromSync(
-                        movieId = remote.movieId,
-                        title = remote.title,
-                        posterPath = remote.posterPath,
-                        genres = remote.genres,
-                        runtime = remote.runtime,
-                        isWatched = remote.isWatched,
-                        isInWatchlist = remote.isInWatchlist,
-                        watchedAt = remote.watchedAt,
-                        updatedAt = remote.updatedAt,
-                    )
-
-                remote.updatedAt > savedLocally.updatedAt ->
-                    databaseRepository.updateMovieSyncState(
-                        movieId = remote.movieId,
-                        isWatched = remote.isWatched,
-                        isInWatchlist = remote.isInWatchlist,
-                        watchedAt = remote.watchedAt,
-                        updatedAt = remote.updatedAt,
-                    )
-
-                else -> Result.success(Unit)
-            }.rethrowCancellation()
+        private companion object {
+            const val FULL_SNAPSHOT_UPLOAD_CHUNK_SIZE = 500
+            val GENRES_TYPE = object : TypeToken<List<Genre>>() {}.type
         }
     }

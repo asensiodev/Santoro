@@ -15,7 +15,4 @@ internal class RoomMovieDetailDataSource
             flow {
                 emit(databaseRepository.getMovieById(id))
             }
-
-        override suspend fun updateMovieState(movie: Movie): Result<Boolean> =
-            databaseRepository.updateMovieState(movie)
     }

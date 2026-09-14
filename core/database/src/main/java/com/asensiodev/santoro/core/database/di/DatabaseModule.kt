@@ -2,9 +2,10 @@ package com.asensiodev.santoro.core.database.di
 
 import android.content.Context
 import androidx.room.Room
+import com.asensiodev.core.domain.repository.MovieMutationRepository
+import com.asensiodev.core.domain.repository.SyncStore
 import com.asensiodev.santoro.core.database.data.SantoroRoomDatabase
 import com.asensiodev.santoro.core.database.data.dao.BrowseCacheDao
-import com.asensiodev.santoro.core.database.data.dao.MovieDao
 import com.asensiodev.santoro.core.database.data.repository.RoomDatabaseRepository
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import dagger.Module
@@ -35,16 +36,20 @@ object DatabaseModule {
             ).build()
 
     @Provides
-    fun provideMovieDao(database: SantoroRoomDatabase): MovieDao = database.movieDao()
-
-    @Provides
     fun provideBrowseCacheDao(database: SantoroRoomDatabase): BrowseCacheDao =
         database.browseCacheDao()
 
     @Provides
-    @Singleton
-    fun provideDatabaseRepository(movieDao: MovieDao): DatabaseRepository =
-        RoomDatabaseRepository(movieDao)
+    fun provideDatabaseRepository(repository: RoomDatabaseRepository): DatabaseRepository =
+        repository
+
+    @Provides
+    fun provideMovieMutationRepository(
+        repository: RoomDatabaseRepository,
+    ): MovieMutationRepository = repository
+
+    @Provides
+    fun provideSyncStore(repository: RoomDatabaseRepository): SyncStore = repository
 }
 
 private const val DATABASE_NAME = "movies_database"

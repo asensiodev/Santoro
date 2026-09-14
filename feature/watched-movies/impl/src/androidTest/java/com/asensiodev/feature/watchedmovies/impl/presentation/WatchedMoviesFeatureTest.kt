@@ -127,44 +127,4 @@ private class FakeDatabaseRepository(
                 },
             )
         }
-
-    override suspend fun updateMovieState(movie: Movie): Result<Boolean> {
-        movies.value = movies.value.map { if (it.id == movie.id) movie else it }
-        return Result.success(true)
-    }
-
-    override suspend fun removeFromWatchlist(movieId: Int): Result<Boolean> {
-        movies.value =
-            movies.value.map { movie ->
-                if (movie.id == movieId) movie.copy(isInWatchlist = false) else movie
-            }
-        return Result.success(true)
-    }
-
-    override suspend fun getMoviesForSync(): Result<List<Movie>> = Result.success(movies.value)
-
-    override suspend fun upsertMovieFromSync(
-        movieId: Int,
-        title: String,
-        posterPath: String?,
-        genres: String,
-        runtime: Int?,
-        isWatched: Boolean,
-        isInWatchlist: Boolean,
-        watchedAt: Long?,
-        updatedAt: Long,
-    ): Result<Unit> = Result.success(Unit)
-
-    override suspend fun updateMovieSyncState(
-        movieId: Int,
-        isWatched: Boolean,
-        isInWatchlist: Boolean,
-        watchedAt: Long?,
-        updatedAt: Long,
-    ): Result<Unit> = Result.success(Unit)
-
-    override suspend fun clearAllUserData(): Result<Unit> {
-        movies.value = emptyList()
-        return Result.success(Unit)
-    }
 }

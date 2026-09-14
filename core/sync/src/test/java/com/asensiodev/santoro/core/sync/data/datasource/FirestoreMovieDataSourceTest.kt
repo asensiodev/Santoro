@@ -161,6 +161,70 @@ class FirestoreMovieDataSourceTest {
         }
 
     @Test
+    fun `GIVEN out of range and noncanonical movie IDs WHEN downloading THEN skips only out of range IDs`() =
+        runTest {
+            val querySnapshot: QuerySnapshot = mockk()
+            val zero = movieDocument(movieId = 0L)
+            val overflow = movieDocument(movieId = Int.MAX_VALUE.toLong() + 1L)
+            val noncanonical = movieDocument(movieId = 42L)
+            val valid = movieDocument(movieId = 7L)
+            every { noncanonical.id } returns "not-42"
+            every { moviesCollection.get() } returns Tasks.forResult(querySnapshot)
+            every { querySnapshot.documents } returns listOf(zero, overflow, noncanonical, valid)
+
+            val result = sut.downloadUserMovies("uid123")
+
+            result.getOrThrow().map { it.movieId } shouldBeEqualTo listOf(42, 7)
+        }
+
+    @Test
+    fun `GIVEN invalid required fields and valid sibling WHEN downloading THEN skips malformed documents`() =
+        runTest {
+            val querySnapshot: QuerySnapshot = mockk()
+            val missingMovieId = movieDocument(movieId = 1L)
+            val missingTitle = movieDocument(movieId = 2L)
+            val blankTitle = movieDocument(movieId = 3L)
+            val wrongMovieIdType = movieDocument(movieId = 4L)
+            val wrongTitleType = movieDocument(movieId = 5L)
+            val valid = movieDocument(movieId = 6L)
+            every { missingMovieId.getLong("movieId") } returns null
+            every { missingTitle.getString("title") } returns null
+            every { blankTitle.getString("title") } returns " "
+            every { wrongMovieIdType.getLong("movieId") } throws IllegalArgumentException("wrong type")
+            every { wrongTitleType.getString("title") } throws IllegalArgumentException("wrong type")
+            every { moviesCollection.get() } returns Tasks.forResult(querySnapshot)
+            every { querySnapshot.documents } returns
+                listOf(
+                    missingMovieId,
+                    missingTitle,
+                    blankTitle,
+                    wrongMovieIdType,
+                    wrongTitleType,
+                    valid,
+                )
+
+            val result = sut.downloadUserMovies("uid123")
+
+            result.getOrThrow().map { it.movieId } shouldBeEqualTo listOf(6)
+        }
+
+    @Test
+    fun `GIVEN wrong typed optional field and valid sibling WHEN downloading THEN skips malformed document`() =
+        runTest {
+            val querySnapshot: QuerySnapshot = mockk()
+            val valid = movieDocument(movieId = 3L)
+            val malformed = movieDocument(movieId = 4L)
+            every { malformed.getBoolean("isWatched") } throws
+                IllegalArgumentException("wrong type")
+            every { moviesCollection.get() } returns Tasks.forResult(querySnapshot)
+            every { querySnapshot.documents } returns listOf(valid, malformed)
+
+            val result = sut.downloadUserMovies("uid123")
+
+            result.getOrThrow().map { it.movieId } shouldBeEqualTo listOf(3)
+        }
+
+    @Test
     fun `GIVEN Firestore throws WHEN downloadUserMovies THEN returns failure`() =
         runTest {
             every {
@@ -173,9 +237,13 @@ class FirestoreMovieDataSourceTest {
         }
 
     @Test
-    fun `GIVEN download is cancelled WHEN downloadUserMovies THEN cancellation propagates`() =
+    fun `GIVEN document decoding is cancelled WHEN downloadUserMovies THEN cancellation propagates`() =
         runTest {
-            every { moviesCollection.get() } returns Tasks.forException(CancellationException())
+            val querySnapshot: QuerySnapshot = mockk()
+            val document = movieDocument(movieId = 1L)
+            every { document.getString("posterPath") } throws CancellationException()
+            every { moviesCollection.get() } returns Tasks.forResult(querySnapshot)
+            every { querySnapshot.documents } returns listOf(document)
 
             val exception =
                 try {
@@ -186,56 +254,6 @@ class FirestoreMovieDataSourceTest {
                 }
 
             (exception is CancellationException) shouldBeEqualTo true
-        }
-
-    @Test
-    fun `GIVEN document without movieId WHEN downloadUserMovies THEN skips invalid document`() =
-        runTest {
-            val querySnapshot: QuerySnapshot = mockk()
-            val invalidDoc: DocumentSnapshot = mockk()
-
-            every { moviesCollection.get() } returns Tasks.forResult(querySnapshot)
-            every { querySnapshot.documents } returns listOf(invalidDoc)
-            every { invalidDoc.getLong("movieId") } returns null
-
-            val result = sut.downloadUserMovies(uid = "uid123")
-
-            result.isSuccess.shouldBeTrue()
-            result.getOrThrow().size shouldBeEqualTo 0
-        }
-
-    @Test
-    fun `GIVEN document with null title WHEN downloadUserMovies THEN skips invalid document`() =
-        runTest {
-            val querySnapshot: QuerySnapshot = mockk()
-            val invalidDoc: DocumentSnapshot = mockk()
-
-            every { moviesCollection.get() } returns Tasks.forResult(querySnapshot)
-            every { querySnapshot.documents } returns listOf(invalidDoc)
-            every { invalidDoc.getLong("movieId") } returns 1L
-            every { invalidDoc.getString("title") } returns null
-
-            val result = sut.downloadUserMovies(uid = "uid123")
-
-            result.isSuccess.shouldBeTrue()
-            result.getOrThrow().size shouldBeEqualTo 0
-        }
-
-    @Test
-    fun `GIVEN document with empty title WHEN downloadUserMovies THEN skips invalid document`() =
-        runTest {
-            val querySnapshot: QuerySnapshot = mockk()
-            val invalidDoc: DocumentSnapshot = mockk()
-
-            every { moviesCollection.get() } returns Tasks.forResult(querySnapshot)
-            every { querySnapshot.documents } returns listOf(invalidDoc)
-            every { invalidDoc.getLong("movieId") } returns 1L
-            every { invalidDoc.getString("title") } returns ""
-
-            val result = sut.downloadUserMovies(uid = "uid123")
-
-            result.isSuccess.shouldBeTrue()
-            result.getOrThrow().size shouldBeEqualTo 0
         }
 
     @Test
@@ -406,5 +424,18 @@ class FirestoreMovieDataSourceTest {
 
             thrown shouldBeEqualTo cancellation
             verify(exactly = 0) { userDocument.delete() }
+        }
+
+    private fun movieDocument(movieId: Long): DocumentSnapshot =
+        mockk {
+            every { getLong("movieId") } returns movieId
+            every { getString("title") } returns "Movie"
+            every { getString("posterPath") } returns null
+            every { getString("genres") } returns ""
+            every { getLong("runtime") } returns null
+            every { getBoolean("isWatched") } returns false
+            every { getBoolean("isInWatchlist") } returns false
+            every { getLong("watchedAt") } returns null
+            every { getLong("updatedAt") } returns 1L
         }
 }

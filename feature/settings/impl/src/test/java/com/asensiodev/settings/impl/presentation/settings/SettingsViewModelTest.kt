@@ -3,6 +3,7 @@ package com.asensiodev.settings.impl.presentation.settings
 import android.content.Context
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
+import com.asensiodev.auth.domain.model.ExpectedUserSignOutOutcome
 import com.asensiodev.auth.domain.usecase.ObserveAuthStateUseCase
 import com.asensiodev.auth.domain.usecase.SignOutUseCase
 import com.asensiodev.auth.helper.GoogleSignInHelper
@@ -11,7 +12,6 @@ import com.asensiodev.core.domain.model.SantoroUser
 import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.core.domain.usecase.ObserveThemeUseCase
 import com.asensiodev.core.domain.usecase.SetThemeUseCase
-import com.asensiodev.santoro.core.sync.domain.repository.SyncRepository
 import com.asensiodev.settings.impl.domain.usecase.DeleteAccountUseCase
 import com.asensiodev.ui.UiText
 import io.mockk.coEvery
@@ -28,6 +28,7 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -44,11 +45,10 @@ import com.asensiodev.santoro.core.stringresources.R as SR
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
     private val observeAuthStateUseCase: ObserveAuthStateUseCase = mockk(relaxed = true)
-    private val signOutUseCase: SignOutUseCase = mockk(relaxed = true)
+    private val signOutUseCase: SignOutUseCase = mockk()
     private val deleteAccountUseCase: DeleteAccountUseCase = mockk(relaxed = true)
     private val observeThemeUseCase: ObserveThemeUseCase = mockk()
     private val setThemeUseCase: SetThemeUseCase = mockk(relaxed = true)
-    private val syncRepository: SyncRepository = mockk(relaxed = true)
     private val googleSignInHelper: GoogleSignInHelper = mockk()
     private val context: Context = mockk(relaxed = true)
 
@@ -61,7 +61,7 @@ class SettingsViewModelTest {
         Dispatchers.setMain(testDispatcher)
         every { observeThemeUseCase() } returns flowOf(ThemeOption.SYSTEM)
         every { observeAuthStateUseCase() } returns flowOf(null)
-        coEvery { syncRepository.uploadPendingChanges(any()) } returns Result.success(Unit)
+        coEvery { signOutUseCase(any()) } returns ExpectedUserSignOutOutcome.SignedOut
         coEvery { googleSignInHelper.signIn(context) } returns Result.success(ID_TOKEN)
         sut =
             SettingsViewModel(
@@ -70,7 +70,6 @@ class SettingsViewModelTest {
                 deleteAccountUseCase = deleteAccountUseCase,
                 observeThemeUseCase = observeThemeUseCase,
                 setThemeUseCase = setThemeUseCase,
-                syncRepository = syncRepository,
                 googleSignInHelper = googleSignInHelper,
             )
     }
@@ -143,45 +142,6 @@ class SettingsViewModelTest {
         }
 
     @Test
-    fun `GIVEN OnLogoutClicked WHEN process THEN signs out without clearing data`() =
-        runTest {
-            sut.process(SettingsIntent.OnLogoutClicked)
-            advanceUntilIdle()
-
-            coVerify(exactly = 1) { signOutUseCase() }
-        }
-
-    @Test
-    fun `GIVEN Google user WHEN OnLogoutClicked THEN uploads changes before signing out`() =
-        runTest {
-            val user = SantoroUser("uid123", "test@email.com", null, null, false)
-            every { observeAuthStateUseCase() } returns flowOf(user)
-            sut.process(SettingsIntent.ObserveAuth)
-            advanceUntilIdle()
-
-            sut.process(SettingsIntent.OnLogoutClicked)
-            advanceUntilIdle()
-
-            coVerify(exactly = 1) { syncRepository.uploadPendingChanges("uid123") }
-            coVerify(exactly = 1) { signOutUseCase() }
-        }
-
-    @Test
-    fun `GIVEN Google user and sync failure WHEN OnLogoutClicked THEN keeps data and does not sign out`() =
-        runTest {
-            val user = SantoroUser("uid123", "test@email.com", null, null, false)
-            every { observeAuthStateUseCase() } returns flowOf(user)
-            coEvery { syncRepository.uploadPendingChanges("uid123") } returns Result.failure(Exception())
-            sut.process(SettingsIntent.ObserveAuth)
-            advanceUntilIdle()
-
-            sut.process(SettingsIntent.OnLogoutClicked)
-            advanceUntilIdle()
-
-            coVerify(exactly = 0) { signOutUseCase() }
-        }
-
-    @Test
     fun `GIVEN auth observation is active WHEN ObserveAuth repeats THEN subscribes once`() =
         runTest {
             var subscriptions = 0
@@ -234,36 +194,127 @@ class SettingsViewModelTest {
         }
 
     @Test
-    fun `GIVEN logout starts WHEN intent is processed THEN loading is set synchronously`() =
+    fun `GIVEN registered user WHEN logout THEN signs out expected uid directly`() =
         runTest {
-            sut.process(SettingsIntent.OnLogoutClicked)
+            observeRegisteredUser()
 
-            sut.uiState.value.isLoading shouldBeEqualTo true
+            sut.process(SettingsIntent.OnLogoutClicked)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { signOutUseCase(UID) }
+            sut.uiState.value.isLoading shouldBeEqualTo false
+            sut.uiState.value.pendingMessage shouldBeEqualTo null
         }
 
     @Test
-    fun `GIVEN logout is pending WHEN destructive intents repeat THEN destructive work runs once`() =
+    fun `GIVEN no current user WHEN logout THEN shows error without signing out`() =
         runTest {
-            val user = SantoroUser("uid123", "test@email.com", null, null, false)
-            val releaseSync = CompletableDeferred<Unit>()
-            every { observeAuthStateUseCase() } returns flowOf(user)
-            coEvery { syncRepository.uploadPendingChanges("uid123") } coAnswers {
-                releaseSync.await()
-                Result.success(Unit)
-            }
+            sut.process(SettingsIntent.OnLogoutClicked)
+            advanceUntilIdle()
+
+            assertLogoutError()
+            coVerify(exactly = 0) { signOutUseCase(any()) }
+        }
+
+    @Test
+    fun `GIVEN anonymous user WHEN logout THEN shows error without signing out`() =
+        runTest {
+            every { observeAuthStateUseCase() } returns flowOf(ANONYMOUS_USER)
             sut.process(SettingsIntent.ObserveAuth)
             advanceUntilIdle()
 
             sut.process(SettingsIntent.OnLogoutClicked)
+            advanceUntilIdle()
+
+            assertLogoutError()
+            coVerify(exactly = 0) { signOutUseCase(any()) }
+        }
+
+    @Test
+    fun `GIVEN signout mismatch WHEN logout THEN localized error is pending`() =
+        runTest {
+            coEvery { signOutUseCase(UID) } returns
+                ExpectedUserSignOutOutcome.AuthenticatedUserMismatch
+            observeRegisteredUser()
+
             sut.process(SettingsIntent.OnLogoutClicked)
-            sut.process(SettingsIntent.ConfirmDeleteAccount(context))
+            advanceUntilIdle()
+
+            assertLogoutError()
+        }
+
+    @Test
+    fun `GIVEN thrown signout failure WHEN logout THEN localized error is pending`() =
+        runTest {
+            coEvery { signOutUseCase(UID) } throws IllegalStateException("auth")
+            observeRegisteredUser()
+
+            sut.process(SettingsIntent.OnLogoutClicked)
+            advanceUntilIdle()
+
+            assertLogoutError()
+        }
+
+    @Test
+    fun `GIVEN no authenticated user signout outcome WHEN logout THEN completes without error`() =
+        runTest {
+            coEvery { signOutUseCase(UID) } returns
+                ExpectedUserSignOutOutcome.NoAuthenticatedUser
+            observeRegisteredUser()
+
+            sut.process(SettingsIntent.OnLogoutClicked)
+            advanceUntilIdle()
+
+            sut.uiState.value.isLoading shouldBeEqualTo false
+            sut.uiState.value.pendingMessage shouldBeEqualTo null
+        }
+
+    @Test
+    fun `GIVEN signout cancellation WHEN logout THEN loading resets without error`() =
+        runTest {
+            coEvery { signOutUseCase(UID) } throws CancellationException()
+            observeRegisteredUser()
+
+            sut.process(SettingsIntent.OnLogoutClicked)
+            advanceUntilIdle()
+
+            sut.uiState.value.isLoading shouldBeEqualTo false
+            sut.uiState.value.pendingMessage shouldBeEqualTo null
+        }
+
+    @Test
+    fun `GIVEN signout is pending WHEN logout repeats THEN signout runs once`() =
+        runTest {
+            val signOut = CompletableDeferred<ExpectedUserSignOutOutcome>()
+            coEvery { signOutUseCase(UID) } coAnswers { signOut.await() }
+            observeRegisteredUser()
+
+            sut.process(SettingsIntent.OnLogoutClicked)
+            sut.process(SettingsIntent.OnLogoutClicked)
             runCurrent()
 
-            coVerify(exactly = 1) { syncRepository.uploadPendingChanges("uid123") }
-            coVerify(exactly = 0) { deleteAccountUseCase(any(), any()) }
-
-            releaseSync.complete(Unit)
+            coVerify(exactly = 1) { signOutUseCase(UID) }
+            signOut.complete(ExpectedUserSignOutOutcome.SignedOut)
             advanceUntilIdle()
+        }
+
+    @Test
+    fun `GIVEN previous logout failed WHEN logout is tapped again THEN a new attempt can succeed`() =
+        runTest {
+            var attempts = 0
+            coEvery { signOutUseCase(UID) } coAnswers {
+                attempts++
+                if (attempts == 1) error("Signout failed")
+                ExpectedUserSignOutOutcome.SignedOut
+            }
+            observeRegisteredUser()
+
+            sut.process(SettingsIntent.OnLogoutClicked)
+            advanceUntilIdle()
+            sut.process(SettingsIntent.OnLogoutClicked)
+            advanceUntilIdle()
+
+            coVerify(exactly = 2) { signOutUseCase(UID) }
         }
 
     @Test
@@ -297,26 +348,13 @@ class SettingsViewModelTest {
 
             sut.process(SettingsIntent.ConfirmDeleteAccount(context))
             sut.process(SettingsIntent.ConfirmDeleteAccount(context))
-            sut.process(SettingsIntent.OnLogoutClicked)
             runCurrent()
 
             coVerify(exactly = 1) { googleSignInHelper.signIn(context) }
             coVerify(exactly = 1) { deleteAccountUseCase(UID, ID_TOKEN) }
-            coVerify(exactly = 0) { signOutUseCase() }
 
             releaseDeletion.complete(Unit)
             advanceUntilIdle()
-        }
-
-    @Test
-    fun `GIVEN logout fails WHEN work ends THEN sets localized pending message`() =
-        runTest {
-            coEvery { signOutUseCase() } throws Exception()
-
-            sut.process(SettingsIntent.OnLogoutClicked)
-            advanceUntilIdle()
-
-            pendingMessageResId() shouldBeEqualTo SR.string.settings_logout_error
         }
 
     @Test
@@ -335,18 +373,6 @@ class SettingsViewModelTest {
 
             sut.process(SettingsIntent.ErrorShown(pendingMessage.id))
 
-            sut.uiState.value.pendingMessage shouldBeEqualTo null
-        }
-
-    @Test
-    fun `GIVEN logout is cancelled WHEN work ends THEN loading resets without pending message`() =
-        runTest {
-            coEvery { signOutUseCase() } throws CancellationException()
-
-            sut.process(SettingsIntent.OnLogoutClicked)
-            advanceUntilIdle()
-
-            sut.uiState.value.isLoading shouldBeEqualTo false
             sut.uiState.value.pendingMessage shouldBeEqualTo null
         }
 
@@ -468,27 +494,19 @@ class SettingsViewModelTest {
             sut.uiState.value.pendingMessage shouldBeEqualTo null
         }
 
-    @Test
-    fun `GIVEN newer pending error WHEN older error is acknowledged THEN newer error remains`() =
-        runTest {
-            coEvery { signOutUseCase() } throws Exception()
-            sut.process(SettingsIntent.OnLogoutClicked)
-            advanceUntilIdle()
-            val firstMessage = requireNotNull(sut.uiState.value.pendingMessage)
-
-            sut.process(SettingsIntent.ErrorShown(firstMessage.id))
-
-            sut.process(SettingsIntent.OnLogoutClicked)
-            advanceUntilIdle()
-            val secondMessage = requireNotNull(sut.uiState.value.pendingMessage)
-
-            sut.process(SettingsIntent.ErrorShown(firstMessage.id))
-
-            sut.uiState.value.pendingMessage shouldBeEqualTo secondMessage
-        }
-
     private fun pendingMessageResId(): Int =
         (requireNotNull(sut.uiState.value.pendingMessage).message as UiText.StringResource).resId
+
+    private suspend fun TestScope.observeRegisteredUser() {
+        every { observeAuthStateUseCase() } returns flowOf(GOOGLE_USER)
+        sut.process(SettingsIntent.ObserveAuth)
+        advanceUntilIdle()
+    }
+
+    private fun assertLogoutError() {
+        sut.uiState.value.isLoading shouldBeEqualTo false
+        pendingMessageResId() shouldBeEqualTo SR.string.settings_logout_error
+    }
 
     @Nested
     inner class ResolveCurrentLanguageTest {

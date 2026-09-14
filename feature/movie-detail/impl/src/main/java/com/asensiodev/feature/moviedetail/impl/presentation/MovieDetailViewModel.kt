@@ -3,15 +3,15 @@ package com.asensiodev.feature.moviedetail.impl.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.core.domain.repository.MovieMutationRepository
+import com.asensiodev.core.domain.repository.SyncScheduler
 import com.asensiodev.core.domain.usecase.ObserveHasSeenDetailTooltipUseCase
 import com.asensiodev.core.domain.usecase.SetDetailTooltipSeenUseCase
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseCase
-import com.asensiodev.feature.moviedetail.impl.domain.usecase.UpdateMovieStateUseCase
 import com.asensiodev.feature.moviedetail.impl.presentation.mapper.toDomain
 import com.asensiodev.feature.moviedetail.impl.presentation.mapper.toUi
 import com.asensiodev.library.observability.api.NoOpObservabilityTracker
 import com.asensiodev.library.observability.api.ObservabilityTracker
-import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import com.asensiodev.ui.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
@@ -32,8 +32,8 @@ internal class MovieDetailViewModel
     @Inject
     constructor(
         private val getMovieDetailUseCase: GetMovieDetailUseCase,
-        private val updateMovieStateUseCase: UpdateMovieStateUseCase,
-        private val syncScheduler: WorkManagerSyncScheduler,
+        private val movieMutationRepository: MovieMutationRepository,
+        private val syncScheduler: SyncScheduler,
         private val observeHasSeenDetailTooltipUseCase: ObserveHasSeenDetailTooltipUseCase,
         private val setDetailTooltipSeenUseCase: SetDetailTooltipSeenUseCase,
         private val observabilityTracker: ObservabilityTracker = NoOpObservabilityTracker,
@@ -169,12 +169,11 @@ internal class MovieDetailViewModel
                 viewModelScope.launch {
                     try {
                         val result =
-                            updateMovieStateUseCase(
-                                updatedMovie.toDomain(),
-                            )
+                            movieMutationRepository
+                                .updateMovieState(updatedMovie.toDomain())
                         val exception = result.exceptionOrNull()
                         if (requestVersion != activeRequestVersion) return@launch
-                        if (exception == null) {
+                        if (result.isSuccess) {
                             observabilityTracker.trackAction(
                                 MOVIE_DETAIL_TOGGLE_WATCHLIST,
                                 mapOf(
@@ -184,7 +183,7 @@ internal class MovieDetailViewModel
                             )
                             _uiState.update { it.copy(movie = updatedMovie) }
                             enqueueUpload(movie.id)
-                        } else {
+                        } else if (exception != null) {
                             observabilityTracker.recordError(
                                 MOVIE_DETAIL_TOGGLE_WATCHLIST_FAILED,
                                 exception,
@@ -221,12 +220,11 @@ internal class MovieDetailViewModel
                 viewModelScope.launch {
                     try {
                         val result =
-                            updateMovieStateUseCase(
-                                updatedMovie.toDomain(),
-                            )
+                            movieMutationRepository
+                                .updateMovieState(updatedMovie.toDomain())
                         val exception = result.exceptionOrNull()
                         if (requestVersion != activeRequestVersion) return@launch
-                        if (exception == null) {
+                        if (result.isSuccess) {
                             observabilityTracker.trackAction(
                                 MOVIE_DETAIL_TOGGLE_WATCHED,
                                 mapOf(
@@ -236,7 +234,7 @@ internal class MovieDetailViewModel
                             )
                             _uiState.update { it.copy(movie = updatedMovie) }
                             enqueueUpload(movie.id)
-                        } else {
+                        } else if (exception != null) {
                             observabilityTracker.recordError(
                                 MOVIE_DETAIL_TOGGLE_WATCHED_FAILED,
                                 exception,
