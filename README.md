@@ -10,6 +10,10 @@
 </p>
 
 <p align="center">
+  <strong><a href="https://play.google.com/store/apps/details?id=com.asensiodev.santoro">Download Santoro on Google Play</a></strong>
+</p>
+
+<p align="center">
   <a href="https://github.com/asensiodev/Santoro/actions/workflows/ci.yml"><img src="https://github.com/asensiodev/Santoro/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
   <a href="https://app.codecov.io/gh/asensiodev/Santoro"><img src="https://codecov.io/gh/asensiodev/Santoro/graph/badge.svg" alt="Codecov coverage" /></a>
   <img src="https://img.shields.io/badge/Android-API%2026%2B-3DDC84?logo=android&logoColor=white" alt="Android API 26 and above" />
