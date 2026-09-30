@@ -49,7 +49,7 @@ Santoro covers the complete loop around choosing and remembering films:
 
 ## Engineering
 
-The codebase uses Clean Architecture with pragmatic, intent-driven MVI. Presentation depends on pure Kotlin domain contracts, while data implementations own Android and service integrations.
+The codebase uses Clean Architecture with pragmatic, intent-driven MVI. Screens use Jetpack Compose, ViewModels expose state through Kotlin Flow, and Hilt provides dependency injection. The shared domain module is pure Kotlin; data implementations own Android and service integrations.
 
 ```mermaid
 flowchart LR
@@ -67,10 +67,10 @@ Key design choices:
 
 - Feature and reusable library modules are split into public `api` and internal `impl` modules.
 - ViewModels expose immutable `StateFlow` state and one-off effects; screens send sealed intents.
-- The domain layer has no Android dependencies.
+- The shared `core:domain` module has no Android dependencies.
 - Room entities and network models remain inside the data layer and are mapped to domain models.
-- Gradle convention plugins centralize Compose, Hilt, quality, and testing configuration.
-- Konsist architecture tests enforce module and dependency boundaries.
+- Gradle convention plugins centralize Compose, Hilt, Room, and testing configuration.
+- Konsist tests check selected architecture boundaries and source conventions.
 
 ## Quality Signals
 
@@ -79,30 +79,41 @@ Quality checks run in [GitHub Actions](https://github.com/asensiodev/Santoro/act
 | Signal | Implementation |
 |---|---|
 | Static analysis | Detekt and ktlint |
-| Unit and Flow tests | JUnit 5, MockK, Kluent, Turbine, and coroutine test dispatchers |
-| Visual tests | Paparazzi screenshot tests for screens and design-system components |
-| Device tests | Room and feature integration tests on an API 35 emulator |
-| Architecture tests | Konsist boundary and convention checks |
+| Unit and Flow tests | JUnit 5, MockK, Kluent, Turbine, and kotlinx-coroutines-test |
+| Visual tests | Paparazzi screenshot tests for feature and design-system components |
+| Android JVM tests | Robolectric for Android-dependent behavior, including WorkManager scheduling |
+| Device tests | JUnit 4, AndroidX Test, Compose UI tests, Room integration and migration tests, and app navigation/authentication journeys |
+| Architecture tests | Selected source-level boundary and convention checks with Konsist |
 | Coverage | Aggregate Kover reports, enforced CI floors, GitHub artifacts, and Codecov reporting |
 
-The measured aggregate JVM baseline is **75.82% line coverage** and **71.20% branch coverage**. CI blocks regressions below **75% lines** or **71% branches** through `koverVerify`. Codecov independently renders the uploaded Kover XML report and provides history and changed-line coverage.
+GitHub Actions runs static analysis, JVM tests and coverage, architecture tests, and a debug build, followed by selected instrumented integration and journey tests on an API 35 emulator. The workflow runs on pushes and pull requests to `main`, excluding documentation-only changes, and can also be started manually.
+
+Kover enforces aggregate thresholds of **75% line coverage** and **71% branch coverage** through `koverVerify`. Codecov displays the uploaded Kover XML report. These thresholds describe the configured checks, not a guarantee of coverage for every module or behavior.
 
 ```sh
 ./gradlew :koverHtmlReport :koverVerify
 ```
 
-Kover covers JVM-tested production logic. Instrumented and Paparazzi tests remain separate signals rather than being folded into that percentage.
+The aggregate Kover report excludes generated code, Composables, and selected infrastructure classes. Instrumented tests provide additional behavioral checks outside that JVM coverage report.
+
+The local pre-commit hook runs Detekt, ktlint, and Konsist when Kotlin files are staged. The app build installs it automatically; it can also be installed explicitly after cloning:
+
+```sh
+./gradlew copyGitHooks
+```
+
+Google Play releases are currently uploaded manually. Automatic delivery to Internal testing is [planned](docs/plan/FIP-024-automatic-internal-deployment.md).
 
 ## Stack
 
 | Concern | Technology |
 |---|---|
 | UI | Jetpack Compose, Material 3, Navigation Compose, Coil 3 |
-| State and async | Coroutines, Flow, StateFlow |
+| State and async | Coroutines, StateFlow for screen state, SharedFlow for transient effects |
 | Architecture | Clean Architecture, intent-driven MVI, multi-module API/implementation boundaries |
-| Data | Retrofit, OkHttp, Room, DataStore |
+| Data | Retrofit, OkHttp, Room, DataStore, and WorkManager for background sync |
 | Services | Firebase Auth, Firestore, Remote Config, Crashlytics, Analytics |
-| Dependency injection | Hilt |
+| Dependency injection | Hilt with constructor injection and module bindings |
 | Build | Gradle Kotlin DSL, version catalogs, convention plugins, Java 21 |
 
 ## Repository Map
@@ -115,8 +126,14 @@ feature/             Login, search, movie detail, watchlist, watched, and settin
 core/                Shared domain, data, database, network, sync, UI, and design system
 library/             Observability, remote config, and secure storage abstractions
 build-logic/         Gradle convention plugins
-architecture-tests/  Automated module and coding-rule enforcement
+architecture-tests/  Selected architecture and source convention checks
 ```
+
+## Reviewing the Project
+
+For a code walkthrough, start with [search state and intents](feature/search-movies/impl/src/main/java/com/asensiodev/feature/searchmovies/impl/presentation/SearchMoviesViewModel.kt), [local persistence](core/database/src/main/java/com/asensiodev/santoro/core/database/data/repository/RoomDatabaseRepository.kt), and the [CI workflow](.github/workflows/ci.yml).
+
+Local builds require JDK 21, the Android SDK, and Firebase configuration files, which are not committed. Running against your own Firebase project also requires Authentication, Firestore, and Remote Config setup. The Google Play version linked above is ready to try.
 
 ## Data Source
 
