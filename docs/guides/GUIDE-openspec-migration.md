@@ -2,9 +2,28 @@
 
 | Field | Value |
 |---|---|
-| **Date** | 2026-09-06 |
-| **Status** | Proposed |
-| **Target** | OpenSpec v1.12.0 with OpenCode |
+| **Date** | 2026-10-04 |
+| **Status** | Pilot implemented; final validation, manual review and archive pending |
+| **Target** | OpenSpec v1.12.0 with Codex and OpenCode |
+
+## Pilot State — 2026-10-04
+
+- Initialized using pinned `@fission-ai/openspec@1.12.0` with `--tools codex,opencode --profile core`.
+- The global CLI is pinned to `@fission-ai/openspec@1.12.0`. `openspec --version` verifies the installed version. A pinned `npm exec --package @fission-ai/openspec@1.12.0 -- openspec <command>` remains an alternative on another machine.
+- Reusable skills now live in `~/.agents/skills/openspec-*`, shared by Codex and OpenCode. OpenCode commands live in `~/.config/opencode/commands/opsx-*.md`. Repository-local copies were removed after checksum verification; shared invocation hints name both tools. Invoke `$openspec-propose` / `$openspec-apply-change` in Codex, or `/opsx-propose` / `/opsx-apply` / `/opsx-archive` in OpenCode.
+- First product pilot: [explore-people-and-filmography](../../openspec/changes/explore-people-and-filmography/proposal.md), PRD F-29. Proposal, delta spec, design, tasks and [implementation evidence](../../openspec/changes/explore-people-and-filmography/implementation.md) are available. Core data, UI and navigation tasks have passed focused checks; outstanding gates remain unchecked.
+- FIP-023 external/manual validation is still pending and FIP-024 is still Draft. Phase 0 is not complete: the read-only person pilot can be planned independently, while existing account work retains its original validation and accepted limitations.
+- The PRD header is synchronized and F-25 is reconciled with FIP-021. Canonical legacy status inventory and the three-change adoption evaluation remain pending; this is a pilot, not a completed migration.
+- Keep `openspec/specs/` empty until validated pilot behavior is synced/archived. Existing FIPs stay in place.
+
+## Global Installation Verification — 2026-10-04
+
+- Global `openspec --version`: `1.12.0`.
+- All six shared skill frontmatters parse and match their directory names; all twelve installed files match the reviewed staging checksums.
+- Codex app-server `skills/list` reports six enabled OpenSpec skills with `scope: user`, all from `~/.agents/skills/`.
+- OpenCode `debug skill --pure` discovers those same six skills, and `debug config --pure` resolves all six `opsx-*` commands.
+- Removed only the nineteen verified local adapter files, including the obsolete `.openspec-target` marker, and empty adapter directories. Existing project specs, change artifacts, TDD rules and unrelated user files are retained.
+- `openspec validate explore-people-and-filmography --strict` and `git diff --check` pass. No Android code or tests changed during this tooling relocation.
 
 ## Goal
 
@@ -84,38 +103,37 @@ Install the reviewed version rather than an unpinned `latest`:
 
 ```bash
 npm install -g @fission-ai/openspec@1.12.0
-openspec init --tools opencode
+openspec --version
 ```
 
-Select the expanded workflow if `verify` and onboarding commands are desired:
+Santoro uses user-level tooling because its owner works alone across projects. Keep reusable skills and commands global, while `openspec/config.yaml`, specs, changes, `AGENTS.md` and testing rules remain in the repository.
+
+```text
+~/.agents/skills/openspec-*/SKILL.md
+~/.config/opencode/commands/opsx-*.md
+```
+
+Codex and OpenCode both discover the shared agent-compatible skill folder. OpenCode commands use its native global folder. Sources: [Codex skill locations](https://learn.chatgpt.com/docs/build-skills), [OpenCode skill locations](https://opencode.ai/docs/skills/) and [OpenCode command locations](https://opencode.ai/docs/commands/).
+
+On another machine, generate the pinned adapters in a temporary workspace with `openspec init --tools codex,opencode --profile core`, inspect them, and install one shared skill set plus the OpenCode commands in the locations above. Preserve both Codex `$openspec-*` and OpenCode `/opsx-*` invocation hints when sharing the skill set. Verify destination files before removing temporary/local copies, and review conflicts instead of replacing unrelated global skills.
+
+For a new project, initialize only project artifacts:
 
 ```bash
-openspec config profile
-openspec update
+openspec init --tools none
 ```
 
-Expected OpenCode integration:
+Santoro already has its configuration and change artifacts; initialization is not needed again. A fresh clone relies on the owner installing global tooling separately.
 
-```text
-.opencode/skills/openspec-*/SKILL.md
-.opencode/commands/opsx-*.md
-```
+The installed core workflow provides `/opsx-propose`, `/opsx-explore`, `/opsx-apply`, `/opsx-update`, `/opsx-sync` and `/opsx-archive`. Additional workflows require deliberate generation and review; `/opsx-verify` is not part of the current installation.
 
-Expected command form in OpenCode:
+After installation:
 
-```text
-/opsx-propose
-/opsx-apply
-/opsx-verify
-/opsx-archive
-```
-
-After initialization:
-
-- Review every generated file before committing it.
+- Verify the CLI version, six skill manifests and six command files.
+- Check OpenCode discovery with `opencode debug skill` and `opencode debug config`; inspect only the relevant skill/command entries, since resolved configuration can contain private settings.
+- Codex detects global skills automatically; use a new turn or restart if its selector has not refreshed.
 - Disable telemetry if desired with `openspec config set telemetry.enabled false` or `OPENSPEC_TELEMETRY=0`.
-- Restart OpenCode only if the generated command discovery instructions request it.
-- Confirm `openspec status` and one OpenCode command work before starting the pilot.
+- Run `openspec validate <change> --strict` against the project; avoid invoking propose/apply merely to test discovery because they can create or change artifacts.
 
 ## Phase 3. Configure Santoro Rules
 
@@ -201,8 +219,8 @@ If the pilot fails, remove only the pilot integration after preserving any usefu
 
 - Pin the CLI version used by the project or installation instructions.
 - Review release notes before upgrades.
-- Run `openspec update` deliberately because generated OpenCode skills and commands can change.
-- Review generated diffs after every update.
+- Generate/update adapters in a temporary workspace, then review and refresh the global skill/command files. Running `openspec init --tools codex,opencode` or `openspec update` in Santoro can recreate local adapters; keep the current global-only layout.
+- Match the global CLI and generated adapter versions, and verify discovery after updates.
 - Avoid beta stores or cross-repository planning until the local single-repository workflow is stable.
 - Do not treat specs as complete coverage of untouched brownfield code.
 

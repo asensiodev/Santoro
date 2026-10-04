@@ -44,7 +44,7 @@ Android app using Kotlin, Jetpack Compose, Clean Architecture, pragmatic MVI, Hi
 
 ## Planning
 
-- Read the relevant PRD, guide, and active plan before implementation. New OpenSpec pilot changes use proposal, specs, design, and tasks under `openspec/changes/`; existing FIPs retain their original workflow. See `docs/guides/GUIDE-openspec-migration.md` for pilot setup and archive rules.
+- Read the relevant PRD, guide, and active plan before implementation. New OpenSpec pilot changes use proposal, specs, design, and tasks under `openspec/changes/`; existing FIPs retain their original workflow. When setting up or archiving an OpenSpec change, read the OpenSpec section in `docs/README.md`.
 - Make technical decisions with product judgment: prioritize realistic user flows and proportional risk, and do not add complexity for theoretically possible cases without credible product impact.
 - Before hardening a corner case, state how a real user reaches it, how likely it is, and what user-visible harm it causes; prefer an explicit accepted limitation when the mitigation costs more than the risk.
 - Execute the active FIP or OpenSpec task list phase by phase; check tasks only after implementation and validation. Keep one plan per change.

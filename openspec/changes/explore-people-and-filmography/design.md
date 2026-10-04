@@ -56,7 +56,7 @@ Test mappings, multi-role grouping, stable ordering, empty/missing fields, succe
 
 ## Migration Plan
 
-No database or account migration. Add modules, resources, and routes; keep existing movie and deep-link routes compatible. Roll back by removing the person route wiring and click affordances together with the new feature modules. Archive only after implementation, focused/aggregate validation, and required manual evidence; human archive review remains required by the migration guide.
+No database or account migration. Add modules, resources, and routes; keep existing movie and deep-link routes compatible. Roll back by removing the person route wiring and click affordances together with the new feature modules. Archive only after implementation, focused/aggregate validation, and required manual evidence; human archive review remains required by the OpenSpec workflow in `docs/README.md`.
 
 ## Approved profile polish
 

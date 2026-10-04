@@ -26,7 +26,11 @@ docs/
 
 New non-trivial pilot changes use `openspec/changes/<change>/` with proposal, delta specs, design, and tasks. The first pilot is [F-29 person exploration](../openspec/changes/explore-people-and-filmography/proposal.md); its implementation and focused emulator checks are complete, with final validation/manual gates recorded in [the evidence report](../openspec/changes/explore-people-and-filmography/implementation.md).
 
-Use OpenSpec **1.12.0** for this pilot. Reusable skills and commands are installed at user level; project specifications and rules remain here. Setup and invocation instructions are in [the migration guide](guides/GUIDE-openspec-migration.md). Existing FIPs, including FIP-023 validation and FIP-024, retain the workflows below. Keep one plan per change. The pilot does not establish complete specifications for untouched code.
+Use OpenSpec **1.12.0** with the default `spec-driven` schema. Install the CLI globally with `npm install -g @fission-ai/openspec@1.12.0`. Reusable skills and commands live at user level; project context stays in `openspec/config.yaml`, specifications in `openspec/specs/`, and active plans in `openspec/changes/`.
+
+Use the global OpenSpec propose/apply skills to plan and implement a change. Inspect progress with `openspec status --change <name>` and validate artifacts with `openspec validate <name> --strict`. Follow [the testing guide](guides/GUIDE-testing-and-tdd.md) during implementation and record validation evidence alongside the change. After implementation, required checks and human review are complete, sync delta specs and archive the change. OpenSpec validation complements the repository tests and external gates.
+
+Existing FIPs, including FIP-023 validation and FIP-024, retain the workflows below. Keep one plan per change; current specs grow from validated archived changes rather than inferred coverage of untouched code.
 
 ## Testing and TDD
 

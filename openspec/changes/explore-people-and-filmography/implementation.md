@@ -72,7 +72,7 @@ Exact verification questions, bounded answers and nested Gradle commands are rec
 - Fresh process restoration and a live TMDB profile with real photos/biographies require device/manual evidence beyond activity recreation and deterministic fixtures.
 - No person disk cache is added; first offline visits show retryable errors. Missing biographies in the requested language show a localized empty message without another language request.
 - No Room migration, account/Firebase mutation, or list modification occurs merely by exploring a person.
-- Archive requires completed validation and human review per the migration guide. No commit or push has been performed.
+- Archive requires completed validation and human review per the OpenSpec workflow in `docs/README.md`. No commit or push had been performed at this validation stage.
 
 ## Profile polish follow-up
 
