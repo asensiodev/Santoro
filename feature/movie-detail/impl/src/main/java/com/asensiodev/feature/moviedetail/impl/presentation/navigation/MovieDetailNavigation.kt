@@ -31,6 +31,7 @@ fun NavGraphBuilder.movieDetailRoute(
     exitTransition: ExitAnim? = null,
     popEnterTransition: EnterAnim? = null,
     popExitTransition: ExitAnim? = null,
+    onPersonClicked: (Int) -> Unit = {},
 ) {
     composable<MovieDetailRoute>(
         enterTransition = enterTransition,
@@ -39,6 +40,10 @@ fun NavGraphBuilder.movieDetailRoute(
         popExitTransition = popExitTransition,
     ) { backStackEntry ->
         val args = backStackEntry.toRoute<MovieDetailRoute>()
-        ScreenRoute(movieId = args.movieId, onBackClicked = onBackClicked)
+        ScreenRoute(
+            movieId = args.movieId,
+            onBackClicked = onBackClicked,
+            onPersonClicked = onPersonClicked,
+        )
     }
 }

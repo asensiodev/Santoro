@@ -189,4 +189,23 @@
     <!-- Google Auth ID -->
     <string name="default_web_client_id" translatable="false">792126816216-49vquegl1mcdcm52655qhgrs9l9ou5cf.apps.googleusercontent.com</string>
 
+    <!-- Person Detail -->
+    <string name="person_detail_title">Person</string>
+    <string name="person_detail_error">Could not load this person. Please try again.</string>
+    <string name="person_biography">Biography</string>
+    <string name="person_biography_empty">No biography available in this language.</string>
+    <string name="person_biography_more">Read more</string>
+    <string name="person_biography_less">Read less</string>
+    <string name="person_born">Born: %1$s</string>
+    <string name="person_died">Died: %1$s</string>
+    <string name="person_filmography">Filmography</string>
+    <string name="person_filmography_empty">No movie credits available.</string>
+    <string name="person_filmography_error">Could not load the filmography.</string>
+    <string name="person_release_date_unknown">No release date</string>
+    <string name="person_acting">Acting</string>
+    <string name="person_crew">Behind the camera</string>
+    <plurals name="person_movie_count">
+        <item quantity="one">%d movie</item>
+        <item quantity="other">%d movies</item>
+    </plurals>
 </resources>

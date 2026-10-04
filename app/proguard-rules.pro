@@ -24,6 +24,7 @@
 # Keep all API models (Gson deserialization)
 -keep class com.asensiodev.santoro.core.data.model.** { *; }
 -keep class com.asensiodev.feature.searchmovies.impl.data.model.** { *; }
+-keep class com.asensiodev.feature.persondetail.impl.data.*ApiModel { *; }
 
 # Retrofit
 -dontwarn retrofit2.**

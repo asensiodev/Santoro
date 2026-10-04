@@ -53,6 +53,8 @@ dependencies {
     kover(project(":core:ui"))
     kover(project(":feature:login:api"))
     kover(project(":feature:login:impl"))
+    kover(project(":feature:person-detail:api"))
+    kover(project(":feature:person-detail:impl"))
     kover(project(":feature:movie-detail:api"))
     kover(project(":feature:movie-detail:impl"))
     kover(project(":feature:search-movies:api"))

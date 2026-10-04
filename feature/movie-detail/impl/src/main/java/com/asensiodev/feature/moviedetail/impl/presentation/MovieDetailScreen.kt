@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -128,12 +129,13 @@ internal fun MovieDetailRoute(
     onBackClicked: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MovieDetailViewModel = hiltViewModel(),
+    onPersonClicked: (Int) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(movieId) {
+    LaunchedEffect(viewModel) {
         viewModel.process(MovieDetailIntent.FetchDetails(movieId))
     }
 
@@ -156,6 +158,7 @@ internal fun MovieDetailRoute(
             onToggleWatched = { onProcess(MovieDetailIntent.ToggleWatched) },
             onRetry = { onProcess(MovieDetailIntent.Retry) },
             onBackClicked = onBackClicked,
+            onPersonClicked = onPersonClicked,
             onShareClicked = { onProcess(MovieDetailIntent.ShareMovie) },
             onDismissTooltip = { onProcess(MovieDetailIntent.DismissTooltip) },
             modifier = Modifier.fillMaxSize(),
@@ -177,6 +180,7 @@ internal fun MovieDetailScreen(
     onBackClicked: () -> Unit,
     onShareClicked: () -> Unit,
     onDismissTooltip: () -> Unit,
+    onPersonClicked: (Int) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
@@ -215,6 +219,7 @@ internal fun MovieDetailScreen(
                         onToggleWatched = onToggleWatched,
                         onDismissTooltip = onDismissTooltip,
                         scrollState = scrollState,
+                        onPersonClicked = onPersonClicked,
                     )
                 }
             }
@@ -318,6 +323,7 @@ internal fun MovieDetailContent(
     onToggleWatchlist: () -> Unit,
     onToggleWatched: () -> Unit,
     onDismissTooltip: () -> Unit,
+    onPersonClicked: (Int) -> Unit = {},
     modifier: Modifier = Modifier,
     scrollState: ScrollState,
 ) {
@@ -357,7 +363,7 @@ internal fun MovieDetailContent(
                         },
                 )
                 Spacer(modifier = Modifier.height(Spacings.spacing8))
-                MovieDetailsSection(movie = movie)
+                MovieDetailsSection(movie = movie, onPersonClicked = onPersonClicked)
             }
         }
 
@@ -631,6 +637,7 @@ private fun WatchlistActionsRow(
 @Composable
 private fun MovieDetailsSection(
     movie: MovieUi,
+    onPersonClicked: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -666,9 +673,9 @@ private fun MovieDetailsSection(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        CastSection(cast = movie.cast)
+        CastSection(cast = movie.cast, onPersonClicked = onPersonClicked)
         if (movie.keyCrew.isNotEmpty()) {
-            CrewGridSection(crew = movie.keyCrew)
+            CrewGridSection(crew = movie.keyCrew, onPersonClicked = onPersonClicked)
         }
         Spacer(modifier = Modifier.height(Spacings.spacing48))
     }
@@ -864,6 +871,7 @@ private fun InfoItem(
 @Composable
 private fun CrewGridSection(
     crew: List<CrewMemberUi>,
+    onPersonClicked: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -888,6 +896,7 @@ private fun CrewGridSection(
                     rowItems.forEach { member ->
                         CrewMemberItem(
                             member = member,
+                            onClick = { onPersonClicked(member.id) },
                             modifier = Modifier.weight(Weights.W10),
                         )
                     }
@@ -903,6 +912,7 @@ private fun CrewGridSection(
 @Composable
 private fun CrewMemberItem(
     member: CrewMemberUi,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val (icon, jobLabel) =
@@ -931,7 +941,7 @@ private fun CrewMemberItem(
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier,
+        modifier = modifier.heightIn(min = Size.size48).clickable(onClick = onClick),
     ) {
         Icon(
             imageVector = icon,
@@ -959,7 +969,10 @@ private fun CrewMemberItem(
 }
 
 @Composable
-private fun CastSection(cast: List<CastMemberUi>) {
+private fun CastSection(
+    cast: List<CastMemberUi>,
+    onPersonClicked: (Int) -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacings.spacing12)) {
         Text(
             text = stringResource(SR.string.cast_title),
@@ -972,18 +985,26 @@ private fun CastSection(cast: List<CastMemberUi>) {
             horizontalArrangement = Arrangement.spacedBy(Spacings.spacing16),
             contentPadding = PaddingValues(horizontal = Spacings.spacing16),
         ) {
-            items(cast, key = { actor -> actor.creditId }) { actor ->
-                CastMemberItem(actor)
+            items(cast, key = { actor -> actor.creditId }, contentType = { "cast" }) { actor ->
+                CastMemberItem(actor, onClick = { onPersonClicked(actor.id) })
             }
         }
     }
 }
 
 @Composable
-private fun CastMemberItem(actor: CastMemberUi) {
+private fun CastMemberItem(
+    actor: CastMemberUi,
+    onClick: () -> Unit,
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(Size.size80),
+        modifier =
+            Modifier
+                .width(
+                    Size.size80,
+                ).heightIn(min = Size.size48)
+                .clickable(onClick = onClick),
     ) {
         AsyncImage(
             model = actor.profileUrl,
@@ -1176,13 +1197,23 @@ private fun MovieDetailScreenPreview() {
                             cast = emptyList(),
                             keyCrew =
                                 listOf(
-                                    CrewMemberUi(name = "Gary Fleder", role = CrewRole.DIRECTOR),
-                                    CrewMemberUi(name = "Scott Rosenberg", role = CrewRole.WRITER),
                                     CrewMemberUi(
+                                        id = 1,
+                                        name = "Gary Fleder",
+                                        role = CrewRole.DIRECTOR,
+                                    ),
+                                    CrewMemberUi(
+                                        id = 2,
+                                        name = "Scott Rosenberg",
+                                        role = CrewRole.WRITER,
+                                    ),
+                                    CrewMemberUi(
+                                        id = 3,
                                         name = "Elliot Davis",
                                         role = CrewRole.CINEMATOGRAPHER,
                                     ),
                                     CrewMemberUi(
+                                        id = 3,
                                         name = "Michael Convertino",
                                         role = CrewRole.COMPOSER,
                                     ),

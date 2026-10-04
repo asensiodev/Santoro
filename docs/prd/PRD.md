@@ -4,9 +4,9 @@
 
 | Field        | Value                          |
 |--------------|--------------------------------|
-| **Version**  | 2.15                           |
+| **Version**  | 2.18                           |
 | **Status**   | ✅ Current                     |
-| **Date**     | 2026-09-05                     |
+| **Date**     | 2026-10-04                     |
 | **Author**   | @asensiodev                    |
 | **Platform** | Android (Native)               |
 
@@ -432,9 +432,9 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
-| **Status**  | 📋 Planned |
+| **Status**  | ✅ Implemented — [FIP-021](../plan/FIP-021-search-movie-status-ribbons.md); release-ready validation recorded in that plan |
 | **Scope**   | Search result movie cards |
-| **Current state** | Users can mark a movie as watched or add it to the watchlist, but search results do not clearly show those persisted states when the movie appears again |
+| **Current state** | Search movie cards show the exclusive Watched or Watchlist status implemented and validated in FIP-021 |
 | **Behaviour** | Show lightweight visual indicators for movies already watched and movies already in the watchlist directly on search result cards |
 | **Rationale** | Reduces memory burden and makes persisted state visible across the app, matching tester feedback |
 
@@ -470,6 +470,18 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 ---
 
+### F-29 — Person Profiles And Connected Movie Exploration
+
+| Attribute | Detail |
+|---|---|
+| **Status** | 🔵 Profile polish implemented — person screenshots and connected tests passed; all-module screenshots verified; manual/external checks pending; [OpenSpec evidence](../../openspec/changes/explore-people-and-filmography/implementation.md) |
+| **Scope** | Movie cast/crew, shared person detail, specialty-first eight-movie previews and complete movie filmography |
+| **Behaviour** | Tap an actor or director (or another displayed crew member) to see their photo, biography, available personal facts, and specialty-first acting/crew previews with counts and See all; browse the complete list grouped under release-year headings, with undated movies last, and tap a movie to open its existing detail and use Back to return through the exploration path |
+| **Boundaries** | TMDB movie/person reads only; no TV, person search, favourite people, account changes, or person persistence in this pilot |
+| **Rationale** | Connect existing movie detail to people and their work so discovery can continue naturally inside Santoro |
+
+---
+
 ## 10. Version History
 
 | Version | Date       | Summary                        |
@@ -500,3 +512,7 @@ Features approved for a future release. Each will get a FIP before implementatio
 | 2.13    | 2026-09-05 | Record approved Settings-owned single-attempt logout, removal of app-level/three-action logout machinery, DAO extension cleanup, and focused validation; reopen architecture, aggregate, and instrumented validation while retaining v2.12 results as historical. |
 | 2.14    | 2026-09-05 | Replace the unshipped owner-only design with FIP-023 v4.0 controlled runtime cleanup, trusted same-account upgrades, current-Auth workers, and transactional merge authority. |
 | 2.15    | 2026-09-06 | Record FIP-023 v4.1 delayed-onboarding correction and explicitly scope direct authenticated account replacement out of the supported product. |
+| 2.16    | 2026-10-04 | Initialize the OpenSpec pilot, plan F-29 person/movie exploration, and reconcile F-25 with FIP-021 implementation and recorded validation without asserting publication. |
+| 2.17    | 2026-10-04 | Implement F-29 person profiles and connected movie navigation; record focused, screenshot and emulator evidence while retaining unresolved aggregate/manual and archive gates. |
+| 2.18    | 2026-10-04 | Polish F-29 with specialty-first poster previews, movie counts and a complete filmography destination; record observed TDD red/green evidence and reuse existing test-double conventions. |
+| 2.19    | 2026-10-04 | Group complete person filmographies under accessible release-year headings; retain years in horizontal previews and record focused screen, snapshot and navigation validation. |

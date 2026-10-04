@@ -79,8 +79,8 @@ private fun List<CrewMember>.toUiCrew(): List<CrewMemberUi> =
     this
         .filter { it.role != CrewRole.UNKNOWN }
         .map { member ->
-            CrewMemberUi(name = member.name, role = member.role)
-        }.distinctBy { it.name to it.role }
+            CrewMemberUi(id = member.id, name = member.name, role = member.role)
+        }.distinctBy { it.id to it.role }
         .sortedBy { it.role.ordinal }
 
 private fun formatRuntime(minutes: Int): String {

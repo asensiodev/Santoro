@@ -22,6 +22,16 @@ docs/
 
 ---
 
+## OpenSpec Pilot
+
+New non-trivial pilot changes use `openspec/changes/<change>/` with proposal, delta specs, design, and tasks. The first pilot is [F-29 person exploration](../openspec/changes/explore-people-and-filmography/proposal.md); its implementation and focused emulator checks are complete, with final validation/manual gates recorded in [the evidence report](../openspec/changes/explore-people-and-filmography/implementation.md).
+
+Use OpenSpec **1.12.0** for this pilot. Reusable skills and commands are installed at user level; project specifications and rules remain here. Setup and invocation instructions are in [the migration guide](guides/GUIDE-openspec-migration.md). Existing FIPs, including FIP-023 validation and FIP-024, retain the workflows below. Keep one plan per change. The pilot does not establish complete specifications for untouched code.
+
+## Testing and TDD
+
+New features and behavior fixes follow [the testing and TDD guide](guides/GUIDE-testing-and-tdd.md). It defines test boundaries, observable red/green evidence, Compose interaction tests, screenshots, and navigation checks. Existing behavior receives regression coverage without being relabeled as test-first work.
+
 ## Workflows
 
 ### A — Own project (full PRD)

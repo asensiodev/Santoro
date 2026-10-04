@@ -40,6 +40,9 @@ import com.asensiodev.core.designsystem.theme.SantoroTheme
 import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.feature.moviedetail.impl.presentation.navigation.movieDetailRoute
 import com.asensiodev.feature.moviedetail.impl.presentation.navigation.navigateToMovieDetail
+import com.asensiodev.feature.persondetail.impl.presentation.navigation.navigateToPersonDetail
+import com.asensiodev.feature.persondetail.impl.presentation.navigation.personDetailRoute
+import com.asensiodev.feature.persondetail.impl.presentation.navigation.personFilmographyRoute
 import com.asensiodev.feature.searchmovies.impl.navigation.seeAllMoviesRoute
 import com.asensiodev.login.impl.presentation.navigation.loginScreen
 import com.asensiodev.santoro.navigation.DeepLinkHandler
@@ -203,7 +206,44 @@ fun SantoroApp(
             SantoroMainTabComponent(mainNavController = mainNavController)
         }
 
+        personDetailRoute(
+            navController = mainNavController,
+            onBackClicked = {
+                if (mainNavController.currentBackStackEntry?.lifecycle?.currentState ==
+                    Lifecycle.State.RESUMED
+                ) {
+                    mainNavController.popBackStack()
+                }
+            },
+            onMovieClicked = { movieId ->
+                if (mainNavController.currentBackStackEntry?.lifecycle?.currentState ==
+                    Lifecycle.State.RESUMED
+                ) {
+                    mainNavController.navigateToMovieDetail(movieId)
+                }
+            },
+        )
+
+        personFilmographyRoute(
+            navController = mainNavController,
+            onBackClicked = {
+                if (mainNavController.currentBackStackEntry?.lifecycle?.currentState ==
+                    Lifecycle.State.RESUMED
+                ) {
+                    mainNavController.popBackStack()
+                }
+            },
+            onMovieClicked = { movieId ->
+                if (mainNavController.currentBackStackEntry?.lifecycle?.currentState ==
+                    Lifecycle.State.RESUMED
+                ) {
+                    mainNavController.navigateToMovieDetail(movieId)
+                }
+            },
+        )
+
         movieDetailRoute(
+            onPersonClicked = { mainNavController.navigateToPersonDetail(it) },
             onBackClicked = {
                 if (mainNavController.currentBackStackEntry?.lifecycle?.currentState ==
                     Lifecycle.State.RESUMED

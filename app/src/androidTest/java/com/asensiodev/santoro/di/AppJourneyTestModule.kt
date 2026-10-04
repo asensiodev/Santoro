@@ -11,11 +11,13 @@ import com.asensiodev.auth.di.AuthDataModule
 import com.asensiodev.auth.di.FirebaseModule
 import com.asensiodev.auth.domain.repository.AuthRepository
 import com.asensiodev.core.domain.repository.MovieMutationRepository
+import com.asensiodev.core.domain.repository.PersonRepository
 import com.asensiodev.core.domain.repository.SyncRepository
 import com.asensiodev.core.domain.repository.SyncScheduler
 import com.asensiodev.core.domain.repository.UserPreferencesRepository
 import com.asensiodev.feature.moviedetail.impl.di.MovieDetailModule
 import com.asensiodev.feature.moviedetail.impl.domain.repository.MovieDetailRepository
+import com.asensiodev.feature.persondetail.impl.di.PersonDetailModule
 import com.asensiodev.feature.searchmovies.impl.data.repository.DefaultMovieLibraryStatusRepository
 import com.asensiodev.feature.searchmovies.impl.di.SearchMoviesModule
 import com.asensiodev.feature.searchmovies.impl.domain.repository.MovieLibraryStatusRepository
@@ -34,6 +36,7 @@ import com.asensiodev.santoro.core.sync.di.SyncModule
 import com.asensiodev.santoro.fake.FakeAuthRepository
 import com.asensiodev.santoro.fake.FakeDatabaseRepository
 import com.asensiodev.santoro.fake.FakeMovieDetailRepository
+import com.asensiodev.santoro.fake.FakePersonRepository
 import com.asensiodev.santoro.fake.FakeRecentSearchesRepository
 import com.asensiodev.santoro.fake.FakeRemoteConfigProvider
 import com.asensiodev.santoro.fake.FakeSearchMoviesRepository
@@ -54,6 +57,7 @@ import javax.inject.Singleton
         FirebaseModule::class,
         SearchMoviesModule::class,
         MovieDetailModule::class,
+        PersonDetailModule::class,
         DatabaseModule::class,
         RepositoryModule::class,
         SyncModule::class,
@@ -123,6 +127,14 @@ object AppJourneyTestModule {
     @Provides
     @Singleton
     fun provideMovieDetailRepository(fake: FakeMovieDetailRepository): MovieDetailRepository = fake
+
+    @Provides
+    @Singleton
+    fun provideFakePersonRepository() = FakePersonRepository()
+
+    @Provides
+    @Singleton
+    fun providePersonRepository(fake: FakePersonRepository): PersonRepository = fake
 
     @Provides
     @Singleton

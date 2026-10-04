@@ -1,0 +1,26 @@
+schema: spec-driven
+context: |
+  Santoro is an Android movie companion using Kotlin, Jetpack Compose,
+  Clean Architecture, pragmatic MVI, Hilt, Room, Firebase, and TMDB.
+  Read AGENTS.md and docs/prd/PRD.md before planning or implementing.
+  OpenSpec 1.12.0 is the pinned pilot CLI; use the default schema.
+  New pilot changes use OpenSpec only. Existing FIPs keep their original
+  workflow and outstanding validation; do not duplicate or bulk-migrate them.
+  Current specs grow from validated archived changes, not inferred coverage.
+rules:
+  proposal:
+    - Reference the PRD feature, realistic user impact, affected modules, and non-goals.
+  specs:
+    - Use testable SHALL requirements and WHEN/THEN scenarios for observable behavior.
+    - Cover failure, empty data, cancellation, concurrency, and lifecycle where relevant.
+  design:
+    - Identify data sources, allowed and forbidden side effects, and failure UX.
+    - Record persistence, migration, rollback, cancellation, and lifecycle decisions where relevant.
+    - Justify accepted limitations by realistic reachability, likelihood, and user harm.
+  tasks:
+    - Follow docs/guides/GUIDE-testing-and-tdd.md; identify confirmed test boundaries before implementation.
+    - Plan one observable behavior at a time with a failing behavioral test, minimal implementation, and focused passing validation.
+    - Record red and green commands/results; distinguish existing-behavior regression coverage from genuine test-first development.
+    - Group delivery into phases with focused validation in each phase.
+    - Check tasks only after implementation and validation; retain manual and external gates.
+    - Run affected tests first and the AGENTS.md aggregate gates before release-ready claims.

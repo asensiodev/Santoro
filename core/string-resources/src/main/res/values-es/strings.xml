@@ -189,4 +189,23 @@
     <!-- Google Auth ID -->
     <string name="default_web_client_id" translatable="false">792126816216-49vquegl1mcdcm52655qhgrs9l9ou5cf.apps.googleusercontent.com</string>
 
+    <!-- Person Detail -->
+    <string name="person_detail_title">Persona</string>
+    <string name="person_detail_error">No se pudo cargar la ficha. Vuelve a intentarlo.</string>
+    <string name="person_biography">Biografía</string>
+    <string name="person_biography_empty">No hay biografía disponible en este idioma.</string>
+    <string name="person_biography_more">Leer más</string>
+    <string name="person_biography_less">Leer menos</string>
+    <string name="person_born">Nacimiento: %1$s</string>
+    <string name="person_died">Fallecimiento: %1$s</string>
+    <string name="person_filmography">Filmografía</string>
+    <string name="person_filmography_empty">No hay créditos cinematográficos disponibles.</string>
+    <string name="person_filmography_error">No se pudo cargar la filmografía.</string>
+    <string name="person_release_date_unknown">Sin fecha</string>
+    <string name="person_acting">Interpretación</string>
+    <string name="person_crew">Detrás de las cámaras</string>
+    <plurals name="person_movie_count">
+        <item quantity="one">%d película</item>
+        <item quantity="other">%d películas</item>
+    </plurals>
 </resources>

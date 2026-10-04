@@ -53,6 +53,8 @@ dependencies {
     implementation(projects.santoro.feature.watchedMovies.impl)
     implementation(projects.santoro.feature.watchlist.api)
     implementation(projects.santoro.feature.watchlist.impl)
+    implementation(projects.feature.personDetail.api)
+    implementation(projects.feature.personDetail.impl)
     implementation(projects.santoro.feature.movieDetail.api)
     implementation(projects.santoro.feature.movieDetail.impl)
     implementation(projects.santoro.feature.settings.api)

@@ -1,6 +1,8 @@
 package com.asensiodev.feature.moviedetail.impl.presentation.mapper
 
 import com.asensiodev.core.domain.model.CastMember
+import com.asensiodev.core.domain.model.CrewMember
+import com.asensiodev.core.domain.model.CrewRole
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.ProductionCountry
@@ -138,6 +140,22 @@ class MovieUiMapperTest {
         val result = movieWithCast(cast).toUi()
 
         result.cast.map { member -> member.creditId } shouldBeEqualTo listOf("credit-1", "credit-2")
+    }
+
+    @Test
+    fun `GIVEN crew sharing a name WHEN mapped THEN person identity and distinct roles survive`() {
+        val movie =
+            movieWithCast(emptyList()).copy(
+                crew =
+                    listOf(
+                        CrewMember(7, "Person", CrewRole.DIRECTOR),
+                        CrewMember(8, "Person", CrewRole.DIRECTOR),
+                        CrewMember(7, "Person", CrewRole.WRITER),
+                        CrewMember(7, "Person", CrewRole.DIRECTOR),
+                    ),
+            )
+        movie.toUi().keyCrew.map { it.id to it.role } shouldBeEqualTo
+            listOf(7 to CrewRole.DIRECTOR, 8 to CrewRole.DIRECTOR, 7 to CrewRole.WRITER)
     }
 
     private fun movieWithCast(cast: List<CastMember>) =

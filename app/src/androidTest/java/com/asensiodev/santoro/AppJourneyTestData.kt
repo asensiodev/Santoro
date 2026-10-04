@@ -1,10 +1,17 @@
 package com.asensiodev.santoro
 
+import com.asensiodev.core.domain.model.CastMember
+import com.asensiodev.core.domain.model.CrewMember
+import com.asensiodev.core.domain.model.CrewRole
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.SantoroUser
 
 object AppJourneyTestData {
+    const val ACTOR_ID = 81001
+    const val DIRECTOR_ID = 81002
+    const val ACTOR_NAME = "Journey Actor"
+    const val DIRECTOR_NAME = "Journey Director"
     const val DEEP_LINK_MOVIE_ID = 71019
 
     val authenticatedUser =
@@ -49,6 +56,8 @@ object AppJourneyTestData {
         genreIds = listOf(18),
         productionCountries = emptyList(),
         runtime = 120,
+        cast = listOf(CastMember(ACTOR_ID, "credit-$id", ACTOR_NAME, "Lead", null)),
+        crew = listOf(CrewMember(DIRECTOR_ID, DIRECTOR_NAME, CrewRole.DIRECTOR)),
         isWatched = isWatched,
         isInWatchlist = isInWatchlist,
         watchedAt = watchedAt,

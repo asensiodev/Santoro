@@ -44,6 +44,13 @@ jobs:
             firebase: true
             reports: true
             coverage: true
+            artifact_name: unit-test-reports
+          - name: Screenshot verification
+            command: ./gradlew verifyPaparazziDebug
+            firebase: false
+            reports: true
+            coverage: false
+            artifact_name: screenshot-test-reports
           - name: Debug build
             command: ./gradlew assembleDebug
             firebase: true
@@ -118,8 +125,11 @@ jobs:
         if: failure() && matrix.reports
         uses: actions/upload-artifact@v6
         with:
-          name: unit-test-reports
-          path: "**/build/reports/tests/**"
+          name: ${{ matrix.artifact_name }}
+          path: |
+            **/build/reports/tests/**
+            **/build/paparazzi/failures/**
+            **/build/reports/paparazzi/**
           if-no-files-found: ignore
           retention-days: 7
 
@@ -162,6 +172,7 @@ jobs:
             :core:database:connectedDebugAndroidTest
             :feature:watchlist:impl:connectedDebugAndroidTest
             :feature:movie-detail:impl:connectedDebugAndroidTest
+            :feature:person-detail:impl:connectedDebugAndroidTest
             :feature:watched-movies:impl:connectedDebugAndroidTest
             :library:secure-storage:impl:connectedDebugAndroidTest
 
