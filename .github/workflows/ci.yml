@@ -135,7 +135,6 @@ jobs:
 
   instrumented-tests:
     name: Instrumented boundary and journey tests
-    needs: verification
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
