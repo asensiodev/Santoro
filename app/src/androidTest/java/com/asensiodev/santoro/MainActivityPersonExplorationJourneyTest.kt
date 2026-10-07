@@ -5,6 +5,7 @@ import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -13,6 +14,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.asensiodev.core.domain.model.CastMember
 import com.asensiodev.core.domain.model.PersonMovieCredit
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.amshove.kluent.shouldBeEqualTo
@@ -23,6 +25,30 @@ import com.asensiodev.santoro.core.stringresources.R as SR
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 class MainActivityPersonExplorationJourneyTest : BaseAppJourneyTest() {
+    @Test
+    fun givenScrolledCast_whenReturningFromActor_thenPositionIsRetained() {
+        detailRepository.extraCast =
+            (1..12).map { index ->
+                CastMember(82000 + index, "cast-$index", "Cast actor $index", "Role $index", null)
+            }
+        detailRepository.responseDelayMillis = 100
+        openMovie()
+        waitForCast()
+        actor().performScrollTo()
+        composeRule
+            .onNode(hasScrollToNodeAction())
+            .performScrollToNode(hasText("Cast actor 8"))
+        val selectedActor = composeRule.onNode(hasText("Cast actor 8") and hasClickAction())
+        selectedActor.assertIsDisplayed()
+        val position = selectedActor.fetchSemanticsNode().positionInRoot
+        selectedActor.performClick()
+        composeRule.onNodeWithText("Journey biography").assertIsDisplayed()
+        back()
+        waitForCast()
+        selectedActor.assertIsDisplayed()
+        selectedActor.fetchSemanticsNode().positionInRoot shouldBeEqualTo position
+    }
+
     @Test
     fun givenActor_whenFollowingFilmography_thenBackRestoresBothSources() {
         openMovie()
@@ -142,6 +168,13 @@ class MainActivityPersonExplorationJourneyTest : BaseAppJourneyTest() {
         authRepository.setUser(AppJourneyTestData.authenticatedUser)
         launch()
         composeRule.onNodeWithText(AppJourneyTestData.nowPlayingMovie.title).performClick()
+    }
+
+    private fun waitForCast() {
+        val castTitle = string(SR.string.cast_title)
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText(castTitle).fetchSemanticsNodes().size == 1
+        }
     }
 
     private fun actor() =

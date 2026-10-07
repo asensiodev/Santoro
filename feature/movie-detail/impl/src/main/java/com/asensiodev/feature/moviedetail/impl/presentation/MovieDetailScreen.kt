@@ -34,8 +34,10 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -184,6 +186,7 @@ internal fun MovieDetailScreen(
     modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
+    val castScrollState = rememberLazyListState()
 
     val collapseThreshold = HEADER_HEIGHT.value * COLLAPSE_THRESHOLD_FACTOR
     val fullyCollapsedAt = HEADER_HEIGHT.value * FULLY_COLLAPSED_AT_FACTOR
@@ -219,6 +222,7 @@ internal fun MovieDetailScreen(
                         onToggleWatched = onToggleWatched,
                         onDismissTooltip = onDismissTooltip,
                         scrollState = scrollState,
+                        castScrollState = castScrollState,
                         onPersonClicked = onPersonClicked,
                     )
                 }
@@ -326,6 +330,7 @@ internal fun MovieDetailContent(
     onPersonClicked: (Int) -> Unit = {},
     modifier: Modifier = Modifier,
     scrollState: ScrollState,
+    castScrollState: LazyListState = rememberLazyListState(),
 ) {
     val movie = uiState.movie ?: return
     val density = LocalDensity.current
@@ -363,7 +368,11 @@ internal fun MovieDetailContent(
                         },
                 )
                 Spacer(modifier = Modifier.height(Spacings.spacing8))
-                MovieDetailsSection(movie = movie, onPersonClicked = onPersonClicked)
+                MovieDetailsSection(
+                    movie = movie,
+                    onPersonClicked = onPersonClicked,
+                    castScrollState = castScrollState,
+                )
             }
         }
 
@@ -638,6 +647,7 @@ private fun WatchlistActionsRow(
 private fun MovieDetailsSection(
     movie: MovieUi,
     onPersonClicked: (Int) -> Unit,
+    castScrollState: LazyListState,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -673,7 +683,11 @@ private fun MovieDetailsSection(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        CastSection(cast = movie.cast, onPersonClicked = onPersonClicked)
+        CastSection(
+            cast = movie.cast,
+            onPersonClicked = onPersonClicked,
+            scrollState = castScrollState,
+        )
         if (movie.keyCrew.isNotEmpty()) {
             CrewGridSection(crew = movie.keyCrew, onPersonClicked = onPersonClicked)
         }
@@ -972,6 +986,7 @@ private fun CrewMemberItem(
 private fun CastSection(
     cast: List<CastMemberUi>,
     onPersonClicked: (Int) -> Unit,
+    scrollState: LazyListState,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacings.spacing12)) {
         Text(
@@ -982,6 +997,7 @@ private fun CastSection(
                 ),
         )
         LazyRow(
+            state = scrollState,
             horizontalArrangement = Arrangement.spacedBy(Spacings.spacing16),
             contentPadding = PaddingValues(horizontal = Spacings.spacing16),
         ) {

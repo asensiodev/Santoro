@@ -35,3 +35,8 @@
 - [x] 6.1 Observe a failing plain-screen assertion for one accessible heading per year, then implement grouped full-list rendering without repeated card years.
 - [x] 6.2 Verify singleton crew years and undated entries, keeping callbacks and profile-preview years intact.
 - [x] 6.3 Inspect updated complete-list light/dark snapshots, verify independently, and run affected behavior and static checks; record evidence and remaining gates.
+
+## 7. Cast scroll restoration regression
+
+- [x] 7.1 Reproduce the confirmed cast → actor → Back journey with a horizontally scrolled cast and a delayed detail response, then preserve the cast scroll through Loading; record observed red/green evidence in design.md.
+- [x] 7.2 Run all person exploration journeys and affected movie-detail unit, screenshot, and app/movie-detail static checks.

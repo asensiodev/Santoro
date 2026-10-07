@@ -4,6 +4,7 @@ package com.asensiodev.santoro.fake
 
 import com.asensiodev.auth.domain.model.ExpectedUserSignOutOutcome
 import com.asensiodev.auth.domain.repository.AuthRepository
+import com.asensiodev.core.domain.model.CastMember
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.SantoroUser
 import com.asensiodev.core.domain.model.ThemeOption
@@ -19,8 +20,10 @@ import com.asensiodev.library.remoteconfig.api.RemoteConfigName
 import com.asensiodev.library.remoteconfig.api.RemoteConfigProvider
 import com.asensiodev.santoro.AppJourneyTestData
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import java.util.concurrent.CopyOnWriteArrayList
@@ -173,18 +176,22 @@ class FakeRecentSearchesRepository : RecentSearchesRepository {
 
 class FakeMovieDetailRepository : MovieDetailRepository {
     val requestedMovieIds = CopyOnWriteArrayList<Int>()
+    var extraCast: List<CastMember> = emptyList()
+    var responseDelayMillis: Long = 0
 
     override fun getMovieDetail(id: Int): Flow<Result<Movie?>> {
         requestedMovieIds += id
-        return flowOf(
-            Result.success(
-                AppJourneyTestData.moviesById[id] ?: AppJourneyTestData.movie(id),
-            ),
-        )
+        return flow {
+            delay(responseDelayMillis)
+            val movie = AppJourneyTestData.moviesById[id] ?: AppJourneyTestData.movie(id)
+            emit(Result.success(movie.copy(cast = movie.cast + extraCast)))
+        }
     }
 
     fun reset() {
         requestedMovieIds.clear()
+        extraCast = emptyList()
+        responseDelayMillis = 0
     }
 }
 

@@ -71,3 +71,37 @@ The user approved the existing testing seams: repository HTTP contract, plain st
 The complete chronological filmography uses subtle accessible year headings for both acting and crew. Cards omit the repeated year; horizontal profile previews retain it. Movies without a release date appear last under a localized No release date / Sin fecha heading. Preserve release-date order, roles, movie callbacks and stable lazy keys. No alternate sorting controls are introduced.
 
 Reuse the already approved plain state-driven Compose and deterministic screenshot boundaries. Verify a single heading for multiple movies in one year, descending section order, singleton crew years and undated entries, and existing click/state contracts. Record behavioral red before implementation and inspect the updated complete-list light/dark snapshots before independent verification.
+
+## Cast scroll restoration regression
+
+The user confirmed the app journey boundary on 2026-10-07: scroll the movie's cast, open an actor, then press Back and retain the actor's position. The regression uses thirteen cast entries and a delayed repository response so the normal Loading transition occurs when returning. It asserts both visibility and the actor's position in the root after content returns.
+
+Returning re-runs the movie fetch and temporarily removes Content. The cast row's locally owned lazy state was lost during that transition. `MovieDetailScreen` now owns the saveable `LazyListState` outside the Loading/Content branches and passes it to the cast row. Fetch behavior remains intact, including refreshing movie status from the repository.
+
+Validation uses the managed `gradle-run.py` workflow `e4ba00650206214e030b6f887722d11b`, JDK 21, `-Pkotlin.compiler.execution.strategy=in-process`, and `-PenableFirebase=false`. The focused command is `:app:connectedJourneyTestAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.asensiodev.santoro.MainActivityPersonExplorationJourneyTest#givenScrolledCast_whenReturningFromActor_thenPositionIsRetained`.
+
+- Behavioral red (run 0003): the actor was not displayed after Back, on Pixel_9a API 37.
+- Green (run 0004): the same test passed after hoisting state, including exact position equality.
+- Setup failures are separate: run 0001 used the obsolete app Debug test task; run 0002 exposed a test selector that depended on a scrolled-away actor. Run 0005 stopped on a new test line's formatting, which was corrected.
+- Run 0006 found one additional call-formatting violation, which was corrected. Run 0007 completed the module tests but the instrumentation process died during the journey suite without a behavioral assertion. Run 0008 passed on retry: seven person exploration journeys and 61 movie-detail JVM tests, including screenshot cases, with Paparazzi verification and both modules' ktlint/detekt checks successful.
+
+Run 0008 used these Gradle tasks and filter through the wrapper:
+
+```text
+:app:connectedJourneyTestAndroidTest
+-Pandroid.testInstrumentationRunnerArguments.class=com.asensiodev.santoro.MainActivityPersonExplorationJourneyTest
+:feature:movie-detail:impl:testDebugUnitTest
+:feature:movie-detail:impl:verifyPaparazziDebug
+:feature:movie-detail:impl:ktlintCheck
+:feature:movie-detail:impl:detekt
+:app:ktlintCheck
+:app:detekt
+```
+
+Verification questions and bounded answers:
+
+- "Does the cast round-trip journey retain its scrolled position before the fix?" No: run 0003 reproduced the reported failure.
+- "Does the cast round-trip journey retain its scrolled position after hoisting its state?" Yes: run 0004 passed.
+- "Do all person exploration journeys and affected movie-detail unit, screenshot and static checks pass?" Yes: run 0008 passed after the separate formatting and instrumentation interruptions recorded above.
+
+Process recreation and the pilot's existing manual/release gates remain outside this bug fix's validation.
