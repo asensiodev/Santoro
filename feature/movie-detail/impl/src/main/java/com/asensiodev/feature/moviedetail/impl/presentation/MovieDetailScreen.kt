@@ -1006,17 +1006,27 @@ private fun CastMemberItem(
                 ).heightIn(min = Size.size48)
                 .clickable(onClick = onClick),
     ) {
-        AsyncImage(
-            model = actor.profileUrl,
-            contentDescription = actor.name,
-            contentScale = ContentScale.Crop,
+        Box(
             modifier =
                 Modifier
                     .size(Size.size64)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surfaceVariant),
-            error = painterResource(id = DR.drawable.ic_launcher_foreground),
-        )
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = AppIcons.Profile,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(Size.size48),
+            )
+            AsyncImage(
+                model = actor.profileUrl,
+                contentDescription = actor.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
         Spacer(modifier = Modifier.height(Spacings.spacing8))
         Text(
             text = actor.name,

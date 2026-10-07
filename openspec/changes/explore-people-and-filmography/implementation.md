@@ -81,3 +81,29 @@ See [polish.md](polish.md) for the approved specialty-first preview/full-list be
 ## Screenshot gate follow-up (2026-10-04)
 
 The subsequent [complete-screen-screenshot-coverage change](../complete-screen-screenshot-coverage/implementation.md) diagnosed and reviewed the old renderer baselines, including GenreChip, and independently verified all 112 active screenshots across eight modules. Task 2.3 is now complete. The earlier mismatch evidence above remains historical; process-death, manual/live-data/accessibility and hosted CI requirements remain open.
+
+## Cast portrait placeholder follow-up (2026-10-07)
+
+The user approved showing the existing person profile icon for loading, missing and failed cast photos, with tests of that visible behavior. The agreed boundary is the state-driven movie-detail content, with controlled image responses rather than a ViewModel or repository fixture.
+
+- `MovieDetailScreen.kt`: `CastMemberItem` draws the theme-aware, 48dp profile icon behind its circular 64dp photo. The existing `AsyncImage` covers it on success; removing the app-logo error painter keeps the profile icon visible on failure or absent data. This preserves the lightweight image component used by the lazy cast row.
+- `CastPortraitTest.kt`: four visual behavior tests run in both themes. A real Coil loader with a controlled interceptor holds requests, returns failures, or supplies a solid-color image. Movie artwork completes separately, and portrait completion is observed before assertions. Tests restore the previous singleton loader and shut down their own loader. They compare the avatar interior exactly with an independently rendered profile icon; two outer pixels are excluded because the circular antialiasing blends with different parent backgrounds. The successful-load test checks photo pixels where the icon's head and body would appear. No production test tags, new dependencies, repository fakes or screenshot baseline updates are needed.
+
+All Gradle commands used `python3 /Users/angelasensio/.agents/skills/gradle-run/scripts/gradle_run.py run --workflow a46e94dd2137435e5a8bfbbf12383857 --scope targeted --question <question> -- ./gradlew <tasks>`, with JDK 21 selected through `-Dorg.gradle.java.home`, `-Pkotlin.compiler.execution.strategy=in-process` and `-PenableFirebase=false`.
+
+Focused command: `:feature:movie-detail:impl:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.asensiodev.feature.moviedetail.impl.presentation.CastPortraitTest`.
+
+| Runs | Verification question | Bounded answer |
+|---|---|---|
+| 0001–0002 | Does the cast portrait show the profile icon while its image request is still loading? | Initial behavioral red: 6,799 pixels differed with the existing blank avatar. After adding the icon, 72 outer-edge pixels differed because of parent-background blending; the test was narrowed to the avatar interior. |
+| 0003 | Does the loading avatar match the profile icon inside its circular image bounds? | Green: the loading assertion passed. |
+| 0004 | Does a failed cast photo retain the profile icon rather than the app logo? | Behavioral red: 2,561 interior pixels differed while the app-logo error painter remained. |
+| 0005 | Do loading and failed cast photos display the same profile icon? | Green: both passed after removing the app-logo error painter. |
+| 0006 | Do cast portraits show the profile icon for loading, missing and failed photos, and replace it on success, in both themes? | Green: 8/8 passed. Missing-photo, success and additional-theme cases are regression coverage. |
+| 0007 | Do movie-detail unit tests, existing screenshot baselines, formatting and static analysis pass after the portrait change? | Unit/screenshot/static checks passed; new Android test formatting failed. This is a formatting failure, not behavioral red. |
+| 0008 | Is the new cast portrait test formatted according to repository rules? | `:feature:movie-detail:impl:ktlintAndroidTestSourceSetFormat` passed. |
+| 0009 | Do all movie-detail instrumented tests, unit tests, screenshot baselines, ktlint and detekt pass with the final portrait fixture? | Green: 9 instrumented tests and 61 JVM tests, including screenshot verification, passed with no failures, errors or skips; ktlint and detekt passed. |
+
+Run 0007 used `:feature:movie-detail:impl:testDebugUnitTest :feature:movie-detail:impl:verifyPaparazziDebug :feature:movie-detail:impl:ktlintCheck :feature:movie-detail:impl:detekt --continue`. Run 0009 added unfiltered `:feature:movie-detail:impl:connectedDebugAndroidTest` to those tasks after isolating movie-artwork completion from portrait completion. Device: Pixel_9a API 37. The existing CI instrumented job already runs this module and will discover the new tests.
+
+This follow-up validates the affected module, not a fresh repository-wide release gate or live TMDB downloads. The managed workflow was finished and removed only wrapper-owned temporary logs. No commit or push was performed for this follow-up.
