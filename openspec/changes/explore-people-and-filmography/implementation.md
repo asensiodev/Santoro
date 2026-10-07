@@ -142,3 +142,5 @@ Managed workflow `553928d63af15e41b55b348aabbc52e4` used the same wrapper, JDK 2
 | Do all eight CastPortraitTest cases pass with exact solid-pixel assertions after restoring the original density 420 and gesture navigation? | Green: 8/8 passed. |
 
 Every report had zero failures, errors or skipped cases. The emulator's original physical 420 dpi with no override and gesture navigation mode 2 were restored. The managed workflow finished successfully and removed only wrapper-owned logs.
+
+Hosted confirmation: [CI run 37665400562](https://github.com/asensiodev/Santoro/actions/runs/37665400562) passed all five jobs for corrective commit `fb24337`: API 35 instrumented boundary/journey tests, static analysis, screenshot verification, unit tests/coverage and Debug assembly. The hosted portrait assertions passed with exact solid-region colors, confirming that the remaining exact-raster failure was confined to the excluded vector-edge regions. The CI portrait failure is resolved; the separate manual/live-TMDB and process-death checks above remain historical outstanding gates.
