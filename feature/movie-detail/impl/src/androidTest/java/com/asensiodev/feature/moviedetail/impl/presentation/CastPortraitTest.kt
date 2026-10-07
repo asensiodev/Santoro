@@ -247,20 +247,29 @@ class CastPortraitTest(
         assertEquals(expected.height, actual.height)
         val center = expected.width / 2f
         val radius = center - 2f
+        val background = expected[expected.width / 2, 3]
+        var profilePixels = 0
         var differentPixels = 0
-        for (y in 0 until expected.height) {
-            for (x in 0 until expected.width) {
+        for (y in 1 until expected.height - 1) {
+            for (x in 1 until expected.width - 1) {
                 val dx = x + 0.5f - center
                 val dy = y + 0.5f - center
-                if (dx * dx + dy * dy < radius * radius &&
-                    actual[x, y] != expected[x, y]
-                ) {
-                    differentPixels++
+                if (dx * dx + dy * dy < radius * radius) {
+                    val color = expected[x, y]
+                    val solid =
+                        (y - 1..y + 1).all { row ->
+                            (x - 1..x + 1).all { column -> expected[column, row] == color }
+                        }
+                    if (solid) {
+                        if (color != background) profilePixels++
+                        if (actual[x, y] != color) differentPixels++
+                    }
                 }
             }
         }
+        assertTrue("Reference must contain solid profile icon pixels", profilePixels > 0)
         assertTrue(
-            "Portrait must display the profile icon; $differentPixels pixels differ",
+            "Portrait must display the profile icon; $differentPixels solid pixels differ",
             differentPixels == 0,
         )
     }

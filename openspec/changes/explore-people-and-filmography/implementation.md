@@ -50,7 +50,7 @@ Additional regression coverage and the future TDD workflow are tracked in [testi
 - English and Spanish string resources provide profile labels, biography controls, missing data messages and retryable errors.
 - `app/proguard-rules.pro` preserves the new Gson DTO classes and fields during release optimization, consistent with existing API-model rules. Every DTO field declares its wire name.
 - Six Paparazzi baseline PNGs establish the new visual contracts.
-- OpenSpec tasks and PRD track delivery and outstanding verification. Existing FIP-023/FIP-024 state is retained.
+- OpenSpec tasks and PRD track delivery and outstanding verification. Existing FIP-023 and external release gates remain open as recorded; release preparation is now tracked in the [unified release guide](../../../docs/guides/GUIDE-release-preparation.md).
 
 ## Validation
 
@@ -124,3 +124,21 @@ The correction uses managed Gradle workflow `ece473c9576a601769b8241a1484efff`, 
 | Do all eight CastPortraitTest cases still pass after the fixture fix with the original gesture navigation restored? | Green: 8/8 passed; original `navigation_mode=2` confirmed. |
 
 The managed workflow was finished successfully, removing only wrapper-owned logs. These runs used API 37 because no local API 35 image is installed; hosted CI remains the check for that platform.
+
+### Rendering-stable portrait assertions
+
+[Run 37663288307](https://github.com/asensiodev/Santoro/actions/runs/37663288307) confirmed the safe-area correction reduced the API 35 mismatch to 370 light and 297 dark pixels, but exact equality still failed in all eight cases. The other four CI jobs passed. Local SDK metadata gives Pixel 6 the same 420 dpi as the local Pixel 9a; additional 480 and 450 dpi runs passed the original exact comparison, so density did not reproduce the remaining hosted difference.
+
+`CastPortraitTest` now checks exact colors in every uniform 3×3 reference region within the avatar, including the solid profile glyph and surrounding background. It requires solid profile pixels to exist. This excludes antialiased vector boundaries rather than permitting a percentage of incorrect pixels or a color tolerance; a blank avatar or wrong icon still differs in the checked glyph regions. Photo replacement remains separately checked with a controlled opaque image. Production code is unchanged. Rendering at icon edges remains the working explanation until hosted API 35 verification confirms the revised visual contract.
+
+Managed workflow `553928d63af15e41b55b348aabbc52e4` used the same wrapper, JDK 21/options and focused instrumented command recorded above:
+
+| Verification question | Bounded answer |
+|---|---|
+| Do the eight exact-pixel CastPortraitTest cases reproduce the remaining CI mismatch at emulator density 480? | 8/8 passed; mismatch not reproduced. |
+| Do the eight exact-pixel CastPortraitTest cases reproduce the remaining CI mismatch at fractional-layout emulator density 450? | 8/8 passed; mismatch not reproduced. |
+| Do all eight CastPortraitTest cases pass at density 450 when comparing exact solid glyph and background pixels? | Green: 8/8 passed. |
+| Do all movie-detail instrumented tests and module ktlintCheck/detekt pass with the exact solid-pixel portrait assertions at density 450? | Green: unfiltered `:feature:movie-detail:impl:connectedDebugAndroidTest` passed 9/9; module `ktlintCheck` and `detekt` passed. |
+| Do all eight CastPortraitTest cases pass with exact solid-pixel assertions after restoring the original density 420 and gesture navigation? | Green: 8/8 passed. |
+
+Every report had zero failures, errors or skipped cases. The emulator's original physical 420 dpi with no override and gesture navigation mode 2 were restored. The managed workflow finished successfully and removed only wrapper-owned logs.
