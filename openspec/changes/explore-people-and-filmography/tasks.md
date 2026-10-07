@@ -20,7 +20,7 @@
 
 - [x] 4.1 Run affected domain/person-detail/movie-detail/app checks first, then test detekt ktlintCheck koverVerify assembleDebug assembleRelease; record exact commands/results and keep failed or unavailable gates open.
 - [ ] 4.2 Record manual actor/director exploration, Spanish missing biography, unavailable portrait, empty credits, offline details, credits retry, light/dark, accessibility, and rapid-tap checks; document any accepted limitations.
-- [x] 4.3 Reconcile F-29 status and report changed production/test classes with validation evidence; keep FIP-023 and FIP-024 external gates unchanged.
+- [x] 4.3 Reconcile F-29 status and report changed production/test classes with validation evidence; keep FIP-023 and the external release gates tracked in the [unified release guide](../../../docs/guides/GUIDE-release-preparation.md) unchanged.
 - [ ] 4.4 After human review and completed validation, sync/archive this pilot and record its planning/resume usefulness in the change completion evidence; verify the resulting main spec and archive with OpenSpec validation.
 
 ## 5. Approved profile polish (test first)

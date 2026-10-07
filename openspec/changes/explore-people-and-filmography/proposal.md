@@ -29,4 +29,4 @@ None. This brownfield pilot has no existing OpenSpec capability to modify; the n
 - Movie-detail crew UI must preserve the person ID already present in the domain; cast already preserves it.
 - Pure person/credit models and repository contract in `core/domain`; TMDB DTOs and mapping at the data boundary, following the existing feature service pattern.
 - TMDB read endpoints: person details and movie credits. No Room schema change, Firebase writes, authentication change, or new runtime dependency is proposed.
-- Existing FIP-023 external validation and FIP-024 remain in their original workflow; this pilot does not close either.
+- Existing FIP-023 external validation and release-pipeline external gates remain outside this pilot. Release preparation is now tracked in the [unified release guide](../../../docs/guides/GUIDE-release-preparation.md); this pilot does not complete those gates.
