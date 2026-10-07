@@ -47,6 +47,7 @@
 
 # Kotlin Serialization
 -keepattributes *Annotation*, InnerClasses
+-keep enum com.asensiodev.feature.persondetail.api.navigation.FilmographySection { *; }
 -dontnote kotlinx.serialization.AnnotationsKt
 -keepclassmembers class kotlinx.serialization.json.** { *** Companion; }
 -keepclasseswithmembers class kotlinx.serialization.json.** {

@@ -61,6 +61,8 @@ To record intentional baselines, target one module and test class at a time, for
 
 ## OpenSpec and completion evidence
 
+Before distributing a release candidate, install the signed, minified Release APK on a test emulator and run `python3 tools/check-release-startup.py --serial <device-serial>` from the repository root. Pass `--adb <path>` if ADB is not on the command path. This regression check requires a non-debuggable app, performs a cold launch, rejects fresh package-specific crashes, and verifies process survival and a resumed activity. It preserves app data. A passing Debug or journey-test build does not validate Release navigation after R8 shrinking; this startup check complements the Play upgrade and fresh-install checks.
+
 For each new change, record the agreed boundaries in `design.md` and use vertical test-first tasks. Keep red and green commands/results in the change evidence. A checked task means both its behavior and its validation passed. Document fixture/compiler/environment failures separately from behavioral red.
 
 For regression-only work, record the previously unprotected scenario, the test added and the passing result. Report every modified production/test class and supporting document. Keep manual, screenshot, process-restoration and external gates visibly pending until verified; a normal JVM `test` task does not substitute for explicit Paparazzi or instrumented execution.

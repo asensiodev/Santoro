@@ -360,6 +360,8 @@ Record:
 
 Do not enable publishing merely because the debug build passed. Debug and release differ in signing, configuration and shrinking.
 
+Install the signed, minified Release APK on a test emulator and run `python3 tools/check-release-startup.py --serial <device-serial>` from the repository root before distributing the bundle. Use `--adb <path>` when needed. The check performs a cold launch and rejects startup crashes; the separate Play upgrade and fresh-install checks remain required.
+
 **Expected result:** a rehearsal summary you can compare with the setup worksheet, with publishing still disabled. Keep failed checks visibly open in this guide's preparation checklist and release-evidence table.
 
 ## 10. Run the first Internal deployment

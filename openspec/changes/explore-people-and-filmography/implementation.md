@@ -144,3 +144,17 @@ Managed workflow `553928d63af15e41b55b348aabbc52e4` used the same wrapper, JDK 2
 Every report had zero failures, errors or skipped cases. The emulator's original physical 420 dpi with no override and gesture navigation mode 2 were restored. The managed workflow finished successfully and removed only wrapper-owned logs.
 
 Hosted confirmation: [CI run 37665400562](https://github.com/asensiodev/Santoro/actions/runs/37665400562) passed all five jobs for corrective commit `fb24337`: API 35 instrumented boundary/journey tests, static analysis, screenshot verification, unit tests/coverage and Debug assembly. The hosted portrait assertions passed with exact solid-region colors, confirming that the remaining exact-raster failure was confined to the excluded vector-edge regions. The CI portrait failure is resolved; the separate manual/live-TMDB and process-death checks above remain historical outstanding gates.
+
+## Minified Release startup regression (2026-10-07)
+
+The maintainer reported an immediate crash opening Play Internal version `1.1.0 (43)` on a physical Pixel 9a. The signed Release APK reproduced the same startup symptom repeatedly on the API 37 Pixel 9a emulator. Android Navigation failed while creating the initial graph because it could not find `com.asensiodev.feature.persondetail.api.navigation.FilmographySection`. R8 had renamed that enum to `d4.b`, while the serialized route retained its original class name. Debug-derived journey tests and successful Release compilation did not exercise this runtime failure.
+
+The existing public app-navigation boundary now has an executable minified-Release startup regression in `tools/check-release-startup.py`. It requires a non-debuggable app, cold-launches the installed Release activity, rejects fresh package-specific crash-buffer entries, and checks process survival and a resumed activity. It preserves app data and does not print device logs. Checking only the PID would miss crashes while Android retains the process to show its crash dialog.
+
+Command: `python3 tools/check-release-startup.py --adb /Users/angelasensio/Library/Android/sdk/platform-tools/adb --serial emulator-5554`.
+
+- Red on the original signed APK: exit 1, `FAIL: The Release app reported a startup crash.`
+- Fix: `app/proguard-rules.pro` preserves only the filmography navigation enum and its members, avoiding a new Android dependency in the pure JVM API module.
+- Green after managed `:app:assembleRelease` and installing the corrected APK over the original: exit 0, `PASS: The Release app stayed alive and reached a resumed activity.` The mapping preserves the enum's fully qualified name.
+
+The testing and release preparation guides now require this check before distributing a candidate. The maintainer authorized replacement version `1.1.1 (44)`. Its version bump and fix must be committed and pushed before generating the replacement AAB. Full candidate checks, bundle verification, physical-device confirmation and Play upgrade testing remain pending at this point.
