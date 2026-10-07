@@ -22,6 +22,14 @@ docs/
 
 ---
 
+## Preparing and publishing a Santoro update
+
+Start with [Prepare Santoro Releases and Deploy to Internal Testing](guides/GUIDE-release-preparation.md). This is the single didactic setup and operating guide: it explains what each service/control does, why Santoro needs it, the UI steps, expected outcomes, credential inventory, rehearsals, Play testing and manual Production promotion.
+
+The approved development flow allows ordinary direct pushes to `main`. Branch rules protect history without requiring PRs; same-commit release checks prevent failed code from reaching Internal. A manual GitHub button starts automated delivery to Internal, and Production remains a manual decision after testing the same artifact.
+
+The guide itself contains the preparation checklist, implementation requirements and release-evidence record. The previous release/Internal guides and separate release FIP have been removed. Workflow and external setup remain pending; reading the guide does not enable publishing.
+
 ## OpenSpec Pilot
 
 New non-trivial pilot changes use `openspec/changes/<change>/` with proposal, delta specs, design, and tasks. The first pilot is [F-29 person exploration](../openspec/changes/explore-people-and-filmography/proposal.md); its implementation and focused emulator checks are complete, with final validation/manual gates recorded in [the evidence report](../openspec/changes/explore-people-and-filmography/implementation.md).
@@ -30,7 +38,7 @@ Use OpenSpec **1.12.0** with the default `spec-driven` schema. Install the CLI g
 
 Use the global OpenSpec propose/apply skills to plan and implement a change. Inspect progress with `openspec status --change <name>` and validate artifacts with `openspec validate <name> --strict`. Follow [the testing guide](guides/GUIDE-testing-and-tdd.md) during implementation and record validation evidence alongside the change. After implementation, required checks and human review are complete, sync delta specs and archive the change. OpenSpec validation complements the repository tests and external gates.
 
-Existing FIPs, including FIP-023 validation and FIP-024, retain the workflows below. Keep one plan per change; current specs grow from validated archived changes rather than inferred coverage of untouched code.
+Existing FIPs, including FIP-023 validation, retain the workflows below. Release preparation is tracked directly in the unified release guide instead of a separate FIP. Keep one plan per change; current specs grow from validated archived changes rather than inferred coverage of untouched code.
 
 ## Testing and TDD
 

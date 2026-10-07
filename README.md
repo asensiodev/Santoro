@@ -102,7 +102,7 @@ The local pre-commit hook runs Detekt, ktlint, and Konsist when Kotlin files are
 ./gradlew copyGitHooks
 ```
 
-Google Play releases are currently uploaded manually. Automatic delivery to Internal testing is [planned](docs/plan/FIP-024-automatic-internal-deployment.md).
+Google Play releases are currently uploaded manually. The [release preparation guide](docs/guides/GUIDE-release-preparation.md) explains the planned manual-trigger pipeline for automated Internal delivery and tracks its setup and validation.
 
 ## Stack
 
