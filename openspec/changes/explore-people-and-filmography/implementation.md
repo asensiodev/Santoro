@@ -107,3 +107,20 @@ Focused command: `:feature:movie-detail:impl:connectedDebugAndroidTest -Pandroid
 Run 0007 used `:feature:movie-detail:impl:testDebugUnitTest :feature:movie-detail:impl:verifyPaparazziDebug :feature:movie-detail:impl:ktlintCheck :feature:movie-detail:impl:detekt --continue`. Run 0009 added unfiltered `:feature:movie-detail:impl:connectedDebugAndroidTest` to those tasks after isolating movie-artwork completion from portrait completion. Device: Pixel_9a API 37. The existing CI instrumented job already runs this module and will discover the new tests.
 
 This follow-up validates the affected module, not a fresh repository-wide release gate or live TMDB downloads. The managed workflow was finished and removed only wrapper-owned temporary logs. No commit or push was performed for this follow-up.
+
+## CI portrait fixture correction (2026-10-07)
+
+[CI run 37660736127](https://github.com/asensiodev/Santoro/actions/runs/37660736127) passed static analysis, unit/coverage, screenshots and the Debug build, but all eight portrait cases failed their pixel comparison on API 35. The reference avatar was placed at the bottom of an edge-to-edge test window, where three-button navigation overlays a scrim. Compose captures a window crop, so the system overlay changed reference pixels while the scrolled cast avatar remained unobstructed.
+
+The local API 37 emulator originally used gesture navigation. Switching only its navigation overlay to three-button mode reproduced all eight failures on the unchanged test: 17,140 differing pixels per case, consistent with the CI failures of 17,178 light and 17,167 dark pixels. Adding `WindowInsets.safeDrawing` padding to the test fixture's root `Surface` made all eight cases pass with three-button navigation still enabled. This changes only `CastPortraitTest`; production rendering and strict interior-pixel assertions are preserved. The reference now occupies unobstructed app content rather than navigation-bar pixels.
+
+The correction uses managed Gradle workflow `ece473c9576a601769b8241a1484efff`, the same JDK 21/options documented above, and the existing focused instrumented command. Navigation mode is restored after the comparison. Hosted API 35 verification is required before treating the CI failure as resolved.
+
+| Verification question | Bounded answer |
+|---|---|
+| Do all eight CastPortraitTest cases pass on the unchanged implementation with three-button navigation? | Red: 8 failures, 17,140 differing pixels per case. |
+| Do all eight CastPortraitTest cases pass with three-button navigation after the test fixture respects safe drawing insets? | Green: 8/8 passed. |
+| Do all movie-detail instrumented tests and module ktlintCheck/detekt pass after the safe drawing test fixture fix with three-button navigation? | Green: unfiltered `:feature:movie-detail:impl:connectedDebugAndroidTest` passed 9/9; `:feature:movie-detail:impl:ktlintCheck :feature:movie-detail:impl:detekt` passed. |
+| Do all eight CastPortraitTest cases still pass after the fixture fix with the original gesture navigation restored? | Green: 8/8 passed; original `navigation_mode=2` confirmed. |
+
+The managed workflow was finished successfully, removing only wrapper-owned logs. These runs used API 37 because no local API 35 image is installed; hosted CI remains the check for that platform.
