@@ -4,9 +4,9 @@
 
 | Field        | Value                          |
 |--------------|--------------------------------|
-| **Version**  | 2.18                           |
+| **Version**  | 2.20                           |
 | **Status**   | ✅ Current                     |
-| **Date**     | 2026-10-04                     |
+| **Date**     | 2026-10-19                     |
 | **Author**   | @asensiodev                    |
 | **Platform** | Android (Native)               |
 
@@ -482,6 +482,18 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 ---
 
+### F-30 — Watchlist: Surprise Me
+
+| Attribute | Detail |
+|---|---|
+| **Status** | 🔵 Implemented locally, code uncommitted — [OpenSpec evidence](../../openspec/changes/surprise-watchlist-movie/implementation.md); manual/external review pending |
+| **Scope** | Unfiltered Watchlist and the existing movie-detail navigation |
+| **Behaviour** | Surprise me / Sorpréndeme opens a dismissible panel with a random saved movie. View details opens its existing detail; Pick another avoids the immediately previous movie when alternatives exist. A single saved movie omits Pick another. |
+| **Boundaries** | Existing loaded Watchlist data and poster loading only; no list writes, sync, new metadata requests, persistent suggestion history or schema changes. Search hides the action; disappearance or failure clears the suggestion. |
+| **Rationale** | Help users choose something to watch from their own saved movies with a small, playful interaction. |
+
+---
+
 ## 10. Version History
 
 | Version | Date       | Summary                        |
@@ -516,3 +528,4 @@ Features approved for a future release. Each will get a FIP before implementatio
 | 2.17    | 2026-10-04 | Implement F-29 person profiles and connected movie navigation; record focused, screenshot and emulator evidence while retaining unresolved aggregate/manual and archive gates. |
 | 2.18    | 2026-10-04 | Polish F-29 with specialty-first poster previews, movie counts and a complete filmography destination; record observed TDD red/green evidence and reuse existing test-double conventions. |
 | 2.19    | 2026-10-04 | Group complete person filmographies under accessible release-year headings; retain years in horizontal previews and record focused screen, snapshot and navigation validation. |
+| 2.20    | 2026-10-19 | Add F-30 Watchlist Surprise me through OpenSpec; record agreed test boundaries, test-first state/UI evidence, passing connected journeys and aggregate/screenshot gates; replace the initial shuffle artwork with a dice icon; publish documentation only and retain the implementation locally with manual/external review pending. |
