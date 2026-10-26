@@ -486,9 +486,9 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 | Attribute | Detail |
 |---|---|
-| **Status** | 🔵 Implemented locally, code uncommitted — [OpenSpec evidence](../../openspec/changes/surprise-watchlist-movie/implementation.md); manual/external review pending |
+| **Status** | 🔵 Implemented — [OpenSpec evidence](../../openspec/changes/surprise-watchlist-movie/implementation.md); manual/external review pending |
 | **Scope** | Unfiltered Watchlist and the existing movie-detail navigation |
-| **Behaviour** | Surprise me / Sorpréndeme opens a dismissible panel with a random saved movie. View details opens its existing detail; Pick another avoids the immediately previous movie when alternatives exist. A single saved movie omits Pick another. |
+| **Behaviour** | A compact text-only Surprise me / Sorpréndeme action floats over the bottom end of the movie list, above app navigation, when at least two movies exist. Movies scroll behind it without an opaque action strip; measured scrollable end padding lets the final movie clear the button fully, including with large text. It opens a dismissible panel with a random saved movie. View details opens its existing detail; Pick another avoids the immediately previous movie when alternatives exist. With one movie, the entry action is hidden; an already-open panel omits Pick another. |
 | **Boundaries** | Existing loaded Watchlist data and poster loading only; no list writes, sync, new metadata requests, persistent suggestion history or schema changes. Search hides the action; disappearance or failure clears the suggestion. |
 | **Rationale** | Help users choose something to watch from their own saved movies with a small, playful interaction. |
 
@@ -529,3 +529,9 @@ Features approved for a future release. Each will get a FIP before implementatio
 | 2.18    | 2026-10-04 | Polish F-29 with specialty-first poster previews, movie counts and a complete filmography destination; record observed TDD red/green evidence and reuse existing test-double conventions. |
 | 2.19    | 2026-10-04 | Group complete person filmographies under accessible release-year headings; retain years in horizontal previews and record focused screen, snapshot and navigation validation. |
 | 2.20    | 2026-10-19 | Add F-30 Watchlist Surprise me through OpenSpec; record agreed test boundaries, test-first state/UI evidence, passing connected journeys and aggregate/screenshot gates; replace the initial shuffle artwork with a dice icon; publish documentation only and retain the implementation locally with manual/external review pending. |
+| 2.21    | 2026-10-26 | Refine F-30 with a text-only wrapping header action, hide it for a single entry, and validate localized Compose tests and large-font light/dark captures. Retain manual/external release gates. |
+| 2.22    | 2026-10-26 | Move F-30's compact action to a fixed bottom-end position for one-handed reach, reserve list space, verify scrolling callbacks and light/dark navigation-shell captures, and retain manual/external release gates. |
+| 2.23    | 2026-10-26 | Correct F-30's bottom placement to a floating overlay with movies behind it and measured scrollable end clearance; verify last-movie visibility with Spanish 200% text and long-list light/dark navigation-shell captures. |
+| 2.24    | 2026-10-26 | Improve F-30's floating action contrast using the existing theme accent/foreground pair; preserve geometry and scroll behavior, inspect affected captures and independently verify module screenshots/static checks. |
+| 2.25    | 2026-10-26 | Soften F-30's dark-theme accent with the existing muted blue container and light foreground; retain identical light captures, geometry and scrolling behavior. |
+| 2.26    | 2026-10-26 | Prepare the user-authorized F-30 implementation publication, align its navigation journey with the two-entry action guard, and verify the selected-detail/Back journey and app static checks. |

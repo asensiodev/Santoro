@@ -4,10 +4,11 @@ People save movies and then struggle to choose one for tonight. Deliver PRD F-30
 
 ## What Changes
 
-- Add Surprise me / Sorpréndeme to the unfiltered, non-empty Watchlist.
+- Add a compact text-only Surprise me / Sorpréndeme action floating over the bottom end of the unfiltered Watchlist when at least two movies exist, above app navigation. Movies scroll behind it; measured scrollable end padding lets the final movie clear the action completely.
 - Show a dismissible bottom sheet with the selected movie's poster, title and existing metadata, plus View details / Ver ficha and Pick another / Elegir otra.
-- Avoid immediately repeating a suggestion when alternatives exist. With one movie, show its suggestion without Pick another.
+- Avoid immediately repeating a suggestion when alternatives exist. With one movie, hide the entry action; an already-open suggestion for that remaining movie omits Pick another.
 - Keep suggestions read-only and refresh them against local list updates.
+- Use the existing theme accent and its matching foreground for the entry action, without changing its compact size or introducing a new palette.
 
 ## Capabilities
 

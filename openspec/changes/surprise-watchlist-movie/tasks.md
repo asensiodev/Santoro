@@ -24,3 +24,30 @@
 ## 5. Icon follow-up
 
 - [x] 5.1 Replace the initial Shuffle artwork with the existing Material Casino dice, record and inspect the six affected light/dark captures, and independently verify affected screenshots and static checks. Retain the implementation locally; publish only the documentation requested by the user.
+
+## 6. Compact header follow-up
+
+- [x] 6.1 Observe a failing plain Compose test for hiding the entry action with one movie, implement the visibility change, and verify the same test passes.
+- [x] 6.2 Place the text-only tonal action beside the count in a wrapping header, preserve its callback and 48dp target, and verify light/dark, Spanish and large-font presentation plus affected checks. Record evidence without claiming fresh release readiness.
+
+## 7. Reachable bottom action follow-up
+
+- [x] 7.1 Add a plain Compose test that scrolls to the last saved movie and still finds a clickable suggestion action without covering the movie; observe red, pin the compact text-only action at the bottom end with reserved list space, and verify green.
+- [x] 7.2 Inspect light/dark and large-font Spanish captures, including the existing bottom navigation in a test-only app-shell composition. Independently verify screenshots, affected tests and static checks, and record outcomes and remaining manual/release gates.
+
+## 8. Floating overlay correction
+
+- [x] 8.1 Observe a failing screen test proving the list viewport extends behind the action, then replace the reserved strip with a transparent overlay and scrollable end clearance; verify overlay placement, final-movie visibility and callback behavior.
+- [x] 8.2 Verify final scroll clearance with Spanish 200% text, inspect long-list light/dark navigation-shell captures, independently verify affected screenshots/tests/static checks, and record the results.
+
+## 9. Accent color refinement
+
+- [x] 9.1 Apply the existing theme accent and matching foreground to the floating action without changing size, shape, elevation, placement or scroll behavior; inspect affected light/dark and large-font captures, independently verify module screenshots/static checks and record results.
+
+## 10. Muted dark-theme accent
+
+- [x] 10.1 Use the existing muted blue container/foreground pair on dark surfaces only, preserve light-theme colors and geometry, inspect all six affected dark captures and independently verify module screenshots/static checks.
+
+## 11. Publication preparation
+
+- [x] 11.1 Reproduce the outdated single-entry navigation journey, adjust its fixture to two current saved movies and assert navigation against the displayed selection, verify the journey and affected app static checks, and identify unrelated local files to exclude from the user-requested publication.

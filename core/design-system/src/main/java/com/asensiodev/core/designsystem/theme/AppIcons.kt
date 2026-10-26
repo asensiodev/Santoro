@@ -16,6 +16,7 @@ import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.CalendarToday
+import androidx.compose.material.icons.rounded.Casino
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.Edit
@@ -60,6 +61,7 @@ object AppIcons {
     val Settings = Icons.Rounded.Settings
     val Help = Icons.Rounded.Help
     val Share = Icons.Rounded.Share
+    val Casino = Icons.Rounded.Casino
     val PrivacyPolicy = Icons.Rounded.PrivacyTip
     val DeleteAccount = Icons.Rounded.DeleteForever
 

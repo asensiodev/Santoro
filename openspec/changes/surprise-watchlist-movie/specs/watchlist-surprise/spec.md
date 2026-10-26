@@ -6,7 +6,22 @@ Help people choose a movie from their saved Watchlist by offering a random, read
 
 ### Requirement: Suggest a saved movie
 
-The Watchlist SHALL offer Surprise me / Sorpréndeme when unfiltered content contains movies. Activating it SHALL show a dismissible suggestion panel with one randomly selected current Watchlist entry, its available poster/title/metadata, and View details / Ver ficha. Selection SHALL use loaded local data and SHALL NOT change saved movie flags or schedule sync.
+The Watchlist SHALL offer Surprise me / Sorpréndeme when unfiltered content contains at least two movies. The action SHALL be a compact text-only elevated tonal button floating over the bottom end of the screen content, above app navigation, with a touch target at least 48dp high. It SHALL remain available while movies scroll behind it, without an opaque full-width strip. Scrollable end padding SHALL account for the action's measured height and spacing so the final movie can clear it completely, including with large text. Activating it SHALL show a dismissible suggestion panel with one randomly selected current Watchlist entry, its available poster/title/metadata, and View details / Ver ficha. Selection SHALL use loaded local data and SHALL NOT change saved movie flags or schedule sync.
+
+#### Scenario: Reach the action after scrolling
+- **WHEN** the user scrolls to the final movie in a long unfiltered Watchlist
+- **THEN** Surprise me remains visible and clickable over the list viewport and above app navigation
+- **AND** the final movie can be fully brought into view without the action covering it
+
+#### Scenario: Movies behind the floating action
+- **WHEN** a long Watchlist is scrolled through before its end
+- **THEN** movie content can be seen behind and beside the floating action rather than ending at a reserved action strip
+
+#### Scenario: Accent styling in both themes
+- **WHEN** the floating action is shown in light or dark theme
+- **THEN** it uses the existing theme accent and matching foreground for readable contrast against the movie cards
+- **AND** dark surfaces use the muted blue container with a light foreground while light-theme colors remain unchanged
+- **AND** its compact size, minimum 48dp height, text-only label, soft elevation and scroll clearance remain unchanged
 
 #### Scenario: Choose from a populated Watchlist
 - **WHEN** the user activates Surprise me on an unfiltered populated Watchlist
@@ -31,7 +46,8 @@ The panel SHALL offer Pick another / Elegir otra only when at least two entries 
 
 #### Scenario: Only one saved movie
 - **WHEN** the Watchlist contains one movie
-- **THEN** the panel shows that movie and omits Pick another
+- **THEN** the list omits Surprise me
+- **AND** an already-open panel for the remaining movie omits Pick another
 
 ### Requirement: Dismiss and open the selected detail
 
