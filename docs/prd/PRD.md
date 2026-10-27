@@ -4,9 +4,9 @@
 
 | Field        | Value                          |
 |--------------|--------------------------------|
-| **Version**  | 2.18                           |
+| **Version**  | 2.20                           |
 | **Status**   | ✅ Current                     |
-| **Date**     | 2026-10-04                     |
+| **Date**     | 2026-10-27                     |
 | **Author**   | @asensiodev                    |
 | **Platform** | Android (Native)               |
 
@@ -482,6 +482,31 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 ---
 
+### F-31 — Watched: Collection Views And Grouping
+
+| Attribute | Detail |
+|---|---|
+| **Status** | 🟡 Planned — [OpenSpec change](../../openspec/changes/organize-watched-collection/proposal.md) |
+| **Scope** | Watched screen, director data on saved movies (Room, Firestore), removable director backfill |
+| **Behaviour** | Choose List or Shelf (poster grid) and group by Date watched, Director, Genre or Decade, with sticky headings and counts; both choices persist on the device. A director heading opens the person profile. Directors are stored when a movie is saved and resolved once in the background for movies saved earlier, with a fallback when a watched movie's detail is opened |
+| **Boundaries** | No custom folders, ratings, cross-device preference sync or changes to list flags; the backfill is self-terminating and designed to be deleted once analytics show no unresolved movies remain |
+| **Rationale** | Turn watched movies into a browsable collection that answers "which films by this director or genre have I seen?" in seconds |
+
+---
+
+### F-32 — Watched: Director Collection
+
+| Attribute | Detail |
+|---|---|
+| **Status** | 🟡 Planned — depends on F-31; [OpenSpec change](../../openspec/changes/director-watched-filmography/proposal.md) |
+| **Scope** | New Director collection screen opened from the Watched Director grouping |
+| **Behaviour** | Show a director's feature films chronologically with watched films marked, unwatched films as placeholders and a "Watched X of Y" progress summary; a persisted Show pending switch hides unwatched films |
+| **Boundaries** | Feature films only (Director job, released, not video, not documentary; watched films always count). No quick add to Watchlist or completion in Watched headings in this version |
+| **Rationale** | Collectors enjoy seeing what is missing; completion gives a reason to return and a natural source of recommendations |
+| **Notes** | Future: let the user choose the filmography scope (feature films only or everything, including documentaries and shorts); label short films, which TMDB credits cannot identify without runtime; one-tap add to Watchlist from an unwatched film, which needs the full movie detail before saving |
+
+---
+
 ## 10. Version History
 
 | Version | Date       | Summary                        |
@@ -516,3 +541,4 @@ Features approved for a future release. Each will get a FIP before implementatio
 | 2.17    | 2026-10-04 | Implement F-29 person profiles and connected movie navigation; record focused, screenshot and emulator evidence while retaining unresolved aggregate/manual and archive gates. |
 | 2.18    | 2026-10-04 | Polish F-29 with specialty-first poster previews, movie counts and a complete filmography destination; record observed TDD red/green evidence and reuse existing test-double conventions. |
 | 2.19    | 2026-10-04 | Group complete person filmographies under accessible release-year headings; retain years in horizontal previews and record focused screen, snapshot and navigation validation. |
+| 2.20    | 2026-10-27 | Plan F-31 Watched collection views and grouping and F-32 Director collection as OpenSpec changes; record the removable director backfill and the future filmography scope option. |
