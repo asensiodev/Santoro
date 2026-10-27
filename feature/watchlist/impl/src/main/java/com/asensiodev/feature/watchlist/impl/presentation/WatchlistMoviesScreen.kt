@@ -6,11 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,18 +15,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,9 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.pluralStringResource
@@ -60,7 +50,6 @@ import com.asensiodev.core.designsystem.theme.AppIcons
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.feature.watchlist.impl.presentation.component.WatchlistMovieItem
-import com.asensiodev.feature.watchlist.impl.presentation.component.WatchlistSurpriseContent
 import com.asensiodev.feature.watchlist.impl.presentation.model.MovieUi
 import com.asensiodev.santoro.core.stringresources.R as SR
 
@@ -86,7 +75,6 @@ internal fun WatchlistMoviesRoute(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun WatchlistMoviesScreen(
     uiState: WatchlistMoviesUiState,
@@ -94,8 +82,6 @@ internal fun WatchlistMoviesScreen(
     onMovieClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colorScheme = MaterialTheme.colorScheme
-    val isDarkSurface = colorScheme.surface.luminance() < colorScheme.onSurface.luminance()
     Column(
         modifier =
             modifier
@@ -121,57 +107,12 @@ internal fun WatchlistMoviesScreen(
             }
 
             is WatchlistScreenState.Content -> {
-                Scaffold(
-                    modifier = Modifier.weight(1f),
-                    containerColor = Color.Transparent,
-                    contentWindowInsets = WindowInsets(0),
-                    bottomBar = {
-                        if (uiState.query.isBlank() && uiState.movies.size > 1) {
-                            Box(
-                                modifier =
-                                    Modifier.fillMaxWidth().padding(
-                                        top = Spacings.spacing12,
-                                    ),
-                                contentAlignment = Alignment.CenterEnd,
-                            ) {
-                                FilledTonalButton(
-                                    onClick = { onProcess(WatchlistIntent.SuggestMovie) },
-                                    modifier = Modifier.heightIn(min = Size.size48),
-                                    colors =
-                                        ButtonDefaults.filledTonalButtonColors(
-                                            containerColor =
-                                                if (isDarkSurface) {
-                                                    colorScheme.tertiaryContainer
-                                                } else {
-                                                    colorScheme.tertiary
-                                                },
-                                            contentColor =
-                                                if (isDarkSurface) {
-                                                    colorScheme.onTertiaryContainer
-                                                } else {
-                                                    colorScheme.onTertiary
-                                                },
-                                        ),
-                                    elevation =
-                                        ButtonDefaults.filledTonalButtonElevation(
-                                            defaultElevation = Size.size4,
-                                        ),
-                                ) {
-                                    Text(text = stringResource(SR.string.watchlist_surprise_action))
-                                }
-                            }
-                        }
-                    },
-                ) { contentPadding ->
-                    MovieList(
-                        listHeader = uiState.listHeader,
-                        movies = uiState.movies,
-                        onMovieClick = onMovieClick,
-                        onRemoveMovie = { onProcess(WatchlistIntent.RequestRemove(it)) },
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = contentPadding,
-                    )
-                }
+                MovieList(
+                    listHeader = uiState.listHeader,
+                    movies = uiState.movies,
+                    onMovieClick = onMovieClick,
+                    onRemoveMovie = { onProcess(WatchlistIntent.RequestRemove(it)) },
+                )
             }
 
             is WatchlistScreenState.NoResults -> {
@@ -188,23 +129,6 @@ internal fun WatchlistMoviesScreen(
                     icon = AppIcons.WatchlistOutlined,
                 )
             }
-        }
-    }
-
-    uiState.suggestedMovie?.let { movie ->
-        ModalBottomSheet(
-            onDismissRequest = { onProcess(WatchlistIntent.DismissSuggestion) },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        ) {
-            WatchlistSurpriseContent(
-                movie = movie,
-                hasAlternatives = uiState.movies.size > 1,
-                onViewDetails = {
-                    onProcess(WatchlistIntent.DismissSuggestion)
-                    onMovieClick(movie.id)
-                },
-                onPickAnother = { onProcess(WatchlistIntent.SuggestMovie) },
-            )
         }
     }
 
@@ -259,12 +183,10 @@ private fun MovieList(
     onMovieClick: (Int) -> Unit,
     onRemoveMovie: (MovieUi) -> Unit,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(),
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(Spacings.spacing8),
         modifier = modifier,
-        contentPadding = contentPadding,
     ) {
         if (listHeader != null) {
             item(

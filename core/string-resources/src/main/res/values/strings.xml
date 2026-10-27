@@ -73,10 +73,6 @@
     <!-- Watchlist Screen -->
     <string name="watchlist_top_bar_title">My watchlist</string>
     <string name="watchlist_movies_textfield_placeholder">Search your watchlist</string>
-    <string name="watchlist_surprise_action">Surprise me</string>
-    <string name="watchlist_surprise_title">What shall we watch?</string>
-    <string name="watchlist_surprise_another">Pick another</string>
-    <string name="watchlist_surprise_details">View details</string>
     <string name="watchlist_no_results_text">Your watchlist is empty</string>
     <string name="watchlist_no_results_subtitle">Search for movies and add them to your watchlist</string>
     <string name="watchlist_search_no_results_text">No movies found in your watchlist</string>

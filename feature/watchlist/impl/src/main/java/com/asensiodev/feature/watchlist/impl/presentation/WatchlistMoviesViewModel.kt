@@ -43,13 +43,6 @@ internal class WatchlistMoviesViewModel
         fun process(intent: WatchlistIntent) {
             when (intent) {
                 is WatchlistIntent.LoadMovies -> loadMovies()
-                is WatchlistIntent.SuggestMovie -> suggestMovie()
-                is WatchlistIntent.DismissSuggestion ->
-                    _uiState.update {
-                        it.copy(
-                            suggestedMovie = null,
-                        )
-                    }
                 is WatchlistIntent.UpdateQuery -> updateQuery(intent.query)
                 is WatchlistIntent.RequestRemove -> onRemoveMovieClicked(intent.movie)
                 is WatchlistIntent.ConfirmRemove -> onRemoveConfirmed()
@@ -108,7 +101,6 @@ internal class WatchlistMoviesViewModel
                                     visibleMoviesCount = moviesUi.size,
                                 ),
                             movies = moviesUi,
-                            suggestedMovie = moviesUi.find { it.id == state.suggestedMovie?.id },
                         )
                     }
                 },
@@ -117,7 +109,6 @@ internal class WatchlistMoviesViewModel
                         it.copy(
                             screenState = WatchlistScreenState.Error(exception.message.orEmpty()),
                             listHeader = null,
-                            suggestedMovie = null,
                         )
                     }
                 },
@@ -138,7 +129,7 @@ internal class WatchlistMoviesViewModel
 
         private fun updateQuery(query: String) {
             searchQuery.value = query
-            _uiState.update { it.copy(query = query, suggestedMovie = null) }
+            _uiState.update { it.copy(query = query) }
         }
 
         private fun showLoadingIfEmpty() {
@@ -148,23 +139,6 @@ internal class WatchlistMoviesViewModel
                 } else {
                     state
                 }
-            }
-        }
-
-        private fun suggestMovie() {
-            _uiState.update { state ->
-                if (state.screenState !is WatchlistScreenState.Content ||
-                    state.query.isNotBlank()
-                ) {
-                    return@update state
-                }
-                val candidates =
-                    if (state.movies.size > 1) {
-                        state.movies.filterNot { it.id == state.suggestedMovie?.id }
-                    } else {
-                        state.movies
-                    }
-                state.copy(suggestedMovie = candidates.randomOrNull())
             }
         }
 

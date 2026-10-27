@@ -208,8 +208,4 @@
         <item quantity="one">%d película</item>
         <item quantity="other">%d películas</item>
     </plurals>
-    <string name="watchlist_surprise_action">Sorpréndeme</string>
-    <string name="watchlist_surprise_title">¿Qué vemos hoy?</string>
-    <string name="watchlist_surprise_another">Elegir otra</string>
-    <string name="watchlist_surprise_details">Ver ficha</string>
 </resources>

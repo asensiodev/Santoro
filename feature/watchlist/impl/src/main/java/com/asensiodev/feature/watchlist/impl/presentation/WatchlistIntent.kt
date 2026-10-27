@@ -4,8 +4,6 @@ import com.asensiodev.feature.watchlist.impl.presentation.model.MovieUi
 
 internal sealed interface WatchlistIntent {
     data object LoadMovies : WatchlistIntent
-    data object SuggestMovie : WatchlistIntent
-    data object DismissSuggestion : WatchlistIntent
     data class UpdateQuery(
         val query: String,
     ) : WatchlistIntent

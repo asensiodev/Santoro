@@ -3,11 +3,9 @@ package com.asensiodev.santoro
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.click
-import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -18,7 +16,6 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dagger.hilt.android.testing.HiltAndroidTest
-import kotlinx.coroutines.runBlocking
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -27,43 +24,6 @@ import com.asensiodev.santoro.core.stringresources.R as SR
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 class MainActivityNavigationJourneyTest : BaseAppJourneyTest() {
-    @Test
-    fun givenWatchlistSuggestion_whenOpeningDetailAndReturning_thenPanelStaysClosed() {
-        val candidates = listOf(AppJourneyTestData.watchlistMovie, AppJourneyTestData.watchedMovie)
-        runBlocking {
-            databaseRepository.updateMovieState(
-                AppJourneyTestData.watchedMovie.copy(isInWatchlist = true),
-            )
-        }
-        authRepository.setUser(AppJourneyTestData.authenticatedUser)
-        launch()
-
-        composeRule.onNodeWithText(string(SR.string.watchlist)).performClick()
-        composeRule.onNodeWithText(string(SR.string.watchlist_surprise_action)).performClick()
-        val selectedMovie =
-            candidates.single { movie ->
-                composeRule
-                    .onAllNodes(hasText(movie.title) and hasAnyAncestor(isDialog()))
-                    .fetchSemanticsNodes()
-                    .isNotEmpty()
-            }
-        composeRule.onNodeWithText(string(SR.string.watchlist_surprise_details)).performClick()
-
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            detailRepository.requestedMovieIds.contains(selectedMovie.id)
-        }
-        detailRepository.requestedMovieIds shouldBeEqualTo
-            listOf(selectedMovie.id)
-        composeRule.onNodeWithContentDescription(string(SR.string.navigate_back)).performClick()
-
-        composeRule.onNodeWithText(string(SR.string.watchlist_surprise_action)).assertIsDisplayed()
-        composeRule
-            .onNodeWithText(
-                string(SR.string.watchlist_surprise_details),
-            ).assertDoesNotExist()
-        composeRule.onNodeWithText(AppJourneyTestData.watchlistMovie.title).assertIsDisplayed()
-    }
-
     @Test
     fun givenSearchQuery_whenSwitchingTabs_thenSearchStateIsRestored() {
         authRepository.setUser(AppJourneyTestData.authenticatedUser)

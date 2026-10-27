@@ -32,5 +32,4 @@ internal data class WatchlistMoviesUiState(
     val movieToRemove: MovieUi? = null,
     val isRemovingMovie: Boolean = false,
     val hasRemoveError: Boolean = false,
-    val suggestedMovie: MovieUi? = null,
 )
