@@ -23,7 +23,7 @@ Android app using Kotlin, Jetpack Compose, Clean Architecture, pragmatic MVI, Hi
 ## Code Rules
 
 - Do not add comments in production code or tests.
-- Do not hardcode user-visible strings; add English and Spanish string resources.
+- Do not hardcode user-visible strings; add English and Spanish entries to `core/string-resources/src/main/res/values{,-es}/strings.xml`.
 - Use design-system spacing, size, weight, and typography tokens instead of raw `dp` or `sp` values.
 - Prefer immutable values and never expose mutable flows publicly.
 - Avoid `!!`, business logic in Composables, and non-exhaustive sealed-class `when` statements.
@@ -38,9 +38,46 @@ Android app using Kotlin, Jetpack Compose, Clean Architecture, pragmatic MVI, Hi
 - Every screen handles Loading, Content, Empty, and Error where applicable.
 - Add `@PreviewLightDark` previews for new public or internal Composables.
 - Keep touch targets at least 48dp and use stable keys/content types in lazy layouts.
-- Follow existing JUnit 5, Kluent, MockK, Turbine, Paparazzi, and journey-test patterns.
+- Follow existing patterns: JUnit 5 with Kluent, MockK, and Turbine for JVM unit tests; JUnit 4 for Paparazzi screenshot tests and instrumented/journey tests.
 - Cover success, failure, cancellation, empty data, and concurrency boundaries relevant to the change.
-- Run affected tests first, then `test detekt ktlintCheck koverVerify assembleDebug assembleRelease` before release-ready claims.
+- Run affected tests first. Before release-ready claims, run the aggregate gate plus `verifyPaparazziDebug`, `:architecture-tests:test`, and the applicable connected tests; before distributing a release candidate, also run the release startup check.
+
+## Commands
+
+Local builds need JDK 21, the Android SDK, and uncommitted Firebase config files (`google-services.json` per build type). Pass `-PenableFirebase=false` to build and test without them.
+
+```sh
+./gradlew :feature:watchlist:impl:testDebugUnitTest --tests '*WatchlistMoviesViewModelTest*'
+./gradlew ktlintCheck detekt
+./gradlew ktlintFormat
+./gradlew :architecture-tests:test
+./gradlew :koverHtmlReport :koverVerify
+./gradlew verifyPaparazziDebug
+./gradlew :feature:login:impl:recordPaparazziDebug --tests '*LoginScreenScreenshotTest*'
+./gradlew :app:connectedJourneyTestAndroidTest
+./gradlew :feature:watchlist:impl:connectedDebugAndroidTest
+./gradlew test detekt ktlintCheck koverVerify assembleDebug assembleRelease
+python3 tools/check-release-startup.py --serial <device-serial>
+```
+
+- Gradle options attach to the preceding task; one trailing `--tests` does not filter earlier tasks in a multi-task command.
+- Do not run `ktlintFormat` and `ktlintCheck` in the same invocation.
+- `test` does not compare Paparazzi goldens. Record one module and test class at a time, inspect every changed image, then verify separately; never commit unrelated golden changes.
+- App journey tests use the `journeyTest` build type (`app/src/journeyTest`) with fake repositories through Hilt.
+- The release startup check requires the signed, minified Release APK installed on an emulator; Debug and journey builds do not exercise R8.
+- Kover enforces aggregate floors of 75% line and 71% branch coverage.
+- The pre-commit hook (`hooks/pre-commit`, installed by `./gradlew copyGitHooks`) runs Detekt, ktlint, and Konsist when Kotlin files are staged.
+
+## Repository Map
+
+- `app`: `MainActivity`, navigation graph, DI wiring, and `HiltTestRunner`.
+- `feature/<name>/api`: public routes and contracts. `feature/<name>/impl`: internal `presentation`, `domain`, `data`, `navigation`, and `di`; only `app` depends on `impl`.
+- `core`: `domain` (pure Kotlin, including `DispatcherProvider`), `data`, `database` (Room), `network` (Retrofit/TMDB), `sync` (WorkManager and Firestore), `auth`, `ui` (`CollectEffectWithLifecycle`, `UiText`), `design-system`, `string-resources`, and `testing` (shared dispatcher and MockK extensions).
+- `library/<name>/{api,impl}`: observability, remote config, and secure storage.
+- `build-logic/convention`: Gradle convention plugins for Android, Compose, Hilt, Room, Paparazzi, and tests; dependencies live in the `gradle/` version catalog.
+- `architecture-tests`: Konsist boundary and convention checks.
+- `docs/prd/PRD.md`, `docs/plan/FIP-*.md`, `docs/guides/`, `openspec/`: product requirements, legacy feature plans, guides, and OpenSpec specs and changes.
+- The TMDB API key is delivered through Firebase Remote Config, not stored in the repository.
 
 ## Planning
 

@@ -2,7 +2,7 @@
 
 <!-- © 2026 Ángel Asensio (@asensiodev) · Licensed under CC BY 4.0 — see docs/LICENSE -->
 
-> **Project conventions:** Read `AGENTS.md` at project root for architecture, module structure, coding rules, testing patterns, build commands, and key directories.
+> **Project conventions:** Read `AGENTS.md` at project root for architecture, coding rules, testing patterns, build commands, and the repository map.
 
 **Role:** Senior Android Engineer. Clean Architecture + Product Mindset.
 
