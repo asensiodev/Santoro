@@ -1,6 +1,7 @@
 package com.asensiodev.santoro.core.sync.data.repository
 
 import com.asensiodev.auth.domain.repository.AuthRepository
+import com.asensiodev.core.domain.model.Director
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.MovieSyncData
 import com.asensiodev.core.domain.model.SantoroUser
@@ -61,6 +62,34 @@ class DefaultSyncRepositoryTest {
                     match { it.movieId == 42 && it.genres.contains("Drama") },
                 )
             }
+        }
+
+    @Test
+    fun `GIVEN movie with directors WHEN upload movie THEN uploads serialized directors`() =
+        runTest {
+            coEvery { syncStore.getMovieForUpload(42) } returns
+                Result.success(movie(42, directors = listOf(Director(1223, "Joel Coen"))))
+            coEvery { remoteDataSource.uploadMovie(any(), any()) } returns Result.success(Unit)
+
+            sut.uploadMovie(UID, 42)
+
+            coVerify {
+                remoteDataSource.uploadMovie(
+                    UID,
+                    match { it.directors.orEmpty().contains("Joel Coen") && it.directors.orEmpty().contains("1223") },
+                )
+            }
+        }
+
+    @Test
+    fun `GIVEN movie with unresolved directors WHEN upload movie THEN uploads no directors`() =
+        runTest {
+            coEvery { syncStore.getMovieForUpload(42) } returns Result.success(movie(42, directors = null))
+            coEvery { remoteDataSource.uploadMovie(any(), any()) } returns Result.success(Unit)
+
+            sut.uploadMovie(UID, 42)
+
+            coVerify { remoteDataSource.uploadMovie(UID, match { it.directors == null }) }
         }
 
     @Test
@@ -181,6 +210,39 @@ class DefaultSyncRepositoryTest {
         }
 
     @Test
+    fun `GIVEN downloaded directors WHEN merging THEN maps them to sync data`() =
+        runTest {
+            val remote =
+                SyncMockUtils.createSyncEntity(9, directors = "[{\"id\":1223,\"name\":\"Joel Coen\"}]")
+            coEvery { remoteDataSource.downloadUserMovies(UID) } returns Result.success(listOf(remote))
+            coEvery { syncStore.completeDownloadedMerge(any(), any()) } returns Result.success(Unit)
+
+            sut.downloadAndMerge(UID)
+
+            coVerify {
+                syncStore.completeDownloadedMerge(
+                    match { it.single().directors == listOf(Director(1223, "Joel Coen")) },
+                    any(),
+                )
+            }
+        }
+
+    @Test
+    fun `GIVEN malformed or absent downloaded directors WHEN merging THEN they stay unresolved`() =
+        runTest {
+            val malformed = SyncMockUtils.createSyncEntity(9, directors = "not json")
+            val absent = SyncMockUtils.createSyncEntity(10, directors = null)
+            coEvery { remoteDataSource.downloadUserMovies(UID) } returns Result.success(listOf(malformed, absent))
+            coEvery { syncStore.completeDownloadedMerge(any(), any()) } returns Result.success(Unit)
+
+            sut.downloadAndMerge(UID)
+
+            coVerify {
+                syncStore.completeDownloadedMerge(match { movies -> movies.all { it.directors == null } }, any())
+            }
+        }
+
+    @Test
     fun `GIVEN auth changes before merge transaction WHEN authority is checked THEN merge is rejected`() =
         runTest {
             val remote = SyncMockUtils.createSyncEntity(9)
@@ -236,12 +298,14 @@ class DefaultSyncRepositoryTest {
     private fun movie(
         movieId: Int,
         genres: List<Genre> = emptyList(),
+        directors: List<Director>? = null,
     ) = MovieSyncData(
         movieId = movieId,
         title = "Movie $movieId",
         posterPath = null,
         genres = genres,
         runtime = null,
+        directors = directors,
         isWatched = true,
         isInWatchlist = false,
         watchedAt = null,

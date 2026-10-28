@@ -1,5 +1,6 @@
 package com.asensiodev.santoro.core.database.data.mapper
 
+import com.asensiodev.core.domain.model.Director
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.MovieSyncData
@@ -23,11 +24,22 @@ fun MovieEntity.toDomain(): Movie =
         productionCountries = productionCountries.toProductionCountries(),
         tagline = tagline,
         runtime = runtime,
+        directors = directors?.toDirectors(),
         isWatched = isWatched,
         isInWatchlist = isInWatchlist,
         watchedAt = watchedAt,
         updatedAt = updatedAt,
     )
+
+fun String.toDirectors(): List<Director>? =
+    runCatching {
+        Gson()
+            .fromJson(this, Array<StoredDirector>::class.java)
+            ?.mapNotNull { storedDirector -> storedDirector.toDomain() }
+    }.getOrNull()
+
+fun List<Director>.toStoredDirectors(): String =
+    Gson().toJson(map { director -> StoredDirector(id = director.id, name = director.name) })
 
 fun String.toGenres(): List<Genre> {
     val gson = Gson()
@@ -75,6 +87,7 @@ fun Movie.toEntity(): MovieEntity {
         productionCountries = gson.toJson(productionCountries),
         tagline = tagline,
         runtime = runtime,
+        directors = directors?.toStoredDirectors(),
         isWatched = isWatched,
         isInWatchlist = isInWatchlist,
         watchedAt = watchedAt,
@@ -96,6 +109,7 @@ fun MovieSyncData.toEntity(): MovieEntity =
         productionCountries = "",
         tagline = null,
         runtime = runtime,
+        directors = directors?.toStoredDirectors(),
         isWatched = isWatched,
         isInWatchlist = isInWatchlist,
         watchedAt = watchedAt,
@@ -109,6 +123,7 @@ fun MovieEntity.toSyncData(): MovieSyncData =
         posterPath = posterPath,
         genres = genres.toGenres(),
         runtime = runtime,
+        directors = directors?.toDirectors(),
         isWatched = isWatched,
         isInWatchlist = isInWatchlist,
         watchedAt = watchedAt,
@@ -122,6 +137,16 @@ private data class StoredGenre(
     @SerializedName("id") val id: Int?,
     @SerializedName("name") val name: String?,
 )
+
+private data class StoredDirector(
+    @SerializedName("id") val id: Int?,
+    @SerializedName("name") val name: String?,
+)
+
+private fun StoredDirector.toDomain(): Director? =
+    id?.let { safeId ->
+        name?.takeIf { it.isNotBlank() }?.let { safeName -> Director(id = safeId, name = safeName) }
+    }
 
 private fun StoredGenre.toDomain(): Genre? =
     id?.let { safeId ->

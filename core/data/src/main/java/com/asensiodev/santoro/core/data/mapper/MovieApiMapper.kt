@@ -3,10 +3,12 @@ package com.asensiodev.santoro.core.data.mapper
 import com.asensiodev.core.domain.model.CastMember
 import com.asensiodev.core.domain.model.CrewMember
 import com.asensiodev.core.domain.model.CrewRole
+import com.asensiodev.core.domain.model.Director
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.ProductionCountry
 import com.asensiodev.santoro.core.data.model.CastMemberApiModel
+import com.asensiodev.santoro.core.data.model.CreditsApiModel
 import com.asensiodev.santoro.core.data.model.CrewMemberApiModel
 import com.asensiodev.santoro.core.data.model.GenreApiModel
 import com.asensiodev.santoro.core.data.model.MovieApiModel
@@ -30,11 +32,19 @@ fun MovieApiModel.toDomain() =
         crew = credits?.crew?.map { it.toDomain() } ?: emptyList(),
         runtime = runtime,
         tagline = tagline,
-        director = credits?.crew?.firstOrNull { it.job == "Director" }?.name,
+        director = credits?.crew?.firstOrNull { it.job == DIRECTOR_JOB }?.name,
+        directors = credits?.toDirectors(),
         isWatched = false,
         isInWatchlist = false,
         watchedAt = null,
     )
+
+private fun CreditsApiModel.toDirectors(): List<Director> =
+    crew
+        .orEmpty()
+        .filter { it.job == DIRECTOR_JOB }
+        .distinctBy { it.id }
+        .map { Director(id = it.id, name = it.name) }
 
 fun GenreApiModel.toDomain() =
     Genre(
@@ -54,7 +64,7 @@ fun CastMemberApiModel.toDomain() =
 fun CrewMemberApiModel.toDomain(): CrewMember {
     val role =
         when (job) {
-            "Director" -> CrewRole.DIRECTOR
+            DIRECTOR_JOB -> CrewRole.DIRECTOR
             "Writer", "Screenplay", "Story" -> CrewRole.WRITER
             "Cinematographer", "Director of Photography" -> CrewRole.CINEMATOGRAPHER
             "Original Music Composer", "Music" -> CrewRole.COMPOSER
@@ -90,3 +100,5 @@ fun Movie.toApiModel() =
         tagline = null,
         credits = null,
     )
+
+private const val DIRECTOR_JOB = "Director"

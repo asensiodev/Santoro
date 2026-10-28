@@ -12,6 +12,7 @@ import com.google.firebase.firestore.Transaction
 import com.google.firebase.firestore.WriteBatch
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import io.mockk.verifyOrder
 import kotlinx.coroutines.CancellationException
@@ -58,6 +59,47 @@ class FirestoreMovieDataSourceTest {
 
             result.isSuccess.shouldBeTrue()
             verify(exactly = 1) { transaction.set(movieDocument, any<Map<String, Any?>>()) }
+        }
+
+    @Test
+    fun `GIVEN entity with directors WHEN uploadMovie THEN writes directors field`() =
+        runTest {
+            val written = slot<Map<String, Any?>>()
+            every { remoteDocument.getLong("updatedAt") } returns null
+            every { transaction.set(movieDocument, capture(written)) } returns transaction
+
+            sut.uploadMovie(
+                uid = "uid123",
+                entity = SyncMockUtils.createSyncEntity(movieId = 1, directors = DIRECTORS_JSON),
+            )
+
+            written.captured["directors"] shouldBeEqualTo DIRECTORS_JSON
+        }
+
+    @Test
+    fun `GIVEN document with directors WHEN downloading THEN maps directors`() =
+        runTest {
+            val querySnapshot: QuerySnapshot = mockk()
+            val document = movieDocument(movieId = 7L)
+            every { document.getString("directors") } returns DIRECTORS_JSON
+            every { moviesCollection.get() } returns Tasks.forResult(querySnapshot)
+            every { querySnapshot.documents } returns listOf(document)
+
+            val result = sut.downloadUserMovies("uid123")
+
+            result.getOrThrow().single().directors shouldBeEqualTo DIRECTORS_JSON
+        }
+
+    @Test
+    fun `GIVEN document without directors WHEN downloading THEN directors stay unresolved`() =
+        runTest {
+            val querySnapshot: QuerySnapshot = mockk()
+            every { moviesCollection.get() } returns Tasks.forResult(querySnapshot)
+            every { querySnapshot.documents } returns listOf(movieDocument(movieId = 8L))
+
+            val result = sut.downloadUserMovies("uid123")
+
+            result.getOrThrow().single().directors shouldBeEqualTo null
         }
 
     @Test
@@ -144,6 +186,7 @@ class FirestoreMovieDataSourceTest {
             every { doc.getString("title") } returns "Movie Title"
             every { doc.getString("posterPath") } returns null
             every { doc.getString("genres") } returns ""
+            every { doc.getString("directors") } returns null
             every { doc.getLong("runtime") } returns null
             every { doc.getBoolean("isWatched") } returns true
             every { doc.getBoolean("isInWatchlist") } returns false
@@ -432,10 +475,15 @@ class FirestoreMovieDataSourceTest {
             every { getString("title") } returns "Movie"
             every { getString("posterPath") } returns null
             every { getString("genres") } returns ""
+            every { getString("directors") } returns null
             every { getLong("runtime") } returns null
             every { getBoolean("isWatched") } returns false
             every { getBoolean("isInWatchlist") } returns false
             every { getLong("watchedAt") } returns null
             every { getLong("updatedAt") } returns 1L
         }
+
+    private companion object {
+        const val DIRECTORS_JSON = "[{\"id\":1223,\"name\":\"Joel Coen\"}]"
+    }
 }

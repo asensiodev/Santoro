@@ -4,10 +4,10 @@
 
 ## 1. Director data (test first)
 
-- [ ] 1.1 Observe a failing migration test for Room 5 → 6 with an existing v5 watched row, then add the nullable `directors` column, entity/mapper changes and the domain `directors` value; verify unresolved vs resolved-empty round trips.
-- [ ] 1.2 Observe a failing detail-mapping test that saved movies keep crew directors, then store directors on save; verify co-directors and movies without directors.
-- [ ] 1.3 Observe failing sync mapping tests for `directors` upload and download (absent → unresolved), then implement the Firestore field.
-- [ ] 1.4 Verify whether an older-client upload removes the `directors` field and record the result and accepted limitation in design.md.
+- [x] 1.1 Observe a failing migration test for Room 5 → 6 with an existing v5 watched row, then add the nullable `directors` column, entity/mapper changes and the domain `directors` value; verify unresolved vs resolved-empty round trips.
+- [x] 1.2 Observe a failing detail-mapping test that saved movies keep crew directors, then store directors on save; verify co-directors and movies without directors.
+- [x] 1.3 Observe failing sync mapping tests for `directors` upload and download (absent → unresolved), then implement the Firestore field.
+- [x] 1.4 Verify whether an older-client upload removes the `directors` field and record the result and accepted limitation in design.md.
 
 ## 2. Removable backfill (test first)
 

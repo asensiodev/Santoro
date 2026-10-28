@@ -1,11 +1,14 @@
 package com.asensiodev.core.data.mapper
 
 import com.asensiodev.core.domain.model.CastMember
+import com.asensiodev.core.domain.model.Director
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.ProductionCountry
 import com.asensiodev.santoro.core.data.mapper.toDomain
 import com.asensiodev.santoro.core.data.model.CastMemberApiModel
+import com.asensiodev.santoro.core.data.model.CreditsApiModel
+import com.asensiodev.santoro.core.data.model.CrewMemberApiModel
 import com.asensiodev.santoro.core.data.model.GenreApiModel
 import com.asensiodev.santoro.core.data.model.MovieApiModel
 import com.asensiodev.santoro.core.data.model.ProductionCountryApiModel
@@ -13,6 +16,64 @@ import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.Test
 
 class MovieApiMapperTest {
+    @Test
+    fun `GIVEN credits with co-directors WHEN toDomain THEN resolves each director once in credit order`() {
+        val crew =
+            listOf(
+                CrewMemberApiModel(id = 1223, name = "Joel Coen", job = "Director"),
+                CrewMemberApiModel(id = 1223, name = "Joel Coen", job = "Director"),
+                CrewMemberApiModel(id = 1224, name = "Ethan Coen", job = "Director"),
+                CrewMemberApiModel(id = 7, name = "Roger Deakins", job = "Director of Photography"),
+            )
+
+        val result = creditsMovie(CreditsApiModel(cast = null, crew = crew)).toDomain()
+
+        result.directors shouldBeEqualTo
+            listOf(Director(id = 1223, name = "Joel Coen"), Director(id = 1224, name = "Ethan Coen"))
+    }
+
+    @Test
+    fun `GIVEN credits without a director WHEN toDomain THEN directors are resolved empty`() {
+        val crew = listOf(CrewMemberApiModel(id = 7, name = "Roger Deakins", job = "Director of Photography"))
+
+        val result = creditsMovie(CreditsApiModel(cast = emptyList(), crew = crew)).toDomain()
+
+        result.directors shouldBeEqualTo emptyList()
+    }
+
+    @Test
+    fun `GIVEN credits without crew WHEN toDomain THEN directors are resolved empty`() {
+        val result = creditsMovie(CreditsApiModel(cast = emptyList(), crew = null)).toDomain()
+
+        result.directors shouldBeEqualTo emptyList()
+    }
+
+    @Test
+    fun `GIVEN no credits WHEN toDomain THEN directors stay unresolved`() {
+        val result = creditsMovie(credits = null).toDomain()
+
+        result.directors shouldBeEqualTo null
+    }
+
+    private fun creditsMovie(credits: CreditsApiModel?) =
+        MovieApiModel(
+            id = 115,
+            title = "The Big Lebowski",
+            overview = "Overview",
+            posterPath = null,
+            releaseDate = "1998-03-06",
+            popularity = null,
+            voteAverage = null,
+            voteCount = null,
+            genres = null,
+            genreIds = null,
+            productionCountries = null,
+            runtime = null,
+            tagline = null,
+            backdropPath = null,
+            credits = credits,
+        )
+
     @Test
     fun `GIVEN a CastMemberApiModel WHEN toDomain THEN preserves credit identity`() {
         val castMember =

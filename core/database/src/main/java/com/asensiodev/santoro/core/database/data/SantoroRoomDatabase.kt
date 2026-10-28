@@ -11,7 +11,7 @@ import com.asensiodev.santoro.core.database.data.model.MovieEntity
 
 @Database(
     entities = [MovieEntity::class, BrowseCacheEntity::class],
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 abstract class SantoroRoomDatabase : RoomDatabase() {
@@ -52,6 +52,13 @@ abstract class SantoroRoomDatabase : RoomDatabase() {
             object : Migration(4, 5) {
                 override fun migrate(db: SupportSQLiteDatabase) {
                     db.execSQL("ALTER TABLE movies ADD COLUMN runtime INTEGER")
+                }
+            }
+
+        val MIGRATION_5_6 =
+            object : Migration(5, 6) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE movies ADD COLUMN directors TEXT")
                 }
             }
     }

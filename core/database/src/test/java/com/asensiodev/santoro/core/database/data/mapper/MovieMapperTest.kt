@@ -1,5 +1,6 @@
 package com.asensiodev.santoro.core.database.data.mapper
 
+import com.asensiodev.core.domain.model.Director
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.MovieSyncData
@@ -9,6 +10,57 @@ import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.Test
 
 class MovieMapperTest {
+    @Test
+    fun `GIVEN unresolved directors WHEN round tripped through entity THEN stay unresolved`() {
+        val result = directorsMovie(directors = null).toEntity().toDomain()
+
+        result.directors shouldBeEqualTo null
+    }
+
+    @Test
+    fun `GIVEN resolved empty directors WHEN round tripped through entity THEN stay resolved empty`() {
+        val result = directorsMovie(directors = emptyList()).toEntity().toDomain()
+
+        result.directors shouldBeEqualTo emptyList()
+    }
+
+    @Test
+    fun `GIVEN co-directors WHEN round tripped through entity THEN keep identity and order`() {
+        val directors = listOf(Director(id = 1223, name = "Joel Coen"), Director(id = 1224, name = "Ethan Coen"))
+
+        val result = directorsMovie(directors = directors).toEntity().toDomain()
+
+        result.directors shouldBeEqualTo directors
+    }
+
+    @Test
+    fun `GIVEN malformed stored directors WHEN toDomain THEN they read as unresolved`() {
+        val entity = directorsMovie(directors = null).toEntity().copy(directors = "not json")
+
+        entity.toDomain().directors shouldBeEqualTo null
+    }
+
+    @Test
+    fun `GIVEN entity with directors WHEN toSyncData THEN directors are uploaded`() {
+        val directors = listOf(Director(id = 1223, name = "Joel Coen"))
+
+        val result = directorsMovie(directors = directors).toEntity().toSyncData()
+
+        result.directors shouldBeEqualTo directors
+    }
+
+    @Test
+    fun `GIVEN downloaded sync data with directors WHEN toEntity THEN directors are stored`() {
+        val directors = listOf(Director(id = 1223, name = "Joel Coen"))
+        val syncData = directorsMovie(directors = directors).toEntity().toSyncData()
+
+        syncData
+            .copy(directors = directors)
+            .toEntity()
+            .toDomain()
+            .directors shouldBeEqualTo directors
+    }
+
     @Test
     fun `GIVEN serialized genres with invalid names WHEN toGenres THEN filters invalid entries`() {
         val result = serializedGenres().toGenres()
@@ -112,6 +164,24 @@ class MovieMapperTest {
             )
     }
 }
+
+private fun directorsMovie(directors: List<Director>?) =
+    Movie(
+        id = 115,
+        title = "The Big Lebowski",
+        overview = "Overview",
+        posterPath = null,
+        backdropPath = null,
+        releaseDate = "1998-03-06",
+        popularity = 1.0,
+        voteAverage = 7.8,
+        voteCount = 10,
+        genres = emptyList(),
+        productionCountries = emptyList(),
+        directors = directors,
+        isWatched = true,
+        isInWatchlist = false,
+    )
 
 private fun serializedGenres() =
     """

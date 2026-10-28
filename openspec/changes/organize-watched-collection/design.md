@@ -25,7 +25,11 @@ Alternative: a separate `movie_directors` table with a join. It allows indexed d
 
 ### Firestore
 
-Upload `directors` as an array of `{id, name}` maps; on download, an absent field maps to `null` (unresolved). Older app versions ignore the field. Task 1.4 verifies whether an older client's upload overwrites the field; if it does, the movie returns to unresolved and the fallback paths below resolve it again. This is accepted: it requires a user on two devices with different app versions and only delays grouping.
+Upload `directors` as a JSON string of `{id, name}` objects, following the existing `genres` field convention; on download, an absent field or malformed JSON maps to `null` (unresolved), never to a resolved empty list, so resolution is retried. Older app versions ignore the field.
+
+Task 1.4 result: release 1.1.1 uploads with `transaction.set(document, map)` without `SetOptions.merge()`, which replaces the whole document. An older client that uploads a movie therefore removes its `directors` field. Accepted limitation: it requires the same account on two devices running different app versions, and the newer device keeps its local directors because the download merge only updates list flags for existing rows. Only a later fresh restore would download the movie as unresolved, and the backfill or the detail fallback resolves it again; the user sees the movie under Unknown director for at most one backfill run.
+
+The download merge does not fill a local unresolved row from remote directors. That case needs another device to have resolved the movie first, and the local backfill resolves it with one request; filling it would add a DAO path for no visible benefit.
 
 ### Removable backfill
 
