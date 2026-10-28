@@ -4,6 +4,7 @@ import androidx.room.Room
 import androidx.room.withTransaction
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.asensiodev.core.domain.model.Director
 import com.asensiodev.core.domain.model.MovieSyncData
 import com.asensiodev.santoro.core.database.MockUtils
 import com.asensiodev.santoro.core.database.data.SantoroRoomDatabase
@@ -40,6 +41,58 @@ class RoomDatabaseRepositoryIntegrationTest {
     fun tearDown() {
         database.close()
     }
+
+    @Test
+    fun getWatchedMovieIdsWithUnresolvedDirectors_returnsOnlyUnresolvedWatchedMovies(): Unit =
+        runBlocking {
+            val dao = database.movieDao()
+            dao.insertOrUpdateMovie(MockUtils.createTestMovieEntity(1, isWatched = true))
+            dao.insertOrUpdateMovie(
+                MockUtils.createTestMovieEntity(2, isWatched = true, directors = "[]"),
+            )
+            dao.insertOrUpdateMovie(MockUtils.createTestMovieEntity(3, isInWatchlist = true))
+            dao.insertOrUpdateMovie(MockUtils.createTestMovieEntity(4, isWatched = true))
+
+            val unresolved = repository.getWatchedMovieIdsWithUnresolvedDirectors().getOrThrow()
+
+            unresolved.sorted() shouldBeEqualTo listOf(1, 4)
+        }
+
+    @Test
+    fun storeResolvedDirectors_storesDirectorsAndMarksMovieForUpload(): Unit =
+        runBlocking {
+            database.movieDao().insertOrUpdateMovie(
+                MockUtils.createTestMovieEntity(1, isWatched = true, updatedAt = 5L),
+            )
+
+            val joelCoen = listOf(Director(1223, "Joel Coen"))
+
+            repository.storeResolvedDirectors(1, joelCoen).getOrThrow() shouldBeEqualTo true
+
+            val stored = repository.getMovieForUpload(1).getOrThrow()
+            stored?.directors shouldBeEqualTo joelCoen
+            (stored?.isWatched == true && stored.updatedAt > 5L) shouldBeEqualTo true
+        }
+
+    @Test
+    fun storeResolvedDirectors_keepsDirectorsSavedMeanwhile(): Unit =
+        runBlocking {
+            val saved = "[{\"id\":1032,\"name\":\"Martin Scorsese\"}]"
+            database.movieDao().insertOrUpdateMovie(
+                MockUtils.createTestMovieEntity(
+                    1,
+                    isWatched = true,
+                    directors = saved,
+                    updatedAt = 5L,
+                ),
+            )
+
+            repository.storeResolvedDirectors(1, emptyList()).getOrThrow() shouldBeEqualTo false
+
+            val stored = repository.getMovieForUpload(1).getOrThrow()
+            stored?.directors shouldBeEqualTo listOf(Director(1032, "Martin Scorsese"))
+            stored?.updatedAt shouldBeEqualTo 5L
+        }
 
     @Test
     fun clearMovies_removesMoviesAndPreservesBrowseCache(): Unit =

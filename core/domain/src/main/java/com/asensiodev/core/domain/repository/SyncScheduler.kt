@@ -6,4 +6,6 @@ interface SyncScheduler {
     fun scheduleImmediateSync()
 
     fun enqueueUpload(movieId: Int)
+
+    fun enqueueDirectorBackfill()
 }

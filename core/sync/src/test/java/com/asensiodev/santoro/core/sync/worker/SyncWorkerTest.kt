@@ -8,6 +8,7 @@ import com.asensiodev.auth.domain.repository.AuthRepository
 import com.asensiodev.core.domain.model.SantoroUser
 import com.asensiodev.core.domain.repository.AccountDeletionRecoveryRepository
 import com.asensiodev.core.domain.repository.SyncRepository
+import com.asensiodev.core.domain.repository.SyncScheduler
 import com.asensiodev.core.testing.relaxedMockk
 import com.asensiodev.core.testing.verifyNever
 import com.asensiodev.library.observability.api.ObservabilityTracker
@@ -15,6 +16,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
@@ -27,6 +29,7 @@ class SyncWorkerTest {
     private val authRepository: AuthRepository = mockk()
     private val deletionRecoveryRepository: AccountDeletionRecoveryRepository = mockk()
     private val syncRepository: SyncRepository = mockk()
+    private val syncScheduler: SyncScheduler = relaxedMockk()
     private val observabilityTracker: ObservabilityTracker = relaxedMockk()
     private val context: Context = mockk(relaxed = true)
     private val workerParams: WorkerParameters = mockk(relaxed = true)
@@ -127,6 +130,19 @@ class SyncWorkerTest {
                 kotlin.Result.failure(Exception("network"))
 
             sut.doWork() shouldBeEqualTo Result.retry()
+            verify(exactly = 0) { syncScheduler.enqueueDirectorBackfill() }
+        }
+
+    @Test
+    fun `GIVEN successful download WHEN work runs THEN director backfill is enqueued`() =
+        runTest {
+            every { workerParams.inputData } returns workDataOf()
+            every { authRepository.currentUser } returns flowOf(user())
+            coEvery { syncRepository.downloadAndMerge(UID) } returns kotlin.Result.success(Unit)
+
+            newWorker().doWork() shouldBeEqualTo Result.success()
+
+            verify(exactly = 1) { syncScheduler.enqueueDirectorBackfill() }
         }
 
     @Test
@@ -148,6 +164,7 @@ class SyncWorkerTest {
             authRepository,
             deletionRecoveryRepository,
             syncRepository,
+            syncScheduler,
             observabilityTracker,
         )
 

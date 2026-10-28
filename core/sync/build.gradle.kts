@@ -10,12 +10,14 @@ android {
 dependencies {
     implementation(projects.core.domain)
     implementation(projects.core.database)
+    implementation(projects.core.data)
     implementation(projects.core.auth)
     implementation(projects.library.observability.api)
 
     implementation(libs.firebase.firestore)
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.gson)
+    implementation(libs.retrofit)
 
     implementation(libs.kotlinx.coroutines.core)
 
@@ -30,4 +32,6 @@ dependencies {
     testImplementation(libs.workmanager.testing)
     testImplementation(libs.robolectric)
     testImplementation(libs.room.runtime)
+    testImplementation(libs.mockwebserver)
+    testImplementation(libs.retrofit.gson.converter)
 }

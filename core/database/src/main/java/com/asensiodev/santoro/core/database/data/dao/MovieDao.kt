@@ -66,6 +66,19 @@ interface MovieDao {
         updatedAt: Long,
     )
 
+    @Query("SELECT id FROM movies WHERE isWatched = 1 AND directors IS NULL")
+    suspend fun getWatchedMovieIdsWithUnresolvedDirectors(): List<Int>
+
+    @Query(
+        "UPDATE movies SET directors = :directors, updatedAt = :updatedAt " +
+            "WHERE id = :movieId AND directors IS NULL",
+    )
+    suspend fun storeResolvedDirectors(
+        movieId: Int,
+        directors: String,
+        updatedAt: Long,
+    ): Int
+
     @Query("DELETE FROM movies")
     suspend fun clearMovies()
 }

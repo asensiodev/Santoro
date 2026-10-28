@@ -2,6 +2,7 @@ package com.asensiodev.santoro.core.sync.scheduler
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import androidx.work.BackoffPolicy
 import androidx.work.Configuration
 import androidx.work.NetworkType
 import androidx.work.WorkInfo
@@ -9,6 +10,7 @@ import androidx.work.WorkManager
 import androidx.work.impl.WorkManagerImpl
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
+import com.asensiodev.santoro.core.sync.worker.DirectorBackfillWorker
 import com.asensiodev.santoro.core.sync.worker.SyncWorker
 import com.asensiodev.santoro.core.sync.worker.UploadWorker
 import org.amshove.kluent.shouldBeEqualTo
@@ -111,6 +113,29 @@ class WorkManagerSyncSchedulerTest {
         workSpecInput(independent)?.keyValueMap?.size shouldBeEqualTo 1
     }
 
+    @Test
+    fun `GIVEN director backfill enqueued twice WHEN inspected THEN existing connected work is kept`() {
+        sut.enqueueDirectorBackfill()
+
+        val first = uniqueWork(DIRECTOR_BACKFILL_WORK_NAME).single()
+
+        sut.enqueueDirectorBackfill()
+
+        val kept = uniqueWork(DIRECTOR_BACKFILL_WORK_NAME).single()
+        kept.id shouldBeEqualTo first.id
+        kept.state shouldBeEqualTo WorkInfo.State.ENQUEUED
+        workSpecWorkerClassName(kept) shouldBeEqualTo DirectorBackfillWorker::class.java.name
+        kept.constraints.requiredNetworkType shouldBeEqualTo NetworkType.CONNECTED
+        workSpecBackoffPolicy(kept) shouldBeEqualTo BackoffPolicy.EXPONENTIAL
+    }
+
+    private fun workSpecBackoffPolicy(workInfo: WorkInfo) =
+        (workManager as WorkManagerImpl)
+            .workDatabase
+            .workSpecDao()
+            .getWorkSpec(workInfo.id.toString())
+            ?.backoffPolicy
+
     private fun uniqueWork(name: String): List<WorkInfo> = workManager.getWorkInfosForUniqueWork(name).get()
 
     private fun workSpecInput(workInfo: WorkInfo) =
@@ -133,6 +158,7 @@ class WorkManagerSyncSchedulerTest {
         const val PERIODIC_SYNC_WORK_NAME = "santoro_periodic_sync"
         const val IMMEDIATE_SYNC_WORK_NAME = "santoro_immediate_sync"
         const val UPLOAD_WORK_NAME_PREFIX = "santoro_upload_movie_"
+        const val DIRECTOR_BACKFILL_WORK_NAME = "santoro_director_backfill"
         const val FIRST_MOVIE_ID = 42
         const val SECOND_MOVIE_ID = 84
     }

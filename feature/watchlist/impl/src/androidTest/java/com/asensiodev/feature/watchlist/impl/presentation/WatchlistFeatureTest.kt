@@ -10,6 +10,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.asensiodev.core.designsystem.theme.SantoroTheme
+import com.asensiodev.core.domain.model.Director
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.repository.MovieMutationRepository
@@ -171,6 +172,11 @@ private class FakeDatabaseRepository(
         return Result.success(Unit)
     }
 
+    override suspend fun storeResolvedDirectors(
+        movieId: Int,
+        directors: List<Director>,
+    ): Result<Boolean> = Result.success(false)
+
     override suspend fun clearMovies() {
         movies.value = emptyList()
     }
@@ -182,4 +188,6 @@ private object NoOpSyncScheduler : SyncScheduler {
     override fun scheduleImmediateSync() = Unit
 
     override fun enqueueUpload(movieId: Int) = Unit
+
+    override fun enqueueDirectorBackfill() = Unit
 }

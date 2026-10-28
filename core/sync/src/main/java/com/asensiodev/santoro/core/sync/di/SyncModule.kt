@@ -5,7 +5,10 @@ import androidx.work.WorkerFactory
 import com.asensiodev.core.domain.repository.SyncRepository
 import com.asensiodev.core.domain.repository.SyncScheduler
 import com.asensiodev.santoro.core.sync.data.datasource.FirestoreMovieDataSource
+import com.asensiodev.santoro.core.sync.data.datasource.MovieCreditsApiService
+import com.asensiodev.santoro.core.sync.data.datasource.MovieDirectorsRemoteDataSource
 import com.asensiodev.santoro.core.sync.data.datasource.MovieSyncRemoteDataSource
+import com.asensiodev.santoro.core.sync.data.datasource.TmdbMovieDirectorsDataSource
 import com.asensiodev.santoro.core.sync.data.repository.DefaultSyncRepository
 import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import com.google.firebase.firestore.FirebaseFirestore
@@ -14,6 +17,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import retrofit2.Retrofit
 import javax.inject.Singleton
 
 @Module
@@ -40,5 +44,12 @@ internal abstract class SyncModule {
         @Provides
         @Singleton
         fun provideFirebaseFirestore(): FirebaseFirestore = FirebaseFirestore.getInstance()
+
+        @Provides
+        @Singleton
+        fun provideMovieDirectorsRemoteDataSource(
+            retrofit: Retrofit,
+        ): MovieDirectorsRemoteDataSource =
+            TmdbMovieDirectorsDataSource(retrofit.create(MovieCreditsApiService::class.java))
     }
 }

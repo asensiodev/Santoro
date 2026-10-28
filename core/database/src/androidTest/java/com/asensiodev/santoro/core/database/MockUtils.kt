@@ -15,6 +15,7 @@ object MockUtils {
         releaseDate: String? = "2023-01-01",
         tagline: String? = null,
         runtime: Int? = null,
+        directors: String? = null,
         watchedAt: Long? = null,
         updatedAt: Long = 0L,
     ) = MovieEntity(
@@ -30,6 +31,7 @@ object MockUtils {
         productionCountries = productionCountries,
         tagline = tagline,
         runtime = runtime,
+        directors = directors,
         isWatched = isWatched,
         isInWatchlist = isInWatchlist,
         watchedAt = watchedAt,

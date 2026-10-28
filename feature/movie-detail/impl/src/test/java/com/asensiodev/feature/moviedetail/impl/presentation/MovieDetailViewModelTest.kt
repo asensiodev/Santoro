@@ -1,6 +1,7 @@
 package com.asensiodev.feature.moviedetail.impl.presentation
 
 import app.cash.turbine.test
+import com.asensiodev.core.domain.model.Director
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.repository.MovieMutationRepository
 import com.asensiodev.core.domain.repository.SyncScheduler
@@ -663,6 +664,91 @@ class MovieDetailViewModelTest {
                 viewModel.effect.test {
                     expectNoEvents()
                 }
+            }
+    }
+
+    @Nested
+    inner class UnresolvedWatchedDirectors {
+        private val directors = listOf(Director(1032, "Martin Scorsese"))
+        private val watchedMovie = testMovie.copy(isWatched = true, directors = directors)
+
+        @Test
+        fun `GIVEN watched movie with loaded directors WHEN stored as resolved THEN uploads it`() =
+            runTest {
+                coEvery { getMovieDetailUseCase(watchedMovie.id) } returns flowOf(Result.success(watchedMovie))
+                coEvery { movieMutationRepository.storeResolvedDirectors(watchedMovie.id, directors) } returns
+                    Result.success(true)
+
+                viewModel.process(MovieDetailIntent.FetchDetails(watchedMovie.id))
+                advanceUntilIdle()
+
+                coVerify(exactly = 1) { movieMutationRepository.storeResolvedDirectors(watchedMovie.id, directors) }
+                verify(exactly = 1) { syncScheduler.enqueueUpload(watchedMovie.id) }
+            }
+
+        @Test
+        fun `GIVEN directors already stored WHEN watched detail loads THEN does not upload`() =
+            runTest {
+                coEvery { getMovieDetailUseCase(watchedMovie.id) } returns flowOf(Result.success(watchedMovie))
+                coEvery { movieMutationRepository.storeResolvedDirectors(any(), any()) } returns Result.success(false)
+
+                viewModel.process(MovieDetailIntent.FetchDetails(watchedMovie.id))
+                advanceUntilIdle()
+
+                verify(exactly = 0) { syncScheduler.enqueueUpload(any()) }
+            }
+
+        @Test
+        fun `GIVEN detail emits repeatedly WHEN watched directors are stored THEN stores once per load`() =
+            runTest {
+                coEvery { getMovieDetailUseCase(watchedMovie.id) } returns
+                    flowOf(Result.success(watchedMovie), Result.success(watchedMovie))
+                coEvery { movieMutationRepository.storeResolvedDirectors(any(), any()) } returns Result.success(true)
+
+                viewModel.process(MovieDetailIntent.FetchDetails(watchedMovie.id))
+                advanceUntilIdle()
+
+                coVerify(exactly = 1) { movieMutationRepository.storeResolvedDirectors(any(), any()) }
+            }
+
+        @Test
+        fun `GIVEN offline then remote detail WHEN loading THEN stores the remote directors`() =
+            runTest {
+                coEvery { getMovieDetailUseCase(watchedMovie.id) } returns
+                    flowOf(Result.success(watchedMovie.copy(directors = null)), Result.success(watchedMovie))
+                coEvery { movieMutationRepository.storeResolvedDirectors(any(), any()) } returns Result.success(true)
+
+                viewModel.process(MovieDetailIntent.FetchDetails(watchedMovie.id))
+                advanceUntilIdle()
+
+                coVerify(exactly = 1) { movieMutationRepository.storeResolvedDirectors(watchedMovie.id, directors) }
+            }
+
+        @Test
+        fun `GIVEN unwatched or offline detail WHEN loading THEN directors are not stored`() =
+            runTest {
+                listOf(watchedMovie.copy(isWatched = false), watchedMovie.copy(directors = null)).forEach { movie ->
+                    coEvery { getMovieDetailUseCase(movie.id) } returns flowOf(Result.success(movie))
+
+                    viewModel.process(MovieDetailIntent.FetchDetails(movie.id))
+                    advanceUntilIdle()
+                }
+
+                coVerify(exactly = 0) { movieMutationRepository.storeResolvedDirectors(any(), any()) }
+            }
+
+        @Test
+        fun `GIVEN storing directors fails WHEN watched detail loads THEN content stays visible without upload`() =
+            runTest {
+                coEvery { getMovieDetailUseCase(watchedMovie.id) } returns flowOf(Result.success(watchedMovie))
+                coEvery { movieMutationRepository.storeResolvedDirectors(any(), any()) } returns
+                    Result.failure(IllegalStateException("Database closed"))
+
+                viewModel.process(MovieDetailIntent.FetchDetails(watchedMovie.id))
+                advanceUntilIdle()
+
+                viewModel.uiState.value.screenState shouldBeEqualTo MovieDetailScreenState.Content
+                verify(exactly = 0) { syncScheduler.enqueueUpload(any()) }
             }
     }
 

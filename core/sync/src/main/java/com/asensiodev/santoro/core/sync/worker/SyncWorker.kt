@@ -7,6 +7,7 @@ import androidx.work.WorkerParameters
 import com.asensiodev.auth.domain.repository.AuthRepository
 import com.asensiodev.core.domain.repository.AccountDeletionRecoveryRepository
 import com.asensiodev.core.domain.repository.SyncRepository
+import com.asensiodev.core.domain.repository.SyncScheduler
 import com.asensiodev.core.domain.result.rethrowCancellation
 import com.asensiodev.library.observability.api.NoOpObservabilityTracker
 import com.asensiodev.library.observability.api.ObservabilityTracker
@@ -25,6 +26,7 @@ internal class SyncWorker
         private val authRepository: AuthRepository,
         private val accountDeletionRecoveryRepository: AccountDeletionRecoveryRepository,
         private val syncRepository: SyncRepository,
+        private val syncScheduler: SyncScheduler,
         private val observabilityTracker: ObservabilityTracker = NoOpObservabilityTracker,
     ) : CoroutineWorker(context, params) {
         override suspend fun doWork(): Result =
@@ -74,6 +76,7 @@ internal class SyncWorker
                 .fold(
                     onSuccess = {
                         observabilityTracker.trackAction(SYNC_DOWNLOAD_SUCCESS)
+                        syncScheduler.enqueueDirectorBackfill()
                         Result.success()
                     },
                     onFailure = ::retry,

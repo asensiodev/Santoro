@@ -33,7 +33,11 @@ The download merge does not fill a local unresolved row from remote directors. T
 
 ### Removable backfill
 
-`DirectorBackfillWorker` in `core/sync`: unique one-time work with `ExistingWorkPolicy.KEEP`, network constraint and exponential backoff. It is enqueued on app start and after a sync download. It reads watched movies with `directors IS NULL`, requests TMDB `GET /3/movie/{id}/credits` sequentially, stores directors (empty on a missing director or 404), enqueues the existing per-movie upload, and returns success when none remain. Transient failures return retry; `CancellationException` propagates. It logs `director_backfill_finished` with resolved and remaining counts through `ObservabilityTracker`.
+`DirectorBackfillWorker` in `core/sync`: unique one-time work (`santoro_director_backfill`) with `ExistingWorkPolicy.KEEP`, network constraint and exponential backoff. `SyncWorker` enqueues it after every successful download and merge; that sync already runs on each authenticated session start (`scheduleSessionSync`), after a restore and every six hours, and waits for network when offline. A single hook covers app start, restore and offline starts, and KEEP makes a run with nothing left cost one Room query.
+
+The worker reads watched movie IDs with `directors IS NULL` (`SyncStore`), requests TMDB `GET /3/movie/{id}/credits` sequentially (`TmdbMovieDirectorsDataSource`, reusing `CreditsApiModel` and the director rule from `core/data`; 404 resolves empty), and stores each result through `MovieMutationRepository.storeResolvedDirectors`. The first failure stops the run and returns retry, keeping movies already stored; `CancellationException` propagates. If anything was stored, it schedules one immediate sync to upload the local snapshot instead of one upload request per movie. The resulting sync re-enqueues the backfill, which finds nothing and does not sync again, so the chain terminates. It logs `director_backfill_finished` with `resolved` and `remaining` counts and records `director_backfill_failed` errors.
+
+`storeResolvedDirectors` is a conditional write (`UPDATE … WHERE directors IS NULL`) that bumps `updatedAt` so the upload is not skipped by the remote-newer check, never overwrites directors saved meanwhile by detail, and returns whether a row changed. It lives on `MovieMutationRepository` because both the worker and the detail fallback use it.
 
 The worker is removable because it is not the source of truth: new saves store directors, Firestore carries them across devices, and the movie-detail fallback resolves any remaining unresolved watched movie on open. Removal criterion: once `remaining` stays at zero across active installs for several weeks, delete the worker, its enqueue calls and its credits request; keep the column, sync field and fallback.
 
@@ -41,7 +45,7 @@ Alternative: resolving directors only on demand when Director grouping is opened
 
 ### Detail fallback
 
-When `MovieDetailViewModel` loads a movie that is locally watched with `directors == null`, it saves the loaded directors through `updateMovieState` without changing list flags. This is a write on read, limited to unresolved watched movies.
+After a remote detail load the ViewModel sees resolved directors and cannot tell whether Room still holds them as unresolved. When `MovieDetailViewModel` loads a watched movie with resolved directors, it calls the conditional `storeResolvedDirectors` once per load; Room only writes if the stored value is unresolved, and the ViewModel enqueues the existing per-movie upload only when a row changed. Offline loads come from Room with unresolved directors and do nothing. List flags are never changed, and a storage failure is silent because the screen content does not depend on it.
 
 ### Collection presentation
 

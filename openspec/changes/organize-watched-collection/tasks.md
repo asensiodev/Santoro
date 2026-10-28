@@ -11,10 +11,10 @@
 
 ## 2. Removable backfill (test first)
 
-- [ ] 2.1 Observe a failing MockWebServer test for `movie/{id}/credits` director extraction, then implement the request in `core/sync`.
-- [ ] 2.2 Observe failing worker tests for success, empty credits, 404, transient retry, cancellation and nothing remaining, then implement `DirectorBackfillWorker` with the unresolved-watched DAO query and upload scheduling.
-- [ ] 2.3 Enqueue the unique backfill on app start and after sync download; verify KEEP semantics and the `director_backfill_finished` event in unit tests.
-- [ ] 2.4 Observe a failing `MovieDetailViewModel` test for the unresolved-watched fallback, then implement it; verify no write for resolved or unwatched movies and unchanged list flags.
+- [x] 2.1 Observe a failing MockWebServer test for `movie/{id}/credits` director extraction, then implement the request in `core/sync`.
+- [x] 2.2 Observe failing worker tests for success, empty credits, 404, transient retry, cancellation and nothing remaining, then implement `DirectorBackfillWorker` with the unresolved-watched DAO query and upload scheduling.
+- [x] 2.3 Enqueue the unique backfill on app start and after sync download; verify KEEP semantics and the `director_backfill_finished` event in unit tests.
+- [x] 2.4 Observe a failing `MovieDetailViewModel` test for the unresolved-watched fallback, then implement it; verify no write for resolved or unwatched movies and unchanged list flags.
 
 ## 3. Collection presentation (test first)
 

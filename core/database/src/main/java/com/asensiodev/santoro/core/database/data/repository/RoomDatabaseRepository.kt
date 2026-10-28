@@ -2,6 +2,7 @@ package com.asensiodev.santoro.core.database.data.repository
 
 import android.database.sqlite.SQLiteException
 import androidx.room.withTransaction
+import com.asensiodev.core.domain.model.Director
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.MovieSyncData
 import com.asensiodev.core.domain.repository.MovieMutationRepository
@@ -10,6 +11,7 @@ import com.asensiodev.santoro.core.database.data.SantoroRoomDatabase
 import com.asensiodev.santoro.core.database.data.dao.MovieDao
 import com.asensiodev.santoro.core.database.data.mapper.toDomain
 import com.asensiodev.santoro.core.database.data.mapper.toEntity
+import com.asensiodev.santoro.core.database.data.mapper.toStoredDirectors
 import com.asensiodev.santoro.core.database.data.mapper.toSyncData
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import kotlinx.coroutines.CancellationException
@@ -120,6 +122,23 @@ class RoomDatabaseRepository
         override suspend fun getMoviesForUpload(): Result<List<MovieSyncData>> =
             transactionResult {
                 movieDao.getMoviesForSync().map { movie -> movie.toSyncData() }
+            }
+
+        override suspend fun getWatchedMovieIdsWithUnresolvedDirectors(): Result<List<Int>> =
+            transactionResult {
+                movieDao.getWatchedMovieIdsWithUnresolvedDirectors()
+            }
+
+        override suspend fun storeResolvedDirectors(
+            movieId: Int,
+            directors: List<Director>,
+        ): Result<Boolean> =
+            transactionResult {
+                movieDao.storeResolvedDirectors(
+                    movieId = movieId,
+                    directors = directors.toStoredDirectors(),
+                    updatedAt = System.currentTimeMillis(),
+                ) > 0
             }
 
         override suspend fun completeDownloadedMerge(

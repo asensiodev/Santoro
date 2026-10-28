@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.asensiodev.core.designsystem.theme.SantoroTheme
+import com.asensiodev.core.domain.model.Director
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.ThemeOption
@@ -51,6 +52,11 @@ class MovieDetailFeatureTest {
 
                         override suspend fun removeFromWatchlist(movieId: Int) =
                             Result.success(Unit)
+
+                        override suspend fun storeResolvedDirectors(
+                            movieId: Int,
+                            directors: List<Director>,
+                        ) = Result.success(false)
 
                         override suspend fun clearMovies() = Unit
                     },
@@ -112,6 +118,8 @@ private object NoOpSyncScheduler : SyncScheduler {
     override fun scheduleImmediateSync() = Unit
 
     override fun enqueueUpload(movieId: Int) = Unit
+
+    override fun enqueueDirectorBackfill() = Unit
 }
 
 private class RetryMovieDetailRepository(

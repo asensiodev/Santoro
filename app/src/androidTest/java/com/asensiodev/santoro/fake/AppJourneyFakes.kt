@@ -5,6 +5,7 @@ package com.asensiodev.santoro.fake
 import com.asensiodev.auth.domain.model.ExpectedUserSignOutOutcome
 import com.asensiodev.auth.domain.repository.AuthRepository
 import com.asensiodev.core.domain.model.CastMember
+import com.asensiodev.core.domain.model.Director
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.SantoroUser
 import com.asensiodev.core.domain.model.ThemeOption
@@ -241,6 +242,11 @@ class FakeDatabaseRepository :
         return Result.success(Unit)
     }
 
+    override suspend fun storeResolvedDirectors(
+        movieId: Int,
+        directors: List<Director>,
+    ): Result<Boolean> = Result.success(false)
+
     override suspend fun clearMovies() {
         movies.value = emptyList()
     }
@@ -269,6 +275,8 @@ class FakeSyncScheduler : SyncScheduler {
     override fun scheduleImmediateSync() = Unit
 
     override fun enqueueUpload(movieId: Int) = Unit
+
+    override fun enqueueDirectorBackfill() = Unit
 }
 
 class FakeRemoteConfigProvider : RemoteConfigProvider {

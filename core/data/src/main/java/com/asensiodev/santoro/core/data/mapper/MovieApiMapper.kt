@@ -39,7 +39,7 @@ fun MovieApiModel.toDomain() =
         watchedAt = null,
     )
 
-private fun CreditsApiModel.toDirectors(): List<Director> =
+fun CreditsApiModel.toDirectors(): List<Director> =
     crew
         .orEmpty()
         .filter { it.job == DIRECTOR_JOB }

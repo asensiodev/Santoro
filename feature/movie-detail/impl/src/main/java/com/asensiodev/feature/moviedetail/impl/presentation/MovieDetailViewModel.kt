@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.repository.MovieMutationRepository
 import com.asensiodev.core.domain.repository.SyncScheduler
+import com.asensiodev.core.domain.result.rethrowCancellation
 import com.asensiodev.core.domain.usecase.ObserveHasSeenDetailTooltipUseCase
 import com.asensiodev.core.domain.usecase.SetDetailTooltipSeenUseCase
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseCase
@@ -51,6 +52,7 @@ internal class MovieDetailViewModel
         private var tooltipCheckedMovieId: Int? = null
         private var tooltipJobRequestVersion: Int? = null
         private var activeRequestVersion = 0
+        private var directorsStoredRequestVersion: Int? = null
 
         fun process(intent: MovieDetailIntent) {
             when (intent) {
@@ -84,6 +86,9 @@ internal class MovieDetailViewModel
                         .collect { result ->
                             if (requestVersion != activeRequestVersion) return@collect
                             handleMovieDetailResult(result, movieId, requestVersion)
+                            result.getOrNull()?.let { movie ->
+                                storeResolvedDirectors(movie, requestVersion)
+                            }
                         }
                 }
         }
@@ -278,6 +283,21 @@ internal class MovieDetailViewModel
                         _uiState.update { it.copy(showTooltip = true) }
                     }
                 }
+        }
+
+        private suspend fun storeResolvedDirectors(
+            movie: Movie,
+            requestVersion: Int,
+        ) {
+            val directors = movie.directors ?: return
+            if (!movie.isWatched || directorsStoredRequestVersion == requestVersion) return
+            directorsStoredRequestVersion = requestVersion
+            val stored =
+                movieMutationRepository
+                    .storeResolvedDirectors(movie.id, directors)
+                    .rethrowCancellation()
+                    .getOrDefault(false)
+            if (stored) enqueueUpload(movie.id)
         }
 
         private fun enqueueUpload(movieId: Int) {
