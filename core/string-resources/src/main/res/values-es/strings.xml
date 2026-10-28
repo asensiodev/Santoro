@@ -208,4 +208,19 @@
         <item quantity="one">%d película</item>
         <item quantity="other">%d películas</item>
     </plurals>
+    <string name="watched_view_mode_shelf">Estantería</string>
+    <string name="watched_view_mode_list">Lista</string>
+    <string name="watched_group_date">Fecha</string>
+    <string name="watched_group_director">Director</string>
+    <string name="watched_group_genre">Género</string>
+    <string name="watched_group_decade">Década</string>
+    <string name="watched_group_unknown_director">Director desconocido</string>
+    <string name="watched_group_no_genre">Sin género</string>
+    <string name="watched_group_undated">Sin fecha</string>
+    <string name="watched_group_decade_label" formatted="true">Años %1$d</string>
+    <string name="watched_group_open_director">Ver perfil del director</string>
+    <plurals name="watched_group_movie_count">
+        <item quantity="one">%d película</item>
+        <item quantity="other">%d películas</item>
+    </plurals>
 </resources>

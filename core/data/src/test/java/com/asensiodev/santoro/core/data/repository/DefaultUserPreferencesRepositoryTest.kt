@@ -1,6 +1,8 @@
 package com.asensiodev.santoro.core.data.repository
 
 import com.asensiodev.core.domain.model.ThemeOption
+import com.asensiodev.core.domain.model.WatchedGrouping
+import com.asensiodev.core.domain.model.WatchedViewMode
 import com.asensiodev.library.securestorage.api.SecureKeyValueStore
 import io.mockk.every
 import io.mockk.mockk
@@ -18,7 +20,47 @@ class DefaultUserPreferencesRepositoryTest {
     companion object {
         private const val KEY_ONBOARDING = "has_seen_guest_onboarding"
         private const val KEY_THEME = "theme_option"
+        private const val KEY_WATCHED_VIEW_MODE = "watched_view_mode"
+        private const val KEY_WATCHED_GROUPING = "watched_grouping"
     }
+
+    @Test
+    fun `GIVEN saved list mode and director grouping WHEN init THEN flows emit them`() =
+        runTest {
+            every { secureKeyValueStore.readString(KEY_WATCHED_VIEW_MODE) } returns "LIST"
+            every { secureKeyValueStore.readString(KEY_WATCHED_GROUPING) } returns "DIRECTOR"
+
+            repository = DefaultUserPreferencesRepository(secureKeyValueStore)
+
+            repository.watchedViewMode.first() shouldBeEqualTo WatchedViewMode.LIST
+            repository.watchedGrouping.first() shouldBeEqualTo WatchedGrouping.DIRECTOR
+        }
+
+    @Test
+    fun `GIVEN missing or invalid collection preferences WHEN init THEN flows emit shelf and date watched`() =
+        runTest {
+            every { secureKeyValueStore.readString(KEY_WATCHED_VIEW_MODE) } returns null
+            every { secureKeyValueStore.readString(KEY_WATCHED_GROUPING) } returns "UNKNOWN"
+
+            repository = DefaultUserPreferencesRepository(secureKeyValueStore)
+
+            repository.watchedViewMode.first() shouldBeEqualTo WatchedViewMode.SHELF
+            repository.watchedGrouping.first() shouldBeEqualTo WatchedGrouping.DATE_WATCHED
+        }
+
+    @Test
+    fun `GIVEN initialized repository WHEN collection preferences change THEN updates store and flows`() =
+        runTest {
+            repository = DefaultUserPreferencesRepository(secureKeyValueStore)
+
+            repository.setWatchedViewMode(WatchedViewMode.LIST)
+            repository.setWatchedGrouping(WatchedGrouping.DECADE)
+
+            verify { secureKeyValueStore.writeString(KEY_WATCHED_VIEW_MODE, "LIST") }
+            verify { secureKeyValueStore.writeString(KEY_WATCHED_GROUPING, "DECADE") }
+            repository.watchedViewMode.first() shouldBeEqualTo WatchedViewMode.LIST
+            repository.watchedGrouping.first() shouldBeEqualTo WatchedGrouping.DECADE
+        }
 
     @Test
     fun `GIVEN store returns true WHEN init THEN flow emits true`() =

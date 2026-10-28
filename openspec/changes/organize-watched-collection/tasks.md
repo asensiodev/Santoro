@@ -18,10 +18,10 @@
 
 ## 3. Collection presentation (test first)
 
-- [ ] 3.1 Observe failing grouping-function tests for date watched, director, genre, decade, ordering, multi-membership and fallback groups, then implement the pure grouping mapper.
-- [ ] 3.2 Observe failing ViewModel tests for mode/grouping intents, persisted defaults, read/write failure, search within groupings and the director navigation effect, then implement state, DataStore data source and analytics.
-- [ ] 3.3 Observe failing plain Compose tests for the toggle, chips, Shelf poster click, director heading click and hidden controls when empty, then build the Shelf grid, sticky headers and controls with design-system tokens, English/Spanish resources and previews.
-- [ ] 3.4 Record and inspect light/dark Paparazzi baselines for List and Shelf in Director and Decade groupings and Spanish large-font chips; verify independently.
+- [x] 3.1 Observe failing grouping-function tests for date watched, director, genre, decade, ordering, multi-membership and fallback groups, then implement the pure grouping mapper.
+- [x] 3.2 Observe failing ViewModel tests for mode/grouping intents, persisted defaults, read/write failure, search within groupings and the director navigation effect, then implement state, `UserPreferencesRepository` persistence and analytics.
+- [x] 3.3 Observe failing plain Compose tests for the toggle, chips, Shelf poster click, director heading click and hidden controls when empty, then build the List rows, three-column Shelf, group headings and controls with design-system tokens, English/Spanish resources and previews.
+- [x] 3.4 Record and inspect light/dark Paparazzi baselines for List and Shelf in Director and Decade groupings and Spanish large-font chips; verify independently.
 
 ## 4. Navigation and validation
 

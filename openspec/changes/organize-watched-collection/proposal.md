@@ -4,8 +4,8 @@ Watched movies are a growing personal collection, but the Watched screen only of
 
 ## What Changes
 
-- Add two view modes on the Watched screen: List (the current rows) and Shelf (a three-column poster grid). The user switches with an icon toggle; the choice persists on the device.
-- Add Group by chips: Date watched (the current monthly grouping), Director, Genre and Decade. The choice persists on the device. Each group shows a sticky heading with its movie count.
+- Add two view modes on the Watched screen: Shelf (the current poster grid, now three fixed columns, default) and List (new rows with year and director). The user switches with an icon toggle; the choice persists on the device.
+- Add Group by chips: Date watched (the current monthly grouping), Director, Genre and Decade. The choice persists on the device. Each group shows a heading with its movie count.
 - Director grouping opens the existing person profile (F-29) from its heading. The collection-aware director filmography follows in F-32.
 - Store each movie's directors locally and in Firestore, captured when a movie is saved from detail. Resolve directors for already-watched movies once through a removable background backfill, plus a fallback when a watched movie's detail is opened.
 - Keep search and the stats dashboard working in every mode and grouping.
@@ -23,7 +23,8 @@ None. Watched behavior predates OpenSpec; this delta documents only the added co
 
 ## Impact
 
-- `feature/watched-movies/impl`: UI state, intents, ViewModel grouping, Shelf grid, chips, DataStore preferences and navigation to person detail.
+- `feature/watched-movies/impl`: UI state, intents, ViewModel grouping, List rows, chips and navigation to person detail.
+- `core/domain` / `core/data`: view mode and grouping preferences in the existing `UserPreferencesRepository`.
 - `core/domain`: director identity on `Movie` (unresolved vs resolved-empty).
 - `core/database`: Room migration 5 → 6 adding a nullable directors column, mapper changes and a query for watched movies with unresolved directors.
 - `core/sync`: Firestore `directors` field on upload and download; a unique one-time director backfill worker using TMDB `movie/{id}/credits`.

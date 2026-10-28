@@ -208,4 +208,19 @@
         <item quantity="one">%d movie</item>
         <item quantity="other">%d movies</item>
     </plurals>
+    <string name="watched_view_mode_shelf">Shelf</string>
+    <string name="watched_view_mode_list">List</string>
+    <string name="watched_group_date">Date watched</string>
+    <string name="watched_group_director">Director</string>
+    <string name="watched_group_genre">Genre</string>
+    <string name="watched_group_decade">Decade</string>
+    <string name="watched_group_unknown_director">Unknown director</string>
+    <string name="watched_group_no_genre">No genre</string>
+    <string name="watched_group_undated">Undated</string>
+    <string name="watched_group_decade_label" formatted="true">%1$ds</string>
+    <string name="watched_group_open_director">Open director profile</string>
+    <plurals name="watched_group_movie_count">
+        <item quantity="one">%d movie</item>
+        <item quantity="other">%d movies</item>
+    </plurals>
 </resources>

@@ -9,6 +9,8 @@ import com.asensiodev.core.domain.model.Director
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.SantoroUser
 import com.asensiodev.core.domain.model.ThemeOption
+import com.asensiodev.core.domain.model.WatchedGrouping
+import com.asensiodev.core.domain.model.WatchedViewMode
 import com.asensiodev.core.domain.repository.MovieMutationRepository
 import com.asensiodev.core.domain.repository.SyncRepository
 import com.asensiodev.core.domain.repository.SyncScheduler
@@ -81,6 +83,8 @@ class FakeUserPreferencesRepository : UserPreferencesRepository {
     override val hasSeenGuestOnboarding = MutableStateFlow(true)
     override val hasSeenDetailTooltip = MutableStateFlow(true)
     override val theme = MutableStateFlow(ThemeOption.SYSTEM)
+    override val watchedViewMode = MutableStateFlow(WatchedViewMode.SHELF)
+    override val watchedGrouping = MutableStateFlow(WatchedGrouping.DATE_WATCHED)
 
     override suspend fun setHasSeenGuestOnboarding(hasSeen: Boolean) {
         hasSeenGuestOnboarding.value = hasSeen
@@ -94,10 +98,20 @@ class FakeUserPreferencesRepository : UserPreferencesRepository {
         theme.value = option
     }
 
+    override suspend fun setWatchedViewMode(mode: WatchedViewMode) {
+        watchedViewMode.value = mode
+    }
+
+    override suspend fun setWatchedGrouping(grouping: WatchedGrouping) {
+        watchedGrouping.value = grouping
+    }
+
     fun reset() {
         hasSeenGuestOnboarding.value = true
         hasSeenDetailTooltip.value = true
         theme.value = ThemeOption.SYSTEM
+        watchedViewMode.value = WatchedViewMode.SHELF
+        watchedGrouping.value = WatchedGrouping.DATE_WATCHED
     }
 }
 

@@ -49,17 +49,19 @@ After a remote detail load the ViewModel sees resolved directors and cannot tell
 
 ### Collection presentation
 
-Add `WatchedViewMode` (List, Shelf) and `WatchedGrouping` (DateWatched, Director, Genre, Decade) to the watched feature. A pure grouping function in the presentation mapper produces ordered `WatchedGroupUi(key, label, count, directorId?, movies)` from domain movies; lazy item keys combine group key and movie ID so multi-membership stays unique. Labels for Unknown director, No genre and Undated use string resources; decade labels use a localized resource. The screen uses `LazyVerticalGrid` with full-span sticky headers in Shelf and the existing `LazyColumn` with sticky headers in List; group headers use stable keys and content types. Mode and grouping are durable state in `WatchedMoviesUiState`; change intents update state immediately, write DataStore through a `WatchedPreferencesDataSource`, and send analytics (`watched_view_mode_changed`, `watched_grouping_changed`).
+The current Watched screen is already a poster grid (`LazyVerticalGrid`, adaptive ~100dp cells, non-sticky month headings). Decision confirmed by the user on 2026-10-28: that grid becomes Shelf with three fixed columns and is the default, so existing users see no change; List is the new mode, rows with a small poster, title and "year · director". Headings stay non-sticky as today, because `LazyVerticalGrid` has no sticky headers and rebuilding the screen on a list for that alone adds risk without credible user benefit. Date watched keeps today's order inside a month (most recently watched first).
 
-Preferences live in DataStore, which sign-out does not clear (F-28 clears only movie rows), so a choice survives app restarts and sign out/in on the same device. A different account on the same device inherits the view preference; this is a display setting, not account data, so it is accepted. Change events alone would under-count returning users whose choice is already saved, so the ViewModel also records `watched_collection_viewed` with `mode` and `grouping` once per screen entry with populated content. This gives the real distribution of views in use through the existing `ObservabilityTracker.trackAction`, without a new user-property API.
+Add `WatchedViewMode` (Shelf, List) and `WatchedGrouping` (DateWatched, Director, Genre, Decade) to `core/domain`, persisted through the existing `UserPreferencesRepository` (secure key-value store, which sign-out does not clear), following `hasSeenDetailTooltip`, instead of a new DataStore data source. A pure grouping function in the presentation mapper produces ordered `WatchedGroupUi(key, label, count, directorId?, movies)` from domain movies; lazy item keys combine group key and movie ID so multi-membership stays unique. Labels for Unknown director, No genre and Undated use string resources; decade labels use a localized resource. The screen keeps one `LazyVerticalGrid`: Shelf uses three columns per row, List uses full-span rows; headings are full-span items; keys and content types stay stable. Mode and grouping are durable state in `WatchedMoviesUiState`; change intents update state immediately, persist through `UserPreferencesRepository`, and send analytics (`watched_view_mode_changed`, `watched_grouping_changed`).
 
-Preferences are collected once with the movies flow (combine), keeping a single long-lived collector and latest-wins behavior for queries. A DataStore read failure falls back to defaults; a write failure keeps the in-memory choice for the session.
+Preferences live in the secure key-value store, which sign-out does not clear (F-28 clears only movie rows), so a choice survives app restarts and sign out/in on the same device. A different account on the same device inherits the view preference; this is a display setting, not account data, so it is accepted. Change events alone would under-count returning users whose choice is already saved, so the ViewModel also records `watched_collection_viewed` with `mode` and `grouping` once per screen entry with populated content. This gives the real distribution of views in use through the existing `ObservabilityTracker.trackAction`, without a new user-property API.
 
-Director heading clicks emit a navigation effect collected in `RESUMED`, navigating to `PersonDetailRoute(personId)` through the app graph.
+Saved preferences are read once before the movies collector starts, so the first content frame already uses them, and then combined in memory with the single long-lived movies collector, keeping latest-wins behavior for queries. A read failure falls back to defaults; a write failure keeps the in-memory choice for the session.
+
+Director heading clicks call an `onDirectorClick(personId)` callback, like the existing `onMovieClick`, navigating to `PersonDetailRoute(personId)` through the app graph; no ViewModel logic is involved, so no effect is needed.
 
 ### Data sources and side effects
 
-- Allowed: Room reads/writes for directors, DataStore preferences, TMDB `movie/{id}/credits`, the existing upload scheduling, analytics events listed above, navigation to person detail.
+- Allowed: Room reads/writes for directors, `UserPreferencesRepository` preferences, TMDB `movie/{id}/credits`, the existing upload scheduling, analytics events listed above, navigation to person detail.
 - Forbidden: changing watched/watchlist flags or timestamps during backfill or fallback, new Firestore collections, person persistence, requests on every screen visit.
 
 ### Failure UX
@@ -78,14 +80,14 @@ Confirmed by the user on 2026-10-27 ("1 ok … 2 ok … empieza con la fase 1"),
 - `WatchedMoviesViewModel` tests through `process(intent)`: mode/grouping changes, persistence calls, defaults on read failure, search in groupings, navigation effect.
 - `MovieDetailViewModel` test for the unresolved-watched fallback, and no write when resolved or not watched.
 - Plain Compose tests for the toggle, chips, Shelf poster click, director heading click and hidden controls when empty.
-- Paparazzi light/dark for List and Shelf in Director and Decade groupings, and Spanish large font for chips.
+- Paparazzi light/dark for List and Shelf in Director and Decade groupings, and Spanish large font for chips. Existing content captures change because of the new controls and fixed columns; review each changed image.
 - App journey: Watched → Director heading → person profile → Back with mode and grouping preserved.
 
 ## Risks / Trade-offs
 
 - A user with several hundred watched movies triggers the same number of sequential credits requests once; TMDB rate limits are well above this and the worker backs off on 429.
 - Genre grouping shows a movie in several groups; group counts therefore do not sum to the total. This matches how people browse by genre.
-- Changing the default view to Shelf could improve discovery but would surprise existing users; List stays the default and the choice is measured through analytics.
+- Shelf, the existing grid, stays the default so the upgrade changes nothing for current users; List adoption is measured through analytics.
 
 ## Migration Plan
 

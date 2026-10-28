@@ -488,7 +488,7 @@ Features approved for a future release. Each will get a FIP before implementatio
 |---|---|
 | **Status** | 🟡 Planned — [OpenSpec change](../../openspec/changes/organize-watched-collection/proposal.md) |
 | **Scope** | Watched screen, director data on saved movies (Room, Firestore), removable director backfill |
-| **Behaviour** | Choose List or Shelf (poster grid) and group by Date watched, Director, Genre or Decade, with sticky headings and counts; both choices persist on the device. A director heading opens the person profile. Directors are stored when a movie is saved and resolved once in the background for movies saved earlier, with a fallback when a watched movie's detail is opened |
+| **Behaviour** | Choose Shelf (the existing poster grid, default) or List (rows with year and director) and group by Date watched, Director, Genre or Decade, with headings and counts; both choices persist on the device. A director heading opens the person profile. Directors are stored when a movie is saved and resolved once in the background for movies saved earlier, with a fallback when a watched movie's detail is opened |
 | **Boundaries** | No custom folders, ratings, cross-device preference sync or changes to list flags; the backfill is self-terminating and designed to be deleted once analytics show no unresolved movies remain |
 | **Rationale** | Turn watched movies into a browsable collection that answers "which films by this director or genre have I seen?" in seconds |
 

@@ -5,4 +5,6 @@ data class MovieUi(
     val title: String,
     val posterPath: String?,
     val watchedDate: String?,
+    val releaseYear: String? = null,
+    val directors: String? = null,
 )

@@ -71,3 +71,34 @@ Verified by reading release 1.1.1 (`0bbe6eb`) `FirestoreMovieDataSource`: upload
 - `ktlintFormat` on changed modules (two test names and long instrumented-test lines shortened by hand), then `ktlintCheck detekt :architecture-tests:test :app:compileDebugKotlin :app:compileJourneyTestAndroidTestKotlin :core:data:test :core:database:testDebugUnitTest :core:sync:testDebugUnitTest :feature:movie-detail:impl:testDebugUnitTest :app:testDebugUnitTest`: passed.
 - core:database instrumented suite after formatting: `OK (29 tests)`.
 - Not yet run: connected tests for movie-detail, watchlist and app journeys (their fakes changed only by a no-op method), Paparazzi and the aggregate gate; these are tracked in task 4.2.
+
+## Phase 3 — Collection presentation
+
+Decision confirmed by the user on 2026-10-28: the existing poster grid becomes Shelf (default, three fixed columns) and List is the new mode; spec, design, proposal and PRD were updated before implementation.
+
+### 3.1 Grouping
+
+- Red: `:feature:watched-movies:impl:testDebugUnitTest --tests '*WatchedGroupMapperTest*'` failed for every grouping, ordering, multi-membership, unique key and release-year/directors case against an empty stub.
+- Green: all watched unit tests passed after implementing `WatchedGroupMapper` and the new `MovieUi` fields; three existing `MovieUiMapperTest` expectations gained the intended `releaseYear`.
+
+### 3.2 Preferences and ViewModel
+
+- Red: `:core:data:test --tests '*DefaultUserPreferencesRepositoryTest*'` failed for saved values and updates against a stub; the defaults case passed as regression coverage. Green: `:core:data:test`.
+- Structural refactor under green: `movies: Map` became `groups: List<WatchedGroupUi>` with `viewMode`/`grouping`; watched unit tests passed and `verifyPaparazziDebug` for the module stayed identical. One existing test that never loaded movies was made to load them, matching its name.
+- Red: `--tests '*WatchedMoviesViewModelTest*'` failed for saved preferences on first content, regrouping with persistence and analytics, mode change, write failure, search grouping and the once-only collection view event; read failure and empty collection passed as regression coverage.
+- Green: `:feature:watched-movies:impl:testDebugUnitTest`.
+
+### 3.3 UI
+
+- Red (instrumented, `emulator-5554`): `WatchedCollectionScreenTest` failed 4 of 6 (toggle, chips, List row, director heading); unknown-director heading and hidden controls passed as regression coverage.
+- Green: watched instrumented suite `OK (7 tests)`. `WatchedMoviesFeatureTest` now expects the total text twice (stats and the single group count).
+
+### 3.4 Screenshots
+
+- Recorded `:feature:watched-movies:impl:recordPaparazziDebug --tests '*WatchedMoviesScreenScreenshotTest*'`: changed `content` (controls, count) and new `shelfDirector`, `listDirector`, `listDecade`, `spanishLargeDecade` in both themes. Inspected content dark, Shelf director light, List director dark, List decade light and Spanish 200% light.
+- Observation for review: when the selected chip is Decade, the chip row starts scrolled to the beginning, so the selected chip can be off screen.
+
+### Phase 3 checks
+
+- `ktlintFormat` on changed modules, then `ktlintCheck detekt :architecture-tests:test verifyPaparazziDebug :app:compileDebugKotlin :app:compileJourneyTestAndroidTestKotlin :core:data:test :feature:watched-movies:impl:testDebugUnitTest :feature:movie-detail:impl:testDebugUnitTest :app:testDebugUnitTest`: passed (all-module screenshots verified).
+- Watched instrumented suite after formatting: `OK (7 tests)`.

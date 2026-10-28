@@ -1,7 +1,9 @@
 package com.asensiodev.feature.watchedmovies.impl.presentation
 
+import com.asensiodev.core.domain.model.WatchedGrouping
+import com.asensiodev.core.domain.model.WatchedViewMode
 import com.asensiodev.feature.watchedmovies.impl.domain.model.WatchedStats
-import com.asensiodev.feature.watchedmovies.impl.presentation.model.MovieUi
+import com.asensiodev.feature.watchedmovies.impl.presentation.model.WatchedGroupUi
 
 internal sealed interface WatchedScreenState {
     data object Loading : WatchedScreenState
@@ -15,7 +17,9 @@ internal sealed interface WatchedScreenState {
 
 internal data class WatchedMoviesUiState(
     val screenState: WatchedScreenState = WatchedScreenState.Loading,
-    val movies: Map<String, List<MovieUi>> = emptyMap(),
+    val groups: List<WatchedGroupUi> = emptyList(),
+    val viewMode: WatchedViewMode = WatchedViewMode.SHELF,
+    val grouping: WatchedGrouping = WatchedGrouping.DATE_WATCHED,
     val query: String = "",
     val stats: WatchedStats? = null,
     val hasMovies: Boolean? = null,

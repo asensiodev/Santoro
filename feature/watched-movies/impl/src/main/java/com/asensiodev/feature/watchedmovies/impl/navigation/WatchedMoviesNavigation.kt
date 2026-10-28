@@ -5,8 +5,11 @@ import androidx.navigation.compose.composable
 import com.asensiodev.feature.watchedmovies.api.navigation.WatchedMoviesRoute
 import com.asensiodev.feature.watchedmovies.impl.presentation.WatchedMoviesRoute
 
-fun NavGraphBuilder.watchedMoviesRoute(onMovieClick: (Int) -> Unit) {
+fun NavGraphBuilder.watchedMoviesRoute(
+    onMovieClick: (Int) -> Unit,
+    onDirectorClick: (Int) -> Unit = {},
+) {
     composable<WatchedMoviesRoute> {
-        WatchedMoviesRoute(onMovieClick = onMovieClick)
+        WatchedMoviesRoute(onMovieClick = onMovieClick, onDirectorClick = onDirectorClick)
     }
 }
