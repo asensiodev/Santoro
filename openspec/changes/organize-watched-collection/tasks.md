@@ -25,7 +25,7 @@
 
 ## 4. Navigation and validation
 
-- [ ] 4.1 Observe a failing app journey for Watched → director heading → person profile → Back with mode, grouping and scroll preserved, then wire navigation in `app`.
-- [ ] 4.2 Run affected module tests, `verifyPaparazziDebug`, `:architecture-tests:test` and connected tests, then the aggregate gate; record commands and results in implementation.md.
+- [x] 4.1 Observe a failing app journey for Watched → director heading → person profile → Back with mode, grouping and scroll preserved, then wire navigation in `app`.
+- [x] 4.2 Run affected module tests, `verifyPaparazziDebug`, `:architecture-tests:test` and connected tests, then the aggregate gate; record commands and results in implementation.md.
 - [ ] 4.3 Manual checks: upgrade from 1.1.1 with watched movies (online and offline), sign-in restore on a second device, Spanish, light/dark, TalkBack on toggle/chips/posters, large font.
 - [ ] 4.4 Update PRD F-31 status, report changed classes, and archive after human review.

@@ -102,3 +102,19 @@ Decision confirmed by the user on 2026-10-28: the existing poster grid becomes S
 
 - `ktlintFormat` on changed modules, then `ktlintCheck detekt :architecture-tests:test verifyPaparazziDebug :app:compileDebugKotlin :app:compileJourneyTestAndroidTestKotlin :core:data:test :feature:watched-movies:impl:testDebugUnitTest :feature:movie-detail:impl:testDebugUnitTest :app:testDebugUnitTest`: passed (all-module screenshots verified).
 - Watched instrumented suite after formatting: `OK (7 tests)`.
+
+## Phase 4 — Navigation and validation
+
+### 4.1 Director navigation journey
+
+- The journey Hilt graph replaces `DatabaseModule` and `SyncModule`, so it lacked `SyncStore` and `MovieDirectorsRemoteDataSource` required by `DirectorBackfillWorker` since phase 2 (phase 2 compiled the journey Kotlin sources but not their Hilt aggregation). Added `FakeSyncStore` and an empty directors source to `AppJourneyTestModule`; `:app:hiltJavaCompileDebug` confirmed the production graph was already complete.
+- `AppJourneyTestData.watchedMovie` now carries the existing journey director.
+- Red: `MainActivityWatchedCollectionJourneyTest` failed (`The component is not displayed!`) because the director heading did nothing.
+- Green: after wiring `onDirectorClick` to `navigateToPersonDetail` with the RESUMED guard in `SantoroTabNavGraph` (and removing the empty default), the full journey suite passed on `emulator-5554`: `OK (18 tests)`. Back restores the Watched screen with List and Director still selected.
+
+### 4.2 Validation
+
+- Connected (emulator only): app journeys `OK (18 tests)`, watched `OK (7 tests)`, movie-detail `OK (9 tests)`, watchlist `OK (2 tests)`, core:database `OK (29 tests)`.
+- `:architecture-tests:test verifyPaparazziDebug`: passed.
+- Aggregate gate `test detekt ktlintCheck koverVerify assembleDebug assembleRelease` with `-PenableFirebase=false`: passed after shortening one journey test name for ktlint.
+- Not run: CI on API 35, the release startup check (needs the signed minified Release APK) and the manual checks in 4.3.

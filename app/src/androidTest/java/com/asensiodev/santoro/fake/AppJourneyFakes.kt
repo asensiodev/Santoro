@@ -7,6 +7,7 @@ import com.asensiodev.auth.domain.repository.AuthRepository
 import com.asensiodev.core.domain.model.CastMember
 import com.asensiodev.core.domain.model.Director
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.core.domain.model.MovieSyncData
 import com.asensiodev.core.domain.model.SantoroUser
 import com.asensiodev.core.domain.model.ThemeOption
 import com.asensiodev.core.domain.model.WatchedGrouping
@@ -14,6 +15,7 @@ import com.asensiodev.core.domain.model.WatchedViewMode
 import com.asensiodev.core.domain.repository.MovieMutationRepository
 import com.asensiodev.core.domain.repository.SyncRepository
 import com.asensiodev.core.domain.repository.SyncScheduler
+import com.asensiodev.core.domain.repository.SyncStore
 import com.asensiodev.core.domain.repository.UserPreferencesRepository
 import com.asensiodev.feature.moviedetail.impl.domain.repository.MovieDetailRepository
 import com.asensiodev.feature.searchmovies.impl.domain.model.FetchPolicy
@@ -281,6 +283,22 @@ class FakeSyncRepository : SyncRepository {
     override suspend fun downloadAndMerge(uid: String): Result<Unit> = Result.success(Unit)
 
     override suspend fun deleteUserData(uid: String): Result<Unit> = Result.success(Unit)
+}
+
+class FakeSyncStore : SyncStore {
+    override suspend fun getMovieForUpload(movieId: Int): Result<MovieSyncData?> =
+        Result.success(null)
+
+    override suspend fun getMoviesForUpload(): Result<List<MovieSyncData>> =
+        Result.success(emptyList())
+
+    override suspend fun getWatchedMovieIdsWithUnresolvedDirectors(): Result<List<Int>> =
+        Result.success(emptyList())
+
+    override suspend fun completeDownloadedMerge(
+        movies: List<MovieSyncData>,
+        canMerge: suspend () -> Boolean,
+    ): Result<Unit> = Result.success(Unit)
 }
 
 class FakeSyncScheduler : SyncScheduler {

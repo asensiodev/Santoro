@@ -3,6 +3,7 @@ package com.asensiodev.santoro
 import com.asensiodev.core.domain.model.CastMember
 import com.asensiodev.core.domain.model.CrewMember
 import com.asensiodev.core.domain.model.CrewRole
+import com.asensiodev.core.domain.model.Director
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.SantoroUser
@@ -29,7 +30,9 @@ object AppJourneyTestData {
     val popularMovie = movie(71022, "Phase Seven Popular")
     val topRatedMovie = movie(71023, "Phase Seven Top Rated")
     val upcomingMovie = movie(71024, "Phase Seven Upcoming")
-    val watchedMovie = movie(71025, "Phase Seven Watched", isWatched = true, watchedAt = 300L)
+    val watchedMovie =
+        movie(71025, "Phase Seven Watched", isWatched = true, watchedAt = 300L)
+            .copy(directors = listOf(Director(DIRECTOR_ID, DIRECTOR_NAME)))
     val watchlistMovie = movie(71026, "Phase Seven Watchlist", isInWatchlist = true)
     val dashboardMovies =
         listOf(nowPlayingMovie, trendingMovie, popularMovie, topRatedMovie, upcomingMovie)

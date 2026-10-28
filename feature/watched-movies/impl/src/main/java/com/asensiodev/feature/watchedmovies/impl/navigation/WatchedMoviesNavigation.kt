@@ -7,7 +7,7 @@ import com.asensiodev.feature.watchedmovies.impl.presentation.WatchedMoviesRoute
 
 fun NavGraphBuilder.watchedMoviesRoute(
     onMovieClick: (Int) -> Unit,
-    onDirectorClick: (Int) -> Unit = {},
+    onDirectorClick: (Int) -> Unit,
 ) {
     composable<WatchedMoviesRoute> {
         WatchedMoviesRoute(onMovieClick = onMovieClick, onDirectorClick = onDirectorClick)
