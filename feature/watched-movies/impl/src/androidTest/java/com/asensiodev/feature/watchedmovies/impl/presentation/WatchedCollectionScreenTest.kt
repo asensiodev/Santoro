@@ -1,6 +1,9 @@
 package com.asensiodev.feature.watchedmovies.impl.presentation
 
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -10,10 +13,12 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.asensiodev.core.designsystem.theme.SantoroTheme
 import com.asensiodev.core.domain.model.WatchedGrouping
 import com.asensiodev.core.domain.model.WatchedViewMode
+import com.asensiodev.feature.watchedmovies.impl.presentation.component.WatchedCollectionControls
 import com.asensiodev.feature.watchedmovies.impl.presentation.model.MovieUi
 import com.asensiodev.feature.watchedmovies.impl.presentation.model.WatchedGroupLabel
 import com.asensiodev.feature.watchedmovies.impl.presentation.model.WatchedGroupUi
@@ -118,6 +123,24 @@ class WatchedCollectionScreenTest {
             ).assertDoesNotExist()
     }
 
+    @Test
+    fun givenDecadeGroupingOnNarrowWidth_whenShown_thenSelectedChipIsVisible() {
+        composeRule.setContent {
+            SantoroTheme {
+                Box(modifier = Modifier.width(NARROW_WIDTH)) {
+                    WatchedCollectionControls(
+                        viewMode = WatchedViewMode.SHELF,
+                        grouping = WatchedGrouping.DECADE,
+                        onViewModeChange = {},
+                        onGroupingChange = {},
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText(string(SR.string.watched_group_decade)).assertIsDisplayed()
+    }
+
     private fun setScreen(state: WatchedMoviesUiState) {
         composeRule.setContent {
             SantoroTheme {
@@ -161,6 +184,7 @@ class WatchedCollectionScreenTest {
     private companion object {
         const val FARGO_ID = 275
         const val JOEL_COEN_ID = 1223
+        val NARROW_WIDTH = 280.dp
         val fargo =
             MovieUi(
                 id = FARGO_ID,

@@ -97,6 +97,7 @@ Decision confirmed by the user on 2026-10-28: the existing poster grid becomes S
 
 - Recorded `:feature:watched-movies:impl:recordPaparazziDebug --tests '*WatchedMoviesScreenScreenshotTest*'`: changed `content` (controls, count) and new `shelfDirector`, `listDirector`, `listDecade`, `spanishLargeDecade` in both themes. Inspected content dark, Shelf director light, List director dark, List decade light and Spanish 200% light.
 - Observation for review: when the selected chip is Decade, the chip row starts scrolled to the beginning, so the selected chip can be off screen.
+- Resolved after review: the selected grouping chip is brought into view on entry and on change. Red (`emulator-5554`): `givenDecadeGroupingOnNarrowWidth_whenShown_thenSelectedChipIsVisible` failed with `The component is not displayed!`. A first attempt that requested bring-into-view directly from `LaunchedEffect` still failed because the chip had no layout yet; waiting one frame before the request turned it green. Watched instrumented suite `OK (8 tests)`; `:feature:watched-movies:impl:verifyPaparazziDebug` passed unchanged because screenshots capture the first frame; module `ktlintCheck detekt testDebugUnitTest` passed.
 
 ### Phase 3 checks
 

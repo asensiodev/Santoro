@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -13,6 +15,9 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -49,11 +54,22 @@ internal fun WatchedCollectionControls(
             horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
         ) {
             WatchedGrouping.entries.forEach { option ->
+                val selected = option == grouping
+                val bringIntoViewRequester = remember { BringIntoViewRequester() }
+                LaunchedEffect(selected) {
+                    if (selected) {
+                        withFrameNanos {}
+                        bringIntoViewRequester.bringIntoView()
+                    }
+                }
                 FilterChip(
-                    selected = option == grouping,
+                    selected = selected,
                     onClick = { onGroupingChange(option) },
                     label = { Text(text = option.label()) },
-                    modifier = Modifier.heightIn(min = Size.size48),
+                    modifier =
+                        Modifier
+                            .heightIn(min = Size.size48)
+                            .bringIntoViewRequester(bringIntoViewRequester),
                 )
             }
         }
