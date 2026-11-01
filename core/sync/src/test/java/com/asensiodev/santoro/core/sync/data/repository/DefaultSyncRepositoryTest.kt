@@ -96,6 +96,17 @@ class DefaultSyncRepositoryTest {
         }
 
     @Test
+    fun `GIVEN movie with genres WHEN upload movie THEN genres use stable id and name keys`() =
+        runTest {
+            coEvery { syncStore.getMovieForUpload(42) } returns Result.success(movie(42, listOf(Genre(18, "Drama"))))
+            coEvery { remoteDataSource.uploadMovie(any(), any()) } returns Result.success(Unit)
+
+            sut.uploadMovie(UID, 42)
+
+            coVerify { remoteDataSource.uploadMovie(UID, match { it.genres == """[{"id":18,"name":"Drama"}]""" }) }
+        }
+
+    @Test
     fun `GIVEN movie with unresolved directors WHEN upload movie THEN uploads no directors`() =
         runTest {
             coEvery { syncStore.getMovieForUpload(42) } returns Result.success(movie(42, directors = null))
@@ -232,6 +243,67 @@ class DefaultSyncRepositoryTest {
                     match { it.single().movieId == 9 && it.single().genres == listOf(Genre(1, "Drama")) },
                     any(),
                 )
+            }
+        }
+
+    @Test
+    fun `GIVEN downloaded genres with stable keys WHEN merging THEN maps them to domain genres`() =
+        runTest {
+            val remote = SyncMockUtils.createSyncEntity(9, genres = """[{"id":18,"name":"Drama"}]""")
+            coEvery { remoteDataSource.downloadUserMovies(UID) } returns Result.success(listOf(remote))
+            coEvery { syncStore.completeDownloadedMerge(any(), any()) } returns Result.success(Unit)
+
+            sut.downloadAndMerge(UID)
+
+            coVerify {
+                syncStore.completeDownloadedMerge(match { it.single().genres == listOf(Genre(18, "Drama")) }, any())
+            }
+        }
+
+    @Test
+    fun `GIVEN downloaded genres with legacy obfuscated keys WHEN merging THEN maps them to domain genres`() =
+        runTest {
+            val remote = SyncMockUtils.createSyncEntity(9, genres = """[{"a":18,"b":"Drama"}]""")
+            val merged = mutableListOf<List<MovieSyncData>>()
+            coEvery { remoteDataSource.downloadUserMovies(UID) } returns Result.success(listOf(remote))
+            coEvery { syncStore.completeDownloadedMerge(capture(merged), any()) } returns Result.success(Unit)
+
+            sut.downloadAndMerge(UID)
+
+            merged.single().single().genres shouldBeEqualTo listOf(Genre(18, "Drama"))
+        }
+
+    @Test
+    fun `GIVEN downloaded genres with incomplete entries WHEN merging THEN keeps only complete genres`() =
+        runTest {
+            val remote =
+                SyncMockUtils.createSyncEntity(
+                    9,
+                    genres =
+                        """[{"name":"No id"},{"id":12},{"id":14,"name":" "},""" +
+                            """{"id":16,"name":"null"},{"id":18,"name":"Drama"}]""",
+                )
+            val merged = mutableListOf<List<MovieSyncData>>()
+            coEvery { remoteDataSource.downloadUserMovies(UID) } returns Result.success(listOf(remote))
+            coEvery { syncStore.completeDownloadedMerge(capture(merged), any()) } returns Result.success(Unit)
+
+            sut.downloadAndMerge(UID)
+
+            merged.single().single().genres shouldBeEqualTo listOf(Genre(18, "Drama"))
+        }
+
+    @Test
+    fun `GIVEN malformed or blank downloaded genres WHEN merging THEN they map to no genres`() =
+        runTest {
+            val malformed = SyncMockUtils.createSyncEntity(9, genres = "not json")
+            val blank = SyncMockUtils.createSyncEntity(10, genres = "")
+            coEvery { remoteDataSource.downloadUserMovies(UID) } returns Result.success(listOf(malformed, blank))
+            coEvery { syncStore.completeDownloadedMerge(any(), any()) } returns Result.success(Unit)
+
+            sut.downloadAndMerge(UID)
+
+            coVerify {
+                syncStore.completeDownloadedMerge(match { movies -> movies.all { it.genres.isEmpty() } }, any())
             }
         }
 
