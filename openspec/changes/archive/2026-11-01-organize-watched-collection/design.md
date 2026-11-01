@@ -59,9 +59,45 @@ Saved preferences are read once before the movies collector starts, so the first
 
 Director heading clicks call an `onDirectorClick(personId)` callback, like the existing `onMovieClick`, navigating to `PersonDetailRoute(personId)` through the app graph; no ViewModel logic is involved, so no effect is needed.
 
+### Screen revision (2026-11-01)
+
+After testing the first implementation on the emulator, the user asked for a layout closer to the earlier design exploration, constrained to the app's real data and design system. The user approved the revised mockups (canvas "Santoro · Colección", row "Propuesta v2") on 2026-11-01.
+
+- **Header.** A `headlineMedium` "Watched" title and a summary line with the total watched movie count, plus a search `IconButton` and the existing `SingleChoiceSegmentedButtonRow` toggle on the right. The total is the number of distinct movie IDs in the unfiltered collection, so multi-membership does not inflate it. It is computed when the query is blank and kept while searching; the header is hidden during search anyway. The summary shows only the movie count; detailed figures belong to the future statistics screen. During Loading, Error and Empty, only the title is shown.
+- **Search on demand.** `WatchedMoviesUiState` gains `isSearchOpen` as durable state. `OpenSearch` sets it; `CloseSearch` clears it and the query in one update, so the latest-wins query collector re-emits the full collection. The open header is a back `IconButton` and the existing `QueryTextField`, which already has a clear action; a `FocusRequester` focuses it when `isSearchOpen` becomes true, and a `BackHandler` enabled only while search is open sends `CloseSearch`. `CloseSearch` also regroups the last full collection immediately instead of waiting for the debounced query, and the screen scrolls the grid to the top when search closes (revision 2026-11-01, after manual checks showed the closed screen kept the filtered list's scroll position; regrouping first avoids the lazy grid re-anchoring to a filtered key). When the movies collector reports no watched movies, the same update closes search, so the Empty state never shows a search field. The view toggle is hidden while searching; the chips stay, so the user can regroup matches. Search stays title-only (`searchWatchedMoviesByTitle`). No analytics event is added for search.
+- **Chips.** The grouping chips reuse the Search screen genre chip shape: `FilterChip` with `RoundedCornerShape(Size.size16)`. Selected colors were first `primaryContainer` / `onPrimaryContainer` like the Search chips; manual checks showed the selected chip looked dimmer than unselected ones in dark theme, so on 2026-11-01 they changed to `secondaryContainer` / `onSecondaryContainer`, matching the view toggle, with the default 48dp minimum touch target instead of today's forced 48dp visual height. They keep a leading check icon on the selected chip: `primaryContainerDark` is close to the dark background, so without the check, the selected chip would differ from the others only by a faint fill.
+- **Headings.** Resolved director headings become a full-width tonal row (`surfaceContainer`, `shapes.medium`, minimum height 56dp) with name, count and chevron, in both modes. The Unknown director heading and all other groupings keep plain 48dp headings without a container. Headings stay non-sticky (see above). Completion progress in headings is out of scope: F-32 explicitly excludes it because it needs one filmography request per director on screen.
+- **Stats removal.** Remove `WatchedStatsDashboard`, its screenshot test and golden, the `LoadStats` intent, `stats` in UI state, the stats collector in the ViewModel and its use-case dependency. Keep `GetWatchedStatsUseCase`, `WatchedStats`, their unit test, the Hilt provider and the `watched_stat_*` strings, so the statistics screen can reuse them. Until then the use case has no consumer, which is accepted.
+
+Rejected alternatives: a permanently visible search field (it takes the most valuable row on a browsing screen, and search is a secondary task here); a search action inside the chip row (it would scroll off with the chips on narrow screens and large fonts).
+
+Accepted limitations:
+- Open search is not restored after process death, because the ViewModel does not use `SavedStateHandle`. The user returns to the closed header with the full collection, so no data is lost.
+- Users used to the always-visible field must tap the search icon first. The icon sits in the header in the standard position, so the cost is one tap.
+
+### Release date restoration (2026-11-01)
+
+Found during manual checks: Firestore documents never carried the release date, so `MovieSyncData.toEntity()` restored every movie with `releaseDate = null`. Any user who changes device, reinstalls, or signs out and in (F-28 clears local movie rows) saw most of the collection under Undated in Decade grouping and List rows without a year. The original device keeps complete rows. The user chose to fix it within F-31 on 2026-11-01, including movies already restored.
+
+- **Tri-state release date.** `null` means unresolved; an empty string means TMDB has no release date; otherwise the TMDB date. Presentation already treats blank as undated. No Room migration: the column is already nullable, and the only rows with `null` are restored rows and movies saved without a TMDB date, which one request resolves.
+- **Firestore.** Upload `releaseDate` as a string field, following `directors`. On download, an absent or null field maps to `null` (unresolved). Older clients overwrite documents without the field, the same accepted limitation as `directors` (task 1.4): a later restore resolves it again through the backfill.
+- **Backfill.** `DirectorBackfillWorker` keeps its class, unique work name and analytics events, so the removal criterion and dashboards stay continuous, but now selects watched movies whose directors or release date are unresolved. The credits request becomes `GET /3/movie/{id}?append_to_response=credits` (the movie detail request, `MovieApiModel`), so one request resolves both values; `MovieDirectorsRemoteDataSource` becomes `MovieMetadataRemoteDataSource`, returning directors (empty when credits are missing) and the release date (empty when absent). A 404 resolves both as empty.
+- **Conditional store.** `MovieMutationRepository.storeResolvedDirectors` becomes `storeResolvedMetadata(movieId, directors?, releaseDate?)`. The update fills only columns that are `null` and receive a non-null value, bumps `updatedAt` only when something changes, and returns whether a row changed; the existing upload-on-change behaviour is unchanged. Because the worker uploads its local snapshot afterwards, the restored device writes the resolved dates back to Firestore and later restores include them.
+- **Detail fallback.** For a watched movie, `MovieDetailViewModel` passes the loaded directors and release date as they are. A Room load passes values that are either already stored or `null`, which the conditional update ignores; a remote load fills whatever is missing. A remote detail with a `null` release date leaves it unresolved for the backfill.
+
+Rejected: filling unresolved local rows from remote values during the download merge (needs another DAO path, and the backfill resolves them with one request), and a separate release-date worker (a second request per movie for the same endpoint).
+
+### Offline posters and detail (2026-11-01)
+
+Found in manual checks with airplane mode and an empty image cache. The user asked to fix both within F-31 on 2026-11-01 ("mete los dos ahora mejor").
+
+- **Watched posters.** Shelf cells showed a blank card when the poster failed to load, so the movie could not be identified, which contradicts the existing "Missing poster" scenario. `MovieCard` and the List thumbnail now draw the existing placeholder (icon, and title in Shelf) underneath the image, following the cast portrait pattern in movie detail: the image covers it once it loads, and failure or loading leaves it visible. The title text is always in the semantics tree, so the image itself carries no content description.
+- **Movie detail without remote data.** The hero backdrop stretched the placeholder icon across the header and the poster cropped it. The backdrop now shows no error image over a neutral `surfaceVariant` base under the existing gradient, and the poster draws the centered placeholder icon on `surfaceVariant` underneath the image. The Cast heading is hidden when the movie has no cast, as the crew grid already is.
+- Out of scope, agreed: filling overview, rating, countries and tagline for restored movies; offline detail shows "No description available" and an unknown country for them until opened online.
+
 ### Data sources and side effects
 
-- Allowed: Room reads/writes for directors, `UserPreferencesRepository` preferences, TMDB `movie/{id}/credits`, the existing upload scheduling, analytics events listed above, navigation to person detail.
+- Allowed: Room reads/writes for directors and release dates, `UserPreferencesRepository` preferences, TMDB `movie/{id}?append_to_response=credits`, the existing upload scheduling, analytics events listed above, navigation to person detail.
 - Forbidden: changing watched/watchlist flags or timestamps during backfill or fallback, new Firestore collections, person persistence, requests on every screen visit.
 
 ### Failure UX
@@ -82,6 +118,22 @@ Confirmed by the user on 2026-10-27 ("1 ok … 2 ok … empieza con la fase 1"),
 - Plain Compose tests for the toggle, chips, Shelf poster click, director heading click and hidden controls when empty.
 - Paparazzi light/dark for List and Shelf in Director and Decade groupings, and Spanish large font for chips. Existing content captures change because of the new controls and fixed columns; review each changed image.
 - App journey: Watched → Director heading → person profile → Back with mode and grouping preserved.
+
+Screen revision boundaries (confirmed by the user on 2026-11-01: "si, dale con la fase 5"):
+
+- `WatchedMoviesViewModel` tests through `process(intent)`: no stats dependency or state; total counts distinct movies with multi-membership; total unchanged while searching; `OpenSearch` / `CloseSearch` (close clears the query and restores the full collection); grouping change keeps the query; search closes when the collection becomes empty.
+- Plain Compose tests: header shows title and total; search button opens a focused field and hides the toggle; the back action and system Back close search; the clear action keeps search open; only the title shows in Loading, Error and Empty; the director heading is a button and Unknown director is not; no stats content.
+- `WatchedMoviesFeatureTest` (instrumented) no longer asserts stats.
+- Paparazzi light/dark: Shelf Director, List Date watched, search open with results, no results while searching, Empty, and Spanish large font. Remove the stats dashboard capture.
+
+Release date restoration boundaries (approved with option 1 on 2026-11-01: "vale, opción 1, actualiza la spec y dale"):
+
+- Sync mapping unit tests: `releaseDate` upload and download at the Firestore and repository layers (absent or null → unresolved, empty → resolved without date), and `MovieSyncData` ↔ entity mapping.
+- Room instrumented tests: the unresolved query includes watched movies with resolved directors and a `null` release date; the conditional store fills only missing values, never overwrites, and reports no change when nothing is filled.
+- HTTP integration test (MockWebServer, real Retrofit/Gson): `movie/{id}?append_to_response=credits` yields directors and release date; missing date → empty; 404 → both empty.
+- Worker unit tests: a date-only unresolved movie is resolved and uploaded; existing cases keep passing.
+- `MovieDetailViewModel` tests: a remote load of a watched movie stores a missing release date; a Room load triggers no upload.
+- Manual: on the emulator, restored movies move from Undated to their decades after the backfill.
 
 ## Risks / Trade-offs
 

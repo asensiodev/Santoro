@@ -4,9 +4,9 @@
 
 | Field        | Value                          |
 |--------------|--------------------------------|
-| **Version**  | 2.20                           |
+| **Version**  | 2.22                           |
 | **Status**   | ✅ Current                     |
-| **Date**     | 2026-10-27                     |
+| **Date**     | 2026-11-01                     |
 | **Author**   | @asensiodev                    |
 | **Platform** | Android (Native)               |
 
@@ -162,10 +162,10 @@ Entry: bottom navigation tab "Watchlist".
 Entry: bottom navigation tab "Watched".
 
 - Lists all movies the user has marked as watched.
-- Grouped by **month/year** of the `watchedAt` timestamp.
-- **Stats dashboard** at the top: total movies watched · total runtime (hours) · favourite genre · longest watched streak. Cards in horizontal scroll row (`ElevatedCard`).
-- **Search** bar filters locally by title.
-- Grid layout (2 columns per group section).
+- Header with the title and the total number of watched movies; F-31 adds collection views and grouping.
+- Grouped by **month/year** of the `watchedAt` timestamp by default.
+- **Search** opens from the header search button and filters locally by title.
+- The stats dashboard (F-20) left this screen in F-31 and will move to a dedicated statistics screen (F-33).
 - Tap navigates to Movie Detail.
 
 **States handled:** Loading · Content · Error (retry) · Empty.
@@ -380,7 +380,7 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 | Attribute   | Detail |
 |-------------|--------|
-| **Status**  | ✅ Shipped — [FIP-012](../plan/FIP-012-watched-stats-dashboard.md) |
+| **Status**  | ✅ Shipped — [FIP-012](../plan/FIP-012-watched-stats-dashboard.md); removed from the Watched screen by F-31, to return in F-33 |
 | **Current state** | The summary card only shows total movies watched. The Watched screen groups movies by month/year but offers no other insights |
 | **Behaviour** | Expand the summary section into a small stats dashboard with: total movies watched · total runtime (hours) · favourite genre (most frequent) · longest watched streak (weeks). Cards use M3 `ElevatedCard` in a horizontal scroll row |
 | **Rationale** | Stats/insights are a proven engagement driver for tracking apps (Spotify Wrapped effect). Adds delight without requiring new data sources |
@@ -486,9 +486,9 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 | Attribute | Detail |
 |---|---|
-| **Status** | 🟡 Planned — [OpenSpec change](../../openspec/changes/organize-watched-collection/proposal.md) |
-| **Scope** | Watched screen, director data on saved movies (Room, Firestore), removable director backfill |
-| **Behaviour** | Choose Shelf (the existing poster grid, default) or List (rows with year and director) and group by Date watched, Director, Genre or Decade, with headings and counts; both choices persist on the device. A director heading opens the person profile. Directors are stored when a movie is saved and resolved once in the background for movies saved earlier, with a fallback when a watched movie's detail is opened |
+| **Status** | ✅ Implemented, pending release — [archived OpenSpec change](../../openspec/changes/archive/2026-11-01-organize-watched-collection/proposal.md) |
+| **Scope** | Watched screen, director and release date data on saved movies (Room, Firestore), removable backfill |
+| **Behaviour** | Choose Shelf (the existing poster grid, default) or List (rows with year and director) and group by Date watched, Director, Genre or Decade, with headings and counts; both choices persist on the device. A header shows the title, the total movie count, a search button that opens search on demand and the view toggle; the stats dashboard leaves the screen. A director heading opens the person profile. Directors are stored when a movie is saved and resolved once in the background for movies saved earlier, with a fallback when a watched movie's detail is opened |
 | **Boundaries** | No custom folders, ratings, cross-device preference sync or changes to list flags; the backfill is self-terminating and designed to be deleted once analytics show no unresolved movies remain |
 | **Rationale** | Turn watched movies into a browsable collection that answers "which films by this director or genre have I seen?" in seconds |
 
@@ -498,12 +498,24 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 | Attribute | Detail |
 |---|---|
-| **Status** | 🟡 Planned — depends on F-31; [OpenSpec change](../../openspec/changes/director-watched-filmography/proposal.md) |
+| **Status** | 🟡 Planned — F-31 dependency implemented; [OpenSpec change](../../openspec/changes/director-watched-filmography/proposal.md) |
 | **Scope** | New Director collection screen opened from the Watched Director grouping |
 | **Behaviour** | Show a director's feature films chronologically with watched films marked, unwatched films as placeholders and a "Watched X of Y" progress summary; a persisted Show pending switch hides unwatched films |
 | **Boundaries** | Feature films only (Director job, released, not video, not documentary; watched films always count). No quick add to Watchlist or completion in Watched headings in this version |
 | **Rationale** | Collectors enjoy seeing what is missing; completion gives a reason to return and a natural source of recommendations |
 | **Notes** | Future: let the user choose the filmography scope (feature films only or everything, including documentaries and shorts); label short films, which TMDB credits cannot identify without runtime; one-tap add to Watchlist from an unwatched film, which needs the full movie detail before saving |
+
+---
+
+### F-33 — Watched Statistics Screen
+
+| Attribute | Detail |
+|---|---|
+| **Status** | 📋 Planned — follow-up from F-31, no plan yet |
+| **Scope** | A dedicated statistics screen for the watched collection |
+| **Behaviour** | Show the F-20 figures (total movies, total runtime, favourite genre, longest streak) and room for richer insights, outside the Watched collection screen |
+| **Rationale** | F-31 turned the Watched screen into a browsing surface; statistics deserve their own destination instead of competing with the collection |
+| **Notes** | `GetWatchedStatsUseCase`, `WatchedStats` and their strings were kept when the dashboard was removed so this screen can reuse them. Entry point and navigation are undecided |
 
 ---
 
@@ -542,3 +554,5 @@ Features approved for a future release. Each will get a FIP before implementatio
 | 2.18    | 2026-10-04 | Polish F-29 with specialty-first poster previews, movie counts and a complete filmography destination; record observed TDD red/green evidence and reuse existing test-double conventions. |
 | 2.19    | 2026-10-04 | Group complete person filmographies under accessible release-year headings; retain years in horizontal previews and record focused screen, snapshot and navigation validation. |
 | 2.20    | 2026-10-27 | Plan F-31 Watched collection views and grouping and F-32 Director collection as OpenSpec changes; record the removable director backfill and the future filmography scope option. |
+| 2.21    | 2026-11-01 | Revise F-31 with a collection header, on-demand search and rounded grouping chips; remove the F-20 stats dashboard from the Watched screen and add F-33 Watched statistics screen to the backlog; sync release dates so restored movies keep their decade. |
+| 2.22    | 2026-11-01 | F-31 implemented and its OpenSpec change archived after validation and review; also fixes the offline cold start crash in API key refresh. |
