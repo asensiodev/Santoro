@@ -1,6 +1,6 @@
 ## Context
 
-See proposal.md. This change starts after `organize-watched-collection` is implemented: movies carry stored directors and the Watched screen has a Director grouping whose heading navigates to the person profile.
+See proposal.md. This change starts after `organize-watched-collection` is implemented: movies carry stored directors and release dates (synced through Firestore and resolved by the backfill), and the Watched screen has a Director grouping whose tonal heading navigates to the person profile. Plan revised on 2026-11-01 against the implemented F-31.
 
 Relevant observed code:
 
@@ -27,27 +27,36 @@ Add `isVideo: Boolean` and `genreIds: List<Int>` to `PersonMovieCredit`, mapped 
 
 ### Feature-film filter
 
-A pure function `directedFeatureFilms(credits, watchedByDirector, today)`: crew credits with role `Director`, not `isVideo`, without genre 99 (Documentary), release date ≤ today; union with the user's watched movies having this person among stored directors; dedupe by ID. Short films are not detectable from TMDB credits without one request per movie; a short appears only if TMDB does not flag it as video. This is accepted: shorts are rare in mainstream directors' credits and appear as one extra placeholder, while per-movie requests would multiply network cost. The follow-up scope option will replace this function's fixed policy with a user-selected scope.
+A pure function `directedFeatureFilms(credits, watchedByDirector, today)`: crew credits with role `Director`, not `isVideo`, without genre 99 (Documentary), release date ≤ today; union with the user's watched movies having this person among stored directors; dedupe by ID. Short films are not detectable from TMDB credits without one request per movie; a short appears only if TMDB does not flag it as video. This is accepted: shorts are rare in mainstream directors' credits and appear as one extra unwatched film, while per-movie requests would multiply network cost. The follow-up scope option will replace this function's fixed policy with a user-selected scope.
 
 ### State and lifecycle
 
-The ViewModel combines the local watched flow (filtered by director ID) with a one-shot filmography request owned by a cancellable job; retry replaces the job (latest wins). Watched state changes recompute marks and the summary without refetching. `CancellationException` propagates and never becomes an error. Show pending is a DataStore preference shared with F-31's preferences data source.
+The ViewModel combines the local watched flow (filtered by director ID) with a one-shot filmography request owned by a cancellable job; retry replaces the job (latest wins). Watched state changes recompute marks and the summary without refetching. `CancellationException` propagates and never becomes an error. Show pending is persisted through the existing `UserPreferencesRepository` (secure key-value store, not cleared on sign-out), following F-31's view mode and grouping preferences; a read failure falls back to on, a write failure keeps the in-memory choice for the session.
 
 ### Data sources and side effects
 
-- Allowed: TMDB `person/{id}/movie_credits` (existing), Room reads, DataStore preference, navigation to movie detail and person profile.
+- Allowed: TMDB `person/{id}/movie_credits` (existing), Room reads, `UserPreferencesRepository` preference, navigation to movie detail and person profile.
 - Forbidden: writes to movies, list flags or Firestore; persisting filmographies.
 
 ### Failure UX
 
-Local watched films render first. Request failure shows an inline error with Retry above the grid; offline shows "X watched" without a total. Missing posters use existing placeholders.
+Local watched films render first, ordered chronologically from their stored release dates. Request failure shows an inline error with Retry above the grid; offline shows "X watched" without a total.
 
-## Test Boundaries (pending user agreement)
+### Presentation (revision 2026-11-01)
+
+- Unwatched films show their TMDB poster dimmed (reduced alpha and desaturated) without a watched mark, instead of dashed placeholders: the poster stays recognizable while the mark and emphasis make the gap clear. They are announced as not watched.
+- Poster tiles reuse F-31's pattern: the placeholder with the title is drawn under the image, so a missing or failed poster still shows the title, dimmed for unwatched films.
+- The grid keeps bottom content padding above the bottom bar, as in F-31.
+- Accepted limitation: a watched movie whose directors are still unresolved (backfill pending, or opened only offline) does not appear in the director's collection until resolved; the TMDB filmography still lists it as unwatched until then.
+
+## Test Boundaries
+
+Confirmed by the user on 2026-11-01 ("si, empieza con F-32"), together with the plan revision against the implemented F-31 (dimmed unwatched posters, `UserPreferencesRepository` preference). `organize-watched-collection` is implemented and archived.
 
 - Person credits HTTP integration test for `video` and `genre_ids` mapping.
 - Pure filter tests: director job, video, documentary, unreleased, undated, watched-documentary inclusion, dedupe.
 - ViewModel tests: local-first state, success, failure and retry, cancellation, watched change without refetch, pending preference.
-- Plain Compose tests: summary text, watched mark semantics, placeholder semantics, switch, film and header callbacks, inline error retry.
+- Plain Compose tests: summary text, watched mark semantics, not-watched semantics of dimmed posters, failed-poster title fallback, switch, film and header callbacks, inline error retry.
 - Paparazzi light/dark: partial collection, pending hidden, loading, error, Spanish large font.
 - App journey: Watched → director heading → Director collection → unwatched film detail → Back → Back.
 
