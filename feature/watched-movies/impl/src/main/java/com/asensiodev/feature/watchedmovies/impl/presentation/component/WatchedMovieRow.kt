@@ -92,6 +92,12 @@ private fun PosterThumbnail(
         modifier = modifier.background(MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center,
     ) {
+        Icon(
+            painter = painterResource(DR.drawable.ic_movie_card_placeholder),
+            contentDescription = null,
+            modifier = Modifier.size(Size.size24),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         if (posterPath != null) {
             AsyncImage(
                 model =
@@ -103,13 +109,6 @@ private fun PosterThumbnail(
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
-            )
-        } else {
-            Icon(
-                painter = painterResource(DR.drawable.ic_movie_card_placeholder),
-                contentDescription = null,
-                modifier = Modifier.size(Size.size24),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

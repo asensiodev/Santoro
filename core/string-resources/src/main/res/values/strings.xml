@@ -219,6 +219,7 @@
     <string name="watched_group_undated">Undated</string>
     <string name="watched_group_decade_label" formatted="true">%1$ds</string>
     <string name="watched_group_open_director">Open director profile</string>
+    <string name="watched_search_close">Close search</string>
     <plurals name="watched_group_movie_count">
         <item quantity="one">%d movie</item>
         <item quantity="other">%d movies</item>

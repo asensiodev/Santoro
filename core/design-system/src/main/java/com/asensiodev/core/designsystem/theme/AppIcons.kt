@@ -17,6 +17,7 @@ import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.CalendarToday
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.Edit
@@ -59,6 +60,7 @@ object AppIcons {
     val ViewList = Icons.AutoMirrored.Rounded.ViewList
     val ArrowBack = Icons.AutoMirrored.Rounded.ArrowBack
     val Clear = Icons.Filled.Clear
+    val Check = Icons.Rounded.Check
     val Refresh = Icons.Filled.Refresh
     val Star = Icons.Rounded.Star
     val Settings = Icons.Rounded.Settings

@@ -7,7 +7,6 @@ import com.asensiodev.core.domain.model.WatchedGrouping
 import com.asensiodev.core.domain.model.WatchedViewMode
 import com.asensiodev.core.domain.repository.UserPreferencesRepository
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchedMoviesUseCase
-import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchedStatsUseCase
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.SearchWatchedMoviesUseCase
 import com.asensiodev.feature.watchedmovies.impl.presentation.mapper.toWatchedGroups
 import com.asensiodev.library.observability.api.NoOpObservabilityTracker
@@ -21,6 +20,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -39,7 +39,6 @@ internal class WatchedMoviesViewModel
     @Inject
     constructor(
         private val getWatchedMoviesUseCase: GetWatchedMoviesUseCase,
-        private val getWatchedStatsUseCase: GetWatchedStatsUseCase,
         private val searchWatchedMoviesUseCase: SearchWatchedMoviesUseCase,
         private val userPreferencesRepository: UserPreferencesRepository,
         private val observabilityTracker: ObservabilityTracker = NoOpObservabilityTracker,
@@ -49,15 +48,21 @@ internal class WatchedMoviesViewModel
 
         private val searchQuery = MutableStateFlow("")
         private var moviesJob: Job? = null
-        private var statsJob: Job? = null
         private var latestMovies: List<Movie> = emptyList()
+        private var latestCollection: List<Movie> = emptyList()
         private var preferencesLoaded = false
         private var collectionViewTracked = false
 
         fun process(intent: WatchedMoviesIntent) {
             when (intent) {
                 is WatchedMoviesIntent.LoadMovies -> loadMovies()
-                is WatchedMoviesIntent.LoadStats -> loadStats()
+                is WatchedMoviesIntent.OpenSearch ->
+                    _uiState.update {
+                        it.copy(
+                            isSearchOpen = true,
+                        )
+                    }
+                is WatchedMoviesIntent.CloseSearch -> closeSearch()
                 is WatchedMoviesIntent.UpdateQuery -> updateQuery(intent.query)
                 is WatchedMoviesIntent.ChangeViewMode -> changeViewMode(intent.mode)
                 is WatchedMoviesIntent.ChangeGrouping -> changeGrouping(intent.grouping)
@@ -72,7 +77,6 @@ internal class WatchedMoviesViewModel
                 moviesJob?.cancel()
                 observeMovies()
             }
-            loadStats()
         }
 
         private fun observeMovies() {
@@ -86,15 +90,16 @@ internal class WatchedMoviesViewModel
                         .onStart { emit(searchQuery.value) }
                         .distinctUntilChanged()
                         .flatMapLatest { query ->
-                            val moviesFlow =
-                                if (query.isBlank()) {
-                                    getWatchedMoviesUseCase()
-                                } else {
-                                    searchWatchedMoviesUseCase(query)
-                                }
-                            moviesFlow.map { result -> query to result }
-                        }.collect { (query, result) ->
-                            updateMovies(result, query.isBlank())
+                            if (query.isBlank()) {
+                                getWatchedMoviesUseCase().map { result -> result to result }
+                            } else {
+                                combine(
+                                    getWatchedMoviesUseCase(),
+                                    searchWatchedMoviesUseCase(query),
+                                ) { collection, matches -> collection to matches }
+                            }
+                        }.collect { (collection, matches) ->
+                            updateMovies(collection, matches)
                         }
                 }
         }
@@ -104,53 +109,59 @@ internal class WatchedMoviesViewModel
             searchQuery.value = query
         }
 
-        private fun loadStats() {
-            if (statsJob?.isActive == true) return
-            statsJob =
-                viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
-                    getWatchedStatsUseCase().collect { stats ->
-                        _uiState.update { it.copy(stats = stats) }
-                    }
-                }
+        private fun closeSearch() {
+            latestMovies = latestCollection
+            _uiState.update { state ->
+                val groupedMovies = latestCollection.toWatchedGroups(state.grouping)
+                state.copy(
+                    isSearchOpen = false,
+                    query = "",
+                    groups = groupedMovies,
+                    screenState =
+                        if (groupedMovies.isNotEmpty()) {
+                            WatchedScreenState.Content
+                        } else {
+                            state.screenState
+                        },
+                )
+            }
+            searchQuery.value = ""
         }
 
         private fun updateMovies(
-            result: Result<List<Movie>>,
-            isUnfiltered: Boolean,
+            collectionResult: Result<List<Movie>>,
+            matchesResult: Result<List<Movie>>,
         ) {
-            result.fold(
-                onSuccess = { moviesList ->
-                    latestMovies = moviesList
-                    _uiState.update { state ->
-                        val groupedMovies = moviesList.toWatchedGroups(state.grouping)
-                        val hasMovies =
-                            if (isUnfiltered) {
-                                groupedMovies.isNotEmpty()
-                            } else {
-                                state.hasMovies
-                            }
-                        val screenState =
-                            when {
-                                groupedMovies.isNotEmpty() -> WatchedScreenState.Content
-                                hasMovies == false -> WatchedScreenState.Empty
-                                else -> WatchedScreenState.NoResults
-                            }
-                        state.copy(
-                            screenState = screenState,
-                            hasMovies = hasMovies,
-                            groups = groupedMovies,
-                        )
+            val collection = collectionResult.getOrElse { return showError(it) }
+            val matches = matchesResult.getOrElse { return showError(it) }
+            val hasMovies = collection.isNotEmpty()
+            latestCollection = collection
+            latestMovies = if (hasMovies) matches else emptyList()
+            if (!hasMovies) searchQuery.value = ""
+            _uiState.update { state ->
+                val groupedMovies = latestMovies.toWatchedGroups(state.grouping)
+                val screenState =
+                    when {
+                        groupedMovies.isNotEmpty() -> WatchedScreenState.Content
+                        !hasMovies -> WatchedScreenState.Empty
+                        else -> WatchedScreenState.NoResults
                     }
-                    trackCollectionViewed()
-                },
-                onFailure = { exception ->
-                    _uiState.update {
-                        it.copy(
-                            screenState = WatchedScreenState.Error(exception.message.orEmpty()),
-                        )
-                    }
-                },
-            )
+                state.copy(
+                    screenState = screenState,
+                    hasMovies = hasMovies,
+                    groups = groupedMovies,
+                    totalMovies = collection.size,
+                    isSearchOpen = state.isSearchOpen && hasMovies,
+                    query = if (hasMovies) state.query else "",
+                )
+            }
+            trackCollectionViewed()
+        }
+
+        private fun showError(exception: Throwable) {
+            _uiState.update {
+                it.copy(screenState = WatchedScreenState.Error(exception.message.orEmpty()))
+            }
         }
 
         private suspend fun loadSavedPreferences() {

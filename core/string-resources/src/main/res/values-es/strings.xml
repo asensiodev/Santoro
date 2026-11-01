@@ -219,6 +219,7 @@
     <string name="watched_group_undated">Sin fecha</string>
     <string name="watched_group_decade_label" formatted="true">Años %1$d</string>
     <string name="watched_group_open_director">Ver perfil del director</string>
+    <string name="watched_search_close">Cerrar búsqueda</string>
     <plurals name="watched_group_movie_count">
         <item quantity="one">%d película</item>
         <item quantity="other">%d películas</item>

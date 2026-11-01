@@ -63,14 +63,21 @@ class WatchedMoviesScreenScreenshotTest(
                                 ),
                             ),
                         hasMovies = true,
+                        totalMovies = 1,
                     )
                 "shelfDirector" -> collectionState(WatchedViewMode.SHELF, WatchedGrouping.DIRECTOR, directorGroups)
                 "listDirector" -> collectionState(WatchedViewMode.LIST, WatchedGrouping.DIRECTOR, directorGroups)
+                "listDate" -> collectionState(WatchedViewMode.LIST, WatchedGrouping.DATE_WATCHED, dateGroups)
                 "listDecade" -> collectionState(WatchedViewMode.LIST, WatchedGrouping.DECADE, decadeGroups)
                 SPANISH_LARGE -> collectionState(WatchedViewMode.SHELF, WatchedGrouping.DECADE, decadeGroups)
+                "searchOpen" ->
+                    collectionState(WatchedViewMode.SHELF, WatchedGrouping.GENRE, genreSearchGroups)
+                        .copy(isSearchOpen = true, query = "dune")
                 "loading" -> WatchedMoviesUiState()
                 "empty" -> WatchedMoviesUiState(screenState = WatchedScreenState.Empty, hasMovies = false)
-                "noResults" -> WatchedMoviesUiState(screenState = WatchedScreenState.NoResults, query = "Unknown")
+                "noResults" ->
+                    collectionState(WatchedViewMode.SHELF, WatchedGrouping.DATE_WATCHED, emptyList())
+                        .copy(screenState = WatchedScreenState.NoResults, isSearchOpen = true, query = "Unknown")
                 "error" -> WatchedMoviesUiState(screenState = WatchedScreenState.Error("Unavailable"))
                 else -> error("Unknown scenario")
             }
@@ -101,6 +108,7 @@ class WatchedMoviesScreenScreenshotTest(
         viewMode = viewMode,
         grouping = grouping,
         hasMovies = true,
+        totalMovies = TOTAL_MOVIES,
     )
 
     companion object {
@@ -124,6 +132,17 @@ class WatchedMoviesScreenScreenshotTest(
                 WatchedGroupUi("director:1223", WatchedGroupLabel.Text("Joel Coen"), listOf(fargo, noCountry), 1223),
                 WatchedGroupUi("director:unknown", WatchedGroupLabel.UnknownDirector, listOf(unknown)),
             )
+        private const val TOTAL_MOVIES = 6
+        private val dateGroups =
+            listOf(
+                WatchedGroupUi("date:2026-03", WatchedGroupLabel.Text("March 2026"), listOf(fargo, noCountry, unknown)),
+                WatchedGroupUi("date:2026-02", WatchedGroupLabel.Text("February 2026"), listOf(dune)),
+            )
+        private val genreSearchGroups =
+            listOf(
+                WatchedGroupUi("genre:878", WatchedGroupLabel.Text("Science Fiction"), listOf(dune)),
+                WatchedGroupUi("genre:12", WatchedGroupLabel.Text("Adventure"), listOf(dune)),
+            )
         private val decadeGroups =
             listOf(
                 WatchedGroupUi("decade:2020", WatchedGroupLabel.Decade(2020), listOf(dune, unknown)),
@@ -139,8 +158,10 @@ class WatchedMoviesScreenScreenshotTest(
                 "content",
                 "shelfDirector",
                 "listDirector",
+                "listDate",
                 "listDecade",
                 SPANISH_LARGE,
+                "searchOpen",
                 "loading",
                 "empty",
                 "noResults",

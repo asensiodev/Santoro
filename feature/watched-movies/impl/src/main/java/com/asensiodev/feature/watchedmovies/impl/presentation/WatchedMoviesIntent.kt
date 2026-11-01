@@ -5,7 +5,8 @@ import com.asensiodev.core.domain.model.WatchedViewMode
 
 internal sealed interface WatchedMoviesIntent {
     data object LoadMovies : WatchedMoviesIntent
-    data object LoadStats : WatchedMoviesIntent
+    data object OpenSearch : WatchedMoviesIntent
+    data object CloseSearch : WatchedMoviesIntent
     data class UpdateQuery(
         val query: String,
     ) : WatchedMoviesIntent

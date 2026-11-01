@@ -1,8 +1,10 @@
 package com.asensiodev.feature.watchedmovies.impl.presentation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,17 +13,22 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -33,16 +40,14 @@ import com.asensiodev.core.designsystem.PreviewContentFullSize
 import com.asensiodev.core.designsystem.component.errorContent.ErrorContent
 import com.asensiodev.core.designsystem.component.loadingIndicator.LoadingIndicator
 import com.asensiodev.core.designsystem.component.noresultscontent.NoResultsContent
-import com.asensiodev.core.designsystem.component.querytextfield.QueryTextField
 import com.asensiodev.core.designsystem.theme.AppIcons
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.core.domain.model.WatchedViewMode
-import com.asensiodev.feature.watchedmovies.impl.domain.model.WatchedStats
 import com.asensiodev.feature.watchedmovies.impl.presentation.component.MovieCard
-import com.asensiodev.feature.watchedmovies.impl.presentation.component.WatchedCollectionControls
+import com.asensiodev.feature.watchedmovies.impl.presentation.component.WatchedCollectionHeader
+import com.asensiodev.feature.watchedmovies.impl.presentation.component.WatchedGroupingChips
 import com.asensiodev.feature.watchedmovies.impl.presentation.component.WatchedMovieRow
-import com.asensiodev.feature.watchedmovies.impl.presentation.component.WatchedStatsDashboard
 import com.asensiodev.feature.watchedmovies.impl.presentation.model.MovieUi
 import com.asensiodev.feature.watchedmovies.impl.presentation.model.WatchedGroupLabel
 import com.asensiodev.feature.watchedmovies.impl.presentation.model.WatchedGroupUi
@@ -80,6 +85,12 @@ internal fun WatchedMoviesScreen(
     onDirectorClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val gridState = rememberLazyGridState()
+    var searchWasOpen by remember { mutableStateOf(uiState.isSearchOpen) }
+    LaunchedEffect(uiState.isSearchOpen) {
+        if (searchWasOpen && !uiState.isSearchOpen) gridState.scrollToItem(0)
+        searchWasOpen = uiState.isSearchOpen
+    }
     Column(
         modifier =
             modifier
@@ -88,16 +99,21 @@ internal fun WatchedMoviesScreen(
                 .padding(top = Spacings.spacing16),
         verticalArrangement = Arrangement.spacedBy(Spacings.spacing12),
     ) {
-        QueryTextField(
+        val showsCollectionControls = uiState.showsCollectionControls()
+        WatchedCollectionHeader(
+            showsCollectionActions = showsCollectionControls,
+            totalMovies = uiState.totalMovies,
+            viewMode = uiState.viewMode,
+            isSearchOpen = uiState.isSearchOpen,
             query = uiState.query,
-            placeholder = stringResource(SR.string.watched_movies_textfield_placeholder),
-            onQueryChanged = { onProcess(WatchedMoviesIntent.UpdateQuery(it)) },
+            onViewModeChange = { onProcess(WatchedMoviesIntent.ChangeViewMode(it)) },
+            onOpenSearch = { onProcess(WatchedMoviesIntent.OpenSearch) },
+            onCloseSearch = { onProcess(WatchedMoviesIntent.CloseSearch) },
+            onQueryChange = { onProcess(WatchedMoviesIntent.UpdateQuery(it)) },
         )
-        if (uiState.showsCollectionControls()) {
-            WatchedCollectionControls(
-                viewMode = uiState.viewMode,
+        if (showsCollectionControls) {
+            WatchedGroupingChips(
                 grouping = uiState.grouping,
-                onViewModeChange = { onProcess(WatchedMoviesIntent.ChangeViewMode(it)) },
                 onGroupingChange = { onProcess(WatchedMoviesIntent.ChangeGrouping(it)) },
             )
         }
@@ -117,7 +133,7 @@ internal fun WatchedMoviesScreen(
                 WatchedMovieList(
                     groups = uiState.groups,
                     viewMode = uiState.viewMode,
-                    stats = uiState.stats,
+                    gridState = gridState,
                     onMovieClick = onMovieClick,
                     onDirectorClick = onDirectorClick,
                 )
@@ -145,26 +161,19 @@ internal fun WatchedMoviesScreen(
 internal fun WatchedMovieList(
     groups: List<WatchedGroupUi>,
     viewMode: WatchedViewMode,
-    stats: WatchedStats?,
     onMovieClick: (Int) -> Unit,
     onDirectorClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    gridState: LazyGridState = rememberLazyGridState(),
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(SHELF_COLUMNS),
+        state = gridState,
         verticalArrangement = Arrangement.spacedBy(Spacings.spacing12),
         horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
+        contentPadding = PaddingValues(bottom = Spacings.spacing16),
         modifier = modifier.fillMaxSize(),
     ) {
-        item(
-            span = { GridItemSpan(maxLineSpan) },
-            contentType = CONTENT_TYPE_STATS,
-        ) {
-            if (stats != null) {
-                WatchedStatsDashboard(stats = stats)
-            }
-        }
-
         groups.forEach { group ->
             item(
                 key = group.key,
@@ -213,18 +222,24 @@ private fun WatchedGroupHeading(
         modifier =
             modifier
                 .fillMaxWidth()
-                .heightIn(min = Size.size48)
                 .then(
                     if (directorId != null) {
-                        Modifier.clickable(
-                            onClickLabel = openDirectorLabel,
-                            role = Role.Button,
-                            onClick = { onDirectorClick(directorId) },
-                        )
+                        Modifier
+                            .padding(top = Spacings.spacing4)
+                            .heightIn(min = Size.size56)
+                            .clip(MaterialTheme.shapes.medium)
+                            .background(MaterialTheme.colorScheme.surfaceContainer)
+                            .clickable(
+                                onClickLabel = openDirectorLabel,
+                                role = Role.Button,
+                                onClick = { onDirectorClick(directorId) },
+                            ).padding(start = Spacings.spacing16, end = Spacings.spacing8)
                     } else {
                         Modifier
+                            .heightIn(min = Size.size48)
+                            .padding(top = Spacings.spacing4)
                     },
-                ).padding(top = Spacings.spacing4),
+                ),
         horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -280,7 +295,6 @@ private fun WatchedGroupLabel.asTitle(): String =
 private const val KEY_SEPARATOR = ":"
 private const val NUMBER_OF_MOCKED_MOVIES = 6
 private const val POSTER_RATIO = 2f / 3f
-private const val CONTENT_TYPE_STATS = "stats"
 private const val CONTENT_TYPE_HEADER = "header"
 private const val CONTENT_TYPE_MOVIE = "movie"
 private const val CONTENT_TYPE_ROW = "row"

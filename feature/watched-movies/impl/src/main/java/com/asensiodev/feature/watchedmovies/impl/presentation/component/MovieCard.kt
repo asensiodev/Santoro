@@ -1,6 +1,7 @@
 package com.asensiodev.feature.watchedmovies.impl.presentation.component
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -45,20 +46,21 @@ internal fun MovieCard(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
             ),
     ) {
-        if (movie.posterPath != null) {
-            AsyncImage(
-                model =
-                    ImageRequest
-                        .Builder(LocalContext.current)
-                        .data(movie.posterPath)
-                        .crossfade(true)
-                        .build(),
-                contentDescription = movie.title,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
-            )
-        } else {
+        Box(modifier = Modifier.fillMaxSize()) {
             PlaceholderContent(title = movie.title)
+            if (movie.posterPath != null) {
+                AsyncImage(
+                    model =
+                        ImageRequest
+                            .Builder(LocalContext.current)
+                            .data(movie.posterPath)
+                            .crossfade(true)
+                            .build(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         }
     }
 }

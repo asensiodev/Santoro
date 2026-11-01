@@ -6,9 +6,7 @@ import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.WatchedGrouping
 import com.asensiodev.core.domain.model.WatchedViewMode
 import com.asensiodev.core.domain.repository.UserPreferencesRepository
-import com.asensiodev.feature.watchedmovies.impl.domain.model.WatchedStats
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchedMoviesUseCase
-import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchedStatsUseCase
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.SearchWatchedMoviesUseCase
 import com.asensiodev.feature.watchedmovies.impl.presentation.model.WatchedGroupLabel
 import com.asensiodev.library.observability.api.ObservabilityTracker
@@ -22,6 +20,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -32,7 +31,6 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.amshove.kluent.shouldBeEqualTo
-import org.amshove.kluent.shouldNotBeNull
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -41,7 +39,6 @@ import java.io.IOException
 @OptIn(ExperimentalCoroutinesApi::class)
 class WatchedMoviesViewModelTest {
     private val getWatchedMoviesUseCase: GetWatchedMoviesUseCase = mockk(relaxed = true)
-    private val getWatchedStatsUseCase: GetWatchedStatsUseCase = mockk(relaxed = true)
     private val searchWatchedMoviesUseCase: SearchWatchedMoviesUseCase = mockk(relaxed = true)
     private val userPreferencesRepository: UserPreferencesRepository = mockk(relaxed = true)
     private val observabilityTracker: ObservabilityTracker = mockk(relaxed = true)
@@ -56,19 +53,9 @@ class WatchedMoviesViewModelTest {
         every { userPreferencesRepository.watchedViewMode } returns flowOf(WatchedViewMode.SHELF)
         every { userPreferencesRepository.watchedGrouping } returns flowOf(WatchedGrouping.DATE_WATCHED)
         every { getWatchedMoviesUseCase() } returns flowOf(Result.success(emptyList()))
-        every { getWatchedStatsUseCase() } returns
-            flowOf(
-                WatchedStats(
-                    totalWatched = 0,
-                    totalRuntimeHours = 0,
-                    favouriteGenre = null,
-                    longestStreakWeeks = 0,
-                ),
-            )
         viewModel =
             WatchedMoviesViewModel(
                 getWatchedMoviesUseCase = getWatchedMoviesUseCase,
-                getWatchedStatsUseCase = getWatchedStatsUseCase,
                 searchWatchedMoviesUseCase = searchWatchedMoviesUseCase,
                 userPreferencesRepository = userPreferencesRepository,
                 observabilityTracker = observabilityTracker,
@@ -109,7 +96,6 @@ class WatchedMoviesViewModelTest {
             viewModel =
                 WatchedMoviesViewModel(
                     getWatchedMoviesUseCase = getWatchedMoviesUseCase,
-                    getWatchedStatsUseCase = getWatchedStatsUseCase,
                     searchWatchedMoviesUseCase = searchWatchedMoviesUseCase,
                     userPreferencesRepository = userPreferencesRepository,
                     observabilityTracker = observabilityTracker,
@@ -124,60 +110,6 @@ class WatchedMoviesViewModelTest {
         }
 
     @Test
-    fun `GIVEN LoadMovies intent WHEN processed THEN stats are populated in state`() =
-        runTest {
-            val expectedStats =
-                WatchedStats(
-                    totalWatched = 2,
-                    totalRuntimeHours = 3,
-                    favouriteGenre = "Action",
-                    longestStreakWeeks = 2,
-                )
-            every { getWatchedStatsUseCase() } returns flowOf(expectedStats)
-            viewModel =
-                WatchedMoviesViewModel(
-                    getWatchedMoviesUseCase = getWatchedMoviesUseCase,
-                    getWatchedStatsUseCase = getWatchedStatsUseCase,
-                    searchWatchedMoviesUseCase = searchWatchedMoviesUseCase,
-                    userPreferencesRepository = userPreferencesRepository,
-                    observabilityTracker = observabilityTracker,
-                )
-
-            viewModel.process(WatchedMoviesIntent.LoadMovies)
-            advanceUntilIdle()
-
-            viewModel.uiState.value.stats shouldBeEqualTo expectedStats
-        }
-
-    @Test
-    fun `GIVEN stats use case emits error stats WHEN LoadMovies THEN stats remain available without crashing`() =
-        runTest {
-            val zeroStats =
-                WatchedStats(
-                    totalWatched = 0,
-                    totalRuntimeHours = 0,
-                    favouriteGenre = null,
-                    longestStreakWeeks = 0,
-                )
-            every { getWatchedStatsUseCase() } returns flowOf(zeroStats)
-            viewModel =
-                WatchedMoviesViewModel(
-                    getWatchedMoviesUseCase = getWatchedMoviesUseCase,
-                    getWatchedStatsUseCase = getWatchedStatsUseCase,
-                    searchWatchedMoviesUseCase = searchWatchedMoviesUseCase,
-                    userPreferencesRepository = userPreferencesRepository,
-                    observabilityTracker = observabilityTracker,
-                )
-
-            viewModel.process(WatchedMoviesIntent.LoadMovies)
-            advanceUntilIdle()
-
-            viewModel.uiState.value.stats
-                .shouldNotBeNull()
-            viewModel.uiState.value.screenState shouldBeEqualTo WatchedScreenState.Empty
-        }
-
-    @Test
     fun `GIVEN movie with null watchedAt WHEN LoadMovies THEN groups under unknown date`() =
         runTest {
             val movie = buildMovie(id = 1).copy(watchedAt = null)
@@ -185,7 +117,6 @@ class WatchedMoviesViewModelTest {
             viewModel =
                 WatchedMoviesViewModel(
                     getWatchedMoviesUseCase = getWatchedMoviesUseCase,
-                    getWatchedStatsUseCase = getWatchedStatsUseCase,
                     searchWatchedMoviesUseCase = searchWatchedMoviesUseCase,
                     userPreferencesRepository = userPreferencesRepository,
                     observabilityTracker = observabilityTracker,
@@ -202,12 +133,11 @@ class WatchedMoviesViewModelTest {
     fun `GIVEN search movie with null watchedAt WHEN searching THEN groups under unknown date`() =
         runTest {
             val movie = buildMovie(id = 1).copy(watchedAt = null)
-            every { getWatchedMoviesUseCase() } returns flowOf(Result.success(emptyList()))
+            every { getWatchedMoviesUseCase() } returns flowOf(Result.success(listOf(movie)))
             every { searchWatchedMoviesUseCase("test") } returns flowOf(Result.success(listOf(movie)))
             viewModel =
                 WatchedMoviesViewModel(
                     getWatchedMoviesUseCase = getWatchedMoviesUseCase,
-                    getWatchedStatsUseCase = getWatchedStatsUseCase,
                     searchWatchedMoviesUseCase = searchWatchedMoviesUseCase,
                     userPreferencesRepository = userPreferencesRepository,
                     observabilityTracker = observabilityTracker,
@@ -231,7 +161,6 @@ class WatchedMoviesViewModelTest {
             viewModel =
                 WatchedMoviesViewModel(
                     getWatchedMoviesUseCase = getWatchedMoviesUseCase,
-                    getWatchedStatsUseCase = getWatchedStatsUseCase,
                     searchWatchedMoviesUseCase = searchWatchedMoviesUseCase,
                     userPreferencesRepository = userPreferencesRepository,
                     observabilityTracker = observabilityTracker,
@@ -247,20 +176,13 @@ class WatchedMoviesViewModelTest {
         }
 
     @Test
-    fun `GIVEN repeated LoadMovies intents WHEN processed THEN movie and stats observers start once`() =
+    fun `GIVEN repeated LoadMovies intents WHEN processed THEN movie observer starts once`() =
         runTest {
             var movieSubscriptions = 0
-            var statsSubscriptions = 0
             every { getWatchedMoviesUseCase() } returns
                 flow {
                     movieSubscriptions++
                     emit(Result.success(emptyList()))
-                    awaitCancellation()
-                }
-            every { getWatchedStatsUseCase() } returns
-                flow {
-                    statsSubscriptions++
-                    emit(WatchedStats(0, 0, null, 0))
                     awaitCancellation()
                 }
 
@@ -271,9 +193,7 @@ class WatchedMoviesViewModelTest {
             runCurrent()
 
             movieSubscriptions shouldBeEqualTo 1
-            statsSubscriptions shouldBeEqualTo 1
             verify(exactly = 1) { getWatchedMoviesUseCase() }
-            verify(exactly = 1) { getWatchedStatsUseCase() }
         }
 
     @Test
@@ -282,6 +202,7 @@ class WatchedMoviesViewModelTest {
             val firstSearchStarted = CompletableDeferred<Unit>()
             val firstSearchCancelled = CompletableDeferred<Unit>()
             val latestMovie = buildMovie(id = 2, title = "Latest")
+            every { getWatchedMoviesUseCase() } returns flowOf(Result.success(listOf(latestMovie)))
             every { searchWatchedMoviesUseCase("first") } returns
                 flow {
                     firstSearchStarted.complete(Unit)
@@ -496,10 +417,159 @@ class WatchedMoviesViewModelTest {
             verify(exactly = 0) { observabilityTracker.trackAction("watched_collection_viewed", any()) }
         }
 
+    @Test
+    fun `GIVEN co-directed movie in director grouping WHEN loaded THEN total counts each movie once`() =
+        runTest {
+            every { userPreferencesRepository.watchedGrouping } returns flowOf(WatchedGrouping.DIRECTOR)
+            every { getWatchedMoviesUseCase() } returns
+                flowOf(Result.success(listOf(coenMovie(FARGO_ID), villeneuveMovie(2))))
+            viewModel = createViewModel()
+
+            viewModel.process(WatchedMoviesIntent.LoadMovies)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.groups
+                .sumOf { it.movies.size } shouldBeEqualTo 3
+            viewModel.uiState.value.totalMovies shouldBeEqualTo 2
+        }
+
+    @Test
+    fun `GIVEN populated collection WHEN searching THEN total keeps the collection size`() =
+        runTest {
+            every { getWatchedMoviesUseCase() } returns
+                flowOf(Result.success(listOf(villeneuveMovie(1, title = "Dune"), villeneuveMovie(2))))
+            every { searchWatchedMoviesUseCase("dune") } returns
+                flowOf(Result.success(listOf(villeneuveMovie(1, title = "Dune"))))
+            viewModel = createViewModel()
+            viewModel.process(WatchedMoviesIntent.LoadMovies)
+            advanceUntilIdle()
+
+            viewModel.process(WatchedMoviesIntent.OpenSearch)
+            viewModel.process(WatchedMoviesIntent.UpdateQuery("dune"))
+            advanceUntilIdle()
+
+            viewModel.uiState.value.groups
+                .flatMap { it.movies }
+                .map { it.id } shouldBeEqualTo listOf(1)
+            viewModel.uiState.value.totalMovies shouldBeEqualTo 2
+        }
+
+    @Test
+    fun `GIVEN populated collection WHEN OpenSearch THEN search is open`() =
+        runTest {
+            every { getWatchedMoviesUseCase() } returns flowOf(Result.success(listOf(villeneuveMovie(1))))
+            viewModel = createViewModel()
+            viewModel.process(WatchedMoviesIntent.LoadMovies)
+            advanceUntilIdle()
+
+            viewModel.process(WatchedMoviesIntent.OpenSearch)
+
+            viewModel.uiState.value.isSearchOpen shouldBeEqualTo true
+        }
+
+    @Test
+    fun `GIVEN open search with query WHEN CloseSearch THEN query is cleared and full collection returns`() =
+        runTest {
+            every { getWatchedMoviesUseCase() } returns
+                flowOf(Result.success(listOf(villeneuveMovie(1, title = "Dune"), villeneuveMovie(2))))
+            every { searchWatchedMoviesUseCase("dune") } returns
+                flowOf(Result.success(listOf(villeneuveMovie(1, title = "Dune"))))
+            viewModel = createViewModel()
+            viewModel.process(WatchedMoviesIntent.LoadMovies)
+            advanceUntilIdle()
+            viewModel.process(WatchedMoviesIntent.OpenSearch)
+            viewModel.process(WatchedMoviesIntent.UpdateQuery("dune"))
+            advanceUntilIdle()
+
+            viewModel.process(WatchedMoviesIntent.CloseSearch)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            state.isSearchOpen shouldBeEqualTo false
+            state.query shouldBeEqualTo ""
+            state.groups
+                .flatMap { it.movies }
+                .map { it.id }
+                .sorted() shouldBeEqualTo listOf(1, 2)
+        }
+
+    @Test
+    fun `GIVEN open search with matches WHEN CloseSearch THEN full collection shows before the query debounce`() =
+        runTest {
+            every { getWatchedMoviesUseCase() } returns
+                flowOf(Result.success(listOf(villeneuveMovie(1, title = "Dune"), villeneuveMovie(2))))
+            every { searchWatchedMoviesUseCase("dune") } returns
+                flowOf(Result.success(listOf(villeneuveMovie(1, title = "Dune"))))
+            viewModel = createViewModel()
+            viewModel.process(WatchedMoviesIntent.LoadMovies)
+            advanceUntilIdle()
+            viewModel.process(WatchedMoviesIntent.OpenSearch)
+            viewModel.process(WatchedMoviesIntent.UpdateQuery("dune"))
+            advanceUntilIdle()
+
+            viewModel.process(WatchedMoviesIntent.CloseSearch)
+            runCurrent()
+
+            viewModel.uiState.value.groups
+                .flatMap { it.movies }
+                .map { it.id }
+                .sorted() shouldBeEqualTo listOf(1, 2)
+        }
+
+    @Test
+    fun `GIVEN search results WHEN grouping changes THEN query is kept and matches are regrouped`() =
+        runTest {
+            every { getWatchedMoviesUseCase() } returns
+                flowOf(Result.success(listOf(villeneuveMovie(1, title = "Dune", releaseDate = "2021-09-15"))))
+            every { searchWatchedMoviesUseCase("dune") } returns
+                flowOf(Result.success(listOf(villeneuveMovie(1, title = "Dune", releaseDate = "2021-09-15"))))
+            viewModel = createViewModel()
+            viewModel.process(WatchedMoviesIntent.LoadMovies)
+            advanceUntilIdle()
+            viewModel.process(WatchedMoviesIntent.OpenSearch)
+            viewModel.process(WatchedMoviesIntent.UpdateQuery("dune"))
+            advanceUntilIdle()
+
+            viewModel.process(WatchedMoviesIntent.ChangeGrouping(WatchedGrouping.DECADE))
+            advanceUntilIdle()
+
+            viewModel.uiState.value.query shouldBeEqualTo "dune"
+            viewModel.uiState.value.groups
+                .map { it.label } shouldBeEqualTo listOf(WatchedGroupLabel.Decade(2020))
+        }
+
+    @Test
+    fun `GIVEN open search WHEN collection becomes empty THEN search closes and Empty is shown`() =
+        runTest {
+            val collection = MutableStateFlow(Result.success(listOf(villeneuveMovie(1, title = "Dune"))))
+            val matches = MutableStateFlow(Result.success(listOf(villeneuveMovie(1, title = "Dune"))))
+            every { getWatchedMoviesUseCase() } returns collection
+            every { searchWatchedMoviesUseCase("dune") } returns matches
+            viewModel = createViewModel()
+            viewModel.process(WatchedMoviesIntent.LoadMovies)
+            advanceUntilIdle()
+            viewModel.process(WatchedMoviesIntent.OpenSearch)
+            viewModel.process(WatchedMoviesIntent.UpdateQuery("dune"))
+            advanceUntilIdle()
+
+            collection.value = Result.success(emptyList())
+            matches.value = Result.success(emptyList())
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            state.isSearchOpen shouldBeEqualTo false
+            state.query shouldBeEqualTo ""
+            state.screenState shouldBeEqualTo WatchedScreenState.Empty
+        }
+
+    private fun coenMovie(id: Int) =
+        buildMovie(id, "Fargo").copy(
+            directors = listOf(Director(JOEL_COEN_ID, "Joel Coen"), Director(ETHAN_COEN_ID, "Ethan Coen")),
+        )
+
     private fun createViewModel() =
         WatchedMoviesViewModel(
             getWatchedMoviesUseCase = getWatchedMoviesUseCase,
-            getWatchedStatsUseCase = getWatchedStatsUseCase,
             searchWatchedMoviesUseCase = searchWatchedMoviesUseCase,
             userPreferencesRepository = userPreferencesRepository,
             observabilityTracker = observabilityTracker,
@@ -540,5 +610,8 @@ class WatchedMoviesViewModelTest {
 
     private companion object {
         const val VILLENEUVE_ID = 137427
+        const val JOEL_COEN_ID = 1223
+        const val ETHAN_COEN_ID = 1224
+        const val FARGO_ID = 275
     }
 }
