@@ -274,6 +274,25 @@ class DefaultSyncRepositoryTest {
         }
 
     @Test
+    fun `GIVEN downloaded genres with incomplete entries WHEN merging THEN keeps only complete genres`() =
+        runTest {
+            val remote =
+                SyncMockUtils.createSyncEntity(
+                    9,
+                    genres =
+                        """[{"name":"No id"},{"id":12},{"id":14,"name":" "},""" +
+                            """{"id":16,"name":"null"},{"id":18,"name":"Drama"}]""",
+                )
+            val merged = mutableListOf<List<MovieSyncData>>()
+            coEvery { remoteDataSource.downloadUserMovies(UID) } returns Result.success(listOf(remote))
+            coEvery { syncStore.completeDownloadedMerge(capture(merged), any()) } returns Result.success(Unit)
+
+            sut.downloadAndMerge(UID)
+
+            merged.single().single().genres shouldBeEqualTo listOf(Genre(18, "Drama"))
+        }
+
+    @Test
     fun `GIVEN malformed or blank downloaded genres WHEN merging THEN they map to no genres`() =
         runTest {
             val malformed = SyncMockUtils.createSyncEntity(9, genres = "not json")
