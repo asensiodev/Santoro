@@ -82,6 +82,20 @@ class DefaultSyncRepositoryTest {
         }
 
     @Test
+    fun `GIVEN movie with directors WHEN upload movie THEN directors use stable id and name keys`() =
+        runTest {
+            coEvery { syncStore.getMovieForUpload(42) } returns
+                Result.success(movie(42, directors = listOf(Director(1223, "Joel Coen"))))
+            coEvery { remoteDataSource.uploadMovie(any(), any()) } returns Result.success(Unit)
+
+            sut.uploadMovie(UID, 42)
+
+            coVerify {
+                remoteDataSource.uploadMovie(UID, match { it.directors == """[{"id":1223,"name":"Joel Coen"}]""" })
+            }
+        }
+
+    @Test
     fun `GIVEN movie with unresolved directors WHEN upload movie THEN uploads no directors`() =
         runTest {
             coEvery { syncStore.getMovieForUpload(42) } returns Result.success(movie(42, directors = null))

@@ -10,6 +10,7 @@ import com.asensiodev.core.domain.repository.SyncStore
 import com.asensiodev.core.domain.result.rethrowCancellation
 import com.asensiodev.santoro.core.sync.data.datasource.MovieSyncRemoteDataSource
 import com.asensiodev.santoro.core.sync.data.model.MovieSyncEntity
+import com.asensiodev.santoro.core.sync.data.model.SyncDirector
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CancellationException
@@ -116,7 +117,10 @@ internal class DefaultSyncRepository
                 posterPath = posterPath,
                 genres = gson.toJson(genres),
                 runtime = runtime,
-                directors = directors?.let(gson::toJson),
+                directors =
+                    directors?.let { list ->
+                        gson.toJson(list.map { SyncDirector(it.id, it.name) })
+                    },
                 releaseDate = releaseDate,
                 isWatched = isWatched,
                 isInWatchlist = isInWatchlist,
@@ -152,7 +156,15 @@ internal class DefaultSyncRepository
 
         private fun String.toDirectorsOrNull(): List<Director>? =
             try {
-                gson.fromJson<List<Director>?>(this, DIRECTORS_TYPE)
+                gson
+                    .fromJson<List<SyncDirector>?>(this, DIRECTORS_TYPE)
+                    ?.mapNotNull { director ->
+                        director.id?.let { id ->
+                            director.name?.takeIf(String::isNotBlank)?.let { name ->
+                                Director(id, name)
+                            }
+                        }
+                    }
             } catch (_: Exception) {
                 null
             }
@@ -171,6 +183,6 @@ internal class DefaultSyncRepository
         private companion object {
             const val FULL_SNAPSHOT_UPLOAD_CHUNK_SIZE = 500
             val GENRES_TYPE = object : TypeToken<List<Genre>>() {}.type
-            val DIRECTORS_TYPE = object : TypeToken<List<Director>>() {}.type
+            val DIRECTORS_TYPE = object : TypeToken<List<SyncDirector>>() {}.type
         }
     }

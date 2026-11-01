@@ -91,15 +91,17 @@ internal class WatchedMoviesViewModel
                         .distinctUntilChanged()
                         .flatMapLatest { query ->
                             if (query.isBlank()) {
-                                getWatchedMoviesUseCase().map { result -> result to result }
+                                getWatchedMoviesUseCase().map { result ->
+                                    Triple(query, result, result)
+                                }
                             } else {
                                 combine(
                                     getWatchedMoviesUseCase(),
                                     searchWatchedMoviesUseCase(query),
-                                ) { collection, matches -> collection to matches }
+                                ) { collection, matches -> Triple(query, collection, matches) }
                             }
-                        }.collect { (collection, matches) ->
-                            updateMovies(collection, matches)
+                        }.collect { (query, collection, matches) ->
+                            if (query == searchQuery.value) updateMovies(collection, matches)
                         }
                 }
         }

@@ -517,6 +517,33 @@ class WatchedMoviesViewModelTest {
         }
 
     @Test
+    fun `GIVEN closed search WHEN the old search emits before the debounce THEN full collection stays`() =
+        runTest {
+            val collection =
+                MutableStateFlow(Result.success(listOf(villeneuveMovie(1, title = "Dune"), villeneuveMovie(2))))
+            every { getWatchedMoviesUseCase() } returns collection
+            every { searchWatchedMoviesUseCase("dune") } returns
+                flowOf(Result.success(listOf(villeneuveMovie(1, title = "Dune"))))
+            viewModel = createViewModel()
+            viewModel.process(WatchedMoviesIntent.LoadMovies)
+            advanceUntilIdle()
+            viewModel.process(WatchedMoviesIntent.OpenSearch)
+            viewModel.process(WatchedMoviesIntent.UpdateQuery("dune"))
+            advanceUntilIdle()
+
+            viewModel.process(WatchedMoviesIntent.CloseSearch)
+            runCurrent()
+            collection.value =
+                Result.success(listOf(villeneuveMovie(1, title = "Dune"), villeneuveMovie(2), villeneuveMovie(3)))
+            runCurrent()
+
+            viewModel.uiState.value.groups
+                .flatMap { it.movies }
+                .map { it.id }
+                .sorted() shouldBeEqualTo listOf(1, 2)
+        }
+
+    @Test
     fun `GIVEN search results WHEN grouping changes THEN query is kept and matches are regrouped`() =
         runTest {
             every { getWatchedMoviesUseCase() } returns
