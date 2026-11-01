@@ -11,6 +11,7 @@ import com.asensiodev.core.domain.result.rethrowCancellation
 import com.asensiodev.santoro.core.sync.data.datasource.MovieSyncRemoteDataSource
 import com.asensiodev.santoro.core.sync.data.model.MovieSyncEntity
 import com.asensiodev.santoro.core.sync.data.model.SyncDirector
+import com.asensiodev.santoro.core.sync.data.model.SyncGenre
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CancellationException
@@ -115,7 +116,7 @@ internal class DefaultSyncRepository
                 movieId = movieId,
                 title = title,
                 posterPath = posterPath,
-                genres = gson.toJson(genres),
+                genres = gson.toJson(genres.map { SyncGenre(it.id, it.name) }),
                 runtime = runtime,
                 directors =
                     directors?.let { list ->
@@ -128,22 +129,12 @@ internal class DefaultSyncRepository
                 updatedAt = updatedAt,
             )
 
-        private fun MovieSyncEntity.toSyncData(): MovieSyncData {
-            val parsedGenres =
-                if (genres.isBlank()) {
-                    emptyList()
-                } else {
-                    try {
-                        gson.fromJson<List<Genre>?>(genres, GENRES_TYPE).orEmpty()
-                    } catch (_: Exception) {
-                        emptyList()
-                    }
-                }
-            return MovieSyncData(
+        private fun MovieSyncEntity.toSyncData(): MovieSyncData =
+            MovieSyncData(
                 movieId = movieId,
                 title = title,
                 posterPath = posterPath,
-                genres = parsedGenres,
+                genres = genres.toGenres(),
                 runtime = runtime,
                 directors = directors?.toDirectorsOrNull(),
                 releaseDate = releaseDate,
@@ -152,7 +143,22 @@ internal class DefaultSyncRepository
                 watchedAt = watchedAt,
                 updatedAt = updatedAt,
             )
-        }
+
+        private fun String.toGenres(): List<Genre> =
+            try {
+                gson
+                    .fromJson<List<SyncGenre>?>(this, GENRES_TYPE)
+                    .orEmpty()
+                    .mapNotNull { genre ->
+                        genre.id?.let { id ->
+                            genre.name?.takeIf { it.isNotBlank() && it != "null" }?.let { name ->
+                                Genre(id, name)
+                            }
+                        }
+                    }
+            } catch (_: Exception) {
+                emptyList()
+            }
 
         private fun String.toDirectorsOrNull(): List<Director>? =
             try {
@@ -182,7 +188,7 @@ internal class DefaultSyncRepository
 
         private companion object {
             const val FULL_SNAPSHOT_UPLOAD_CHUNK_SIZE = 500
-            val GENRES_TYPE = object : TypeToken<List<Genre>>() {}.type
+            val GENRES_TYPE = object : TypeToken<List<SyncGenre>>() {}.type
             val DIRECTORS_TYPE = object : TypeToken<List<SyncDirector>>() {}.type
         }
     }
