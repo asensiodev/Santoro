@@ -103,6 +103,38 @@ class FirestoreMovieDataSourceTest {
         }
 
     @Test
+    fun `GIVEN entity with release date WHEN uploadMovie THEN writes releaseDate field`() =
+        runTest {
+            val written = slot<Map<String, Any?>>()
+            every { remoteDocument.getLong("updatedAt") } returns null
+            every { transaction.set(movieDocument, capture(written)) } returns transaction
+
+            sut.uploadMovie(
+                uid = "uid123",
+                entity = SyncMockUtils.createSyncEntity(movieId = 1, releaseDate = RELEASE_DATE),
+            )
+
+            written.captured["releaseDate"] shouldBeEqualTo RELEASE_DATE
+        }
+
+    @Test
+    fun `GIVEN documents with date, empty date and no date WHEN downloading THEN keeps the three states`() =
+        runTest {
+            val querySnapshot: QuerySnapshot = mockk()
+            val dated = movieDocument(movieId = 7L)
+            val resolvedWithoutDate = movieDocument(movieId = 8L)
+            val unresolved = movieDocument(movieId = 9L)
+            every { dated.getString("releaseDate") } returns RELEASE_DATE
+            every { resolvedWithoutDate.getString("releaseDate") } returns ""
+            every { moviesCollection.get() } returns Tasks.forResult(querySnapshot)
+            every { querySnapshot.documents } returns listOf(dated, resolvedWithoutDate, unresolved)
+
+            val result = sut.downloadUserMovies("uid123")
+
+            result.getOrThrow().map { it.releaseDate } shouldBeEqualTo listOf(RELEASE_DATE, "", null)
+        }
+
+    @Test
     fun `GIVEN remote movie is newer WHEN uploadMovie THEN does not overwrite it`() =
         runTest {
             val entity = SyncMockUtils.createSyncEntity(movieId = 1, updatedAt = 1000L)
@@ -187,6 +219,7 @@ class FirestoreMovieDataSourceTest {
             every { doc.getString("posterPath") } returns null
             every { doc.getString("genres") } returns ""
             every { doc.getString("directors") } returns null
+            every { doc.getString("releaseDate") } returns null
             every { doc.getLong("runtime") } returns null
             every { doc.getBoolean("isWatched") } returns true
             every { doc.getBoolean("isInWatchlist") } returns false
@@ -476,6 +509,7 @@ class FirestoreMovieDataSourceTest {
             every { getString("posterPath") } returns null
             every { getString("genres") } returns ""
             every { getString("directors") } returns null
+            every { getString("releaseDate") } returns null
             every { getLong("runtime") } returns null
             every { getBoolean("isWatched") } returns false
             every { getBoolean("isInWatchlist") } returns false
@@ -485,5 +519,6 @@ class FirestoreMovieDataSourceTest {
 
     private companion object {
         const val DIRECTORS_JSON = "[{\"id\":1223,\"name\":\"Joel Coen\"}]"
+        const val RELEASE_DATE = "2021-04-07"
     }
 }

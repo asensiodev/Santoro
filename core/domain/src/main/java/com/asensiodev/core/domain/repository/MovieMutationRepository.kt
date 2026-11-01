@@ -8,9 +8,10 @@ interface MovieMutationRepository {
 
     suspend fun removeFromWatchlist(movieId: Int): Result<Unit>
 
-    suspend fun storeResolvedDirectors(
+    suspend fun storeResolvedMetadata(
         movieId: Int,
-        directors: List<Director>,
+        directors: List<Director>?,
+        releaseDate: String?,
     ): Result<Boolean>
 
     suspend fun clearMovies()

@@ -66,16 +66,21 @@ interface MovieDao {
         updatedAt: Long,
     )
 
-    @Query("SELECT id FROM movies WHERE isWatched = 1 AND directors IS NULL")
-    suspend fun getWatchedMovieIdsWithUnresolvedDirectors(): List<Int>
+    @Query(
+        "SELECT id FROM movies WHERE isWatched = 1 AND (directors IS NULL OR releaseDate IS NULL)",
+    )
+    suspend fun getWatchedMovieIdsWithUnresolvedMetadata(): List<Int>
 
     @Query(
-        "UPDATE movies SET directors = :directors, updatedAt = :updatedAt " +
-            "WHERE id = :movieId AND directors IS NULL",
+        "UPDATE movies SET directors = COALESCE(directors, :directors), " +
+            "releaseDate = COALESCE(releaseDate, :releaseDate), updatedAt = :updatedAt " +
+            "WHERE id = :movieId AND ((directors IS NULL AND :directors IS NOT NULL) " +
+            "OR (releaseDate IS NULL AND :releaseDate IS NOT NULL))",
     )
-    suspend fun storeResolvedDirectors(
+    suspend fun storeResolvedMetadata(
         movieId: Int,
-        directors: String,
+        directors: String?,
+        releaseDate: String?,
         updatedAt: Long,
     ): Int
 

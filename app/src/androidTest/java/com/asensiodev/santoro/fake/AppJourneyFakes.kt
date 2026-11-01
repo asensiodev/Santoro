@@ -258,9 +258,10 @@ class FakeDatabaseRepository :
         return Result.success(Unit)
     }
 
-    override suspend fun storeResolvedDirectors(
+    override suspend fun storeResolvedMetadata(
         movieId: Int,
-        directors: List<Director>,
+        directors: List<Director>?,
+        releaseDate: String?,
     ): Result<Boolean> = Result.success(false)
 
     override suspend fun clearMovies() {
@@ -292,7 +293,7 @@ class FakeSyncStore : SyncStore {
     override suspend fun getMoviesForUpload(): Result<List<MovieSyncData>> =
         Result.success(emptyList())
 
-    override suspend fun getWatchedMovieIdsWithUnresolvedDirectors(): Result<List<Int>> =
+    override suspend fun getWatchedMovieIdsWithUnresolvedMetadata(): Result<List<Int>> =
         Result.success(emptyList())
 
     override suspend fun completeDownloadedMerge(

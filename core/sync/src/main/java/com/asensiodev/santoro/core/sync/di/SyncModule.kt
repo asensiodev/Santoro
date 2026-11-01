@@ -5,10 +5,10 @@ import androidx.work.WorkerFactory
 import com.asensiodev.core.domain.repository.SyncRepository
 import com.asensiodev.core.domain.repository.SyncScheduler
 import com.asensiodev.santoro.core.sync.data.datasource.FirestoreMovieDataSource
-import com.asensiodev.santoro.core.sync.data.datasource.MovieCreditsApiService
-import com.asensiodev.santoro.core.sync.data.datasource.MovieDirectorsRemoteDataSource
+import com.asensiodev.santoro.core.sync.data.datasource.MovieMetadataApiService
+import com.asensiodev.santoro.core.sync.data.datasource.MovieMetadataRemoteDataSource
 import com.asensiodev.santoro.core.sync.data.datasource.MovieSyncRemoteDataSource
-import com.asensiodev.santoro.core.sync.data.datasource.TmdbMovieDirectorsDataSource
+import com.asensiodev.santoro.core.sync.data.datasource.TmdbMovieMetadataDataSource
 import com.asensiodev.santoro.core.sync.data.repository.DefaultSyncRepository
 import com.asensiodev.santoro.core.sync.scheduler.WorkManagerSyncScheduler
 import com.google.firebase.firestore.FirebaseFirestore
@@ -47,9 +47,9 @@ internal abstract class SyncModule {
 
         @Provides
         @Singleton
-        fun provideMovieDirectorsRemoteDataSource(
+        fun provideMovieMetadataRemoteDataSource(
             retrofit: Retrofit,
-        ): MovieDirectorsRemoteDataSource =
-            TmdbMovieDirectorsDataSource(retrofit.create(MovieCreditsApiService::class.java))
+        ): MovieMetadataRemoteDataSource =
+            TmdbMovieMetadataDataSource(retrofit.create(MovieMetadataApiService::class.java))
     }
 }

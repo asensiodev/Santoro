@@ -9,7 +9,8 @@ import com.asensiodev.core.domain.repository.SyncScheduler
 import com.asensiodev.core.domain.repository.SyncStore
 import com.asensiodev.core.testing.relaxedMockk
 import com.asensiodev.library.observability.api.ObservabilityTracker
-import com.asensiodev.santoro.core.sync.data.datasource.MovieDirectorsRemoteDataSource
+import com.asensiodev.santoro.core.sync.data.datasource.MovieMetadataRemoteDataSource
+import com.asensiodev.santoro.core.sync.data.datasource.RemoteMovieMetadata
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -24,7 +25,7 @@ import java.io.IOException
 class DirectorBackfillWorkerTest {
     private val syncStore: SyncStore = mockk()
     private val movieMutationRepository: MovieMutationRepository = mockk()
-    private val directorsDataSource: MovieDirectorsRemoteDataSource = mockk()
+    private val metadataDataSource: MovieMetadataRemoteDataSource = mockk()
     private val syncScheduler: SyncScheduler = relaxedMockk()
     private val observabilityTracker: ObservabilityTracker = relaxedMockk()
     private val sut =
@@ -33,24 +34,44 @@ class DirectorBackfillWorkerTest {
             mockk<WorkerParameters>(relaxed = true),
             syncStore,
             movieMutationRepository,
-            directorsDataSource,
+            metadataDataSource,
             syncScheduler,
             observabilityTracker,
         )
 
     @Test
-    fun `GIVEN unresolved watched movies WHEN work runs THEN stores directors and syncs once`() =
+    fun `GIVEN watched movie missing only its release date WHEN work runs THEN stores the date and syncs`() =
         runTest {
-            coEvery { syncStore.getWatchedMovieIdsWithUnresolvedDirectors() } returns
-                kotlin.Result.success(listOf(115, 404))
-            coEvery { directorsDataSource.getDirectors(115) } returns kotlin.Result.success(COEN_BROTHERS)
-            coEvery { directorsDataSource.getDirectors(404) } returns kotlin.Result.success(emptyList())
-            coEvery { movieMutationRepository.storeResolvedDirectors(any(), any()) } returns kotlin.Result.success(true)
+            coEvery { syncStore.getWatchedMovieIdsWithUnresolvedMetadata() } returns kotlin.Result.success(listOf(275))
+            coEvery { metadataDataSource.getMetadata(275) } returns
+                kotlin.Result.success(RemoteMovieMetadata(COEN_BROTHERS, FARGO_RELEASE_DATE))
+            coEvery { movieMutationRepository.storeResolvedMetadata(any(), any(), any()) } returns
+                kotlin.Result.success(true)
 
             sut.doWork() shouldBeEqualTo Result.success()
 
-            coVerify(exactly = 1) { movieMutationRepository.storeResolvedDirectors(115, COEN_BROTHERS) }
-            coVerify(exactly = 1) { movieMutationRepository.storeResolvedDirectors(404, emptyList()) }
+            coVerify(exactly = 1) {
+                movieMutationRepository.storeResolvedMetadata(275, COEN_BROTHERS, FARGO_RELEASE_DATE)
+            }
+            verify(exactly = 1) { syncScheduler.scheduleImmediateSync() }
+        }
+
+    @Test
+    fun `GIVEN unresolved watched movies WHEN work runs THEN stores directors and syncs once`() =
+        runTest {
+            coEvery { syncStore.getWatchedMovieIdsWithUnresolvedMetadata() } returns
+                kotlin.Result.success(listOf(115, 404))
+            coEvery { metadataDataSource.getMetadata(115) } returns
+                kotlin.Result.success(RemoteMovieMetadata(COEN_BROTHERS, ""))
+            coEvery { metadataDataSource.getMetadata(404) } returns
+                kotlin.Result.success(RemoteMovieMetadata(emptyList(), ""))
+            coEvery { movieMutationRepository.storeResolvedMetadata(any(), any(), any()) } returns
+                kotlin.Result.success(true)
+
+            sut.doWork() shouldBeEqualTo Result.success()
+
+            coVerify(exactly = 1) { movieMutationRepository.storeResolvedMetadata(115, COEN_BROTHERS, any()) }
+            coVerify(exactly = 1) { movieMutationRepository.storeResolvedMetadata(404, emptyList(), any()) }
             verify(exactly = 1) { syncScheduler.scheduleImmediateSync() }
             verify {
                 observabilityTracker.trackAction(
@@ -63,11 +84,11 @@ class DirectorBackfillWorkerTest {
     @Test
     fun `GIVEN nothing unresolved WHEN work runs THEN succeeds without requests or sync`() =
         runTest {
-            coEvery { syncStore.getWatchedMovieIdsWithUnresolvedDirectors() } returns kotlin.Result.success(emptyList())
+            coEvery { syncStore.getWatchedMovieIdsWithUnresolvedMetadata() } returns kotlin.Result.success(emptyList())
 
             sut.doWork() shouldBeEqualTo Result.success()
 
-            coVerify(exactly = 0) { directorsDataSource.getDirectors(any()) }
+            coVerify(exactly = 0) { metadataDataSource.getMetadata(any()) }
             verify(exactly = 0) { syncScheduler.scheduleImmediateSync() }
             verify {
                 observabilityTracker.trackAction(
@@ -80,16 +101,18 @@ class DirectorBackfillWorkerTest {
     @Test
     fun `GIVEN transient failure mid run WHEN work runs THEN keeps resolved movies and retries`() =
         runTest {
-            coEvery { syncStore.getWatchedMovieIdsWithUnresolvedDirectors() } returns
+            coEvery { syncStore.getWatchedMovieIdsWithUnresolvedMetadata() } returns
                 kotlin.Result.success(listOf(115, 116, 117))
-            coEvery { directorsDataSource.getDirectors(115) } returns kotlin.Result.success(COEN_BROTHERS)
-            coEvery { directorsDataSource.getDirectors(116) } returns kotlin.Result.failure(IOException("Offline"))
-            coEvery { movieMutationRepository.storeResolvedDirectors(any(), any()) } returns kotlin.Result.success(true)
+            coEvery { metadataDataSource.getMetadata(115) } returns
+                kotlin.Result.success(RemoteMovieMetadata(COEN_BROTHERS, ""))
+            coEvery { metadataDataSource.getMetadata(116) } returns kotlin.Result.failure(IOException("Offline"))
+            coEvery { movieMutationRepository.storeResolvedMetadata(any(), any(), any()) } returns
+                kotlin.Result.success(true)
 
             sut.doWork() shouldBeEqualTo Result.retry()
 
-            coVerify(exactly = 1) { movieMutationRepository.storeResolvedDirectors(115, COEN_BROTHERS) }
-            coVerify(exactly = 0) { directorsDataSource.getDirectors(117) }
+            coVerify(exactly = 1) { movieMutationRepository.storeResolvedMetadata(115, COEN_BROTHERS, any()) }
+            coVerify(exactly = 0) { metadataDataSource.getMetadata(117) }
             verify(exactly = 1) { syncScheduler.scheduleImmediateSync() }
             verify {
                 observabilityTracker.trackAction(
@@ -102,19 +125,19 @@ class DirectorBackfillWorkerTest {
     @Test
     fun `GIVEN local read failure WHEN work runs THEN retries without requests`() =
         runTest {
-            coEvery { syncStore.getWatchedMovieIdsWithUnresolvedDirectors() } returns
+            coEvery { syncStore.getWatchedMovieIdsWithUnresolvedMetadata() } returns
                 kotlin.Result.failure(IllegalStateException("Database closed"))
 
             sut.doWork() shouldBeEqualTo Result.retry()
 
-            coVerify(exactly = 0) { directorsDataSource.getDirectors(any()) }
+            coVerify(exactly = 0) { metadataDataSource.getMetadata(any()) }
         }
 
     @Test
     fun `GIVEN work is cancelled WHEN a request is running THEN cancellation propagates without failure`() =
         runTest {
-            coEvery { syncStore.getWatchedMovieIdsWithUnresolvedDirectors() } returns kotlin.Result.success(listOf(115))
-            coEvery { directorsDataSource.getDirectors(115) } throws CancellationException("Stopped")
+            coEvery { syncStore.getWatchedMovieIdsWithUnresolvedMetadata() } returns kotlin.Result.success(listOf(115))
+            coEvery { metadataDataSource.getMetadata(115) } throws CancellationException("Stopped")
 
             assertThrows<CancellationException> { sut.doWork() }
 
@@ -123,6 +146,7 @@ class DirectorBackfillWorkerTest {
         }
 
     private companion object {
+        const val FARGO_RELEASE_DATE = "1996-03-08"
         val COEN_BROTHERS = listOf(Director(1223, "Joel Coen"), Director(1224, "Ethan Coen"))
     }
 }

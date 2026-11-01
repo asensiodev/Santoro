@@ -52,7 +52,7 @@ internal class MovieDetailViewModel
         private var tooltipCheckedMovieId: Int? = null
         private var tooltipJobRequestVersion: Int? = null
         private var activeRequestVersion = 0
-        private var directorsStoredRequestVersion: Int? = null
+        private var metadataStoredRequestVersion: Int? = null
 
         fun process(intent: MovieDetailIntent) {
             when (intent) {
@@ -87,7 +87,7 @@ internal class MovieDetailViewModel
                             if (requestVersion != activeRequestVersion) return@collect
                             handleMovieDetailResult(result, movieId, requestVersion)
                             result.getOrNull()?.let { movie ->
-                                storeResolvedDirectors(movie, requestVersion)
+                                storeResolvedMetadata(movie, requestVersion)
                             }
                         }
                 }
@@ -285,19 +285,21 @@ internal class MovieDetailViewModel
                 }
         }
 
-        private suspend fun storeResolvedDirectors(
+        private suspend fun storeResolvedMetadata(
             movie: Movie,
             requestVersion: Int,
         ) {
             val directors = movie.directors ?: return
-            if (!movie.isWatched || directorsStoredRequestVersion == requestVersion) return
-            directorsStoredRequestVersion = requestVersion
+            if (!movie.isWatched || metadataStoredRequestVersion == requestVersion) return
             val stored =
                 movieMutationRepository
-                    .storeResolvedDirectors(movie.id, directors)
+                    .storeResolvedMetadata(movie.id, directors, movie.releaseDate)
                     .rethrowCancellation()
                     .getOrDefault(false)
-            if (stored) enqueueUpload(movie.id)
+            if (stored) {
+                metadataStoredRequestVersion = requestVersion
+                enqueueUpload(movie.id)
+            }
         }
 
         private fun enqueueUpload(movieId: Int) {

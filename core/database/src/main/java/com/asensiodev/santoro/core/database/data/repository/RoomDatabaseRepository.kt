@@ -124,19 +124,21 @@ class RoomDatabaseRepository
                 movieDao.getMoviesForSync().map { movie -> movie.toSyncData() }
             }
 
-        override suspend fun getWatchedMovieIdsWithUnresolvedDirectors(): Result<List<Int>> =
+        override suspend fun getWatchedMovieIdsWithUnresolvedMetadata(): Result<List<Int>> =
             transactionResult {
-                movieDao.getWatchedMovieIdsWithUnresolvedDirectors()
+                movieDao.getWatchedMovieIdsWithUnresolvedMetadata()
             }
 
-        override suspend fun storeResolvedDirectors(
+        override suspend fun storeResolvedMetadata(
             movieId: Int,
-            directors: List<Director>,
+            directors: List<Director>?,
+            releaseDate: String?,
         ): Result<Boolean> =
             transactionResult {
-                movieDao.storeResolvedDirectors(
+                movieDao.storeResolvedMetadata(
                     movieId = movieId,
-                    directors = directors.toStoredDirectors(),
+                    directors = directors?.toStoredDirectors(),
+                    releaseDate = releaseDate,
                     updatedAt = System.currentTimeMillis(),
                 ) > 0
             }

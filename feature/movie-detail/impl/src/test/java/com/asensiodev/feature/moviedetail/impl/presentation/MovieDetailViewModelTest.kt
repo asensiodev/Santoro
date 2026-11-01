@@ -676,13 +676,56 @@ class MovieDetailViewModelTest {
         fun `GIVEN watched movie with loaded directors WHEN stored as resolved THEN uploads it`() =
             runTest {
                 coEvery { getMovieDetailUseCase(watchedMovie.id) } returns flowOf(Result.success(watchedMovie))
-                coEvery { movieMutationRepository.storeResolvedDirectors(watchedMovie.id, directors) } returns
+                coEvery { movieMutationRepository.storeResolvedMetadata(watchedMovie.id, directors, any()) } returns
                     Result.success(true)
 
                 viewModel.process(MovieDetailIntent.FetchDetails(watchedMovie.id))
                 advanceUntilIdle()
 
-                coVerify(exactly = 1) { movieMutationRepository.storeResolvedDirectors(watchedMovie.id, directors) }
+                coVerify(
+                    exactly = 1,
+                ) { movieMutationRepository.storeResolvedMetadata(watchedMovie.id, directors, any()) }
+                verify(exactly = 1) { syncScheduler.enqueueUpload(watchedMovie.id) }
+            }
+
+        @Test
+        fun `GIVEN remote watched detail WHEN loaded THEN stores its release date with the directors`() =
+            runTest {
+                coEvery { getMovieDetailUseCase(watchedMovie.id) } returns flowOf(Result.success(watchedMovie))
+                coEvery { movieMutationRepository.storeResolvedMetadata(any(), any(), any()) } returns
+                    Result.success(true)
+
+                viewModel.process(MovieDetailIntent.FetchDetails(watchedMovie.id))
+                advanceUntilIdle()
+
+                coVerify(exactly = 1) {
+                    movieMutationRepository.storeResolvedMetadata(watchedMovie.id, directors, RELEASE_DATE)
+                }
+            }
+
+        @Test
+        fun `GIVEN stored movie without date then remote detail WHEN loading THEN stores the remote date once`() =
+            runTest {
+                val storedWithoutDate = watchedMovie.copy(releaseDate = null)
+                coEvery { getMovieDetailUseCase(watchedMovie.id) } returns
+                    flowOf(Result.success(storedWithoutDate), Result.success(watchedMovie))
+                coEvery { movieMutationRepository.storeResolvedMetadata(watchedMovie.id, directors, null) } returns
+                    Result.success(false)
+                coEvery {
+                    movieMutationRepository.storeResolvedMetadata(
+                        watchedMovie.id,
+                        directors,
+                        RELEASE_DATE,
+                    )
+                } returns
+                    Result.success(true)
+
+                viewModel.process(MovieDetailIntent.FetchDetails(watchedMovie.id))
+                advanceUntilIdle()
+
+                coVerify(exactly = 1) {
+                    movieMutationRepository.storeResolvedMetadata(watchedMovie.id, directors, RELEASE_DATE)
+                }
                 verify(exactly = 1) { syncScheduler.enqueueUpload(watchedMovie.id) }
             }
 
@@ -690,7 +733,8 @@ class MovieDetailViewModelTest {
         fun `GIVEN directors already stored WHEN watched detail loads THEN does not upload`() =
             runTest {
                 coEvery { getMovieDetailUseCase(watchedMovie.id) } returns flowOf(Result.success(watchedMovie))
-                coEvery { movieMutationRepository.storeResolvedDirectors(any(), any()) } returns Result.success(false)
+                coEvery { movieMutationRepository.storeResolvedMetadata(any(), any(), any()) } returns
+                    Result.success(false)
 
                 viewModel.process(MovieDetailIntent.FetchDetails(watchedMovie.id))
                 advanceUntilIdle()
@@ -703,12 +747,13 @@ class MovieDetailViewModelTest {
             runTest {
                 coEvery { getMovieDetailUseCase(watchedMovie.id) } returns
                     flowOf(Result.success(watchedMovie), Result.success(watchedMovie))
-                coEvery { movieMutationRepository.storeResolvedDirectors(any(), any()) } returns Result.success(true)
+                coEvery { movieMutationRepository.storeResolvedMetadata(any(), any(), any()) } returns
+                    Result.success(true)
 
                 viewModel.process(MovieDetailIntent.FetchDetails(watchedMovie.id))
                 advanceUntilIdle()
 
-                coVerify(exactly = 1) { movieMutationRepository.storeResolvedDirectors(any(), any()) }
+                coVerify(exactly = 1) { movieMutationRepository.storeResolvedMetadata(any(), any(), any()) }
             }
 
         @Test
@@ -716,12 +761,15 @@ class MovieDetailViewModelTest {
             runTest {
                 coEvery { getMovieDetailUseCase(watchedMovie.id) } returns
                     flowOf(Result.success(watchedMovie.copy(directors = null)), Result.success(watchedMovie))
-                coEvery { movieMutationRepository.storeResolvedDirectors(any(), any()) } returns Result.success(true)
+                coEvery { movieMutationRepository.storeResolvedMetadata(any(), any(), any()) } returns
+                    Result.success(true)
 
                 viewModel.process(MovieDetailIntent.FetchDetails(watchedMovie.id))
                 advanceUntilIdle()
 
-                coVerify(exactly = 1) { movieMutationRepository.storeResolvedDirectors(watchedMovie.id, directors) }
+                coVerify(
+                    exactly = 1,
+                ) { movieMutationRepository.storeResolvedMetadata(watchedMovie.id, directors, any()) }
             }
 
         @Test
@@ -734,14 +782,14 @@ class MovieDetailViewModelTest {
                     advanceUntilIdle()
                 }
 
-                coVerify(exactly = 0) { movieMutationRepository.storeResolvedDirectors(any(), any()) }
+                coVerify(exactly = 0) { movieMutationRepository.storeResolvedMetadata(any(), any(), any()) }
             }
 
         @Test
         fun `GIVEN storing directors fails WHEN watched detail loads THEN content stays visible without upload`() =
             runTest {
                 coEvery { getMovieDetailUseCase(watchedMovie.id) } returns flowOf(Result.success(watchedMovie))
-                coEvery { movieMutationRepository.storeResolvedDirectors(any(), any()) } returns
+                coEvery { movieMutationRepository.storeResolvedMetadata(any(), any(), any()) } returns
                     Result.failure(IllegalStateException("Database closed"))
 
                 viewModel.process(MovieDetailIntent.FetchDetails(watchedMovie.id))
@@ -771,3 +819,5 @@ class MovieDetailViewModelTest {
             updatedAt = 0L,
         )
 }
+
+private const val RELEASE_DATE = "2010-07-16"

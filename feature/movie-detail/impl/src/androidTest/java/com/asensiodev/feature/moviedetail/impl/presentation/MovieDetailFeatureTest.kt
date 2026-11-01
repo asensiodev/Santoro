@@ -55,9 +55,10 @@ class MovieDetailFeatureTest {
                         override suspend fun removeFromWatchlist(movieId: Int) =
                             Result.success(Unit)
 
-                        override suspend fun storeResolvedDirectors(
+                        override suspend fun storeResolvedMetadata(
                             movieId: Int,
-                            directors: List<Director>,
+                            directors: List<Director>?,
+                            releaseDate: String?,
                         ) = Result.success(false)
 
                         override suspend fun clearMovies() = Unit

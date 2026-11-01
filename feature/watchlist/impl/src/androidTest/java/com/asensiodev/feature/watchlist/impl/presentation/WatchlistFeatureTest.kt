@@ -172,9 +172,10 @@ private class FakeDatabaseRepository(
         return Result.success(Unit)
     }
 
-    override suspend fun storeResolvedDirectors(
+    override suspend fun storeResolvedMetadata(
         movieId: Int,
-        directors: List<Director>,
+        directors: List<Director>?,
+        releaseDate: String?,
     ): Result<Boolean> = Result.success(false)
 
     override suspend fun clearMovies() {

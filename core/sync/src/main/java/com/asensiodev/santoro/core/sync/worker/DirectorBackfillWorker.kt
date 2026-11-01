@@ -9,7 +9,7 @@ import com.asensiodev.core.domain.repository.SyncScheduler
 import com.asensiodev.core.domain.repository.SyncStore
 import com.asensiodev.core.domain.result.rethrowCancellation
 import com.asensiodev.library.observability.api.ObservabilityTracker
-import com.asensiodev.santoro.core.sync.data.datasource.MovieDirectorsRemoteDataSource
+import com.asensiodev.santoro.core.sync.data.datasource.MovieMetadataRemoteDataSource
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
@@ -21,14 +21,14 @@ internal class DirectorBackfillWorker
         @Assisted params: WorkerParameters,
         private val syncStore: SyncStore,
         private val movieMutationRepository: MovieMutationRepository,
-        private val directorsDataSource: MovieDirectorsRemoteDataSource,
+        private val metadataDataSource: MovieMetadataRemoteDataSource,
         private val syncScheduler: SyncScheduler,
         private val observabilityTracker: ObservabilityTracker,
     ) : CoroutineWorker(context, params) {
         override suspend fun doWork(): Result {
             val movieIds =
                 syncStore
-                    .getWatchedMovieIdsWithUnresolvedDirectors()
+                    .getWatchedMovieIdsWithUnresolvedMetadata()
                     .rethrowCancellation()
                     .getOrElse { exception -> return retry(exception) }
             var resolvedCount = 0
@@ -50,13 +50,13 @@ internal class DirectorBackfillWorker
         }
 
         private suspend fun resolve(movieId: Int): kotlin.Result<Unit> {
-            val directors =
-                directorsDataSource
-                    .getDirectors(movieId)
+            val metadata =
+                metadataDataSource
+                    .getMetadata(movieId)
                     .rethrowCancellation()
                     .getOrElse { exception -> return kotlin.Result.failure(exception) }
             return movieMutationRepository
-                .storeResolvedDirectors(movieId, directors)
+                .storeResolvedMetadata(movieId, metadata.directors, metadata.releaseDate)
                 .rethrowCancellation()
                 .map { }
         }

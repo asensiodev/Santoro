@@ -93,6 +93,18 @@ class DefaultSyncRepositoryTest {
         }
 
     @Test
+    fun `GIVEN movie with release date WHEN upload movie THEN uploads release date`() =
+        runTest {
+            coEvery { syncStore.getMovieForUpload(42) } returns
+                Result.success(movie(42).copy(releaseDate = RELEASE_DATE))
+            coEvery { remoteDataSource.uploadMovie(any(), any()) } returns Result.success(Unit)
+
+            sut.uploadMovie(UID, 42)
+
+            coVerify { remoteDataSource.uploadMovie(UID, match { it.releaseDate == RELEASE_DATE }) }
+        }
+
+    @Test
     fun `GIVEN missing movie WHEN upload movie THEN succeeds without remote access`() =
         runTest {
             coEvery { syncStore.getMovieForUpload(42) } returns Result.success(null)
@@ -243,6 +255,26 @@ class DefaultSyncRepositoryTest {
         }
 
     @Test
+    fun `GIVEN downloaded release dates WHEN merging THEN keeps resolved and unresolved states`() =
+        runTest {
+            val dated = SyncMockUtils.createSyncEntity(9, releaseDate = RELEASE_DATE)
+            val resolvedWithoutDate = SyncMockUtils.createSyncEntity(10, releaseDate = "")
+            val unresolved = SyncMockUtils.createSyncEntity(11, releaseDate = null)
+            coEvery { remoteDataSource.downloadUserMovies(UID) } returns
+                Result.success(listOf(dated, resolvedWithoutDate, unresolved))
+            coEvery { syncStore.completeDownloadedMerge(any(), any()) } returns Result.success(Unit)
+
+            sut.downloadAndMerge(UID)
+
+            coVerify {
+                syncStore.completeDownloadedMerge(
+                    match { movies -> movies.map { it.releaseDate } == listOf(RELEASE_DATE, "", null) },
+                    any(),
+                )
+            }
+        }
+
+    @Test
     fun `GIVEN auth changes before merge transaction WHEN authority is checked THEN merge is rejected`() =
         runTest {
             val remote = SyncMockUtils.createSyncEntity(9)
@@ -316,5 +348,6 @@ class DefaultSyncRepositoryTest {
 
     private companion object {
         const val UID = "uid123"
+        const val RELEASE_DATE = "2021-04-07"
     }
 }

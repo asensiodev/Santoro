@@ -62,6 +62,30 @@ class MovieMapperTest {
     }
 
     @Test
+    fun `GIVEN entity with release date WHEN toSyncData THEN release date is uploaded`() {
+        val result =
+            directorsMovie(directors = null)
+                .copy(releaseDate = RELEASE_DATE)
+                .toEntity()
+                .toSyncData()
+
+        result.releaseDate shouldBeEqualTo RELEASE_DATE
+    }
+
+    @Test
+    fun `GIVEN downloaded release dates WHEN toEntity THEN resolved and unresolved states are stored`() {
+        val syncData = directorsMovie(directors = null).toEntity().toSyncData()
+
+        listOf(RELEASE_DATE, "", null).map { releaseDate ->
+            syncData
+                .copy(releaseDate = releaseDate)
+                .toEntity()
+                .toDomain()
+                .releaseDate
+        } shouldBeEqualTo listOf(RELEASE_DATE, "", null)
+    }
+
+    @Test
     fun `GIVEN serialized genres with invalid names WHEN toGenres THEN filters invalid entries`() {
         val result = serializedGenres().toGenres()
 
@@ -157,6 +181,7 @@ class MovieMapperTest {
                 posterPath = "/upload.jpg",
                 genres = listOf(Genre(id = 28, name = "Action")),
                 runtime = 120,
+                releaseDate = "2026-01-01",
                 isWatched = false,
                 isInWatchlist = true,
                 watchedAt = null,
@@ -192,3 +217,5 @@ private fun serializedGenres() =
       {"id":4,"name":"null"}
     ]
     """.trimIndent()
+
+private const val RELEASE_DATE = "2021-04-07"

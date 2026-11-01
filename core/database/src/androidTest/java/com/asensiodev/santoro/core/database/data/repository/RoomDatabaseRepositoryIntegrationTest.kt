@@ -43,7 +43,7 @@ class RoomDatabaseRepositoryIntegrationTest {
     }
 
     @Test
-    fun getWatchedMovieIdsWithUnresolvedDirectors_returnsOnlyUnresolvedWatchedMovies(): Unit =
+    fun getWatchedMovieIdsWithUnresolvedMetadata_returnsOnlyUnresolvedWatchedMovies(): Unit =
         runBlocking {
             val dao = database.movieDao()
             dao.insertOrUpdateMovie(MockUtils.createTestMovieEntity(1, isWatched = true))
@@ -53,13 +53,13 @@ class RoomDatabaseRepositoryIntegrationTest {
             dao.insertOrUpdateMovie(MockUtils.createTestMovieEntity(3, isInWatchlist = true))
             dao.insertOrUpdateMovie(MockUtils.createTestMovieEntity(4, isWatched = true))
 
-            val unresolved = repository.getWatchedMovieIdsWithUnresolvedDirectors().getOrThrow()
+            val unresolved = repository.getWatchedMovieIdsWithUnresolvedMetadata().getOrThrow()
 
             unresolved.sorted() shouldBeEqualTo listOf(1, 4)
         }
 
     @Test
-    fun storeResolvedDirectors_storesDirectorsAndMarksMovieForUpload(): Unit =
+    fun storeResolvedMetadata_storesDirectorsAndMarksMovieForUpload(): Unit =
         runBlocking {
             database.movieDao().insertOrUpdateMovie(
                 MockUtils.createTestMovieEntity(1, isWatched = true, updatedAt = 5L),
@@ -67,7 +67,7 @@ class RoomDatabaseRepositoryIntegrationTest {
 
             val joelCoen = listOf(Director(1223, "Joel Coen"))
 
-            repository.storeResolvedDirectors(1, joelCoen).getOrThrow() shouldBeEqualTo true
+            repository.storeResolvedMetadata(1, joelCoen, null).getOrThrow() shouldBeEqualTo true
 
             val stored = repository.getMovieForUpload(1).getOrThrow()
             stored?.directors shouldBeEqualTo joelCoen
@@ -75,7 +75,7 @@ class RoomDatabaseRepositoryIntegrationTest {
         }
 
     @Test
-    fun storeResolvedDirectors_keepsDirectorsSavedMeanwhile(): Unit =
+    fun storeResolvedMetadata_keepsDirectorsSavedMeanwhile(): Unit =
         runBlocking {
             val saved = "[{\"id\":1032,\"name\":\"Martin Scorsese\"}]"
             database.movieDao().insertOrUpdateMovie(
@@ -87,10 +87,99 @@ class RoomDatabaseRepositoryIntegrationTest {
                 ),
             )
 
-            repository.storeResolvedDirectors(1, emptyList()).getOrThrow() shouldBeEqualTo false
+            repository.storeResolvedMetadata(1, emptyList(), null).getOrThrow() shouldBeEqualTo
+                false
 
             val stored = repository.getMovieForUpload(1).getOrThrow()
             stored?.directors shouldBeEqualTo listOf(Director(1032, "Martin Scorsese"))
+            stored?.updatedAt shouldBeEqualTo 5L
+        }
+
+    @Test
+    fun getWatchedMovieIdsWithUnresolvedMetadata_includesWatchedMoviesWithoutReleaseDate(): Unit =
+        runBlocking {
+            val dao = database.movieDao()
+            dao.insertOrUpdateMovie(
+                MockUtils.createTestMovieEntity(
+                    1,
+                    isWatched = true,
+                    directors = "[]",
+                    releaseDate = null,
+                ),
+            )
+            dao.insertOrUpdateMovie(
+                MockUtils.createTestMovieEntity(
+                    2,
+                    isWatched = true,
+                    directors = "[]",
+                    releaseDate = "",
+                ),
+            )
+            dao.insertOrUpdateMovie(
+                MockUtils.createTestMovieEntity(
+                    3,
+                    isInWatchlist = true,
+                    directors = "[]",
+                    releaseDate = null,
+                ),
+            )
+
+            repository.getWatchedMovieIdsWithUnresolvedMetadata().getOrThrow() shouldBeEqualTo
+                listOf(1)
+        }
+
+    @Test
+    fun storeResolvedMetadata_fillsMissingReleaseDateAndKeepsDirectors(): Unit =
+        runBlocking {
+            val saved = "[{\"id\":1032,\"name\":\"Martin Scorsese\"}]"
+            database.movieDao().insertOrUpdateMovie(
+                MockUtils.createTestMovieEntity(
+                    1,
+                    isWatched = true,
+                    directors = saved,
+                    releaseDate = null,
+                    updatedAt = 5L,
+                ),
+            )
+
+            repository
+                .storeResolvedMetadata(
+                    1,
+                    emptyList(),
+                    RELEASE_DATE,
+                ).getOrThrow() shouldBeEqualTo
+                true
+
+            val stored = repository.getMovieForUpload(1).getOrThrow()
+            stored?.directors shouldBeEqualTo listOf(Director(1032, "Martin Scorsese"))
+            stored?.releaseDate shouldBeEqualTo RELEASE_DATE
+            ((stored?.updatedAt ?: 0L) > 5L) shouldBeEqualTo true
+        }
+
+    @Test
+    fun storeResolvedMetadata_withNothingMissing_reportsNoChange(): Unit =
+        runBlocking {
+            database.movieDao().insertOrUpdateMovie(
+                MockUtils.createTestMovieEntity(
+                    1,
+                    isWatched = true,
+                    directors = "[]",
+                    releaseDate = "1998-03-06",
+                    updatedAt = 5L,
+                ),
+            )
+
+            repository.storeResolvedMetadata(1, null, null).getOrThrow() shouldBeEqualTo false
+            repository
+                .storeResolvedMetadata(
+                    1,
+                    emptyList(),
+                    RELEASE_DATE,
+                ).getOrThrow() shouldBeEqualTo
+                false
+
+            val stored = repository.getMovieForUpload(1).getOrThrow()
+            stored?.releaseDate shouldBeEqualTo "1998-03-06"
             stored?.updatedAt shouldBeEqualTo 5L
         }
 
@@ -215,3 +304,5 @@ class RoomDatabaseRepositoryIntegrationTest {
         updatedAt = updatedAt,
     )
 }
+
+private const val RELEASE_DATE = "2021-04-07"
