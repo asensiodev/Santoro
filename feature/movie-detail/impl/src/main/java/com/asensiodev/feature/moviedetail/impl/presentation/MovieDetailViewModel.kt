@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.repository.MovieMutationRepository
 import com.asensiodev.core.domain.repository.SyncScheduler
+import com.asensiodev.core.domain.result.rethrowCancellation
 import com.asensiodev.core.domain.usecase.ObserveHasSeenDetailTooltipUseCase
 import com.asensiodev.core.domain.usecase.SetDetailTooltipSeenUseCase
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseCase
@@ -51,6 +52,7 @@ internal class MovieDetailViewModel
         private var tooltipCheckedMovieId: Int? = null
         private var tooltipJobRequestVersion: Int? = null
         private var activeRequestVersion = 0
+        private var metadataStoredRequestVersion: Int? = null
 
         fun process(intent: MovieDetailIntent) {
             when (intent) {
@@ -84,6 +86,9 @@ internal class MovieDetailViewModel
                         .collect { result ->
                             if (requestVersion != activeRequestVersion) return@collect
                             handleMovieDetailResult(result, movieId, requestVersion)
+                            result.getOrNull()?.let { movie ->
+                                storeResolvedMetadata(movie, requestVersion)
+                            }
                         }
                 }
         }
@@ -278,6 +283,23 @@ internal class MovieDetailViewModel
                         _uiState.update { it.copy(showTooltip = true) }
                     }
                 }
+        }
+
+        private suspend fun storeResolvedMetadata(
+            movie: Movie,
+            requestVersion: Int,
+        ) {
+            val directors = movie.directors ?: return
+            if (!movie.isWatched || metadataStoredRequestVersion == requestVersion) return
+            val stored =
+                movieMutationRepository
+                    .storeResolvedMetadata(movie.id, directors, movie.releaseDate)
+                    .rethrowCancellation()
+                    .getOrDefault(false)
+            if (stored) {
+                metadataStoredRequestVersion = requestVersion
+                enqueueUpload(movie.id)
+            }
         }
 
         private fun enqueueUpload(movieId: Int) {

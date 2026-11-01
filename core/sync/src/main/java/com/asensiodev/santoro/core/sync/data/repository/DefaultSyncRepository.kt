@@ -1,6 +1,7 @@
 package com.asensiodev.santoro.core.sync.data.repository
 
 import com.asensiodev.auth.domain.repository.AuthRepository
+import com.asensiodev.core.domain.model.Director
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.MovieSyncData
 import com.asensiodev.core.domain.repository.AccountDeletionRecoveryRepository
@@ -9,6 +10,7 @@ import com.asensiodev.core.domain.repository.SyncStore
 import com.asensiodev.core.domain.result.rethrowCancellation
 import com.asensiodev.santoro.core.sync.data.datasource.MovieSyncRemoteDataSource
 import com.asensiodev.santoro.core.sync.data.model.MovieSyncEntity
+import com.asensiodev.santoro.core.sync.data.model.SyncDirector
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CancellationException
@@ -115,6 +117,11 @@ internal class DefaultSyncRepository
                 posterPath = posterPath,
                 genres = gson.toJson(genres),
                 runtime = runtime,
+                directors =
+                    directors?.let { list ->
+                        gson.toJson(list.map { SyncDirector(it.id, it.name) })
+                    },
+                releaseDate = releaseDate,
                 isWatched = isWatched,
                 isInWatchlist = isInWatchlist,
                 watchedAt = watchedAt,
@@ -138,12 +145,29 @@ internal class DefaultSyncRepository
                 posterPath = posterPath,
                 genres = parsedGenres,
                 runtime = runtime,
+                directors = directors?.toDirectorsOrNull(),
+                releaseDate = releaseDate,
                 isWatched = isWatched,
                 isInWatchlist = isInWatchlist,
                 watchedAt = watchedAt,
                 updatedAt = updatedAt,
             )
         }
+
+        private fun String.toDirectorsOrNull(): List<Director>? =
+            try {
+                gson
+                    .fromJson<List<SyncDirector>?>(this, DIRECTORS_TYPE)
+                    ?.mapNotNull { director ->
+                        director.id?.let { id ->
+                            director.name?.takeIf(String::isNotBlank)?.let { name ->
+                                Director(id, name)
+                            }
+                        }
+                    }
+            } catch (_: Exception) {
+                null
+            }
 
         private suspend fun String.canAccessFirestore(): Boolean {
             val uid = this
@@ -159,5 +183,6 @@ internal class DefaultSyncRepository
         private companion object {
             const val FULL_SNAPSHOT_UPLOAD_CHUNK_SIZE = 500
             val GENRES_TYPE = object : TypeToken<List<Genre>>() {}.type
+            val DIRECTORS_TYPE = object : TypeToken<List<SyncDirector>>() {}.type
         }
     }

@@ -18,6 +18,7 @@ data class Movie(
     val tagline: String? = null,
     val runtime: Int? = null,
     val director: String? = null,
+    val directors: List<Director>? = null,
     val isWatched: Boolean,
     val isInWatchlist: Boolean,
     val watchedAt: Long? = null,

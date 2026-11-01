@@ -91,6 +91,31 @@ class SantoroRoomDatabaseMigrationTest {
     }
 
     @Test
+    fun givenVersion5_whenMigratedTo6_thenDataPreservedAndDirectorsUnresolved() {
+        helper.createDatabase(DATABASE_NAME, 5).use { database ->
+            insertMovie(database, 5, tagline = "Synthetic tagline")
+            insertCache(database)
+        }
+
+        val migrated =
+            helper.runMigrationsAndValidate(
+                DATABASE_NAME,
+                6,
+                true,
+                SantoroRoomDatabase.MIGRATION_5_6,
+            )
+
+        migrated.use { database ->
+            assertMovie(database, expectedTagline = "Synthetic tagline", expectedRuntime = null)
+            assertCache(database)
+            database.query("SELECT directors FROM movies WHERE id = $MOVIE_ID").use { cursor ->
+                cursor.moveToFirst().shouldBeTrue()
+                cursor.isNull(0).shouldBeTrue()
+            }
+        }
+    }
+
+    @Test
     fun givenOldestAvailableVersion_whenMigratedTo5_thenCompletePathPreservesDataAndDefaults() {
         helper.createDatabase(DATABASE_NAME, 2).use { database -> insertMovie(database, 2) }
 

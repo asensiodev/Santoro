@@ -10,6 +10,7 @@ android {
 dependencies {
     implementation(projects.feature.watchedMovies.api)
     implementation(projects.core.database)
+    implementation(projects.library.observability.api)
 
     implementation(libs.bundles.coil)
 }

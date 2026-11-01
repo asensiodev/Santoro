@@ -1,6 +1,8 @@
 package com.asensiodev.santoro.core.data.repository
 
 import com.asensiodev.core.domain.model.ThemeOption
+import com.asensiodev.core.domain.model.WatchedGrouping
+import com.asensiodev.core.domain.model.WatchedViewMode
 import com.asensiodev.core.domain.repository.UserPreferencesRepository
 import com.asensiodev.library.securestorage.api.SecureKeyValueStore
 import kotlinx.coroutines.flow.Flow
@@ -24,6 +26,24 @@ class DefaultUserPreferencesRepository
 
         private val _theme = MutableStateFlow(getInitialThemeValue())
         override val theme: Flow<ThemeOption> = _theme.asStateFlow()
+
+        private val _watchedViewMode =
+            MutableStateFlow(readEnum(KEY_WATCHED_VIEW_MODE, WatchedViewMode.SHELF))
+        override val watchedViewMode: Flow<WatchedViewMode> = _watchedViewMode.asStateFlow()
+
+        private val _watchedGrouping =
+            MutableStateFlow(readEnum(KEY_WATCHED_GROUPING, WatchedGrouping.DATE_WATCHED))
+        override val watchedGrouping: Flow<WatchedGrouping> = _watchedGrouping.asStateFlow()
+
+        override suspend fun setWatchedViewMode(mode: WatchedViewMode) {
+            secureKeyValueStore.writeString(KEY_WATCHED_VIEW_MODE, mode.name)
+            _watchedViewMode.value = mode
+        }
+
+        override suspend fun setWatchedGrouping(grouping: WatchedGrouping) {
+            secureKeyValueStore.writeString(KEY_WATCHED_GROUPING, grouping.name)
+            _watchedGrouping.value = grouping
+        }
 
         override suspend fun setHasSeenGuestOnboarding(hasSeen: Boolean) {
             secureKeyValueStore.writeString(KEY_HAS_SEEN_ONBOARDING, hasSeen.toString())
@@ -56,9 +76,20 @@ class DefaultUserPreferencesRepository
                 ?: ThemeOption.SYSTEM
         }
 
+        private inline fun <reified T : Enum<T>> readEnum(
+            key: String,
+            default: T,
+        ): T =
+            secureKeyValueStore
+                .readString(key)
+                ?.let { value -> enumValues<T>().firstOrNull { it.name == value } }
+                ?: default
+
         companion object {
             private const val KEY_HAS_SEEN_ONBOARDING = "has_seen_guest_onboarding"
             private const val KEY_HAS_SEEN_DETAIL_TOOLTIP = "has_seen_detail_tooltip"
             private const val KEY_THEME_OPTION = "theme_option"
+            private const val KEY_WATCHED_VIEW_MODE = "watched_view_mode"
+            private const val KEY_WATCHED_GROUPING = "watched_grouping"
         }
     }

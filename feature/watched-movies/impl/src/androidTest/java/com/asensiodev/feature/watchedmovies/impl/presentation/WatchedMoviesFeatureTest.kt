@@ -1,17 +1,22 @@
 package com.asensiodev.feature.watchedmovies.impl.presentation
 
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.asensiodev.core.designsystem.theme.SantoroTheme
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.core.domain.model.ThemeOption
+import com.asensiodev.core.domain.model.WatchedGrouping
+import com.asensiodev.core.domain.model.WatchedViewMode
+import com.asensiodev.core.domain.repository.UserPreferencesRepository
 import com.asensiodev.core.testing.dispatcher.TestDispatcherProvider
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchedMoviesUseCase
-import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchedStatsUseCase
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.SearchWatchedMoviesUseCase
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import kotlinx.coroutines.flow.Flow
@@ -45,25 +50,31 @@ class WatchedMoviesFeatureTest {
         viewModel =
             WatchedMoviesViewModel(
                 getWatchedMoviesUseCase = GetWatchedMoviesUseCase(repository, dispatchers),
-                getWatchedStatsUseCase = GetWatchedStatsUseCase(repository, dispatchers),
                 searchWatchedMoviesUseCase = SearchWatchedMoviesUseCase(repository, dispatchers),
+                userPreferencesRepository = FakeUserPreferencesRepository(),
             )
     }
 
     @Test
-    fun givenWatchedMovies_whenFeatureLoads_thenShowsStatsAndNavigatesWithMovieId() {
+    fun givenWatchedMovies_whenFeatureLoads_thenShowsTotalWithoutStatsAndNavigatesWithMovieId() {
         var selectedMovieId: Int? = null
         composeRule.setContent {
             SantoroTheme {
                 WatchedMoviesRoute(
                     onMovieClick = { selectedMovieId = it },
+                    onDirectorClick = {},
                     viewModel = viewModel,
                 )
             }
         }
 
-        val totalMovies = composeRule.activity.getString(SR.string.watched_stat_total_value, 2)
-        composeRule.onNodeWithText(totalMovies).assertIsDisplayed()
+        val totalMovies =
+            composeRule.activity.resources
+                .getQuantityString(SR.plurals.watched_group_movie_count, 2, 2)
+        composeRule.onAllNodesWithText(totalMovies).assertCountEquals(HEADER_AND_GROUP_COUNT)
+        composeRule
+            .onNodeWithText(composeRule.activity.getString(SR.string.watched_stat_total_label))
+            .assertDoesNotExist()
         composeRule.onNodeWithText("Inception").assertIsDisplayed().performClick()
 
         composeRule.runOnIdle {
@@ -128,3 +139,33 @@ private class FakeDatabaseRepository(
             )
         }
 }
+
+private class FakeUserPreferencesRepository : UserPreferencesRepository {
+    override val hasSeenGuestOnboarding = MutableStateFlow(true)
+    override val hasSeenDetailTooltip = MutableStateFlow(true)
+    override val theme = MutableStateFlow(ThemeOption.SYSTEM)
+    override val watchedViewMode = MutableStateFlow(WatchedViewMode.SHELF)
+    override val watchedGrouping = MutableStateFlow(WatchedGrouping.DATE_WATCHED)
+
+    override suspend fun setHasSeenGuestOnboarding(hasSeen: Boolean) {
+        hasSeenGuestOnboarding.value = hasSeen
+    }
+
+    override suspend fun setHasSeenDetailTooltip(hasSeen: Boolean) {
+        hasSeenDetailTooltip.value = hasSeen
+    }
+
+    override suspend fun setTheme(option: ThemeOption) {
+        theme.value = option
+    }
+
+    override suspend fun setWatchedViewMode(mode: WatchedViewMode) {
+        watchedViewMode.value = mode
+    }
+
+    override suspend fun setWatchedGrouping(grouping: WatchedGrouping) {
+        watchedGrouping.value = grouping
+    }
+}
+
+private const val HEADER_AND_GROUP_COUNT = 2

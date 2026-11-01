@@ -7,6 +7,8 @@ interface SyncStore {
 
     suspend fun getMoviesForUpload(): Result<List<MovieSyncData>>
 
+    suspend fun getWatchedMovieIdsWithUnresolvedMetadata(): Result<List<Int>>
+
     suspend fun completeDownloadedMerge(
         movies: List<MovieSyncData>,
         canMerge: suspend () -> Boolean,

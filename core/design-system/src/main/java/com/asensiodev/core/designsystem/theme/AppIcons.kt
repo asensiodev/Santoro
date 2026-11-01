@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ExitToApp
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.rounded.ViewList
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
@@ -16,9 +17,11 @@ import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.CalendarToday
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.Help
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.MusicNote
@@ -53,8 +56,11 @@ object AppIcons {
     val Info = Icons.Filled.Info
     val ExitToApp = Icons.AutoMirrored.Rounded.ExitToApp
     val ChevronRight = Icons.AutoMirrored.Rounded.KeyboardArrowRight
+    val GridView = Icons.Rounded.GridView
+    val ViewList = Icons.AutoMirrored.Rounded.ViewList
     val ArrowBack = Icons.AutoMirrored.Rounded.ArrowBack
     val Clear = Icons.Filled.Clear
+    val Check = Icons.Rounded.Check
     val Refresh = Icons.Filled.Refresh
     val Star = Icons.Rounded.Star
     val Settings = Icons.Rounded.Settings

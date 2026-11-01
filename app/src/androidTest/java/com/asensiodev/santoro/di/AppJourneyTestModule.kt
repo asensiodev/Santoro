@@ -14,6 +14,7 @@ import com.asensiodev.core.domain.repository.MovieMutationRepository
 import com.asensiodev.core.domain.repository.PersonRepository
 import com.asensiodev.core.domain.repository.SyncRepository
 import com.asensiodev.core.domain.repository.SyncScheduler
+import com.asensiodev.core.domain.repository.SyncStore
 import com.asensiodev.core.domain.repository.UserPreferencesRepository
 import com.asensiodev.feature.moviedetail.impl.di.MovieDetailModule
 import com.asensiodev.feature.moviedetail.impl.domain.repository.MovieDetailRepository
@@ -32,6 +33,8 @@ import com.asensiodev.library.remoteconfig.impl.di.RemoteConfigModule
 import com.asensiodev.santoro.core.data.di.RepositoryModule
 import com.asensiodev.santoro.core.database.di.DatabaseModule
 import com.asensiodev.santoro.core.database.domain.DatabaseRepository
+import com.asensiodev.santoro.core.sync.data.datasource.MovieMetadataRemoteDataSource
+import com.asensiodev.santoro.core.sync.data.datasource.RemoteMovieMetadata
 import com.asensiodev.santoro.core.sync.di.SyncModule
 import com.asensiodev.santoro.fake.FakeAuthRepository
 import com.asensiodev.santoro.fake.FakeDatabaseRepository
@@ -42,6 +45,7 @@ import com.asensiodev.santoro.fake.FakeRemoteConfigProvider
 import com.asensiodev.santoro.fake.FakeSearchMoviesRepository
 import com.asensiodev.santoro.fake.FakeSyncRepository
 import com.asensiodev.santoro.fake.FakeSyncScheduler
+import com.asensiodev.santoro.fake.FakeSyncStore
 import com.asensiodev.santoro.fake.FakeUserPreferencesRepository
 import dagger.Module
 import dagger.Provides
@@ -147,6 +151,18 @@ object AppJourneyTestModule {
     @Provides
     @Singleton
     fun provideSyncScheduler(): SyncScheduler = FakeSyncScheduler()
+
+    @Provides
+    @Singleton
+    fun provideSyncStore(): SyncStore = FakeSyncStore()
+
+    @Provides
+    @Singleton
+    fun provideMovieMetadataRemoteDataSource(): MovieMetadataRemoteDataSource =
+        object : MovieMetadataRemoteDataSource {
+            override suspend fun getMetadata(movieId: Int): Result<RemoteMovieMetadata> =
+                Result.success(RemoteMovieMetadata(emptyList(), ""))
+        }
 
     @Provides
     @Singleton

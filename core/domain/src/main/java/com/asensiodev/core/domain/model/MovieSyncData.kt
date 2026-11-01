@@ -6,6 +6,8 @@ data class MovieSyncData(
     val posterPath: String?,
     val genres: List<Genre>,
     val runtime: Int?,
+    val directors: List<Director>? = null,
+    val releaseDate: String? = null,
     val isWatched: Boolean,
     val isInWatchlist: Boolean,
     val watchedAt: Long?,

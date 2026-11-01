@@ -1,6 +1,7 @@
 package com.asensiodev.santoro.core.sync.scheduler
 
 import android.content.Context
+import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
@@ -8,8 +9,10 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.WorkRequest
 import androidx.work.workDataOf
 import com.asensiodev.core.domain.repository.SyncScheduler
+import com.asensiodev.santoro.core.sync.worker.DirectorBackfillWorker
 import com.asensiodev.santoro.core.sync.worker.SyncWorker
 import com.asensiodev.santoro.core.sync.worker.UploadWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -20,6 +23,7 @@ import javax.inject.Singleton
 private const val PERIODIC_SYNC_WORK_NAME = "santoro_periodic_sync"
 private const val UPLOAD_WORK_NAME_PREFIX = "santoro_upload_movie_"
 private const val IMMEDIATE_SYNC_WORK_NAME = "santoro_immediate_sync"
+private const val DIRECTOR_BACKFILL_WORK_NAME = "santoro_director_backfill"
 private const val SYNC_INTERVAL_HOURS = 6L
 
 @Singleton
@@ -80,6 +84,23 @@ class WorkManagerSyncScheduler
             WorkManager.getInstance(context).enqueueUniqueWork(
                 "$UPLOAD_WORK_NAME_PREFIX$movieId",
                 ExistingWorkPolicy.REPLACE,
+                request,
+            )
+        }
+
+        override fun enqueueDirectorBackfill() {
+            val request =
+                OneTimeWorkRequestBuilder<DirectorBackfillWorker>()
+                    .setConstraints(networkConstraints)
+                    .setBackoffCriteria(
+                        BackoffPolicy.EXPONENTIAL,
+                        WorkRequest.MIN_BACKOFF_MILLIS,
+                        TimeUnit.MILLISECONDS,
+                    ).build()
+
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                DIRECTOR_BACKFILL_WORK_NAME,
+                ExistingWorkPolicy.KEEP,
                 request,
             )
         }

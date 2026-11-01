@@ -16,6 +16,8 @@ private const val FIELD_MOVIE_ID = "movieId"
 private const val FIELD_TITLE = "title"
 private const val FIELD_POSTER_PATH = "posterPath"
 private const val FIELD_GENRES = "genres"
+private const val FIELD_DIRECTORS = "directors"
+private const val FIELD_RELEASE_DATE = "releaseDate"
 private const val FIELD_RUNTIME = "runtime"
 private const val FIELD_IS_WATCHED = "isWatched"
 private const val FIELD_IS_IN_WATCHLIST = "isInWatchlist"
@@ -89,6 +91,8 @@ internal class FirestoreMovieDataSource
                 FIELD_POSTER_PATH to posterPath,
                 FIELD_GENRES to genres,
                 FIELD_RUNTIME to runtime,
+                FIELD_DIRECTORS to directors,
+                FIELD_RELEASE_DATE to releaseDate,
                 FIELD_IS_WATCHED to isWatched,
                 FIELD_IS_IN_WATCHLIST to isInWatchlist,
                 FIELD_WATCHED_AT to watchedAt,
@@ -130,6 +134,8 @@ internal class FirestoreMovieDataSource
                         posterPath = getString(FIELD_POSTER_PATH),
                         genres = getString(FIELD_GENRES).orEmpty(),
                         runtime = getLong(FIELD_RUNTIME)?.toInt(),
+                        directors = getString(FIELD_DIRECTORS),
+                        releaseDate = getString(FIELD_RELEASE_DATE),
                         isWatched = getBoolean(FIELD_IS_WATCHED) ?: false,
                         isInWatchlist = getBoolean(FIELD_IS_IN_WATCHLIST) ?: false,
                         watchedAt = getLong(FIELD_WATCHED_AT),

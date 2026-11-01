@@ -421,14 +421,13 @@ private fun ParallaxBackdrop(
                 .graphicsLayer {
                     translationY = -scrollValue * PARALLAX_FACTOR
                     alpha = 1f - (scrollValue / BACKDROP_HEIGHT.toPx()).coerceIn(0f, 1f)
-                },
+                }.background(MaterialTheme.colorScheme.surfaceVariant),
     ) {
         AsyncImage(
             model = movie.backdropPath ?: movie.posterPath,
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
-            error = painterResource(DR.drawable.ic_movie_card_placeholder),
         )
         Box(
             modifier =
@@ -471,9 +470,7 @@ private fun MovieHeaderSection(
                     .padding(horizontal = Spacings.spacing16),
             verticalAlignment = Alignment.Bottom,
         ) {
-            AsyncImage(
-                model = movie.posterPath,
-                contentDescription = movie.title,
+            Box(
                 modifier =
                     Modifier
                         .width(POSTER_WIDTH)
@@ -484,9 +481,21 @@ private fun MovieHeaderSection(
                             shape = MaterialTheme.shapes.small,
                         ).clip(MaterialTheme.shapes.small)
                         .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentScale = ContentScale.Crop,
-                error = painterResource(DR.drawable.ic_movie_card_placeholder),
-            )
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(DR.drawable.ic_movie_card_placeholder),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(Size.size48),
+                )
+                AsyncImage(
+                    model = movie.posterPath,
+                    contentDescription = movie.title,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                )
+            }
             Spacer(modifier = Modifier.width(Spacings.spacing16))
             Column(
                 modifier =
@@ -683,11 +692,13 @@ private fun MovieDetailsSection(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        CastSection(
-            cast = movie.cast,
-            onPersonClicked = onPersonClicked,
-            scrollState = castScrollState,
-        )
+        if (movie.cast.isNotEmpty()) {
+            CastSection(
+                cast = movie.cast,
+                onPersonClicked = onPersonClicked,
+                scrollState = castScrollState,
+            )
+        }
         if (movie.keyCrew.isNotEmpty()) {
             CrewGridSection(crew = movie.keyCrew, onPersonClicked = onPersonClicked)
         }

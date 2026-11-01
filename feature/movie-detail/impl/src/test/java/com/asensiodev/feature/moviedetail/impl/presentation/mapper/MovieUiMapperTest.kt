@@ -3,6 +3,7 @@ package com.asensiodev.feature.moviedetail.impl.presentation.mapper
 import com.asensiodev.core.domain.model.CastMember
 import com.asensiodev.core.domain.model.CrewMember
 import com.asensiodev.core.domain.model.CrewRole
+import com.asensiodev.core.domain.model.Director
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.ProductionCountry
@@ -13,6 +14,29 @@ import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.Test
 
 class MovieUiMapperTest {
+    @Test
+    fun `GIVEN resolved co-directors WHEN mapped to ui and back THEN saved movie keeps them`() {
+        val directors = listOf(Director(id = 1223, name = "Joel Coen"), Director(id = 1224, name = "Ethan Coen"))
+
+        val result = detailMovie(directors = directors).toUi().toDomain()
+
+        result.directors shouldBeEqualTo directors
+    }
+
+    @Test
+    fun `GIVEN resolved empty directors WHEN mapped to ui and back THEN saved movie stays resolved empty`() {
+        val result = detailMovie(directors = emptyList()).toUi().toDomain()
+
+        result.directors shouldBeEqualTo emptyList()
+    }
+
+    @Test
+    fun `GIVEN offline unresolved directors WHEN mapped to ui and back THEN saved movie stays unresolved`() {
+        val result = detailMovie(directors = null).toUi().toDomain()
+
+        result.directors shouldBeEqualTo null
+    }
+
     @Test
     fun `GIVEN a Movie WHEN toUi THEN returns expected MovieUi`() {
         val movie =
@@ -176,3 +200,21 @@ class MovieUiMapperTest {
             isInWatchlist = false,
         )
 }
+
+private fun detailMovie(directors: List<Director>?) =
+    Movie(
+        id = 115,
+        title = "The Big Lebowski",
+        overview = "Overview",
+        posterPath = null,
+        backdropPath = null,
+        releaseDate = "1998-03-06",
+        popularity = 1.0,
+        voteAverage = 7.8,
+        voteCount = 10,
+        genres = emptyList(),
+        productionCountries = emptyList(),
+        directors = directors,
+        isWatched = true,
+        isInWatchlist = false,
+    )

@@ -8,9 +8,12 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.asensiodev.core.designsystem.theme.SantoroTheme
+import com.asensiodev.core.domain.model.Director
 import com.asensiodev.core.domain.model.Genre
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.ThemeOption
+import com.asensiodev.core.domain.model.WatchedGrouping
+import com.asensiodev.core.domain.model.WatchedViewMode
 import com.asensiodev.core.domain.repository.MovieMutationRepository
 import com.asensiodev.core.domain.repository.SyncScheduler
 import com.asensiodev.core.domain.repository.UserPreferencesRepository
@@ -51,6 +54,12 @@ class MovieDetailFeatureTest {
 
                         override suspend fun removeFromWatchlist(movieId: Int) =
                             Result.success(Unit)
+
+                        override suspend fun storeResolvedMetadata(
+                            movieId: Int,
+                            directors: List<Director>?,
+                            releaseDate: String?,
+                        ) = Result.success(false)
 
                         override suspend fun clearMovies() = Unit
                     },
@@ -112,6 +121,8 @@ private object NoOpSyncScheduler : SyncScheduler {
     override fun scheduleImmediateSync() = Unit
 
     override fun enqueueUpload(movieId: Int) = Unit
+
+    override fun enqueueDirectorBackfill() = Unit
 }
 
 private class RetryMovieDetailRepository(
@@ -134,6 +145,8 @@ private class FakeUserPreferencesRepository : UserPreferencesRepository {
     override val hasSeenGuestOnboarding = MutableStateFlow(true)
     override val hasSeenDetailTooltip = MutableStateFlow(true)
     override val theme = MutableStateFlow(ThemeOption.SYSTEM)
+    override val watchedViewMode = MutableStateFlow(WatchedViewMode.SHELF)
+    override val watchedGrouping = MutableStateFlow(WatchedGrouping.DATE_WATCHED)
 
     override suspend fun setHasSeenGuestOnboarding(hasSeen: Boolean) {
         hasSeenGuestOnboarding.value = hasSeen
@@ -145,5 +158,13 @@ private class FakeUserPreferencesRepository : UserPreferencesRepository {
 
     override suspend fun setTheme(option: ThemeOption) {
         theme.value = option
+    }
+
+    override suspend fun setWatchedViewMode(mode: WatchedViewMode) {
+        watchedViewMode.value = mode
+    }
+
+    override suspend fun setWatchedGrouping(grouping: WatchedGrouping) {
+        watchedGrouping.value = grouping
     }
 }

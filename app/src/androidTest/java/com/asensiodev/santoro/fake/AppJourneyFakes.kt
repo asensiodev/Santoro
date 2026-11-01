@@ -5,12 +5,17 @@ package com.asensiodev.santoro.fake
 import com.asensiodev.auth.domain.model.ExpectedUserSignOutOutcome
 import com.asensiodev.auth.domain.repository.AuthRepository
 import com.asensiodev.core.domain.model.CastMember
+import com.asensiodev.core.domain.model.Director
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.core.domain.model.MovieSyncData
 import com.asensiodev.core.domain.model.SantoroUser
 import com.asensiodev.core.domain.model.ThemeOption
+import com.asensiodev.core.domain.model.WatchedGrouping
+import com.asensiodev.core.domain.model.WatchedViewMode
 import com.asensiodev.core.domain.repository.MovieMutationRepository
 import com.asensiodev.core.domain.repository.SyncRepository
 import com.asensiodev.core.domain.repository.SyncScheduler
+import com.asensiodev.core.domain.repository.SyncStore
 import com.asensiodev.core.domain.repository.UserPreferencesRepository
 import com.asensiodev.feature.moviedetail.impl.domain.repository.MovieDetailRepository
 import com.asensiodev.feature.searchmovies.impl.domain.model.FetchPolicy
@@ -80,6 +85,8 @@ class FakeUserPreferencesRepository : UserPreferencesRepository {
     override val hasSeenGuestOnboarding = MutableStateFlow(true)
     override val hasSeenDetailTooltip = MutableStateFlow(true)
     override val theme = MutableStateFlow(ThemeOption.SYSTEM)
+    override val watchedViewMode = MutableStateFlow(WatchedViewMode.SHELF)
+    override val watchedGrouping = MutableStateFlow(WatchedGrouping.DATE_WATCHED)
 
     override suspend fun setHasSeenGuestOnboarding(hasSeen: Boolean) {
         hasSeenGuestOnboarding.value = hasSeen
@@ -93,10 +100,20 @@ class FakeUserPreferencesRepository : UserPreferencesRepository {
         theme.value = option
     }
 
+    override suspend fun setWatchedViewMode(mode: WatchedViewMode) {
+        watchedViewMode.value = mode
+    }
+
+    override suspend fun setWatchedGrouping(grouping: WatchedGrouping) {
+        watchedGrouping.value = grouping
+    }
+
     fun reset() {
         hasSeenGuestOnboarding.value = true
         hasSeenDetailTooltip.value = true
         theme.value = ThemeOption.SYSTEM
+        watchedViewMode.value = WatchedViewMode.SHELF
+        watchedGrouping.value = WatchedGrouping.DATE_WATCHED
     }
 }
 
@@ -241,6 +258,12 @@ class FakeDatabaseRepository :
         return Result.success(Unit)
     }
 
+    override suspend fun storeResolvedMetadata(
+        movieId: Int,
+        directors: List<Director>?,
+        releaseDate: String?,
+    ): Result<Boolean> = Result.success(false)
+
     override suspend fun clearMovies() {
         movies.value = emptyList()
     }
@@ -263,12 +286,30 @@ class FakeSyncRepository : SyncRepository {
     override suspend fun deleteUserData(uid: String): Result<Unit> = Result.success(Unit)
 }
 
+class FakeSyncStore : SyncStore {
+    override suspend fun getMovieForUpload(movieId: Int): Result<MovieSyncData?> =
+        Result.success(null)
+
+    override suspend fun getMoviesForUpload(): Result<List<MovieSyncData>> =
+        Result.success(emptyList())
+
+    override suspend fun getWatchedMovieIdsWithUnresolvedMetadata(): Result<List<Int>> =
+        Result.success(emptyList())
+
+    override suspend fun completeDownloadedMerge(
+        movies: List<MovieSyncData>,
+        canMerge: suspend () -> Boolean,
+    ): Result<Unit> = Result.success(Unit)
+}
+
 class FakeSyncScheduler : SyncScheduler {
     override fun schedulePeriodicSync() = Unit
 
     override fun scheduleImmediateSync() = Unit
 
     override fun enqueueUpload(movieId: Int) = Unit
+
+    override fun enqueueDirectorBackfill() = Unit
 }
 
 class FakeRemoteConfigProvider : RemoteConfigProvider {

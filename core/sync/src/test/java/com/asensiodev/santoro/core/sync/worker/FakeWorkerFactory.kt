@@ -7,11 +7,13 @@ import androidx.work.WorkerParameters
 import com.asensiodev.auth.domain.repository.AuthRepository
 import com.asensiodev.core.domain.repository.AccountDeletionRecoveryRepository
 import com.asensiodev.core.domain.repository.SyncRepository
+import com.asensiodev.core.domain.repository.SyncScheduler
 
 internal class FakeWorkerFactory(
     private val authRepository: AuthRepository,
     private val accountDeletionRecoveryRepository: AccountDeletionRecoveryRepository,
     private val syncRepository: SyncRepository,
+    private val syncScheduler: SyncScheduler,
 ) : WorkerFactory() {
     override fun createWorker(
         appContext: Context,
@@ -36,6 +38,7 @@ internal class FakeWorkerFactory(
                     authRepository,
                     accountDeletionRecoveryRepository,
                     syncRepository,
+                    syncScheduler,
                 )
             }
 

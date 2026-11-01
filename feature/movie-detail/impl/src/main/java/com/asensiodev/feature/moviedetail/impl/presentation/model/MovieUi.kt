@@ -1,5 +1,7 @@
 package com.asensiodev.feature.moviedetail.impl.presentation.model
 
+import com.asensiodev.core.domain.model.Director
+
 data class MovieUi(
     val id: Int,
     val title: String,
@@ -18,6 +20,7 @@ data class MovieUi(
     val runtime: String?,
     val runtimeMinutes: Int? = null,
     val director: String?,
+    val directors: List<Director>? = null,
     val isWatched: Boolean,
     val isInWatchlist: Boolean,
     val watchedAt: Long? = null,
