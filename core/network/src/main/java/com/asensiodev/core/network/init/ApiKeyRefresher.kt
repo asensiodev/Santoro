@@ -3,6 +3,7 @@ package com.asensiodev.core.network.init
 import com.asensiodev.core.network.data.repository.ApiKeyRepository
 import com.asensiodev.library.remoteconfig.api.RemoteConfigName
 import com.asensiodev.library.remoteconfig.api.RemoteConfigProvider
+import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,7 +21,13 @@ class ApiKeyRefresher
          * If RC fails or returns blank, this method is a no-op.
          */
         suspend fun ensureKeyUpToDate() {
-            remoteConfig.initialize()
+            try {
+                remoteConfig.initialize()
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (_: Exception) {
+                return
+            }
 
             val current: String? = repository.getSyncOrNull()
 

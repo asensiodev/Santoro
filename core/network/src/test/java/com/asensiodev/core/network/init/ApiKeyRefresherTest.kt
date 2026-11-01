@@ -9,9 +9,12 @@ import io.mockk.coEvery
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import java.io.IOException
 
 class ApiKeyRefresherTest {
     private var repository: ApiKeyRepository = mockk()
@@ -23,6 +26,24 @@ class ApiKeyRefresherTest {
     fun setup() {
         refresher = ApiKeyRefresher(repository, remoteConfig)
     }
+
+    @Test
+    fun `GIVEN remote config fetch fails offline WHEN ensureKeyUpToDate THEN keeps the local key without throwing`() =
+        runTest {
+            coEvery { remoteConfig.initialize() } throws IOException("Unable to resolve host")
+
+            refresher.ensureKeyUpToDate()
+
+            coVerifyNever { repository.refreshFromRemote(any()) }
+        }
+
+    @Test
+    fun `GIVEN remote config fetch is cancelled WHEN ensureKeyUpToDate THEN cancellation propagates`() =
+        runTest {
+            coEvery { remoteConfig.initialize() } throws CancellationException("Stopped")
+
+            assertThrows<CancellationException> { refresher.ensureKeyUpToDate() }
+        }
 
     @Test
     fun `GIVEN remote key is blank WHEN ensureKeyUpToDate is called THEN do nothing`() =
