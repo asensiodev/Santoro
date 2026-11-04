@@ -39,6 +39,8 @@ private fun List<PersonCreditApiModel>.toMovies(
                 posterPath = credits.firstNotNullOfOrNull { it.posterPath.nonBlank() },
                 releaseDate = credits.firstNotNullOfOrNull { it.releaseDate.validDate() },
                 roles = credits.mapNotNull { role(it).nonBlank() }.distinct(),
+                isVideo = credits.any { it.video == true },
+                genreIds = credits.flatMap { it.genreIds.orEmpty() }.distinct(),
             )
         }.sortedWith(
             compareByDescending<PersonMovieCredit> { it.releaseDate }

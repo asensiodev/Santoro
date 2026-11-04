@@ -4,8 +4,8 @@
 
 ## 1. Data and filter (test first)
 
-- [ ] 1.1 Observe a failing person credits HTTP test for `video` and `genre_ids`, then map them onto `PersonMovieCredit`; verify existing person tests stay green.
-- [ ] 1.2 Observe failing filter tests for director job, video, documentary, unreleased, undated, watched-documentary inclusion and dedupe, then implement `directedFeatureFilms`.
+- [x] 1.1 Observe a failing person credits HTTP test for `video` and `genre_ids`, then map them onto `PersonMovieCredit`; verify existing person tests stay green.
+- [x] 1.2 Observe failing filter tests for director job, video, documentary, unreleased, undated, watched-documentary inclusion and dedupe, then implement `directedFeatureFilms`.
 
 ## 2. Screen state (test first)
 

@@ -25,4 +25,6 @@ internal data class PersonCreditApiModel(
     @SerializedName("release_date") val releaseDate: String?,
     @SerializedName("character") val character: String?,
     @SerializedName("job") val job: String?,
+    @SerializedName("video") val video: Boolean? = null,
+    @SerializedName("genre_ids") val genreIds: List<Int>? = null,
 )

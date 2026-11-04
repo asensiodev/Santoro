@@ -4,9 +4,9 @@
 
 | Field        | Value                          |
 |--------------|--------------------------------|
-| **Version**  | 2.23                           |
+| **Version**  | 2.24                           |
 | **Status**   | ✅ Current                     |
-| **Date**     | 2026-11-01                     |
+| **Date**     | 2026-11-04                     |
 | **Author**   | @asensiodev                    |
 | **Platform** | Android (Native)               |
 
@@ -519,15 +519,15 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 ---
 
-### F-34 — Watched: Recent And A–Z Groupings
+### F-34 — Watched: Recent And A–Z Groupings And Collapsible Director Groups
 
 | Attribute | Detail |
 |---|---|
 | **Status** | 📋 Planned for 1.3.0, together with F-32 — no plan yet |
 | **Scope** | Watched screen groupings |
-| **Behaviour** | Replace the Date watched grouping (by month) with **Recent**, the default: all watched movies without group headings, most recently added first. Add an **A–Z** grouping with letter headings (case- and accent-insensitive; numbers and symbols under "#"; leading articles are not skipped). A saved Date watched preference maps to Recent. Works in Shelf and List |
+| **Behaviour** | Replace the Date watched grouping (by month) with **Recent**, the default: all watched movies without group headings, most recently added first. Add an **A–Z** grouping with letter headings (case- and accent-insensitive; numbers and symbols under "#"; leading articles are not skipped). A saved Date watched preference maps to Recent. In the **Director** grouping, each director heading gets a separate chevron that collapses or expands that director's movies; groups start collapsed so the screen reads as a list of directors, tapping the director name still opens the F-32 director collection, an active search expands groups with matches, and collapsed state is not persisted. Works in Shelf and List |
 | **Decision (2026-11-01)** | The app does not record or edit the date a movie was watched. Marking a movie as watched stays one tap; the stored timestamp only orders Recent and is never shown as a watch date. Statistics are timeless (F-33). Rationale: editable dates invite users to back-date their whole history, which is tedious and discouraging, while dates add little to a collection centred on directors, genres and decades |
-| **Boundaries** | No watch-date picker, "watched before" state, batch dating or monthly activity. A contacts-style alphabetical index (side scrubber) was considered and discarded for complexity |
+| **Boundaries** | No new view mode for collapsed groups and no collapsing in other groupings. No watch-date picker, "watched before" state, batch dating or monthly activity. A contacts-style alphabetical index (side scrubber) was considered and discarded for complexity |
 | **Rationale** | Users want to see their whole collection simply, either in the order they added movies or alphabetically, without misleading month headings |
 
 ---
@@ -570,3 +570,4 @@ Features approved for a future release. Each will get a FIP before implementatio
 | 2.21    | 2026-11-01 | Revise F-31 with a collection header, on-demand search and rounded grouping chips; remove the F-20 stats dashboard from the Watched screen and add F-33 Watched statistics screen to the backlog; sync release dates so restored movies keep their decade. |
 | 2.22    | 2026-11-01 | F-31 implemented and its OpenSpec change archived after validation and review; also fixes the offline cold start crash in API key refresh. |
 | 2.23    | 2026-11-01 | Revise the F-32 plan against the implemented F-31 (dimmed unwatched posters); make F-33 statistics timeless without the streak; add F-34 Recent and A–Z groupings and record the decision not to track editable watch dates. |
+| 2.24    | 2026-11-04 | Add collapsible director groups (collapsed by default, chevron separate from opening the director) to F-34. |
