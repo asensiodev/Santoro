@@ -9,8 +9,8 @@
 
 ## 2. Screen state (test first)
 
-- [ ] 2.1 Observe failing ViewModel tests for local-first state, success, failure, retry, cancellation and watched change without refetch, then implement the ViewModel.
-- [ ] 2.2 Observe a failing test for the persisted Show pending preference, then implement it in `UserPreferencesRepository` alongside F-31's view preferences.
+- [x] 2.1 Observe failing ViewModel tests for local-first state, success, failure, retry, cancellation and watched change without refetch, then implement the ViewModel.
+- [x] 2.2 Observe a failing test for the persisted Show pending preference, then implement it in `UserPreferencesRepository` alongside F-31's view preferences.
 
 ## 3. UI (test first)
 

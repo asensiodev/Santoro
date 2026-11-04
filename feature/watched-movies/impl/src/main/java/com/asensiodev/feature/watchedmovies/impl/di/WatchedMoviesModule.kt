@@ -9,6 +9,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import java.time.Clock
 import javax.inject.Singleton
 
 @Module
@@ -34,4 +35,7 @@ internal object WatchedMoviesModule {
         repository: DatabaseRepository,
         dispatchers: DispatcherProvider,
     ): GetWatchedStatsUseCase = GetWatchedStatsUseCase(repository, dispatchers)
+
+    @Provides
+    internal fun provideClock(): Clock = Clock.systemDefaultZone()
 }

@@ -11,9 +11,11 @@ interface UserPreferencesRepository {
     val theme: Flow<ThemeOption>
     val watchedViewMode: Flow<WatchedViewMode>
     val watchedGrouping: Flow<WatchedGrouping>
+    val directorShowPending: Flow<Boolean>
     suspend fun setHasSeenGuestOnboarding(hasSeen: Boolean)
     suspend fun setHasSeenDetailTooltip(hasSeen: Boolean)
     suspend fun setTheme(option: ThemeOption)
     suspend fun setWatchedViewMode(mode: WatchedViewMode)
     suspend fun setWatchedGrouping(grouping: WatchedGrouping)
+    suspend fun setDirectorShowPending(show: Boolean)
 }

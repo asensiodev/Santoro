@@ -35,6 +35,18 @@ class DefaultUserPreferencesRepository
             MutableStateFlow(readEnum(KEY_WATCHED_GROUPING, WatchedGrouping.DATE_WATCHED))
         override val watchedGrouping: Flow<WatchedGrouping> = _watchedGrouping.asStateFlow()
 
+        private val _directorShowPending =
+            MutableStateFlow(
+                secureKeyValueStore.readString(KEY_DIRECTOR_SHOW_PENDING)?.toBooleanStrictOrNull()
+                    ?: true,
+            )
+        override val directorShowPending: Flow<Boolean> = _directorShowPending.asStateFlow()
+
+        override suspend fun setDirectorShowPending(show: Boolean) {
+            secureKeyValueStore.writeString(KEY_DIRECTOR_SHOW_PENDING, show.toString())
+            _directorShowPending.value = show
+        }
+
         override suspend fun setWatchedViewMode(mode: WatchedViewMode) {
             secureKeyValueStore.writeString(KEY_WATCHED_VIEW_MODE, mode.name)
             _watchedViewMode.value = mode
@@ -91,5 +103,6 @@ class DefaultUserPreferencesRepository
             private const val KEY_THEME_OPTION = "theme_option"
             private const val KEY_WATCHED_VIEW_MODE = "watched_view_mode"
             private const val KEY_WATCHED_GROUPING = "watched_grouping"
+            private const val KEY_DIRECTOR_SHOW_PENDING = "director_show_pending"
         }
     }

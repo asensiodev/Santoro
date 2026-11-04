@@ -22,7 +22,38 @@ class DefaultUserPreferencesRepositoryTest {
         private const val KEY_THEME = "theme_option"
         private const val KEY_WATCHED_VIEW_MODE = "watched_view_mode"
         private const val KEY_WATCHED_GROUPING = "watched_grouping"
+        private const val KEY_DIRECTOR_SHOW_PENDING = "director_show_pending"
     }
+
+    @Test
+    fun `GIVEN saved hidden pending films WHEN init THEN show pending emits false`() =
+        runTest {
+            every { secureKeyValueStore.readString(KEY_DIRECTOR_SHOW_PENDING) } returns "false"
+
+            repository = DefaultUserPreferencesRepository(secureKeyValueStore)
+
+            repository.directorShowPending.first() shouldBeEqualTo false
+        }
+
+    @Test
+    fun `GIVEN missing or invalid show pending WHEN init THEN show pending emits true`() =
+        runTest {
+            every { secureKeyValueStore.readString(KEY_DIRECTOR_SHOW_PENDING) } returnsMany listOf(null, "maybe")
+
+            DefaultUserPreferencesRepository(secureKeyValueStore).directorShowPending.first() shouldBeEqualTo true
+            DefaultUserPreferencesRepository(secureKeyValueStore).directorShowPending.first() shouldBeEqualTo true
+        }
+
+    @Test
+    fun `GIVEN initialized repository WHEN show pending changes THEN updates store and flow`() =
+        runTest {
+            repository = DefaultUserPreferencesRepository(secureKeyValueStore)
+
+            repository.setDirectorShowPending(false)
+
+            verify { secureKeyValueStore.writeString(KEY_DIRECTOR_SHOW_PENDING, "false") }
+            repository.directorShowPending.first() shouldBeEqualTo false
+        }
 
     @Test
     fun `GIVEN saved list mode and director grouping WHEN init THEN flows emit them`() =
