@@ -2,6 +2,7 @@ package com.asensiodev.feature.watchedmovies.impl.presentation.director
 
 import com.asensiodev.core.domain.model.Director
 import com.asensiodev.core.domain.model.Movie
+import com.asensiodev.core.domain.model.Person
 import com.asensiodev.core.domain.model.PersonFilmography
 import com.asensiodev.core.domain.model.PersonMovieCredit
 import com.asensiodev.core.domain.repository.PersonRepository
@@ -47,6 +48,7 @@ class DirectorCollectionViewModelTest {
         every { getWatchedMoviesUseCase() } returns watchedMovies
         every { userPreferencesRepository.directorShowPending } returns flowOf(true)
         coEvery { personRepository.getMovieCredits(NOLAN) } returns filmography()
+        coEvery { personRepository.getPerson(NOLAN) } returns Result.success(person(PHOTO))
     }
 
     @AfterEach
@@ -65,6 +67,7 @@ class DirectorCollectionViewModelTest {
             viewModel.uiState.value shouldBeEqualTo
                 DirectorCollectionUiState(
                     directorName = NAME,
+                    profilePath = PHOTO,
                     films = listOf(watchedFilm(1, "Memento", "2000-09-05")),
                     watchedCount = 1,
                     totalCount = null,
@@ -185,6 +188,38 @@ class DirectorCollectionViewModelTest {
             initializedViewModel().uiState.value.showPending shouldBeEqualTo true
         }
 
+    @Test
+    fun `GIVEN a director with a photo WHEN initialized THEN the header shows the photo`() =
+        runTest {
+            initializedViewModel().uiState.value.profilePath shouldBeEqualTo PHOTO
+        }
+
+    @Test
+    fun `GIVEN the profile request fails WHEN initialized THEN shows no photo and still loads the filmography`() =
+        runTest {
+            coEvery { personRepository.getPerson(NOLAN) } returns Result.failure(IOException("offline"))
+            val state = initializedViewModel().uiState.value
+
+            state.profilePath shouldBeEqualTo null
+            state.filmographyState shouldBeEqualTo FilmographyState.CONTENT
+            state.totalCount shouldBeEqualTo 3
+        }
+
+    @Test
+    fun `GIVEN the filmography fails WHEN retried THEN the profile is not requested again`() =
+        runTest {
+            coEvery { personRepository.getMovieCredits(NOLAN) } returns Result.failure(IOException("offline"))
+            val viewModel = initializedViewModel()
+
+            viewModel.process(DirectorCollectionIntent.RetryFilmography)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.profilePath shouldBeEqualTo PHOTO
+            coVerify(exactly = 1) { personRepository.getPerson(NOLAN) }
+        }
+
+    private fun person(profilePath: String?) = Person(NOLAN, NAME, "", profilePath, null, null, null)
+
     private suspend fun kotlinx.coroutines.test.TestScope.initializedViewModel(): DirectorCollectionViewModel {
         val viewModel =
             DirectorCollectionViewModel(getWatchedMoviesUseCase, personRepository, userPreferencesRepository, CLOCK)
@@ -244,6 +279,7 @@ class DirectorCollectionViewModelTest {
     private companion object {
         const val NOLAN = 525
         const val NAME = "Christopher Nolan"
+        const val PHOTO = "/nolan.jpg"
         val CLOCK: Clock = Clock.fixed(Instant.parse("2026-11-04T10:00:00Z"), ZoneOffset.UTC)
     }
 }

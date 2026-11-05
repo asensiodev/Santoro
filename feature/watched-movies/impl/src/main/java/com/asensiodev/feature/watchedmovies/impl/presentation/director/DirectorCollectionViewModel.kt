@@ -56,8 +56,20 @@ internal class DirectorCollectionViewModel
             personId = id
             _uiState.update { it.copy(directorName = name) }
             viewModelScope.launch { loadShowPending() }
+            loadProfilePhoto(id)
             observeWatched(id)
             loadFilmography()
+        }
+
+        private fun loadProfilePhoto(id: Int) {
+            viewModelScope.launch {
+                val result = personRepository.getPerson(id)
+                ensureActive()
+                result
+                    .onSuccess { person ->
+                        _uiState.update { it.copy(profilePath = person.profilePath) }
+                    }.onFailure { error -> if (error is CancellationException) throw error }
+            }
         }
 
         private fun observeWatched(id: Int) {

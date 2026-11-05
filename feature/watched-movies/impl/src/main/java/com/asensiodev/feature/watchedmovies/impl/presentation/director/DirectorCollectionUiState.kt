@@ -11,6 +11,7 @@ internal enum class FilmographyState {
 
 internal data class DirectorCollectionUiState(
     val directorName: String = "",
+    val profilePath: String? = null,
     val films: List<DirectorFilm> = emptyList(),
     val watchedCount: Int = 0,
     val totalCount: Int? = null,

@@ -24,5 +24,5 @@ internal fun Movie.toUi(): MovieUi =
 
 internal fun List<Movie>.toUiList(): List<MovieUi> = this.map { it.toUi() }
 
-private const val BASE_POSTER_URL = "https://image.tmdb.org/t/p/w500"
+internal const val BASE_POSTER_URL = "https://image.tmdb.org/t/p/w500"
 private const val DIRECTOR_SEPARATOR = ", "

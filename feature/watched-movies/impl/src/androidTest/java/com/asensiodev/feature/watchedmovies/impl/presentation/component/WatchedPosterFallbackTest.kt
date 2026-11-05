@@ -17,6 +17,8 @@ import coil3.intercept.Interceptor
 import coil3.request.ErrorResult
 import coil3.request.ImageRequest
 import com.asensiodev.core.designsystem.theme.SantoroTheme
+import com.asensiodev.feature.watchedmovies.impl.domain.model.DirectorFilm
+import com.asensiodev.feature.watchedmovies.impl.presentation.director.DirectorFilmCard
 import com.asensiodev.feature.watchedmovies.impl.presentation.model.MovieUi
 import kotlinx.coroutines.CompletableDeferred
 import org.junit.After
@@ -73,6 +75,23 @@ class WatchedPosterFallbackTest {
             SantoroTheme {
                 MovieCard(
                     movie = MovieUi(1, TITLE, POSTER_URL, "March 2026"),
+                    onClick = {},
+                    modifier = Modifier.width(120.dp).aspectRatio(2f / 3f),
+                )
+            }
+        }
+
+        composeRule.waitUntil { failed.isCompleted }
+
+        composeRule.onNodeWithText(TITLE).assertIsDisplayed()
+    }
+
+    @Test
+    fun givenUnwatchedDirectorFilmPosterFailsToLoad_whenShown_thenPlaceholderShowsTheTitle() {
+        composeRule.setContent {
+            SantoroTheme {
+                DirectorFilmCard(
+                    film = DirectorFilm(1, TITLE, "/poster.jpg", "2021-04-07", isWatched = false),
                     onClick = {},
                     modifier = Modifier.width(120.dp).aspectRatio(2f / 3f),
                 )

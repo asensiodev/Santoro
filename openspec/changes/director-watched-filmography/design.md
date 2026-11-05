@@ -35,7 +35,7 @@ The ViewModel combines the local watched flow (filtered by director ID) with a o
 
 ### Data sources and side effects
 
-- Allowed: TMDB `person/{id}/movie_credits` (existing), Room reads, `UserPreferencesRepository` preference, navigation to movie detail and person profile.
+- Allowed: TMDB `person/{id}/movie_credits` and `person/{id}` for the header photo (existing), Room reads, `UserPreferencesRepository` preference, navigation to movie detail and person profile.
 - Forbidden: writes to movies, list flags or Firestore; persisting filmographies.
 
 ### Failure UX
@@ -47,6 +47,7 @@ Local watched films render first, ordered chronologically from their stored rele
 - Unwatched films show their TMDB poster dimmed (reduced alpha and desaturated) without a watched mark, instead of dashed placeholders: the poster stays recognizable while the mark and emphasis make the gap clear. They are announced as not watched.
 - Poster tiles reuse F-31's pattern: the placeholder with the title is drawn under the image, so a missing or failed poster still shows the title, dimmed for unwatched films.
 - The grid keeps bottom content padding above the bottom bar, as in F-31.
+- Header (revision 2026-11-05): the top bar shows the director's TMDB profile photo in a small circle next to the name, so the screen reads as the director's page and links visually to the person profile. The photo comes from the existing `PersonRepository.getPerson(id)` in a separate request owned by the ViewModel, independent of the filmography: until it loads, or if it fails or the person has no photo, only the name is shown, with no error and no retry. The Director grouping heading keeps opening this screen; the name and photo open the person profile.
 - Accepted limitation: a watched movie whose directors are still unresolved (backfill pending, or opened only offline) does not appear in the director's collection until resolved; the TMDB filmography still lists it as unwatched until then.
 
 ## Test Boundaries
@@ -55,8 +56,8 @@ Confirmed by the user on 2026-11-01 ("si, empieza con F-32"), together with the 
 
 - Person credits HTTP integration test for `video` and `genre_ids` mapping.
 - Pure filter tests: director job, video, documentary, unreleased, undated, watched-documentary inclusion, dedupe.
-- ViewModel tests: local-first state, success, failure and retry, cancellation, watched change without refetch, pending preference.
-- Plain Compose tests: summary text, watched mark semantics, not-watched semantics of dimmed posters, failed-poster title fallback, switch, film and header callbacks, inline error retry.
+- ViewModel tests: local-first state, success, failure and retry, cancellation, watched change without refetch, pending preference, header photo loaded or failed without affecting the filmography.
+- Plain Compose tests: header photo shown when available, summary text, watched mark semantics, not-watched semantics of dimmed posters, failed-poster title fallback, switch, film and header callbacks, inline error retry.
 - Paparazzi light/dark: partial collection, pending hidden, loading, error, Spanish large font.
 - App journey: Watched → director heading → Director collection → unwatched film detail → Back → Back.
 

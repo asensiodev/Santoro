@@ -66,7 +66,7 @@ internal fun MovieCard(
 }
 
 @Composable
-private fun PlaceholderContent(title: String) {
+internal fun PlaceholderContent(title: String) {
     Column(
         modifier =
             Modifier

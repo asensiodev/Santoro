@@ -91,7 +91,7 @@ class WatchedMoviesScreenScreenshotTest(
                                 fontScale = if (scenario == SPANISH_LARGE) LARGE_FONT_SCALE else 1f,
                             ),
                     ) {
-                        WatchedMoviesScreen(state, {}, {}, {})
+                        WatchedMoviesScreen(state, {}, {}, { _, _ -> })
                     }
                 }
             }

@@ -218,10 +218,23 @@
     <string name="watched_group_no_genre">No genre</string>
     <string name="watched_group_undated">Undated</string>
     <string name="watched_group_decade_label" formatted="true">%1$ds</string>
-    <string name="watched_group_open_director">Open director profile</string>
+    <string name="watched_group_open_director">Open director collection</string>
     <string name="watched_search_close">Close search</string>
     <plurals name="watched_group_movie_count">
         <item quantity="one">%d movie</item>
         <item quantity="other">%d movies</item>
     </plurals>
+    <string name="director_collection_open_profile">Open director profile</string>
+    <string name="director_collection_progress" formatted="true">Watched %1$d of %2$d</string>
+    <string name="director_collection_percent" formatted="true">%1$d%%</string>
+    <plurals name="director_collection_watched_count">
+        <item quantity="one">%d watched</item>
+        <item quantity="other">%d watched</item>
+    </plurals>
+    <string name="director_collection_show_pending">Show pending</string>
+    <string name="director_collection_loading">Loading filmography</string>
+    <string name="director_collection_error">Couldn\'t load the full filmography</string>
+    <string name="director_collection_empty">No films to show</string>
+    <string name="director_collection_watched">Watched</string>
+    <string name="director_collection_not_watched">Not watched</string>
 </resources>

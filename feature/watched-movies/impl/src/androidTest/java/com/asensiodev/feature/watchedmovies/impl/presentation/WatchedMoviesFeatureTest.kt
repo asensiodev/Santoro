@@ -62,7 +62,7 @@ class WatchedMoviesFeatureTest {
             SantoroTheme {
                 WatchedMoviesRoute(
                     onMovieClick = { selectedMovieId = it },
-                    onDirectorClick = {},
+                    onDirectorClick = { _, _ -> },
                     viewModel = viewModel,
                 )
             }
