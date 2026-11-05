@@ -45,6 +45,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -160,6 +161,7 @@ internal fun DirectorCollectionScreen(
                 )
             }
             if (uiState.visibleFilms.isEmpty() &&
+                uiState.visibleShorts.isEmpty() &&
                 uiState.filmographyState != FilmographyState.LOADING
             ) {
                 item(
@@ -186,7 +188,59 @@ internal fun DirectorCollectionScreen(
                     modifier = Modifier.aspectRatio(POSTER_RATIO),
                 )
             }
+            if (uiState.visibleShorts.isNotEmpty()) {
+                item(
+                    key = KEY_SHORTS,
+                    span = { GridItemSpan(maxLineSpan) },
+                    contentType = KEY_SHORTS,
+                ) {
+                    ShortsHeading(watched = uiState.shortsWatchedCount, total = uiState.shorts.size)
+                }
+                items(
+                    items = uiState.visibleShorts,
+                    key = { "$KEY_SHORTS${it.movieId}" },
+                    contentType = { CONTENT_TYPE_FILM },
+                ) { film ->
+                    DirectorFilmCard(
+                        film = film,
+                        onClick = { onMovieClick(film.movieId) },
+                        modifier = Modifier.aspectRatio(POSTER_RATIO),
+                    )
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun ShortsHeading(
+    watched: Int,
+    total: Int,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(top = Spacings.spacing16)
+                .semantics(mergeDescendants = true) { heading() },
+        horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(SR.string.director_collection_shorts),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text =
+                stringResource(
+                    SR.string.director_collection_shorts_progress,
+                    watched,
+                    total,
+                ),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -345,6 +399,7 @@ private const val KEY_SUMMARY = "summary"
 private const val KEY_ERROR = "error"
 private const val KEY_SHOW_PENDING = "show_pending"
 private const val KEY_EMPTY = "empty"
+private const val KEY_SHORTS = "shorts"
 private const val CONTENT_TYPE_FILM = "film"
 
 @PreviewLightDark

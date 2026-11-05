@@ -68,3 +68,34 @@ Instrumented Compose tests ran on `emulator-5554` (API 36 arm64 emulator) by ins
 - Gate: `verifyPaparazziDebug ktlintCheck detekt :architecture-tests:test :feature:watched-movies:impl:testDebugUnitTest :feature:watched-movies:impl:compileDebugAndroidTestKotlin :app:assembleDebug` passed.
 - Demo on `emulator-5554` with a guest session (the debug app's local data was cleared first so no real account was used): Christopher Nolan shows his photo, "Watched 4 of 16", 25% and real posters, with unwatched films dimmed and grey. Observation: his three early shorts (Doodlebug, Larceny, Tarantella) appear as unwatched films and count towards the 16, which is the accepted short-film limitation.
 
+## Phase 5 — Short films (revision 2026-11-05)
+
+Plan updated first (proposal, design "Short films", spec scenarios "Early shorts" and "Runtime unknown", tasks 5.1–5.4); `openspec validate director-watched-filmography --strict` passed.
+
+### 5.1 Runtime repository
+
+- Scaffolding: `MovieRuntimeRepository` in `core/domain`, `MovieRuntimeApiService` (`movie/{id}`, `id` and `runtime`), a `TmdbMovieRuntimeRepository` returning an empty map, and its Hilt binding in `PersonDetailModule`.
+- Red: both `MovieRuntimeRepositoryHttpTest` cases failed on assertions (`Expected: <Pairs: []> but was: <Pairs: [(1, 30), (2, 113)]>` for known runtimes with zero, null and HTTP 500 left out, and for a second call that serves cached runtimes and retries only the failed lookup, 3 requests in total).
+- Green: up to 6 parallel requests (`Semaphore`), positive runtimes cached in memory for the process, failures returned as unknown and not cached, `CancellationException` rethrown. `:feature:person-detail:impl:testDebugUnitTest` passed.
+
+### 5.2 Short classification
+
+- Scaffolding: `DirectorFilmography(features, shorts)` and `splitShorts(runtimes)` returning everything as features.
+- Red: both `ShortFilmsTest` cases failed on assertions (40 and 9 minutes are shorts, 41 minutes and unknown runtime stay features; a watched short stays watched among shorts).
+- Green: `splitShorts` partitions by a known runtime of 40 minutes or less, preserving order. The file is `DirectorFilmography.kt` (Detekt `MatchingDeclarationName`).
+
+### 5.3 ViewModel
+
+- Scaffolding: `DirectorCollectionUiState.shorts`, `visibleShorts`, `shortsWatchedCount`, and `MovieRuntimeRepository` injected without use.
+- Red: 4 new `DirectorCollectionViewModelTest` cases failed on assertions: the short counted among feature films (`[5, 1, 2, 3]`), no runtime lookup for films without a stored runtime, `CONTENT` while runtimes were still loading, and a locally stored watched short not split out.
+- Green: after the credits succeed, the filmography job requests runtimes only for candidates without a positive stored `Movie.runtime`, then publishes features and shorts together; stored runtimes classify local watched films immediately. The summary counts feature films only. `:feature:watched-movies:impl:testDebugUnitTest` passed.
+
+### 5.4 Shorts section
+
+- Red: `givenShorts_whenShown_thenListsThemApartWithTheirOwnCount` failed (no Doodlebug node in the grid); the hidden-section case passed as a guardrail.
+- Green: below the feature grid, a Shorts heading (accessibility heading) with "X of Y watched" and the same tiles with their own keys; hidden when it has no visible films; the empty message only shows when both lists are empty. English "Shorts" / "X of Y watched", Spanish "Cortometrajes" / "X de Y vistos". The module's instrumented suite passed (31 tests on `emulator-5554`).
+- Journey DI: `AppJourneyTestModule` binds a `FakeMovieRuntimeRepository` (no runtimes, so every film stays a feature film); all 18 app journeys passed.
+- Screenshots: recorded `DirectorCollectionScreenScreenshotTest` with the new `shorts` scenario in light and dark (2 new images, no other golden changed) and inspected them.
+- Gate: `verifyPaparazziDebug ktlintCheck detekt :architecture-tests:test :feature:watched-movies:impl:testDebugUnitTest :feature:person-detail:impl:testDebugUnitTest :app:assembleDebug` passed.
+- Demo on `emulator-5554` (guest session, real TMDB data): Christopher Nolan reads "Watched 4 of 13", 31%, and a Shorts section lists Tarantella, Larceny and Doodlebug with 0 of 3 watched.
+

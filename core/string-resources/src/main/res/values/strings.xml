@@ -237,4 +237,6 @@
     <string name="director_collection_empty">No films to show</string>
     <string name="director_collection_watched">Watched</string>
     <string name="director_collection_not_watched">Not watched</string>
+    <string name="director_collection_shorts">Shorts</string>
+    <string name="director_collection_shorts_progress" formatted="true">%1$d of %2$d watched</string>
 </resources>

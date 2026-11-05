@@ -19,6 +19,13 @@
 
 - [x] 3.3 Observe failing ViewModel and Compose tests for the header photo (loaded, missing, failed without affecting the filmography), then load it through `PersonRepository.getPerson` and show it next to the name; verify the Paparazzi baselines.
 
+## 5. Short films (revision 2026-11-05)
+
+- [x] 5.1 Observe a failing HTTP test for `MovieRuntimeRepository` (runtime parsing, cache, failed lookup unknown), then implement it in person-detail impl with bounded parallel requests.
+- [x] 5.2 Observe failing filter tests for short classification (40 and 41 minutes, unknown runtime, watched short), then split the filmography into feature films and shorts.
+- [x] 5.3 Observe failing ViewModel tests for summary over feature films only, shorts count, local watched shorts and runtime lookup only after credits, then implement.
+- [x] 5.4 Observe failing Compose tests for the Shorts section (heading, count, hidden with pending off and no watched shorts), then build it; record and inspect Paparazzi baselines.
+
 ## 4. Navigation and validation
 
 - [x] 4.1 Observe a failing app journey for Watched → director heading → Director collection → film detail → Back → Back, then add the route and replace F-31's person-profile link.

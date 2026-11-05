@@ -5,6 +5,7 @@ import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.Person
 import com.asensiodev.core.domain.model.PersonFilmography
 import com.asensiodev.core.domain.model.PersonMovieCredit
+import com.asensiodev.core.domain.repository.MovieRuntimeRepository
 import com.asensiodev.core.domain.repository.PersonRepository
 import com.asensiodev.core.domain.repository.UserPreferencesRepository
 import com.asensiodev.feature.watchedmovies.impl.domain.model.DirectorFilm
@@ -38,6 +39,7 @@ import java.time.ZoneOffset
 class DirectorCollectionViewModelTest {
     private val getWatchedMoviesUseCase: GetWatchedMoviesUseCase = mockk()
     private val personRepository: PersonRepository = mockk()
+    private val movieRuntimeRepository: MovieRuntimeRepository = mockk()
     private val userPreferencesRepository: UserPreferencesRepository = mockk(relaxed = true)
     private val watchedMovies = MutableStateFlow(Result.success(listOf(watched(1, "Memento", "2000-09-05"))))
     private val testDispatcher = StandardTestDispatcher()
@@ -49,6 +51,7 @@ class DirectorCollectionViewModelTest {
         every { userPreferencesRepository.directorShowPending } returns flowOf(true)
         coEvery { personRepository.getMovieCredits(NOLAN) } returns filmography()
         coEvery { personRepository.getPerson(NOLAN) } returns Result.success(person(PHOTO))
+        coEvery { movieRuntimeRepository.getRuntimes(any()) } returns emptyMap()
     }
 
     @AfterEach
@@ -218,17 +221,75 @@ class DirectorCollectionViewModelTest {
             coVerify(exactly = 1) { personRepository.getPerson(NOLAN) }
         }
 
+    @Test
+    fun `GIVEN shorts in the filmography WHEN loaded THEN only feature films count and shorts are apart`() =
+        runTest {
+            coEvery { personRepository.getMovieCredits(NOLAN) } returns
+                filmography(credit(5, "Doodlebug", "1997-01-01"))
+            coEvery { movieRuntimeRepository.getRuntimes(any()) } returns mapOf(5 to 3, 2 to 148, 3 to 180)
+            val state = initializedViewModel().uiState.value
+
+            state.films.map { it.movieId } shouldBeEqualTo listOf(1, 2, 3)
+            state.shorts shouldBeEqualTo listOf(DirectorFilm(5, "Doodlebug", "/5.jpg", "1997-01-01", isWatched = false))
+            state.watchedCount shouldBeEqualTo 1
+            state.totalCount shouldBeEqualTo 3
+            state.shortsWatchedCount shouldBeEqualTo 0
+        }
+
+    @Test
+    fun `GIVEN credits loaded WHEN runtimes are requested THEN only films without a stored runtime are looked up`() =
+        runTest {
+            watchedMovies.value = Result.success(listOf(watched(1, "Memento", "2000-09-05", runtime = 113)))
+
+            initializedViewModel()
+
+            coVerify(exactly = 1) { movieRuntimeRepository.getRuntimes(listOf(2, 3)) }
+        }
+
+    @Test
+    fun `GIVEN runtimes still loading WHEN credits arrive THEN the filmography stays loading with local films only`() =
+        runTest {
+            coEvery { movieRuntimeRepository.getRuntimes(any()) } coAnswers { CompletableDeferred<Nothing>().await() }
+            val state = initializedViewModel().uiState.value
+
+            state.filmographyState shouldBeEqualTo FilmographyState.LOADING
+            state.totalCount shouldBeEqualTo null
+            state.films shouldBeEqualTo listOf(watchedFilm(1, "Memento", "2000-09-05"))
+        }
+
+    @Test
+    fun `GIVEN a watched short stored locally WHEN the filmography is loading THEN it already shows among shorts`() =
+        runTest {
+            coEvery { personRepository.getMovieCredits(NOLAN) } coAnswers { CompletableDeferred<Nothing>().await() }
+            watchedMovies.value =
+                Result.success(
+                    listOf(watched(1, "Memento", "2000-09-05"), watched(5, "Doodlebug", "1997-01-01", runtime = 3)),
+                )
+            val state = initializedViewModel().uiState.value
+
+            state.films shouldBeEqualTo listOf(watchedFilm(1, "Memento", "2000-09-05"))
+            state.shorts shouldBeEqualTo listOf(watchedFilm(5, "Doodlebug", "1997-01-01"))
+            state.watchedCount shouldBeEqualTo 1
+            state.shortsWatchedCount shouldBeEqualTo 1
+        }
+
     private fun person(profilePath: String?) = Person(NOLAN, NAME, "", profilePath, null, null, null)
 
     private suspend fun kotlinx.coroutines.test.TestScope.initializedViewModel(): DirectorCollectionViewModel {
         val viewModel =
-            DirectorCollectionViewModel(getWatchedMoviesUseCase, personRepository, userPreferencesRepository, CLOCK)
+            DirectorCollectionViewModel(
+                getWatchedMoviesUseCase,
+                personRepository,
+                movieRuntimeRepository,
+                userPreferencesRepository,
+                CLOCK,
+            )
         viewModel.process(DirectorCollectionIntent.Initialize(NOLAN, NAME))
         advanceUntilIdle()
         return viewModel
     }
 
-    private fun filmography() =
+    private fun filmography(vararg extraCredits: PersonMovieCredit) =
         Result.success(
             PersonFilmography(
                 acting = emptyList(),
@@ -238,7 +299,7 @@ class DirectorCollectionViewModelTest {
                         credit(1, "Memento", "2000-09-05"),
                         credit(3, "Oppenheimer", "2023-07-19"),
                         credit(4, "Future", "2030-01-01"),
-                    ),
+                    ) + extraCredits,
             ),
         )
 
@@ -259,6 +320,7 @@ class DirectorCollectionViewModelTest {
         title: String,
         releaseDate: String,
         directorId: Int = NOLAN,
+        runtime: Int? = null,
     ) = Movie(
         id = id,
         title = title,
@@ -272,6 +334,7 @@ class DirectorCollectionViewModelTest {
         genres = emptyList(),
         productionCountries = emptyList(),
         directors = listOf(Director(directorId, "Director $directorId")),
+        runtime = runtime,
         isWatched = true,
         isInWatchlist = false,
     )

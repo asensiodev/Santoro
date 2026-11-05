@@ -49,6 +49,7 @@ class DirectorCollectionScreenScreenshotTest(
             when (scenario) {
                 "partial", SPANISH_LARGE -> partialState
                 "pendingHidden" -> partialState.copy(showPending = false)
+                "shorts" -> shortsState
                 "loading" -> localState(FilmographyState.LOADING)
                 "error" -> localState(FilmographyState.ERROR)
                 else -> error("Unknown scenario")
@@ -73,6 +74,7 @@ class DirectorCollectionScreenScreenshotTest(
     companion object {
         private const val SPANISH_LARGE = "spanishLarge"
         private const val LARGE_FONT_SCALE = 2f
+        private const val SHORTS_SCENARIO_FEATURES = 3
         private const val NAME = "Christopher Nolan"
         private val films =
             listOf(
@@ -95,6 +97,21 @@ class DirectorCollectionScreenScreenshotTest(
                 filmographyState = FilmographyState.CONTENT,
             )
 
+        private val shortsState =
+            films.take(SHORTS_SCENARIO_FEATURES).let { features ->
+                partialState.copy(
+                    films = features,
+                    shorts =
+                        listOf(
+                            DirectorFilm(1000, "Tarantella", null, "1989-01-01", isWatched = false),
+                            DirectorFilm(1001, "Larceny", null, "1996-01-01", isWatched = true),
+                            DirectorFilm(1002, "Doodlebug", null, "1997-01-01", isWatched = false),
+                        ),
+                    watchedCount = features.count { it.isWatched },
+                    totalCount = features.size,
+                )
+            }
+
         private fun localState(filmographyState: FilmographyState): DirectorCollectionUiState {
             val watched = films.filter { it.isWatched }
             return DirectorCollectionUiState(
@@ -109,7 +126,7 @@ class DirectorCollectionScreenScreenshotTest(
         @JvmStatic
         @Parameterized.Parameters(name = "{0}-dark={1}")
         fun scenarios(): List<Array<Any>> =
-            listOf("partial", "pendingHidden", "loading", "error", SPANISH_LARGE).flatMap { scenario ->
+            listOf("partial", "pendingHidden", "shorts", "loading", "error", SPANISH_LARGE).flatMap { scenario ->
                 listOf(arrayOf(scenario, false), arrayOf(scenario, true))
             }
     }

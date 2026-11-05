@@ -237,4 +237,6 @@
     <string name="director_collection_empty">No hay películas que mostrar</string>
     <string name="director_collection_watched">Vista</string>
     <string name="director_collection_not_watched">No vista</string>
+    <string name="director_collection_shorts">Cortometrajes</string>
+    <string name="director_collection_shorts_progress" formatted="true">%1$d de %2$d vistos</string>
 </resources>

@@ -24,7 +24,7 @@ The app SHALL show a Director collection screen with the director's name, a "Wat
 - **THEN** the film shows as watched and the summary updates without a new filmography request
 
 ### Requirement: Feature films only
-The filmography SHALL include movies where the person has the Director job, that are not flagged as video, are not documentaries, and have a release date on or before today. Movies the user has watched with this person as a stored director SHALL always be included and counted, even if they would otherwise be excluded. Movies SHALL be deduplicated by ID.
+The filmography SHALL include movies where the person has the Director job, that are not flagged as video, are not documentaries, and have a release date on or before today. Movies the user has watched with this person as a stored director SHALL always be included and counted, even if they would otherwise be excluded. Movies SHALL be deduplicated by ID. A film whose known runtime is 40 minutes or less SHALL be treated as a short: it SHALL appear in a separate Shorts section below the feature films, with its own watched count, and SHALL not be counted in the main summary. A film with an unknown runtime SHALL be treated as a feature film.
 
 #### Scenario: Documentary excluded
 - **WHEN** a director's TMDB credits include a documentary they directed that the user has not watched
@@ -33,6 +33,14 @@ The filmography SHALL include movies where the person has the Director job, that
 #### Scenario: Watched documentary kept
 - **WHEN** the user has watched a documentary by that director
 - **THEN** it is shown as watched and counted in both X and Y
+
+#### Scenario: Early shorts
+- **WHEN** a director has 13 feature films and 3 shorts of 30 minutes or less, and the user has watched 4 feature films
+- **THEN** the summary reads 4 of 13, and a Shorts section below lists the 3 shorts with 0 of 3 watched
+
+#### Scenario: Runtime unknown
+- **WHEN** a film's runtime is missing or its runtime request fails
+- **THEN** the film is listed and counted as a feature film
 
 #### Scenario: Unreleased film excluded
 - **WHEN** a credit has no release date or a future release date

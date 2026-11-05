@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.PersonMovieCredit
+import com.asensiodev.core.domain.repository.MovieRuntimeRepository
 import com.asensiodev.core.domain.repository.PersonRepository
 import com.asensiodev.core.domain.repository.UserPreferencesRepository
 import com.asensiodev.feature.watchedmovies.impl.domain.filter.directedFeatureFilms
+import com.asensiodev.feature.watchedmovies.impl.domain.filter.splitShorts
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchedMoviesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
@@ -29,6 +31,7 @@ internal class DirectorCollectionViewModel
     constructor(
         private val getWatchedMoviesUseCase: GetWatchedMoviesUseCase,
         private val personRepository: PersonRepository,
+        private val movieRuntimeRepository: MovieRuntimeRepository,
         private val userPreferencesRepository: UserPreferencesRepository,
         private val clock: Clock,
     ) : ViewModel() {
@@ -38,6 +41,7 @@ internal class DirectorCollectionViewModel
         private var personId: Int? = null
         private var watchedByDirector: List<Movie> = emptyList()
         private var crewCredits: List<PersonMovieCredit>? = null
+        private var fetchedRuntimes: Map<Int, Int> = emptyMap()
         private var request: Job? = null
 
         fun process(intent: DirectorCollectionIntent) {
@@ -94,6 +98,7 @@ internal class DirectorCollectionViewModel
                     ensureActive()
                     result.fold(
                         onSuccess = { filmography ->
+                            fetchedRuntimes = runtimesFor(filmography.crew)
                             crewCredits = filmography.crew
                             publishFilms()
                         },
@@ -105,13 +110,36 @@ internal class DirectorCollectionViewModel
                 }
         }
 
+        private suspend fun runtimesFor(credits: List<PersonMovieCredit>): Map<Int, Int> {
+            val stored = storedRuntimes()
+            val missing =
+                directedFeatureFilms(credits, watchedByDirector, LocalDate.now(clock))
+                    .map { it.movieId }
+                    .filterNot(stored::containsKey)
+            return if (missing.isEmpty()) {
+                emptyMap()
+            } else {
+                movieRuntimeRepository.getRuntimes(
+                    missing,
+                )
+            }
+        }
+
+        private fun storedRuntimes(): Map<Int, Int> =
+            watchedByDirector
+                .mapNotNull { movie -> movie.runtime?.takeIf { it > 0 }?.let { movie.id to it } }
+                .toMap()
+
         private fun publishFilms() {
             val credits = crewCredits
-            val films =
+            val filmography =
                 directedFeatureFilms(credits.orEmpty(), watchedByDirector, LocalDate.now(clock))
+                    .splitShorts(fetchedRuntimes + storedRuntimes())
+            val films = filmography.features
             _uiState.update { state ->
                 state.copy(
                     films = films,
+                    shorts = filmography.shorts,
                     watchedCount = films.count { it.isWatched },
                     totalCount = credits?.let { films.size },
                     filmographyState =

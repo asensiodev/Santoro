@@ -11,6 +11,7 @@ import com.asensiodev.auth.di.AuthDataModule
 import com.asensiodev.auth.di.FirebaseModule
 import com.asensiodev.auth.domain.repository.AuthRepository
 import com.asensiodev.core.domain.repository.MovieMutationRepository
+import com.asensiodev.core.domain.repository.MovieRuntimeRepository
 import com.asensiodev.core.domain.repository.PersonRepository
 import com.asensiodev.core.domain.repository.SyncRepository
 import com.asensiodev.core.domain.repository.SyncScheduler
@@ -39,6 +40,7 @@ import com.asensiodev.santoro.core.sync.di.SyncModule
 import com.asensiodev.santoro.fake.FakeAuthRepository
 import com.asensiodev.santoro.fake.FakeDatabaseRepository
 import com.asensiodev.santoro.fake.FakeMovieDetailRepository
+import com.asensiodev.santoro.fake.FakeMovieRuntimeRepository
 import com.asensiodev.santoro.fake.FakePersonRepository
 import com.asensiodev.santoro.fake.FakeRecentSearchesRepository
 import com.asensiodev.santoro.fake.FakeRemoteConfigProvider
@@ -139,6 +141,10 @@ object AppJourneyTestModule {
     @Provides
     @Singleton
     fun providePersonRepository(fake: FakePersonRepository): PersonRepository = fake
+
+    @Provides
+    @Singleton
+    fun provideMovieRuntimeRepository(): MovieRuntimeRepository = FakeMovieRuntimeRepository()
 
     @Provides
     @Singleton

@@ -6,12 +6,15 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasScrollToNodeAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import coil3.ImageLoader
 import coil3.SingletonImageLoader
@@ -148,6 +151,39 @@ class DirectorCollectionScreenTest {
     }
 
     @Test
+    fun givenShorts_whenShown_thenListsThemApartWithTheirOwnCount() {
+        setScreen(contentState().copy(shorts = shorts))
+
+        composeRule
+            .onNodeWithText(
+                string(SR.string.director_collection_progress, 1, 3),
+            ).assertIsDisplayed()
+        composeRule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText(DOODLEBUG))
+        composeRule.onNodeWithText(string(SR.string.director_collection_shorts)).assertIsDisplayed()
+        composeRule
+            .onNodeWithText(
+                string(SR.string.director_collection_shorts_progress, 1, 2),
+            ).assertIsDisplayed()
+        composeRule
+            .onNodeWithText(
+                DOODLEBUG,
+            ).assert(hasState(string(SR.string.director_collection_not_watched)))
+    }
+
+    @Test
+    fun givenPendingHiddenAndNoWatchedShorts_whenShown_thenTheShortsSectionIsHidden() {
+        setScreen(
+            contentState(showPending = false).copy(shorts = shorts.filterNot { it.isWatched }),
+        )
+
+        composeRule
+            .onNodeWithText(
+                string(SR.string.director_collection_shorts),
+            ).assertDoesNotExist()
+        composeRule.onNodeWithText(DOODLEBUG).assertDoesNotExist()
+    }
+
+    @Test
     fun givenShowPendingOn_whenSwitchIsClicked_thenRequestsHidingPending() {
         setScreen(contentState())
 
@@ -231,6 +267,12 @@ class DirectorCollectionScreenTest {
             showPending = showPending,
         )
 
+    private val shorts =
+        listOf(
+            DirectorFilm(11, DOODLEBUG, null, "1997-01-01", isWatched = false),
+            DirectorFilm(12, "Larceny", null, "1996-01-01", isWatched = true),
+        )
+
     private fun localState(filmographyState: FilmographyState) =
         DirectorCollectionUiState(
             directorName = NAME,
@@ -257,5 +299,6 @@ class DirectorCollectionScreenTest {
         const val NAME = "Christopher Nolan"
         const val MEMENTO = "Memento"
         const val INCEPTION = "Inception"
+        const val DOODLEBUG = "Doodlebug"
     }
 }

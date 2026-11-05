@@ -27,7 +27,17 @@ Add `isVideo: Boolean` and `genreIds: List<Int>` to `PersonMovieCredit`, mapped 
 
 ### Feature-film filter
 
-A pure function `directedFeatureFilms(credits, watchedByDirector, today)`: crew credits with role `Director`, not `isVideo`, without genre 99 (Documentary), release date ≤ today; union with the user's watched movies having this person among stored directors; dedupe by ID. Short films are not detectable from TMDB credits without one request per movie; a short appears only if TMDB does not flag it as video. This is accepted: shorts are rare in mainstream directors' credits and appear as one extra unwatched film, while per-movie requests would multiply network cost. The follow-up scope option will replace this function's fixed policy with a user-selected scope.
+A pure function `directedFeatureFilms(credits, watchedByDirector, today)`: crew credits with role `Director`, not `isVideo`, without genre 99 (Documentary), release date ≤ today; union with the user's watched movies having this person among stored directors; dedupe by ID. Short films are handled separately (see Short films). The follow-up scope option will replace this function's fixed policy with a user-selected scope.
+
+### Short films (revision 2026-11-05)
+
+The manual demo showed Christopher Nolan's three early shorts counted as unwatched feature films ("4 of 16" instead of 13 features), and early shorts are common among directors. Shorts are therefore split out instead of removed, because some users want to see them:
+
+- A film is a short when its known runtime is 1 to 40 minutes (the Academy definition). An unknown runtime (missing, zero or a failed request) keeps the film among feature films, so a network error never hides a film.
+- Runtimes of watched films come from the stored `Movie.runtime`; the others come from a new `MovieRuntimeRepository` in `core/domain`, implemented in person-detail impl next to the person TMDB service, calling `movie/{id}` with up to 6 requests in parallel and caching results in memory for the process lifetime. Failed lookups are not cached.
+- The ViewModel requests runtimes only after the credits succeed, inside the same replaceable filmography job, and publishes the complete filmography once both are resolved, so tiles never jump between sections. Until then the local watched films show (watched shorts already in the Shorts section when their stored runtime says so).
+- The main summary counts feature films only. A Shorts section below the feature grid shows a heading with "X of Y watched" and the same tiles; Show pending applies to it, and the section is hidden when it has no visible films.
+- Cost: one small request per unwatched candidate film the first time a director is opened in a session (about 12 for Christopher Nolan); accepted for a correct count.
 
 ### State and lifecycle
 
@@ -35,7 +45,7 @@ The ViewModel combines the local watched flow (filtered by director ID) with a o
 
 ### Data sources and side effects
 
-- Allowed: TMDB `person/{id}/movie_credits` and `person/{id}` for the header photo (existing), Room reads, `UserPreferencesRepository` preference, navigation to movie detail and person profile.
+- Allowed: TMDB `person/{id}/movie_credits`, `person/{id}` for the header photo and `movie/{id}` for runtimes, Room reads, `UserPreferencesRepository` preference, navigation to movie detail and person profile.
 - Forbidden: writes to movies, list flags or Firestore; persisting filmographies.
 
 ### Failure UX
@@ -54,8 +64,8 @@ Local watched films render first, ordered chronologically from their stored rele
 
 Confirmed by the user on 2026-11-01 ("si, empieza con F-32"), together with the plan revision against the implemented F-31 (dimmed unwatched posters, `UserPreferencesRepository` preference). `organize-watched-collection` is implemented and archived.
 
-- Person credits HTTP integration test for `video` and `genre_ids` mapping.
-- Pure filter tests: director job, video, documentary, unreleased, undated, watched-documentary inclusion, dedupe.
+- Person credits HTTP integration test for `video` and `genre_ids` mapping; runtime HTTP test for parsing, parallel lookup, in-memory cache and failed lookups left unknown.
+- Pure filter tests: director job, video, documentary, unreleased, undated, watched-documentary inclusion, dedupe; short classification at 40 and 41 minutes and unknown runtime.
 - ViewModel tests: local-first state, success, failure and retry, cancellation, watched change without refetch, pending preference, header photo loaded or failed without affecting the filmography.
 - Plain Compose tests: header photo shown when available, summary text, watched mark semantics, not-watched semantics of dimmed posters, failed-poster title fallback, switch, film and header callbacks, inline error retry.
 - Paparazzi light/dark: partial collection, pending hidden, loading, error, Spanish large font.
