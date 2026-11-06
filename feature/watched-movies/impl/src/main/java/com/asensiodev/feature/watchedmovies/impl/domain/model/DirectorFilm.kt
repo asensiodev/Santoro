@@ -6,4 +6,5 @@ internal data class DirectorFilm(
     val posterPath: String?,
     val releaseDate: String?,
     val isWatched: Boolean,
+    val isInWatchlist: Boolean = false,
 )

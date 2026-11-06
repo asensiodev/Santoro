@@ -1,18 +1,13 @@
 package com.asensiodev.feature.watchedmovies.impl.presentation.director
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,7 +25,8 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.asensiodev.core.designsystem.PreviewContent
-import com.asensiodev.core.designsystem.theme.AppIcons
+import com.asensiodev.core.designsystem.component.statusribbon.MovieRibbonStatus
+import com.asensiodev.core.designsystem.component.statusribbon.MovieStatusRibbon
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
 import com.asensiodev.feature.watchedmovies.impl.domain.model.DirectorFilm
@@ -86,26 +82,29 @@ internal fun DirectorFilmCard(
                     )
                 }
             }
-            if (film.isWatched) {
-                Icon(
-                    imageVector = AppIcons.Watched,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier =
-                        Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(Spacings.spacing4)
-                            .size(Size.size24)
-                            .background(MaterialTheme.colorScheme.surface, CircleShape),
+            film.ribbonStatus()?.let { status ->
+                MovieStatusRibbon(
+                    status = status,
+                    modifier = Modifier.align(Alignment.TopEnd),
+                    announceStatus = status == MovieRibbonStatus.WATCHLIST,
                 )
             }
         }
     }
 }
 
-private val DesaturatedFilter = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
+private fun DirectorFilm.ribbonStatus(): MovieRibbonStatus? =
+    when {
+        isWatched -> MovieRibbonStatus.WATCHED
+        isInWatchlist -> MovieRibbonStatus.WATCHLIST
+        else -> null
+    }
+
+private val DesaturatedFilter =
+    ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(PENDING_SATURATION) })
 private const val FULL_ALPHA = 1f
-private const val DIMMED_ALPHA = 0.45f
+private const val DIMMED_ALPHA = 0.6f
+private const val PENDING_SATURATION = 0.25f
 private const val PREVIEW_POSTER_RATIO = 2f / 3f
 
 @PreviewLightDark

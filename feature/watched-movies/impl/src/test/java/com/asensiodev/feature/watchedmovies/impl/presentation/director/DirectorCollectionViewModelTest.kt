@@ -10,6 +10,7 @@ import com.asensiodev.core.domain.repository.PersonRepository
 import com.asensiodev.core.domain.repository.UserPreferencesRepository
 import com.asensiodev.feature.watchedmovies.impl.domain.model.DirectorFilm
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchedMoviesUseCase
+import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchlistMovieIdsUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -38,6 +39,8 @@ import java.time.ZoneOffset
 @OptIn(ExperimentalCoroutinesApi::class)
 class DirectorCollectionViewModelTest {
     private val getWatchedMoviesUseCase: GetWatchedMoviesUseCase = mockk()
+    private val getWatchlistMovieIdsUseCase: GetWatchlistMovieIdsUseCase = mockk()
+    private val watchlistIds = MutableStateFlow(emptySet<Int>())
     private val personRepository: PersonRepository = mockk()
     private val movieRuntimeRepository: MovieRuntimeRepository = mockk()
     private val userPreferencesRepository: UserPreferencesRepository = mockk(relaxed = true)
@@ -48,6 +51,7 @@ class DirectorCollectionViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         every { getWatchedMoviesUseCase() } returns watchedMovies
+        every { getWatchlistMovieIdsUseCase() } returns watchlistIds
         every { userPreferencesRepository.directorShowPending } returns flowOf(true)
         coEvery { personRepository.getMovieCredits(NOLAN) } returns filmography()
         coEvery { personRepository.getPerson(NOLAN) } returns Result.success(person(PHOTO))
@@ -273,12 +277,37 @@ class DirectorCollectionViewModelTest {
             state.shortsWatchedCount shouldBeEqualTo 1
         }
 
+    @Test
+    fun `GIVEN films in the watchlist WHEN loaded THEN only unwatched ones are marked as in the watchlist`() =
+        runTest {
+            watchlistIds.value = setOf(1, 2)
+            val state = initializedViewModel().uiState.value
+
+            state.films.associate { it.movieId to it.isInWatchlist } shouldBeEqualTo
+                mapOf(1 to false, 2 to true, 3 to false)
+        }
+
+    @Test
+    fun `GIVEN loaded filmography WHEN the watchlist changes THEN marks update without a new request`() =
+        runTest {
+            val viewModel = initializedViewModel()
+
+            watchlistIds.value = setOf(3)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.films
+                .single { it.movieId == 3 }
+                .isInWatchlist shouldBeEqualTo true
+            coVerify(exactly = 1) { personRepository.getMovieCredits(NOLAN) }
+        }
+
     private fun person(profilePath: String?) = Person(NOLAN, NAME, "", profilePath, null, null, null)
 
     private suspend fun kotlinx.coroutines.test.TestScope.initializedViewModel(): DirectorCollectionViewModel {
         val viewModel =
             DirectorCollectionViewModel(
                 getWatchedMoviesUseCase,
+                getWatchlistMovieIdsUseCase,
                 personRepository,
                 movieRuntimeRepository,
                 userPreferencesRepository,

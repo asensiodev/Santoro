@@ -10,6 +10,7 @@ import com.asensiodev.core.domain.repository.UserPreferencesRepository
 import com.asensiodev.feature.watchedmovies.impl.domain.filter.directedFeatureFilms
 import com.asensiodev.feature.watchedmovies.impl.domain.filter.splitShorts
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchedMoviesUseCase
+import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchlistMovieIdsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -30,6 +31,7 @@ internal class DirectorCollectionViewModel
     @Inject
     constructor(
         private val getWatchedMoviesUseCase: GetWatchedMoviesUseCase,
+        private val getWatchlistMovieIdsUseCase: GetWatchlistMovieIdsUseCase,
         private val personRepository: PersonRepository,
         private val movieRuntimeRepository: MovieRuntimeRepository,
         private val userPreferencesRepository: UserPreferencesRepository,
@@ -42,6 +44,7 @@ internal class DirectorCollectionViewModel
         private var watchedByDirector: List<Movie> = emptyList()
         private var crewCredits: List<PersonMovieCredit>? = null
         private var fetchedRuntimes: Map<Int, Int> = emptyMap()
+        private var watchlistIds: Set<Int> = emptySet()
         private var request: Job? = null
 
         fun process(intent: DirectorCollectionIntent) {
@@ -62,6 +65,7 @@ internal class DirectorCollectionViewModel
             viewModelScope.launch { loadShowPending() }
             loadProfilePhoto(id)
             observeWatched(id)
+            observeWatchlist()
             loadFilmography()
         }
 
@@ -73,6 +77,15 @@ internal class DirectorCollectionViewModel
                     .onSuccess { person ->
                         _uiState.update { it.copy(profilePath = person.profilePath) }
                     }.onFailure { error -> if (error is CancellationException) throw error }
+            }
+        }
+
+        private fun observeWatchlist() {
+            viewModelScope.launch {
+                getWatchlistMovieIdsUseCase().collect { ids ->
+                    watchlistIds = ids
+                    publishFilms()
+                }
             }
         }
 
@@ -134,7 +147,12 @@ internal class DirectorCollectionViewModel
             val credits = crewCredits
             val filmography =
                 directedFeatureFilms(credits.orEmpty(), watchedByDirector, LocalDate.now(clock))
-                    .splitShorts(fetchedRuntimes + storedRuntimes())
+                    .map { film ->
+                        film.copy(
+                            isInWatchlist =
+                                !film.isWatched && film.movieId in watchlistIds,
+                        )
+                    }.splitShorts(fetchedRuntimes + storedRuntimes())
             val films = filmography.features
             _uiState.update { state ->
                 state.copy(

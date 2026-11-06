@@ -99,3 +99,25 @@ Plan updated first (proposal, design "Short films", spec scenarios "Early shorts
 - Gate: `verifyPaparazziDebug ktlintCheck detekt :architecture-tests:test :feature:watched-movies:impl:testDebugUnitTest :feature:person-detail:impl:testDebugUnitTest :app:assembleDebug` passed.
 - Demo on `emulator-5554` (guest session, real TMDB data): Christopher Nolan reads "Watched 4 of 13", 31%, and a Shorts section lists Tarantella, Larceny and Doodlebug with 0 of 3 watched.
 
+## Phase 6 — Consistent status marks (revision 2026-11-05)
+
+Plan updated first (design status-marks revision, spec scenario "Pending film in the Watchlist", tasks 6.1–6.3); `openspec validate director-watched-filmography --strict` passed.
+
+### 6.1 Shared ribbon
+
+- Refactor with existing coverage: `MovieStatusRibbon` moved from search-movies to `core/design-system/component/statusribbon` with `MovieRibbonStatus` (own file for Detekt `MatchingDeclarationName`) and an `announceStatus` flag; Search maps `MovieLibraryStatus` through `toRibbonStatus()`. `:feature:search-movies:impl:verifyPaparazziDebug`, `:feature:search-movies:impl:testDebugUnitTest` and the search instrumented suite (3 tests, including `MovieCardStatusSemanticsTest`) passed unchanged.
+
+### 6.2 Watchlist membership
+
+- Scaffolding: `DirectorFilm.isInWatchlist` (default false) and `GetWatchlistMovieIdsUseCase` (local watchlist IDs) injected without use.
+- Red: both new `DirectorCollectionViewModelTest` cases failed on assertions (unwatched film 2 not marked while film 1 is watched and in the watchlist; a later watchlist change not reflected).
+- Green: the ViewModel collects the watchlist IDs and marks unwatched films only, recomputing without a new credits request. `:feature:watched-movies:impl:testDebugUnitTest` passed.
+
+### 6.3 Card
+
+- Red: `givenPendingFilmInTheWatchlist_whenShown_thenAnnouncesItIsInTheWatchlist` failed (no "In Watchlist" content description).
+- Green: `DirectorFilmCard` uses the shared ribbon (watched without a duplicate announcement, watchlist announced as "In Watchlist") at full emphasis over the poster, and the pending treatment is softened to 60% opacity and 25% saturation. The module's instrumented suite passed (32 tests).
+- Screenshots: re-recorded the 12 Director collection baselines (Inception in the Watchlist in the partial scenarios) and inspected them; with placeholders in dark theme the watched ribbon has low contrast against the grey card, while on real posters (emulator demo) it reads clearly, as on Home.
+- Gate: `verifyPaparazziDebug ktlintCheck detekt :architecture-tests:test :feature:watched-movies:impl:testDebugUnitTest :feature:search-movies:impl:testDebugUnitTest :feature:search-movies:impl:compileDebugAndroidTestKotlin :app:compileJourneyTestAndroidTestKotlin` passed.
+- Demo on `emulator-5554` (guest session): Inception and Tenet added to the Watchlist show the bookmark ribbon on their dimmed posters; watched films show the check ribbon; light and dark themes checked.
+

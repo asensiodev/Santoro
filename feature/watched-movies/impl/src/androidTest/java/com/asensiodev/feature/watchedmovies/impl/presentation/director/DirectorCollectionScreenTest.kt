@@ -6,6 +6,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -99,6 +100,29 @@ class DirectorCollectionScreenTest {
             .onNodeWithText(
                 INCEPTION,
             ).assert(hasState(string(SR.string.director_collection_not_watched)))
+    }
+
+    @Test
+    fun givenPendingFilmInTheWatchlist_whenShown_thenAnnouncesItIsInTheWatchlist() {
+        val inWatchlist =
+            contentState().films.map {
+                if (it.movieId ==
+                    2
+                ) {
+                    it.copy(isInWatchlist = true)
+                } else {
+                    it
+                }
+            }
+        setScreen(contentState().copy(films = inWatchlist))
+
+        val watchlist = hasContentDescription(string(SR.string.watchlist_icon_button_added))
+        composeRule.onNodeWithText(INCEPTION).assert(watchlist)
+        composeRule
+            .onNodeWithText(
+                INCEPTION,
+            ).assert(hasState(string(SR.string.director_collection_not_watched)))
+        composeRule.onNodeWithText(MEMENTO).assert(!watchlist)
     }
 
     @Test

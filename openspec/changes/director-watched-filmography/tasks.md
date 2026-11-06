@@ -26,6 +26,12 @@
 - [x] 5.3 Observe failing ViewModel tests for summary over feature films only, shorts count, local watched shorts and runtime lookup only after credits, then implement.
 - [x] 5.4 Observe failing Compose tests for the Shorts section (heading, count, hidden with pending off and no watched shorts), then build it; record and inspect Paparazzi baselines.
 
+## 6. Consistent status marks (revision 2026-11-05)
+
+- [x] 6.1 Move `MovieStatusRibbon` to `core/design-system` with a design-system status enum; Search keeps identical rendering (existing Paparazzi goldens and status semantics tests unchanged).
+- [x] 6.2 Observe failing ViewModel tests for Watchlist membership on unwatched films (live updates, watched wins), then observe the local watchlist flow.
+- [x] 6.3 Observe failing Compose tests for the watched and watchlist ribbons and their announcements, then use the shared ribbon with softer dimming; re-record and inspect the Director collection baselines.
+
 ## 4. Navigation and validation
 
 - [x] 4.1 Observe a failing app journey for Watched → director heading → Director collection → film detail → Back → Back, then add the route and replace F-31's person-profile link.

@@ -1,4 +1,4 @@
-package com.asensiodev.feature.searchmovies.impl.presentation.component
+package com.asensiodev.core.designsystem.component.statusribbon
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -20,26 +20,26 @@ import com.asensiodev.core.designsystem.PreviewContent
 import com.asensiodev.core.designsystem.theme.AppIcons
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
-import com.asensiodev.feature.searchmovies.impl.domain.model.MovieLibraryStatus
 import com.asensiodev.santoro.core.stringresources.R as SR
 
 @Composable
-internal fun MovieStatusRibbon(
-    status: MovieLibraryStatus,
+fun MovieStatusRibbon(
+    status: MovieRibbonStatus,
     modifier: Modifier = Modifier,
     tagSize: Dp = Size.size56,
     iconPadding: Dp = Spacings.spacing8,
+    announceStatus: Boolean = true,
 ) {
     val presentation =
         when (status) {
-            MovieLibraryStatus.Watched ->
+            MovieRibbonStatus.WATCHED ->
                 MovieStatusPresentation(
                     icon = AppIcons.Watched,
                     contentDescription = stringResource(SR.string.watched_icon_button_marked),
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 )
-            MovieLibraryStatus.Watchlist ->
+            MovieRibbonStatus.WATCHLIST ->
                 MovieStatusPresentation(
                     icon = AppIcons.Watchlist,
                     contentDescription = stringResource(SR.string.watchlist_icon_button_added),
@@ -65,7 +65,7 @@ internal fun MovieStatusRibbon(
     ) {
         Icon(
             imageVector = presentation.icon,
-            contentDescription = presentation.contentDescription,
+            contentDescription = presentation.contentDescription.takeIf { announceStatus },
             tint = presentation.contentColor,
             modifier =
                 Modifier
@@ -88,8 +88,8 @@ private data class MovieStatusPresentation(
 private fun MovieStatusRibbonPreview() {
     PreviewContent {
         Row {
-            MovieStatusRibbon(MovieLibraryStatus.Watched)
-            MovieStatusRibbon(MovieLibraryStatus.Watchlist)
+            MovieStatusRibbon(MovieRibbonStatus.WATCHED)
+            MovieStatusRibbon(MovieRibbonStatus.WATCHLIST)
         }
     }
 }

@@ -25,8 +25,10 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.asensiodev.core.designsystem.PreviewContentFullSize
+import com.asensiodev.core.designsystem.component.statusribbon.MovieStatusRibbon
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
+import com.asensiodev.feature.searchmovies.impl.presentation.mapper.toRibbonStatus
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 import com.asensiodev.santoro.core.designsystem.R as DR
 
@@ -86,7 +88,7 @@ internal fun MovieCard(
             }
             movie.libraryStatus?.let { status ->
                 MovieStatusRibbon(
-                    status = status,
+                    status = status.toRibbonStatus(),
                     modifier = Modifier.align(Alignment.TopEnd),
                 )
             }

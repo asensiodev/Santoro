@@ -84,7 +84,7 @@ class DirectorCollectionScreenScreenshotTest(
                 DirectorFilm(272, "Batman Begins", null, "2005-06-10", isWatched = true),
                 DirectorFilm(1124, "The Prestige", null, "2006-10-19", isWatched = true),
                 DirectorFilm(155, "The Dark Knight", null, "2008-07-16", isWatched = true),
-                DirectorFilm(27205, "Inception", null, "2010-07-15", isWatched = false),
+                DirectorFilm(27205, "Inception", null, "2010-07-15", isWatched = false, isInWatchlist = true),
                 DirectorFilm(49026, "The Dark Knight Rises", null, "2012-07-16", isWatched = false),
                 DirectorFilm(157336, "Interstellar", null, "2014-11-05", isWatched = true),
             )
