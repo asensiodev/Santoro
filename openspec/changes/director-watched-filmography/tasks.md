@@ -32,9 +32,15 @@
 - [x] 6.2 Observe failing ViewModel tests for Watchlist membership on unwatched films (live updates, watched wins), then observe the local watchlist flow.
 - [x] 6.3 Observe failing Compose tests for the watched and watchlist ribbons and their announcements, then use the shared ribbon with softer dimming; re-record and inspect the Director collection baselines.
 
+## 7. List layout (revision 2026-11-06)
+
+- [x] 7.1 Share the ribbon's icon, colors and descriptions in `core/design-system` for a list status mark; Search rendering unchanged.
+- [x] 7.2 Observe failing Compose tests for title and release year in each row (undated shows the title only), then replace the poster grid with a list of `DirectorFilmRow`; re-record and inspect the Director collection baselines.
+- [x] 7.3 Observe failing UiState and Compose tests for the films-left count, completion message and visible status labels, then replace the trailing badge with an inline `MovieStatusLabel` and rebuild the summary as a card; re-record and inspect the baselines.
+
 ## 4. Navigation and validation
 
 - [x] 4.1 Observe a failing app journey for Watched → director heading → Director collection → film detail → Back → Back, then add the route and replace F-31's person-profile link.
 - [ ] 4.2 Run affected tests, `verifyPaparazziDebug`, `:architecture-tests:test`, connected tests and the aggregate gate; record results in implementation.md.
-- [ ] 4.3 Manual checks: offline open, slow network, Spanish, light/dark, TalkBack on marks and dimmed posters, large font.
+- [ ] 4.3 Manual checks: offline open, slow network, Spanish, light/dark, TalkBack on status labels and dimmed rows, large font.
 - [ ] 4.4 Update PRD F-32 status, report changed classes, and archive after human review.

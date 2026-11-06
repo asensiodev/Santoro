@@ -7,7 +7,7 @@ Depends on `organize-watched-collection` (F-31) for stored directors and the Dir
 ## What Changes
 
 - Add a Director collection screen opened from a director heading in the Watched Director grouping, replacing F-31's link to the generic person profile.
-- Show the director's feature films chronologically: watched films at full emphasis with a watched mark, unwatched films with a dimmed poster and no mark, and a "Watched X of Y" progress summary (revision 2026-11-01: dimmed posters instead of dashed placeholders).
+- Show the director's feature films chronologically: watched films at full emphasis with a watched mark, unwatched films with a dimmed poster and no mark, and a "Watched X of Y" progress summary (revision 2026-11-01: dimmed posters instead of dashed placeholders; revision 2026-11-06: a single list with thumbnail, title and year instead of a poster grid).
 - Add a Show pending switch, on by default and persisted on the device through the existing `UserPreferencesRepository`, to hide unwatched films.
 - Open the existing movie detail from any film and the existing person profile from the screen header.
 - Count only feature films directed by the person. A watched film by that director always counts, even if the filter would exclude it.

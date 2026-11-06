@@ -29,6 +29,7 @@ internal data class DirectorCollectionUiState(
             }
         }
     val shortsWatchedCount: Int = shorts.count { it.isWatched }
+    val remainingCount: Int? = totalCount?.let { total -> (total - watchedCount).coerceAtLeast(0) }
     val progressPercent: Int? =
         totalCount?.takeIf { it > 0 }?.let { total ->
             (watchedCount * PERCENT / total.toFloat()).roundToInt()

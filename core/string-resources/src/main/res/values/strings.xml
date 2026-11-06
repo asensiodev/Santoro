@@ -231,6 +231,11 @@
         <item quantity="one">%d watched</item>
         <item quantity="other">%d watched</item>
     </plurals>
+    <plurals name="director_collection_remaining">
+        <item quantity="one">%d film to go</item>
+        <item quantity="other">%d films to go</item>
+    </plurals>
+    <string name="director_collection_complete">You\'ve seen the whole filmography</string>
     <string name="director_collection_show_pending">Show pending</string>
     <string name="director_collection_loading">Loading filmography</string>
     <string name="director_collection_error">Couldn\'t load the full filmography</string>

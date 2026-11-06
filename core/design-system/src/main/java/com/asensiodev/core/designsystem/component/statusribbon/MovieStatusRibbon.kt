@@ -1,11 +1,13 @@
 package com.asensiodev.core.designsystem.component.statusribbon
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,23 +32,7 @@ fun MovieStatusRibbon(
     iconPadding: Dp = Spacings.spacing8,
     announceStatus: Boolean = true,
 ) {
-    val presentation =
-        when (status) {
-            MovieRibbonStatus.WATCHED ->
-                MovieStatusPresentation(
-                    icon = AppIcons.Watched,
-                    contentDescription = stringResource(SR.string.watched_icon_button_marked),
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                )
-            MovieRibbonStatus.WATCHLIST ->
-                MovieStatusPresentation(
-                    icon = AppIcons.Watchlist,
-                    contentDescription = stringResource(SR.string.watchlist_icon_button_added),
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                )
-        }
+    val presentation = status.presentation()
 
     Box(
         modifier =
@@ -76,11 +62,58 @@ fun MovieStatusRibbon(
     }
 }
 
+@Composable
+fun MovieStatusLabel(
+    status: MovieRibbonStatus,
+    modifier: Modifier = Modifier,
+) {
+    val presentation = status.presentation()
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(Spacings.spacing4),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = presentation.icon,
+            contentDescription = null,
+            tint = presentation.accentColor,
+            modifier = Modifier.size(Size.size16),
+        )
+        Text(
+            text = presentation.contentDescription,
+            style = MaterialTheme.typography.labelMedium,
+            color = presentation.accentColor,
+        )
+    }
+}
+
+@Composable
+private fun MovieRibbonStatus.presentation(): MovieStatusPresentation =
+    when (this) {
+        MovieRibbonStatus.WATCHED ->
+            MovieStatusPresentation(
+                icon = AppIcons.Watched,
+                contentDescription = stringResource(SR.string.watched_icon_button_marked),
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                accentColor = MaterialTheme.colorScheme.secondary,
+            )
+        MovieRibbonStatus.WATCHLIST ->
+            MovieStatusPresentation(
+                icon = AppIcons.Watchlist,
+                contentDescription = stringResource(SR.string.watchlist_icon_button_added),
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                accentColor = MaterialTheme.colorScheme.tertiary,
+            )
+    }
+
 private data class MovieStatusPresentation(
     val icon: ImageVector,
     val contentDescription: String,
     val containerColor: Color,
     val contentColor: Color,
+    val accentColor: Color,
 )
 
 @PreviewLightDark
@@ -90,6 +123,17 @@ private fun MovieStatusRibbonPreview() {
         Row {
             MovieStatusRibbon(MovieRibbonStatus.WATCHED)
             MovieStatusRibbon(MovieRibbonStatus.WATCHLIST)
+        }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun MovieStatusLabelPreview() {
+    PreviewContent {
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacings.spacing16)) {
+            MovieStatusLabel(MovieRibbonStatus.WATCHED)
+            MovieStatusLabel(MovieRibbonStatus.WATCHLIST)
         }
     }
 }

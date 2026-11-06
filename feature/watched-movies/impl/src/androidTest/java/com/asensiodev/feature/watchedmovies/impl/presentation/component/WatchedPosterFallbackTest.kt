@@ -18,7 +18,7 @@ import coil3.request.ErrorResult
 import coil3.request.ImageRequest
 import com.asensiodev.core.designsystem.theme.SantoroTheme
 import com.asensiodev.feature.watchedmovies.impl.domain.model.DirectorFilm
-import com.asensiodev.feature.watchedmovies.impl.presentation.director.DirectorFilmCard
+import com.asensiodev.feature.watchedmovies.impl.presentation.director.DirectorFilmRow
 import com.asensiodev.feature.watchedmovies.impl.presentation.model.MovieUi
 import kotlinx.coroutines.CompletableDeferred
 import org.junit.After
@@ -87,13 +87,12 @@ class WatchedPosterFallbackTest {
     }
 
     @Test
-    fun givenUnwatchedDirectorFilmPosterFailsToLoad_whenShown_thenPlaceholderShowsTheTitle() {
+    fun givenUnwatchedDirectorFilmPosterFailsToLoad_whenShown_thenRowKeepsTitleAndYear() {
         composeRule.setContent {
             SantoroTheme {
-                DirectorFilmCard(
+                DirectorFilmRow(
                     film = DirectorFilm(1, TITLE, "/poster.jpg", "2021-04-07", isWatched = false),
                     onClick = {},
-                    modifier = Modifier.width(120.dp).aspectRatio(2f / 3f),
                 )
             }
         }
@@ -101,6 +100,7 @@ class WatchedPosterFallbackTest {
         composeRule.waitUntil { failed.isCompleted }
 
         composeRule.onNodeWithText(TITLE).assertIsDisplayed()
+        composeRule.onNodeWithText("2021").assertIsDisplayed()
     }
 
     private companion object {

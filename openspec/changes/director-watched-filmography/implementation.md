@@ -121,3 +121,32 @@ Plan updated first (design status-marks revision, spec scenario "Pending film in
 - Gate: `verifyPaparazziDebug ktlintCheck detekt :architecture-tests:test :feature:watched-movies:impl:testDebugUnitTest :feature:search-movies:impl:testDebugUnitTest :feature:search-movies:impl:compileDebugAndroidTestKotlin :app:compileJourneyTestAndroidTestKotlin` passed.
 - Demo on `emulator-5554` (guest session): Inception and Tenet added to the Watchlist show the bookmark ribbon on their dimmed posters; watched films show the check ribbon; light and dark themes checked.
 
+
+## Phase 7 — List layout (revision 2026-11-06)
+
+Plan updated first (design list-layout revision, spec requirement and scenarios reworded from poster grid to list rows, tasks 7.1–7.2).
+
+### 7.1 Status badge
+
+- Refactor with existing coverage: the ribbon's icon, colors and descriptions moved into a private `MovieRibbonStatus.presentation()` shared by `MovieStatusRibbon` and a list status mark (first a trailing `MovieStatusBadge`, replaced in 7.3). `:feature:search-movies:impl:verifyPaparazziDebug` and `:core:design-system:verifyPaparazziDebug` passed unchanged.
+
+### 7.2 List rows
+
+- Red: `givenFilms_whenShown_thenShowsTitleAndReleaseYearInChronologicalRows` failed against the poster grid (no year text). `givenFilmWithoutReleaseDate_whenShown_thenShowsOnlyTheTitle` passed already and stays as a regression guard.
+- Green: `DirectorFilmCard` replaced by `DirectorFilmRow` (thumbnail, title, year, trailing badge; pending rows dimmed with a secondary title color) and the grid by a `LazyColumn` with the same keys and content types. `WatchedPosterFallbackTest` now checks that a failed poster leaves title and year readable. `MovieCard.PlaceholderContent` is private again. The module's instrumented suite passed on `emulator-5554` (34 tests, 0 failures).
+- Screenshots: re-recorded the 12 Director collection baselines and inspected partial, shorts, pending hidden, loading, error and Spanish large font in light and dark; no other goldens changed.
+- Checks: `:feature:watched-movies:impl:testDebugUnitTest :feature:search-movies:impl:testDebugUnitTest :core:design-system:testDebugUnitTest detekt ktlintCheck` and `verifyPaparazziDebug` for watched-movies, search-movies and design-system passed.
+
+### 7.3 Inline status and summary card
+
+- Review feedback: the trailing filled check looked like a tappable checkbox and outweighed the title; the progress bar looked thin and generic.
+- Red: three of the four `DirectorCollectionUiStateTest` cases for `remainingCount` failed against a `null` scaffold (the unknown-total case passed); `givenPartialCollection_whenShown_thenShowsHowManyFilmsAreLeft`, `givenCompleteCollection_whenShown_thenCelebratesTheCompleteFilmography` and the watched and watchlist label assertions failed. `givenUnknownTotal_whenShown_thenShowsNoRemainingCount` passed already and stays as a guard.
+- Green: `remainingCount = (total - watched).coerceAtLeast(0)` when the total is known; `MovieStatusBadge` replaced by `MovieStatusLabel` (16dp icon, labelMedium text, accent tint); `DirectorFilmRow` shows the year, a separator hidden from accessibility services and the label, and keeps the "Not watched" state description only for pending films; the summary is a `surfaceContainer` card with a headline percentage, an 8dp round-cap bar without stop indicator and the films-left or completion line. New plural `director_collection_remaining` and string `director_collection_complete` in English and Spanish. A first green run failed because the year and separator shared one text; the separator is now its own text. `:feature:watched-movies:impl:testDebugUnitTest` and the module's instrumented suite on `emulator-5554` (37 tests, 0 failures) passed.
+- Screenshots: re-recorded the 12 Director collection baselines and inspected partial, loading, light, dark and Spanish large font.
+- Checks: unit tests for watched-movies, search-movies and design-system, `detekt`, `ktlintCheck` and `verifyPaparazziDebug` for those three modules passed. Demo on `emulator-5554` (guest) with real posters in light and dark.
+
+### 7.3 Follow-up review
+
+- The status label moved to the end of the row (year alone under the title, no separator) and the summary was compacted: percentage at `titleMedium`, 12dp vertical padding, 8dp spacing, films-left line at `bodySmall`. Copy and semantics unchanged, so no new tests; the module's instrumented suite passed again, the 12 baselines were re-recorded and inspected (including Spanish large font, where long titles wrap before the label), and unit tests, `detekt`, `ktlintCheck`, `verifyPaparazziDebug` for watched-movies, search-movies and design-system and `:app:assembleDebug` passed. Demo on `emulator-5554` with real posters.
+- Second review: the right-aligned labels looked ragged ("Watched" and "In Watchlist" differ in width) and the compact card still felt heavier than the original. Restored the inline label after the year and the original summary (no card, `labelLarge` percentage, standard Material indicator), keeping the `bodySmall` films-left line. The module's instrumented suite passed, the 12 baselines were re-recorded and inspected, and unit tests, `detekt`, `ktlintCheck`, `verifyPaparazziDebug` for watched-movies, search-movies and design-system and `:app:assembleDebug` passed.
+- Third review: the default Material 3 indicator showed a gap between progress and track and a stop dot at the end. Set `gapSize = 0`, no stop indicator, round caps and a `surfaceVariant` track; re-recorded and inspected the 12 baselines; unit tests, `detekt`, `ktlintCheck`, `verifyPaparazziDebug` for watched-movies, search-movies and design-system and `:app:assembleDebug` passed; checked on `emulator-5554`.

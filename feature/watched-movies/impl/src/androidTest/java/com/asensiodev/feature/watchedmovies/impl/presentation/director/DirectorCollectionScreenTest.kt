@@ -6,7 +6,6 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOn
-import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -89,17 +88,65 @@ class DirectorCollectionScreenTest {
     }
 
     @Test
+    fun givenPartialCollection_whenShown_thenShowsHowManyFilmsAreLeft() {
+        setScreen(contentState())
+
+        composeRule
+            .onNodeWithText(pluralString(SR.plurals.director_collection_remaining, 2))
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun givenCompleteCollection_whenShown_thenCelebratesTheCompleteFilmography() {
+        setScreen(contentState().copy(watchedCount = 3))
+
+        composeRule
+            .onNodeWithText(
+                string(SR.string.director_collection_complete),
+            ).assertIsDisplayed()
+    }
+
+    @Test
+    fun givenUnknownTotal_whenShown_thenShowsNoRemainingCount() {
+        setScreen(localState(FilmographyState.ERROR))
+
+        composeRule
+            .onNodeWithText(
+                string(SR.string.director_collection_complete),
+            ).assertDoesNotExist()
+    }
+
+    @Test
     fun givenFilms_whenShown_thenAnnouncesWatchedAndNotWatchedStates() {
         setScreen(contentState())
 
         composeRule
             .onNodeWithText(
                 MEMENTO,
-            ).assert(hasState(string(SR.string.director_collection_watched)))
+            ).assert(hasText(string(SR.string.watched_icon_button_marked)))
         composeRule
             .onNodeWithText(
                 INCEPTION,
             ).assert(hasState(string(SR.string.director_collection_not_watched)))
+    }
+
+    @Test
+    fun givenFilms_whenShown_thenShowsTitleAndReleaseYearInChronologicalRows() {
+        setScreen(contentState())
+
+        composeRule.onNodeWithText(MEMENTO).assert(hasText("2000"))
+        composeRule.onNodeWithText(INCEPTION).assert(hasText("2010"))
+    }
+
+    @Test
+    fun givenFilmWithoutReleaseDate_whenShown_thenShowsOnlyTheTitle() {
+        setScreen(
+            contentState().copy(
+                films = listOf(DirectorFilm(1, MEMENTO, null, null, isWatched = true)),
+            ),
+        )
+
+        composeRule.onNodeWithText(MEMENTO).assertIsDisplayed()
     }
 
     @Test
@@ -116,7 +163,7 @@ class DirectorCollectionScreenTest {
             }
         setScreen(contentState().copy(films = inWatchlist))
 
-        val watchlist = hasContentDescription(string(SR.string.watchlist_icon_button_added))
+        val watchlist = hasText(string(SR.string.watchlist_icon_button_added))
         composeRule.onNodeWithText(INCEPTION).assert(watchlist)
         composeRule
             .onNodeWithText(

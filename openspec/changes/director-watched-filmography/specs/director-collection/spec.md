@@ -5,11 +5,11 @@ Show a director's feature filmography against the user's watched collection, so 
 ## ADDED Requirements
 
 ### Requirement: Director collection screen
-The app SHALL show a Director collection screen with the director's name, a "Watched X of Y" summary with a progress bar and percentage, and the director's feature films in a three-column poster grid ordered by release date ascending, undated last. Watched films SHALL show their poster at full emphasis with the app's watched status ribbon, exposed to accessibility services. Unwatched films SHALL show their poster dimmed, without a watched mark, and SHALL be announced as not watched; an unwatched film in the user's Watchlist SHALL show the app's watchlist status ribbon and be announced as in the Watchlist. A missing or failed poster SHALL show the placeholder with the title. Tapping any film SHALL open the existing movie detail; tapping the director name or photo SHALL open the existing person profile. The header SHALL show the director's profile photo next to the name when it is available; when the photo is missing, still loading or fails to load, the header SHALL show the name alone without an error.
+The app SHALL show a Director collection screen with the director's name, a "Watched X of Y" summary with a progress bar, a percentage and the number of films left (or a completion message when none are left), and the director's feature films in a single-column list ordered by release date ascending, undated last. Each row SHALL show a poster thumbnail, the title and the release year (omitted when unknown). Watched films SHALL show their thumbnail and title at full emphasis and a "Watched" label with the app's watched icon next to the year, read by accessibility services. Unwatched films SHALL show their thumbnail dimmed and their title in a secondary color, without a watched mark, and SHALL be announced as not watched; an unwatched film in the user's Watchlist SHALL show an "In Watchlist" label with the app's watchlist icon next to the year and be announced as in the Watchlist. Status marks SHALL NOT look like tappable controls. A missing or failed poster SHALL leave the title and year readable. Tapping any film SHALL open the existing movie detail; tapping the director name or photo SHALL open the existing person profile. The header SHALL show the director's profile photo next to the name when it is available; when the photo is missing, still loading or fails to load, the header SHALL show the name alone without an error.
 
 #### Scenario: Partially watched director
 - **WHEN** the user opens a director with 26 feature films of which 9 are watched
-- **THEN** the summary reads 9 of 26 with 35% progress, and the grid shows 9 marked and 17 dimmed films in chronological order
+- **THEN** the summary reads 9 of 26 with 35% progress and 17 films to go, and the list shows 9 marked and 17 dimmed rows with title and year in chronological order
 
 #### Scenario: Director photo unavailable
 - **WHEN** the director has no TMDB profile photo or the profile request fails
@@ -17,7 +17,7 @@ The app SHALL show a Director collection screen with the director's name, a "Wat
 
 #### Scenario: Pending film in the Watchlist
 - **WHEN** an unwatched film by the director is in the user's Watchlist
-- **THEN** its dimmed poster shows the same watchlist ribbon used on Home, and it is announced as not watched and in the Watchlist
+- **THEN** its dimmed row shows an "In Watchlist" label with the same bookmark icon used on Home, and it is announced as not watched and in the Watchlist
 
 #### Scenario: Open an unwatched film
 - **WHEN** the user taps an unwatched film

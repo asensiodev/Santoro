@@ -6,16 +6,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
@@ -39,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
@@ -116,10 +114,8 @@ internal fun DirectorCollectionScreen(
             )
         },
     ) { padding ->
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(COLUMNS),
-            verticalArrangement = Arrangement.spacedBy(Spacings.spacing12),
-            horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(Spacings.spacing8),
             contentPadding =
                 PaddingValues(
                     start = Spacings.spacing16,
@@ -134,7 +130,6 @@ internal fun DirectorCollectionScreen(
         ) {
             item(
                 key = KEY_SUMMARY,
-                span = { GridItemSpan(maxLineSpan) },
                 contentType = KEY_SUMMARY,
             ) {
                 CollectionSummary(uiState = uiState)
@@ -142,7 +137,6 @@ internal fun DirectorCollectionScreen(
             if (uiState.filmographyState == FilmographyState.ERROR) {
                 item(
                     key = KEY_ERROR,
-                    span = { GridItemSpan(maxLineSpan) },
                     contentType = KEY_ERROR,
                 ) {
                     FilmographyError(
@@ -152,7 +146,6 @@ internal fun DirectorCollectionScreen(
             }
             item(
                 key = KEY_SHOW_PENDING,
-                span = { GridItemSpan(maxLineSpan) },
                 contentType = KEY_SHOW_PENDING,
             ) {
                 ShowPendingSwitch(
@@ -166,7 +159,6 @@ internal fun DirectorCollectionScreen(
             ) {
                 item(
                     key = KEY_EMPTY,
-                    span = { GridItemSpan(maxLineSpan) },
                     contentType = KEY_EMPTY,
                 ) {
                     Text(
@@ -182,16 +174,11 @@ internal fun DirectorCollectionScreen(
                 key = { it.movieId },
                 contentType = { CONTENT_TYPE_FILM },
             ) { film ->
-                DirectorFilmCard(
-                    film = film,
-                    onClick = { onMovieClick(film.movieId) },
-                    modifier = Modifier.aspectRatio(POSTER_RATIO),
-                )
+                DirectorFilmRow(film = film, onClick = { onMovieClick(film.movieId) })
             }
             if (uiState.visibleShorts.isNotEmpty()) {
                 item(
                     key = KEY_SHORTS,
-                    span = { GridItemSpan(maxLineSpan) },
                     contentType = KEY_SHORTS,
                 ) {
                     ShortsHeading(watched = uiState.shortsWatchedCount, total = uiState.shorts.size)
@@ -201,11 +188,7 @@ internal fun DirectorCollectionScreen(
                     key = { "$KEY_SHORTS${it.movieId}" },
                     contentType = { CONTENT_TYPE_FILM },
                 ) { film ->
-                    DirectorFilmCard(
-                        film = film,
-                        onClick = { onMovieClick(film.movieId) },
-                        modifier = Modifier.aspectRatio(POSTER_RATIO),
-                    )
+                    DirectorFilmRow(film = film, onClick = { onMovieClick(film.movieId) })
                 }
             }
         }
@@ -221,7 +204,7 @@ private fun ShortsHeading(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(top = Spacings.spacing16)
+                .padding(top = Spacings.spacing16, bottom = Spacings.spacing4)
                 .semantics(mergeDescendants = true) { heading() },
         horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
         verticalAlignment = Alignment.CenterVertically,
@@ -339,7 +322,27 @@ private fun CollectionSummary(uiState: DirectorCollectionUiState) {
         if (percent != null) {
             LinearProgressIndicator(
                 progress = { percent / PERCENT },
+                strokeCap = StrokeCap.Round,
+                gapSize = Size.size0,
+                drawStopIndicator = {},
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
                 modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        uiState.remainingCount?.let { remaining ->
+            Text(
+                text =
+                    if (remaining == 0) {
+                        stringResource(SR.string.director_collection_complete)
+                    } else {
+                        pluralStringResource(
+                            SR.plurals.director_collection_remaining,
+                            remaining,
+                            remaining,
+                        )
+                    },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -392,8 +395,6 @@ private fun ShowPendingSwitch(
 
 internal const val DIRECTOR_PHOTO_TAG = "director_photo"
 private const val BASE_PROFILE_URL = "https://image.tmdb.org/t/p/w185"
-private const val COLUMNS = 3
-private const val POSTER_RATIO = 2f / 3f
 private const val PERCENT = 100f
 private const val KEY_SUMMARY = "summary"
 private const val KEY_ERROR = "error"
@@ -401,13 +402,21 @@ private const val KEY_SHOW_PENDING = "show_pending"
 private const val KEY_EMPTY = "empty"
 private const val KEY_SHORTS = "shorts"
 private const val CONTENT_TYPE_FILM = "film"
+private const val PREVIEW_FIRST_YEAR = 2000
 
 @PreviewLightDark
 @Composable
 private fun DirectorCollectionScreenPreview() {
     val films =
         listOf("Memento", "Inception", "Oppenheimer").mapIndexed { index, title ->
-            DirectorFilm(index, title, null, null, isWatched = index != 1)
+            DirectorFilm(
+                index,
+                title,
+                null,
+                "${PREVIEW_FIRST_YEAR + index}-01-01",
+                isWatched =
+                    index != 1,
+            )
         }
     PreviewContentFullSize {
         DirectorCollectionScreen(
