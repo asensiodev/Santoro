@@ -130,11 +130,9 @@ internal class DirectorCollectionViewModel
                     .map { it.movieId }
                     .filterNot(stored::containsKey)
             return if (missing.isEmpty()) {
-                emptyMap()
+                stored
             } else {
-                movieRuntimeRepository.getRuntimes(
-                    missing,
-                )
+                stored + movieRuntimeRepository.getRuntimes(missing)
             }
         }
 

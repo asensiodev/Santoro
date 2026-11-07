@@ -235,7 +235,7 @@
         <item quantity="one">Te falta %d película</item>
         <item quantity="other">Te faltan %d películas</item>
     </plurals>
-    <string name="director_collection_complete">Has visto toda la filmografía</string>
+    <string name="director_collection_complete">Has visto todos sus largometrajes</string>
     <string name="director_collection_show_pending">Mostrar pendientes</string>
     <string name="director_collection_loading">Cargando filmografía</string>
     <string name="director_collection_error">No se pudo cargar la filmografía completa</string>

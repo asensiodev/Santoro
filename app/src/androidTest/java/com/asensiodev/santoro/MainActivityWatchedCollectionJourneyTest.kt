@@ -60,6 +60,8 @@ class MainActivityWatchedCollectionJourneyTest : BaseAppJourneyTest() {
             .onNode(hasText(AppJourneyTestData.DIRECTOR_NAME) and hasClickAction())
             .performClick()
         composeRule.onNodeWithText("Journey biography").assertIsDisplayed()
+        personRepository.requestedPersonIds shouldBeEqualTo
+            listOf(AppJourneyTestData.DIRECTOR_ID, AppJourneyTestData.DIRECTOR_ID)
         composeRule.onNodeWithContentDescription(string(SR.string.navigate_back)).performClick()
         composeRule.onNodeWithText(progress).assertIsDisplayed()
 

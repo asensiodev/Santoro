@@ -19,6 +19,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -27,6 +28,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withContext
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -130,7 +132,9 @@ class DirectorCollectionViewModelTest {
     fun `GIVEN a slow request WHEN retried THEN only the latest result is applied`() =
         runTest {
             val slow = CompletableDeferred<Result<PersonFilmography>>()
-            coEvery { personRepository.getMovieCredits(NOLAN) } coAnswers { slow.await() } andThen filmography()
+            coEvery { personRepository.getMovieCredits(NOLAN) } coAnswers {
+                withContext(NonCancellable) { slow.await() }
+            } andThen filmography()
             val viewModel = initializedViewModel()
 
             viewModel.process(DirectorCollectionIntent.RetryFilmography)
@@ -275,6 +279,26 @@ class DirectorCollectionViewModelTest {
             state.shorts shouldBeEqualTo listOf(watchedFilm(5, "Doodlebug", "1997-01-01"))
             state.watchedCount shouldBeEqualTo 1
             state.shortsWatchedCount shouldBeEqualTo 1
+        }
+
+    @Test
+    fun `GIVEN a watched short with a stored runtime WHEN it is unmarked THEN it stays among shorts`() =
+        runTest {
+            coEvery { personRepository.getMovieCredits(NOLAN) } returns
+                filmography(credit(5, "Doodlebug", "1997-01-01"))
+            coEvery { movieRuntimeRepository.getRuntimes(any()) } returns mapOf(2 to 148, 3 to 180)
+            watchedMovies.value =
+                Result.success(
+                    listOf(watched(1, "Memento", "2000-09-05"), watched(5, "Doodlebug", "1997-01-01", runtime = 3)),
+                )
+            val viewModel = initializedViewModel()
+
+            watchedMovies.value = Result.success(listOf(watched(1, "Memento", "2000-09-05")))
+            advanceUntilIdle()
+
+            viewModel.uiState.value.shorts shouldBeEqualTo
+                listOf(DirectorFilm(5, "Doodlebug", "/5.jpg", "1997-01-01", isWatched = false))
+            viewModel.uiState.value.totalCount shouldBeEqualTo 3
         }
 
     @Test
