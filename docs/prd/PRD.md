@@ -4,9 +4,9 @@
 
 | Field        | Value                          |
 |--------------|--------------------------------|
-| **Version**  | 2.22                           |
+| **Version**  | 2.25                           |
 | **Status**   | ✅ Current                     |
-| **Date**     | 2026-11-01                     |
+| **Date**     | 2026-11-07                     |
 | **Author**   | @asensiodev                    |
 | **Platform** | Android (Native)               |
 
@@ -498,12 +498,12 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 | Attribute | Detail |
 |---|---|
-| **Status** | 🟡 Planned — F-31 dependency implemented; [OpenSpec change](../../openspec/changes/director-watched-filmography/proposal.md) |
+| **Status** | ✅ Implemented, pending release — [archived OpenSpec change](../../openspec/changes/archive/2026-11-07-director-watched-filmography/proposal.md) |
 | **Scope** | New Director collection screen opened from the Watched Director grouping |
-| **Behaviour** | Show a director's feature films chronologically with watched films marked, unwatched films as placeholders and a "Watched X of Y" progress summary; a persisted Show pending switch hides unwatched films |
+| **Behaviour** | Show a director's feature films chronologically as a list (thumbnail, title, year) with "Watched" and "In Watchlist" labels, unwatched films dimmed, and a "Watched X of Y" summary with a progress bar and the films left; short films (40 minutes or less, runtime from TMDB) are shown in their own Shorts section with a separate count; a persisted Show pending switch hides unwatched films |
 | **Boundaries** | Feature films only (Director job, released, not video, not documentary; watched films always count). No quick add to Watchlist or completion in Watched headings in this version |
 | **Rationale** | Collectors enjoy seeing what is missing; completion gives a reason to return and a natural source of recommendations |
-| **Notes** | Future: let the user choose the filmography scope (feature films only or everything, including documentaries and shorts); label short films, which TMDB credits cannot identify without runtime; one-tap add to Watchlist from an unwatched film, which needs the full movie detail before saving |
+| **Notes** | Future: let the user choose the filmography scope (feature films only or everything, including documentaries and other credits); one-tap add to Watchlist from an unwatched film, which needs the full movie detail before saving |
 
 ---
 
@@ -513,9 +513,22 @@ Features approved for a future release. Each will get a FIP before implementatio
 |---|---|
 | **Status** | 📋 Planned — follow-up from F-31, no plan yet |
 | **Scope** | A dedicated statistics screen for the watched collection |
-| **Behaviour** | Show the F-20 figures (total movies, total runtime, favourite genre, longest streak) and room for richer insights, outside the Watched collection screen |
+| **Behaviour** | Timeless collection statistics outside the Watched screen: total movies, total runtime, favourite genres, directors and decades, director completion (F-32) and playful insights such as "You love the 70s". No time-based activity (no streak, no monthly counts) |
 | **Rationale** | F-31 turned the Watched screen into a browsing surface; statistics deserve their own destination instead of competing with the collection |
-| **Notes** | `GetWatchedStatsUseCase`, `WatchedStats` and their strings were kept when the dashboard was removed so this screen can reuse them. Entry point and navigation are undecided |
+| **Notes** | `GetWatchedStatsUseCase`, `WatchedStats` and their strings were kept when the dashboard was removed so this screen can reuse them; the longest-streak figure is dropped (decision 2026-11-01, see F-34). Entry point and navigation are undecided |
+
+---
+
+### F-34 — Watched: Recent And A–Z Groupings And Collapsible Director Groups
+
+| Attribute | Detail |
+|---|---|
+| **Status** | 📋 Planned for 1.3.0, together with F-32 — no plan yet |
+| **Scope** | Watched screen groupings |
+| **Behaviour** | Replace the Date watched grouping (by month) with **Recent**, the default: all watched movies without group headings, most recently added first. Add an **A–Z** grouping with letter headings (case- and accent-insensitive; numbers and symbols under "#"; leading articles are not skipped). A saved Date watched preference maps to Recent. In the **Director** grouping, each director heading gets a separate chevron that collapses or expands that director's movies; groups start collapsed so the screen reads as a list of directors, tapping the director name still opens the F-32 director collection, an active search expands groups with matches, and collapsed state is not persisted. Works in Shelf and List |
+| **Decision (2026-11-01)** | The app does not record or edit the date a movie was watched. Marking a movie as watched stays one tap; the stored timestamp only orders Recent and is never shown as a watch date. Statistics are timeless (F-33). Rationale: editable dates invite users to back-date their whole history, which is tedious and discouraging, while dates add little to a collection centred on directors, genres and decades |
+| **Boundaries** | No new view mode for collapsed groups and no collapsing in other groupings. No watch-date picker, "watched before" state, batch dating or monthly activity. A contacts-style alphabetical index (side scrubber) was considered and discarded for complexity |
+| **Rationale** | Users want to see their whole collection simply, either in the order they added movies or alphabetically, without misleading month headings |
 
 ---
 
@@ -556,3 +569,6 @@ Features approved for a future release. Each will get a FIP before implementatio
 | 2.20    | 2026-10-27 | Plan F-31 Watched collection views and grouping and F-32 Director collection as OpenSpec changes; record the removable director backfill and the future filmography scope option. |
 | 2.21    | 2026-11-01 | Revise F-31 with a collection header, on-demand search and rounded grouping chips; remove the F-20 stats dashboard from the Watched screen and add F-33 Watched statistics screen to the backlog; sync release dates so restored movies keep their decade. |
 | 2.22    | 2026-11-01 | F-31 implemented and its OpenSpec change archived after validation and review; also fixes the offline cold start crash in API key refresh. |
+| 2.23    | 2026-11-01 | Revise the F-32 plan against the implemented F-31 (dimmed unwatched posters); make F-33 statistics timeless without the streak; add F-34 Recent and A–Z groupings and record the decision not to track editable watch dates. |
+| 2.24    | 2026-11-04 | Add collapsible director groups (collapsed by default, chevron separate from opening the director) to F-34. |
+| 2.25    | 2026-11-07 | F-32 implemented and its OpenSpec change archived after validation and review: list layout with Watched and In Watchlist labels, films left, and a separate Shorts section. |

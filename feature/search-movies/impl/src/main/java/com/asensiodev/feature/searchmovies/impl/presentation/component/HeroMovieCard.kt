@@ -31,9 +31,11 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.asensiodev.core.designsystem.component.statusribbon.MovieStatusRibbon
 import com.asensiodev.core.designsystem.theme.SantoroTheme
 import com.asensiodev.core.designsystem.theme.Size
 import com.asensiodev.core.designsystem.theme.Spacings
+import com.asensiodev.feature.searchmovies.impl.presentation.mapper.toRibbonStatus
 import com.asensiodev.feature.searchmovies.impl.presentation.model.MovieUi
 import com.asensiodev.santoro.core.stringresources.R as SR
 
@@ -77,7 +79,7 @@ internal fun HeroMovieCard(
             )
             movie.libraryStatus?.let { status ->
                 MovieStatusRibbon(
-                    status = status,
+                    status = status.toRibbonStatus(),
                     modifier = Modifier.align(Alignment.TopEnd),
                     tagSize = Size.size64,
                     iconPadding = Spacings.spacing8 + Size.size2,

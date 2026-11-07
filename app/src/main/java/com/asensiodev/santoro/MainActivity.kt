@@ -44,6 +44,7 @@ import com.asensiodev.feature.persondetail.impl.presentation.navigation.navigate
 import com.asensiodev.feature.persondetail.impl.presentation.navigation.personDetailRoute
 import com.asensiodev.feature.persondetail.impl.presentation.navigation.personFilmographyRoute
 import com.asensiodev.feature.searchmovies.impl.navigation.seeAllMoviesRoute
+import com.asensiodev.feature.watchedmovies.impl.navigation.directorCollectionRoute
 import com.asensiodev.login.impl.presentation.navigation.loginScreen
 import com.asensiodev.santoro.navigation.DeepLinkHandler
 import com.asensiodev.santoro.navigation.SantoroMainTabComponent
@@ -221,6 +222,26 @@ fun SantoroApp(
                 ) {
                     mainNavController.navigateToMovieDetail(movieId)
                 }
+            },
+        )
+
+        directorCollectionRoute(
+            onBackClick = {
+                if (mainNavController.currentBackStackEntry?.lifecycle?.currentState ==
+                    Lifecycle.State.RESUMED
+                ) {
+                    mainNavController.popBackStack()
+                }
+            },
+            onMovieClick = { movieId ->
+                if (mainNavController.currentBackStackEntry?.lifecycle?.currentState ==
+                    Lifecycle.State.RESUMED
+                ) {
+                    mainNavController.navigateToMovieDetail(movieId)
+                }
+            },
+            onDirectorProfileClick = { personId ->
+                mainNavController.navigateToPersonDetail(personId)
             },
         )
 

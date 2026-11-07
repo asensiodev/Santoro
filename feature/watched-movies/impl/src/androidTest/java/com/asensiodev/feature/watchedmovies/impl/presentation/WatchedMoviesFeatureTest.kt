@@ -62,7 +62,7 @@ class WatchedMoviesFeatureTest {
             SantoroTheme {
                 WatchedMoviesRoute(
                     onMovieClick = { selectedMovieId = it },
-                    onDirectorClick = {},
+                    onDirectorClick = { _, _ -> },
                     viewModel = viewModel,
                 )
             }
@@ -146,6 +146,7 @@ private class FakeUserPreferencesRepository : UserPreferencesRepository {
     override val theme = MutableStateFlow(ThemeOption.SYSTEM)
     override val watchedViewMode = MutableStateFlow(WatchedViewMode.SHELF)
     override val watchedGrouping = MutableStateFlow(WatchedGrouping.DATE_WATCHED)
+    override val directorShowPending = MutableStateFlow(true)
 
     override suspend fun setHasSeenGuestOnboarding(hasSeen: Boolean) {
         hasSeenGuestOnboarding.value = hasSeen
@@ -165,6 +166,10 @@ private class FakeUserPreferencesRepository : UserPreferencesRepository {
 
     override suspend fun setWatchedGrouping(grouping: WatchedGrouping) {
         watchedGrouping.value = grouping
+    }
+
+    override suspend fun setDirectorShowPending(show: Boolean) {
+        directorShowPending.value = show
     }
 }
 

@@ -56,7 +56,7 @@ import com.asensiodev.santoro.core.stringresources.R as SR
 @Composable
 internal fun WatchedMoviesRoute(
     onMovieClick: (Int) -> Unit,
-    onDirectorClick: (Int) -> Unit,
+    onDirectorClick: (Int, String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: WatchedMoviesViewModel = hiltViewModel(),
 ) {
@@ -82,7 +82,7 @@ internal fun WatchedMoviesScreen(
     uiState: WatchedMoviesUiState,
     onProcess: (WatchedMoviesIntent) -> Unit,
     onMovieClick: (Int) -> Unit,
-    onDirectorClick: (Int) -> Unit,
+    onDirectorClick: (Int, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val gridState = rememberLazyGridState()
@@ -162,7 +162,7 @@ internal fun WatchedMovieList(
     groups: List<WatchedGroupUi>,
     viewMode: WatchedViewMode,
     onMovieClick: (Int) -> Unit,
-    onDirectorClick: (Int) -> Unit,
+    onDirectorClick: (Int, String) -> Unit,
     modifier: Modifier = Modifier,
     gridState: LazyGridState = rememberLazyGridState(),
 ) {
@@ -213,10 +213,11 @@ internal fun WatchedMovieList(
 @Composable
 private fun WatchedGroupHeading(
     group: WatchedGroupUi,
-    onDirectorClick: (Int) -> Unit,
+    onDirectorClick: (Int, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val directorId = group.directorId
+    val title = group.label.asTitle()
     val openDirectorLabel = stringResource(SR.string.watched_group_open_director)
     Row(
         modifier =
@@ -232,7 +233,7 @@ private fun WatchedGroupHeading(
                             .clickable(
                                 onClickLabel = openDirectorLabel,
                                 role = Role.Button,
-                                onClick = { onDirectorClick(directorId) },
+                                onClick = { onDirectorClick(directorId, title) },
                             ).padding(start = Spacings.spacing16, end = Spacings.spacing8)
                     } else {
                         Modifier
@@ -244,7 +245,7 @@ private fun WatchedGroupHeading(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = group.label.asTitle(),
+            text = title,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -330,7 +331,7 @@ private fun WatchedMoviesScreenPreview() {
                 ),
             onProcess = {},
             onMovieClick = {},
-            onDirectorClick = {},
+            onDirectorClick = { _, _ -> },
         )
     }
 }

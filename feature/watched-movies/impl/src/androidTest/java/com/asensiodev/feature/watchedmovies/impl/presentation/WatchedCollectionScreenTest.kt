@@ -251,7 +251,7 @@ class WatchedCollectionScreenTest {
                     uiState = state.value,
                     onProcess = {},
                     onMovieClick = {},
-                    onDirectorClick = {},
+                    onDirectorClick = { _, _ -> },
                 )
             }
         }
@@ -288,7 +288,7 @@ class WatchedCollectionScreenTest {
                     uiState = state,
                     onProcess = { intents += it },
                     onMovieClick = { clickedMovieId = it },
-                    onDirectorClick = { clickedDirectorId = it },
+                    onDirectorClick = { id, _ -> clickedDirectorId = id },
                 )
             }
         }

@@ -10,6 +10,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 class FakePersonRepository : PersonRepository {
     val requestedCreditIds = CopyOnWriteArrayList<Int>()
     var extraMovies: List<PersonMovieCredit> = emptyList()
+    var crewMovies: List<PersonMovieCredit> = emptyList()
 
     val requestedPersonIds = CopyOnWriteArrayList<Int>()
 
@@ -39,12 +40,13 @@ class FakePersonRepository : PersonRepository {
         val movie = AppJourneyTestData.trendingMovie
         val credit =
             PersonMovieCredit(movie.id, movie.title, null, movie.releaseDate, listOf("Lead"))
-        return Result.success(PersonFilmography(listOf(credit) + extraMovies, emptyList()))
+        return Result.success(PersonFilmography(listOf(credit) + extraMovies, crewMovies))
     }
 
     fun reset() {
         requestedPersonIds.clear()
         requestedCreditIds.clear()
         extraMovies = emptyList()
+        crewMovies = emptyList()
     }
 }

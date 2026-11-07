@@ -218,10 +218,30 @@
     <string name="watched_group_no_genre">Sin género</string>
     <string name="watched_group_undated">Sin fecha</string>
     <string name="watched_group_decade_label" formatted="true">Años %1$d</string>
-    <string name="watched_group_open_director">Ver perfil del director</string>
+    <string name="watched_group_open_director">Ver colección del director</string>
     <string name="watched_search_close">Cerrar búsqueda</string>
     <plurals name="watched_group_movie_count">
         <item quantity="one">%d película</item>
         <item quantity="other">%d películas</item>
     </plurals>
+    <string name="director_collection_open_profile">Ver perfil del director</string>
+    <string name="director_collection_progress" formatted="true">Vistas %1$d de %2$d</string>
+    <string name="director_collection_percent" formatted="true">%1$d %%</string>
+    <plurals name="director_collection_watched_count">
+        <item quantity="one">%d vista</item>
+        <item quantity="other">%d vistas</item>
+    </plurals>
+    <plurals name="director_collection_remaining">
+        <item quantity="one">Te falta %d película</item>
+        <item quantity="other">Te faltan %d películas</item>
+    </plurals>
+    <string name="director_collection_complete">Has visto todos sus largometrajes</string>
+    <string name="director_collection_show_pending">Mostrar pendientes</string>
+    <string name="director_collection_loading">Cargando filmografía</string>
+    <string name="director_collection_error">No se pudo cargar la filmografía completa</string>
+    <string name="director_collection_empty">No hay películas que mostrar</string>
+    <string name="director_collection_watched">Vista</string>
+    <string name="director_collection_not_watched">No vista</string>
+    <string name="director_collection_shorts">Cortometrajes</string>
+    <string name="director_collection_shorts_progress" formatted="true">%1$d de %2$d vistos</string>
 </resources>

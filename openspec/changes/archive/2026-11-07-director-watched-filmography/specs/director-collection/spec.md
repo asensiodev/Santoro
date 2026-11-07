@@ -1,0 +1,69 @@
+## Purpose
+
+Show a director's feature filmography against the user's watched collection, so users can see what they have watched, what is missing and how complete their collection is.
+
+## ADDED Requirements
+
+### Requirement: Director collection screen
+The app SHALL show a Director collection screen with the director's name, a "Watched X of Y" summary with a progress bar, a percentage and the number of films left (or a completion message when none are left), and the director's feature films in a single-column list ordered by release date ascending, undated last. Each row SHALL show a poster thumbnail, the title and the release year (omitted when unknown). Watched films SHALL show their thumbnail and title at full emphasis and a "Watched" label with the app's watched icon next to the year, read by accessibility services. Unwatched films SHALL show their thumbnail dimmed and their title in a secondary color, without a watched mark, and SHALL be announced as not watched; an unwatched film in the user's Watchlist SHALL show an "In Watchlist" label with the app's watchlist icon next to the year and be announced as in the Watchlist. Status marks SHALL NOT look like tappable controls. A missing or failed poster SHALL leave the title and year readable. Tapping any film SHALL open the existing movie detail; tapping the director name or photo SHALL open the existing person profile. The header SHALL show the director's profile photo next to the name when it is available; when the photo is missing, still loading or fails to load, the header SHALL show the name alone without an error.
+
+#### Scenario: Partially watched director
+- **WHEN** the user opens a director with 26 feature films of which 9 are watched
+- **THEN** the summary reads 9 of 26 with 35% progress and 17 films to go, and the list shows 9 marked and 17 dimmed rows with title and year in chronological order
+
+#### Scenario: Director photo unavailable
+- **WHEN** the director has no TMDB profile photo or the profile request fails
+- **THEN** the header shows only the name, and the summary and films are unaffected
+
+#### Scenario: Pending film in the Watchlist
+- **WHEN** an unwatched film by the director is in the user's Watchlist
+- **THEN** its dimmed row shows an "In Watchlist" label with the same bookmark icon used on Home, and it is announced as not watched and in the Watchlist
+
+#### Scenario: Open an unwatched film
+- **WHEN** the user taps an unwatched film
+- **THEN** that movie's detail opens, and Back returns to the Director collection with its scroll position
+
+#### Scenario: Watched state changes
+- **WHEN** the user marks a film as watched from its detail and returns
+- **THEN** the film shows as watched and the summary updates without a new filmography request
+
+### Requirement: Feature films only
+The filmography SHALL include movies where the person has the Director job, that are not flagged as video, are not documentaries, and have a release date on or before today. Movies the user has watched with this person as a stored director SHALL always be included and counted, even if they would otherwise be excluded. Movies SHALL be deduplicated by ID. A film whose known runtime is 40 minutes or less SHALL be treated as a short: it SHALL appear in a separate Shorts section below the feature films, with its own watched count, and SHALL not be counted in the main summary. A film with an unknown runtime SHALL be treated as a feature film.
+
+#### Scenario: Documentary excluded
+- **WHEN** a director's TMDB credits include a documentary they directed that the user has not watched
+- **THEN** it is not shown and not counted in Y
+
+#### Scenario: Watched documentary kept
+- **WHEN** the user has watched a documentary by that director
+- **THEN** it is shown as watched and counted in both X and Y
+
+#### Scenario: Early shorts
+- **WHEN** a director has 13 feature films and 3 shorts of 30 minutes or less, and the user has watched 4 feature films
+- **THEN** the summary reads 4 of 13, and a Shorts section below lists the 3 shorts with 0 of 3 watched
+
+#### Scenario: Runtime unknown
+- **WHEN** a film's runtime is missing or its runtime request fails
+- **THEN** the film is listed and counted as a feature film
+
+#### Scenario: Unreleased film excluded
+- **WHEN** a credit has no release date or a future release date
+- **THEN** it is not shown and not counted
+
+### Requirement: Show pending switch
+The screen SHALL offer a Show pending switch, on by default, persisted on the device. When off, only watched films SHALL be shown; the summary SHALL remain unchanged.
+
+#### Scenario: Hide pending
+- **WHEN** the user turns Show pending off
+- **THEN** only watched films remain, the summary still reads X of Y, and the choice persists for other directors and app restarts
+
+### Requirement: Loading, error and empty states
+The screen SHALL show the director name and the user's watched films for that director immediately from local data, a loading indicator for the remaining filmography, and a retryable inline error if the filmography request fails. Offline, the screen SHALL still list the watched films with a summary of X watched and no total. Cancellation SHALL not be shown as an error.
+
+#### Scenario: Filmography request fails
+- **WHEN** the TMDB credits request fails
+- **THEN** watched films remain visible with an inline error and Retry; Retry loads the full filmography
+
+#### Scenario: Leave while loading
+- **WHEN** the user navigates Back before the filmography loads
+- **THEN** the request is cancelled without an error state or analytics error

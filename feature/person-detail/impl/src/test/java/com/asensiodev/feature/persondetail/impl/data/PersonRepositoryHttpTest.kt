@@ -107,6 +107,30 @@ class PersonRepositoryHttpTest {
         }
 
     @Test
+    fun `GIVEN directed credits with video flag and genres WHEN loaded THEN both cross the HTTP boundary`() =
+        runTest {
+            server.enqueue(
+                MockResponse().setBody(
+                    """
+                    {"cast":[],
+                     "crew":[
+                      {"id":42,"title":"Concert Film","release_date":"2020-01-10",
+                       "job":"Director","video":true,"genre_ids":[10402,99]},
+                      {"id":43,"title":"Feature","release_date":"2021-05-01",
+                       "job":"Director","video":false,"genre_ids":[18]},
+                      {"id":43,"title":"Feature","release_date":"2021-05-01",
+                       "job":"Writer","video":false,"genre_ids":[18,80]}]}
+                    """.trimIndent(),
+                ),
+            )
+
+            val crew = repository.getMovieCredits(7).getOrThrow().crew
+
+            crew.map { Triple(it.movieId, it.isVideo, it.genreIds) } shouldBeEqualTo
+                listOf(Triple(43, false, listOf(18, 80)), Triple(42, true, listOf(10402, 99)))
+        }
+
+    @Test
     fun `GIVEN unavailable profile WHEN retried after recovery THEN failure is replaced with the requested person`() =
         runTest {
             server.enqueue(MockResponse().setResponseCode(404))

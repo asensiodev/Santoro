@@ -57,11 +57,15 @@ The Watched screen SHALL offer Group by chips for Date watched, Director, Genre 
 - **THEN** the Watched screen is grouped by decade
 
 ### Requirement: Open a director from the collection
-In Director grouping, a resolved director heading SHALL be an accessible button that opens the existing person profile for that director. The Unknown director heading SHALL not be actionable.
+In Director grouping, a resolved director heading SHALL be an accessible button that opens the Director collection screen for that director. The Unknown director heading SHALL not be actionable.
+
+#### Scenario: Open director collection
+- **WHEN** the user taps the Martin Scorsese heading
+- **THEN** the Director collection screen for that TMDB person opens, and Back returns to the Watched screen with mode, grouping and scroll position preserved
 
 #### Scenario: Open director profile
-- **WHEN** the user taps the Martin Scorsese heading
-- **THEN** the person profile for that TMDB person opens, and Back returns to the Watched screen with mode, grouping and scroll position preserved
+- **WHEN** the user taps the director name on the Director collection screen opened from the Martin Scorsese heading
+- **THEN** the person profile for that TMDB person opens, and Back returns to the Director collection
 
 ### Requirement: Collection header
 The Watched screen SHALL show a header with the screen title and, when the collection has movies, a summary with the total number of watched movies, a search button and the view mode toggle. The total SHALL count each watched movie once, regardless of how many groups it appears in, and SHALL not change while searching. During Loading, Error and Empty, the header SHALL show only the title.

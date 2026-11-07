@@ -11,4 +11,6 @@ data class PersonMovieCredit(
     val posterPath: String?,
     val releaseDate: String?,
     val roles: List<String>,
+    val isVideo: Boolean = false,
+    val genreIds: List<Int> = emptyList(),
 )
