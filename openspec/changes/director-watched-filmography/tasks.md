@@ -41,6 +41,6 @@
 ## 4. Navigation and validation
 
 - [x] 4.1 Observe a failing app journey for Watched → director heading → Director collection → film detail → Back → Back, then add the route and replace F-31's person-profile link.
-- [ ] 4.2 Run affected tests, `verifyPaparazziDebug`, `:architecture-tests:test`, connected tests and the aggregate gate; record results in implementation.md.
+- [x] 4.2 Run affected tests, `verifyPaparazziDebug`, `:architecture-tests:test`, connected tests and the aggregate gate; record results in implementation.md.
 - [ ] 4.3 Manual checks: offline open, slow network, Spanish, light/dark, TalkBack on status labels and dimmed rows, large font.
 - [ ] 4.4 Update PRD F-32 status, report changed classes, and archive after human review.
