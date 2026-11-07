@@ -156,3 +156,20 @@ Plan updated first (design list-layout revision, spec requirement and scenarios 
 - `./gradlew -PenableFirebase=false test detekt ktlintCheck koverVerify assembleDebug assembleRelease verifyPaparazziDebug :architecture-tests:test` passed (only pre-existing deprecation and R8 rule warnings).
 - Connected tests on `emulator-5554` (Pixel_9a AVD, Android 17): `:feature:watched-movies:impl:connectedDebugAndroidTest` 37/37, `:feature:search-movies:impl:connectedDebugAndroidTest` 3/3, `:feature:movie-detail:impl:connectedDebugAndroidTest` 10/10, `:app:connectedJourneyTestAndroidTest` 18/18; no failures or skips.
 - Not run: the release startup check (`tools/check-release-startup.py`), which belongs to release-candidate distribution, not this change.
+
+## Review follow-up (PR #6, commit 29918f1)
+
+- Completion copy: "You've seen the whole filmography" was wrong when every feature film was watched but a short was pending. `director_collection_complete` now reads "You've seen all their feature films" / "Has visto todos sus largometrajes".
+- Watchlist read failure: `GetWatchlistMovieIdsUseCase` mapped a failed read to an empty set, which removed every "In Watchlist" label. Failures are now skipped and the last known ids stay. Red: `GetWatchlistMovieIdsUseCaseTest` failure case; green after the fix.
+- Unmarked watched short: stored runtimes were used only to skip lookups, so unmarking a watched short moved it to the feature films and raised the total. `runtimesFor` now keeps the stored runtimes. Red: `GIVEN a watched short with a stored runtime WHEN it is unmarked THEN it stays among shorts`; green after the fix.
+- Test hardening: the stale-response test now returns its stale failure after cancellation (`NonCancellable`), and the watched collection journey asserts the profile request id.
+- Declined: guarding only the new preference read (every preference shares the same encrypted store), checking the TMDB response id (not a realistic case) and loaded posters in screenshots (needs a fake image loader for little value). Replies are on the PR.
+- Checks: `:feature:watched-movies:impl:testDebugUnitTest`, `verifyPaparazziDebug detekt ktlintCheck :architecture-tests:test` (no golden changed), and on `emulator-5554` `:app:connectedJourneyTestAndroidTest` 18/18 and `:feature:watched-movies:impl:connectedDebugAndroidTest` 37/37.
+
+## 4.3 Manual checks (2026-11-07)
+
+- Done by the product owner on device: offline open, slow network, Spanish, light and dark, TalkBack on status labels and dimmed rows, and large font. No issues reported.
+
+## 4.4 Close (2026-11-07)
+
+- PRD F-32 marked implemented, pending release, with a link to the archived change. Delta specs synced to `openspec/specs/director-collection` and `openspec/specs/watched-collection`, then the change was archived after review of PR #6.

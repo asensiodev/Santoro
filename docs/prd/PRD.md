@@ -4,9 +4,9 @@
 
 | Field        | Value                          |
 |--------------|--------------------------------|
-| **Version**  | 2.24                           |
+| **Version**  | 2.25                           |
 | **Status**   | ✅ Current                     |
-| **Date**     | 2026-11-04                     |
+| **Date**     | 2026-11-07                     |
 | **Author**   | @asensiodev                    |
 | **Platform** | Android (Native)               |
 
@@ -498,12 +498,12 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 | Attribute | Detail |
 |---|---|
-| **Status** | 🟡 Planned — F-31 dependency implemented; [OpenSpec change](../../openspec/changes/director-watched-filmography/proposal.md) |
+| **Status** | ✅ Implemented, pending release — [archived OpenSpec change](../../openspec/changes/archive/2026-11-07-director-watched-filmography/proposal.md) |
 | **Scope** | New Director collection screen opened from the Watched Director grouping |
-| **Behaviour** | Show a director's feature films chronologically with watched films marked, unwatched films shown with dimmed posters and a "Watched X of Y" progress summary; a persisted Show pending switch hides unwatched films |
+| **Behaviour** | Show a director's feature films chronologically as a list (thumbnail, title, year) with "Watched" and "In Watchlist" labels, unwatched films dimmed, and a "Watched X of Y" summary with a progress bar and the films left; short films (40 minutes or less, runtime from TMDB) are shown in their own Shorts section with a separate count; a persisted Show pending switch hides unwatched films |
 | **Boundaries** | Feature films only (Director job, released, not video, not documentary; watched films always count). No quick add to Watchlist or completion in Watched headings in this version |
 | **Rationale** | Collectors enjoy seeing what is missing; completion gives a reason to return and a natural source of recommendations |
-| **Notes** | Future: let the user choose the filmography scope (feature films only or everything, including documentaries and shorts); label short films, which TMDB credits cannot identify without runtime; one-tap add to Watchlist from an unwatched film, which needs the full movie detail before saving |
+| **Notes** | Future: let the user choose the filmography scope (feature films only or everything, including documentaries and other credits); one-tap add to Watchlist from an unwatched film, which needs the full movie detail before saving |
 
 ---
 
@@ -571,3 +571,4 @@ Features approved for a future release. Each will get a FIP before implementatio
 | 2.22    | 2026-11-01 | F-31 implemented and its OpenSpec change archived after validation and review; also fixes the offline cold start crash in API key refresh. |
 | 2.23    | 2026-11-01 | Revise the F-32 plan against the implemented F-31 (dimmed unwatched posters); make F-33 statistics timeless without the streak; add F-34 Recent and A–Z groupings and record the decision not to track editable watch dates. |
 | 2.24    | 2026-11-04 | Add collapsible director groups (collapsed by default, chevron separate from opening the director) to F-34. |
+| 2.25    | 2026-11-07 | F-32 implemented and its OpenSpec change archived after validation and review: list layout with Watched and In Watchlist labels, films left, and a separate Shorts section. |
