@@ -22,9 +22,12 @@ import com.asensiodev.core.domain.usecase.SetDetailTooltipSeenUseCase
 import com.asensiodev.core.testing.dispatcher.TestDispatcherProvider
 import com.asensiodev.feature.moviedetail.impl.domain.repository.MovieDetailRepository
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseCase
+import com.asensiodev.feature.moviedetail.impl.domain.usecase.HasSavedMoviesUseCase
+import com.asensiodev.santoro.core.database.domain.DatabaseRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.Before
 import org.junit.Rule
@@ -68,6 +71,7 @@ class MovieDetailFeatureTest {
                     ObserveHasSeenDetailTooltipUseCase(preferencesRepository),
                 setDetailTooltipSeenUseCase =
                     SetDetailTooltipSeenUseCase(preferencesRepository),
+                hasSavedMoviesUseCase = HasSavedMoviesUseCase(EmptyDatabaseRepository, dispatchers),
             )
     }
 
@@ -172,4 +176,18 @@ private class FakeUserPreferencesRepository : UserPreferencesRepository {
     override suspend fun setDirectorShowPending(show: Boolean) {
         directorShowPending.value = show
     }
+}
+
+private object EmptyDatabaseRepository : DatabaseRepository {
+    override fun getWatchedMovies() = flowOf(Result.success(emptyList<Movie>()))
+
+    override fun getWatchlistMovies() = flowOf(Result.success(emptyList<Movie>()))
+
+    override suspend fun getMovieById(movieId: Int) = Result.success<Movie?>(null)
+
+    override fun searchWatchedMoviesByTitle(query: String) =
+        flowOf(Result.success(emptyList<Movie>()))
+
+    override fun searchWatchlistMoviesByTitle(query: String) =
+        flowOf(Result.success(emptyList<Movie>()))
 }
