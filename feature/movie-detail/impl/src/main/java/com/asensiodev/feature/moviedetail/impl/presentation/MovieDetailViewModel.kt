@@ -9,6 +9,7 @@ import com.asensiodev.core.domain.result.rethrowCancellation
 import com.asensiodev.core.domain.usecase.ObserveHasSeenDetailTooltipUseCase
 import com.asensiodev.core.domain.usecase.SetDetailTooltipSeenUseCase
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseCase
+import com.asensiodev.feature.moviedetail.impl.domain.usecase.HasSavedMoviesUseCase
 import com.asensiodev.feature.moviedetail.impl.presentation.mapper.toDomain
 import com.asensiodev.feature.moviedetail.impl.presentation.mapper.toUi
 import com.asensiodev.library.observability.api.NoOpObservabilityTracker
@@ -37,6 +38,7 @@ internal class MovieDetailViewModel
         private val syncScheduler: SyncScheduler,
         private val observeHasSeenDetailTooltipUseCase: ObserveHasSeenDetailTooltipUseCase,
         private val setDetailTooltipSeenUseCase: SetDetailTooltipSeenUseCase,
+        private val hasSavedMoviesUseCase: HasSavedMoviesUseCase,
         private val observabilityTracker: ObservabilityTracker = NoOpObservabilityTracker,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(MovieDetailUiState())
@@ -269,7 +271,8 @@ internal class MovieDetailViewModel
             tooltipJobRequestVersion = requestVersion
             tooltipJob =
                 viewModelScope.launch {
-                    val hasSeen = observeHasSeenDetailTooltipUseCase().first()
+                    val hasSeen =
+                        observeHasSeenDetailTooltipUseCase().first() || hasSavedMoviesUseCase()
                     val state = _uiState.value
                     if (
                         requestVersion != activeRequestVersion ||
@@ -281,6 +284,7 @@ internal class MovieDetailViewModel
                     tooltipCheckedMovieId = movieId
                     if (!hasSeen) {
                         _uiState.update { it.copy(showTooltip = true) }
+                        setDetailTooltipSeenUseCase()
                     }
                 }
         }
@@ -315,9 +319,6 @@ internal class MovieDetailViewModel
         private fun dismissTooltip() {
             observabilityTracker.trackAction(MOVIE_DETAIL_TOOLTIP_DISMISSED)
             _uiState.update { it.copy(showTooltip = false) }
-            viewModelScope.launch {
-                setDetailTooltipSeenUseCase()
-            }
         }
 
         private companion object {

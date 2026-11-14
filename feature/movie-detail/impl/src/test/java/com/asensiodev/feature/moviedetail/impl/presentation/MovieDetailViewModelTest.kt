@@ -10,6 +10,7 @@ import com.asensiodev.core.domain.usecase.SetDetailTooltipSeenUseCase
 import com.asensiodev.core.testing.coVerifyOnce
 import com.asensiodev.core.testing.extension.CoroutineTestExtension
 import com.asensiodev.feature.moviedetail.impl.domain.usecase.GetMovieDetailUseCase
+import com.asensiodev.feature.moviedetail.impl.domain.usecase.HasSavedMoviesUseCase
 import com.asensiodev.feature.moviedetail.impl.presentation.mapper.toUi
 import com.asensiodev.ui.UiText
 import io.mockk.coEvery
@@ -47,6 +48,7 @@ class MovieDetailViewModelTest {
     private val syncScheduler: SyncScheduler = mockk(relaxed = true)
     private val observeHasSeenDetailTooltipUseCase: ObserveHasSeenDetailTooltipUseCase = mockk()
     private val setDetailTooltipSeenUseCase: SetDetailTooltipSeenUseCase = mockk(relaxed = true)
+    private val hasSavedMoviesUseCase: HasSavedMoviesUseCase = mockk()
     private val testMovie = createTestMovie()
 
     private lateinit var viewModel: MovieDetailViewModel
@@ -54,6 +56,7 @@ class MovieDetailViewModelTest {
     @BeforeEach
     fun setUp() {
         every { observeHasSeenDetailTooltipUseCase() } returns flowOf(true)
+        coEvery { hasSavedMoviesUseCase() } returns false
         viewModel =
             MovieDetailViewModel(
                 getMovieDetailUseCase = getMovieDetailUseCase,
@@ -61,6 +64,7 @@ class MovieDetailViewModelTest {
                 syncScheduler = syncScheduler,
                 observeHasSeenDetailTooltipUseCase = observeHasSeenDetailTooltipUseCase,
                 setDetailTooltipSeenUseCase = setDetailTooltipSeenUseCase,
+                hasSavedMoviesUseCase = hasSavedMoviesUseCase,
             )
     }
 
@@ -557,6 +561,32 @@ class MovieDetailViewModelTest {
             }
 
         @Test
+        fun `GIVEN tooltip not seen but movies already saved WHEN FetchDetails succeeds THEN showTooltip is false`() =
+            runTest {
+                every { observeHasSeenDetailTooltipUseCase() } returns flowOf(false)
+                coEvery { hasSavedMoviesUseCase() } returns true
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+
+                viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
+                advanceUntilIdle()
+
+                viewModel.uiState.value.showTooltip shouldBeEqualTo false
+            }
+
+        @Test
+        fun `GIVEN tooltip shown WHEN the user leaves without dismissing THEN it is stored as seen`() =
+            runTest {
+                every { observeHasSeenDetailTooltipUseCase() } returns flowOf(false)
+                coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
+
+                viewModel.process(MovieDetailIntent.FetchDetails(testMovie.id))
+                advanceUntilIdle()
+
+                viewModel.uiState.value.showTooltip shouldBeEqualTo true
+                coVerify(exactly = 1) { setDetailTooltipSeenUseCase() }
+            }
+
+        @Test
         fun `GIVEN tooltip already seen WHEN FetchDetails succeeds THEN showTooltip is false`() =
             runTest {
                 every { observeHasSeenDetailTooltipUseCase() } returns flowOf(true)
@@ -632,7 +662,7 @@ class MovieDetailViewModelTest {
             }
 
         @Test
-        fun `GIVEN tooltip shown WHEN DismissTooltip THEN hides tooltip and calls setDetailTooltipSeen`() =
+        fun `GIVEN tooltip shown WHEN DismissTooltip THEN hides tooltip and stores it as seen once`() =
             runTest {
                 every { observeHasSeenDetailTooltipUseCase() } returns flowOf(false)
                 coEvery { getMovieDetailUseCase(testMovie.id) } returns flowOf(Result.success(testMovie))
