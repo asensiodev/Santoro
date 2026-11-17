@@ -18,9 +18,10 @@ internal data class WatchedMoviesUiState(
     val screenState: WatchedScreenState = WatchedScreenState.Loading,
     val groups: List<WatchedGroupUi> = emptyList(),
     val viewMode: WatchedViewMode = WatchedViewMode.SHELF,
-    val grouping: WatchedGrouping = WatchedGrouping.DATE_WATCHED,
+    val grouping: WatchedGrouping = WatchedGrouping.RECENT,
     val query: String = "",
     val isSearchOpen: Boolean = false,
     val totalMovies: Int = 0,
     val hasMovies: Boolean? = null,
+    val expandedGroupKeys: Set<String> = emptySet(),
 )

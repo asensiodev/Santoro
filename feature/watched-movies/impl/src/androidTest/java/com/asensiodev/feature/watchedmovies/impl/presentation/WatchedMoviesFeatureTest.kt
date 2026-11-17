@@ -71,7 +71,7 @@ class WatchedMoviesFeatureTest {
         val totalMovies =
             composeRule.activity.resources
                 .getQuantityString(SR.plurals.watched_group_movie_count, 2, 2)
-        composeRule.onAllNodesWithText(totalMovies).assertCountEquals(HEADER_AND_GROUP_COUNT)
+        composeRule.onAllNodesWithText(totalMovies).assertCountEquals(1)
         composeRule
             .onNodeWithText(composeRule.activity.getString(SR.string.watched_stat_total_label))
             .assertDoesNotExist()
@@ -145,7 +145,7 @@ private class FakeUserPreferencesRepository : UserPreferencesRepository {
     override val hasSeenDetailTooltip = MutableStateFlow(true)
     override val theme = MutableStateFlow(ThemeOption.SYSTEM)
     override val watchedViewMode = MutableStateFlow(WatchedViewMode.SHELF)
-    override val watchedGrouping = MutableStateFlow(WatchedGrouping.DATE_WATCHED)
+    override val watchedGrouping = MutableStateFlow(WatchedGrouping.RECENT)
     override val directorShowPending = MutableStateFlow(true)
 
     override suspend fun setHasSeenGuestOnboarding(hasSeen: Boolean) {
@@ -172,5 +172,3 @@ private class FakeUserPreferencesRepository : UserPreferencesRepository {
         directorShowPending.value = show
     }
 }
-
-private const val HEADER_AND_GROUP_COUNT = 2

@@ -102,7 +102,6 @@ private fun MovieCardPreview() {
                     id = 1,
                     title = "Sample Movie",
                     posterPath = null,
-                    watchedDate = "January 2024",
                 ),
             onClick = {},
             modifier = Modifier.size(width = 120.dp, height = 180.dp),

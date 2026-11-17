@@ -30,7 +30,7 @@ class WatchedMoviesScreenScreenshotTest(
     @get:Rule
     val paparazzi =
         Paparazzi(
-            deviceConfig = DeviceConfig.PIXEL_3.copy(locale = if (scenario == SPANISH_LARGE) "es" else "en"),
+            deviceConfig = DeviceConfig.PIXEL_3.copy(locale = if (scenario.startsWith(SPANISH_LARGE)) "es" else "en"),
             theme = "Theme.Santoro",
             showSystemUi = false,
         )
@@ -57,26 +57,32 @@ class WatchedMoviesScreenScreenshotTest(
                         groups =
                             listOf(
                                 WatchedGroupUi(
-                                    key = "date:2024",
-                                    label = WatchedGroupLabel.Text("2024"),
-                                    movies = listOf(MovieUi(1, "The Long Journey", null, "Mar 15")),
+                                    key = "recent",
+                                    label = null,
+                                    movies = listOf(MovieUi(1, "The Long Journey", null)),
                                 ),
                             ),
                         hasMovies = true,
                         totalMovies = 1,
                     )
-                "shelfDirector" -> collectionState(WatchedViewMode.SHELF, WatchedGrouping.DIRECTOR, directorGroups)
+                "shelfDirector" ->
+                    collectionState(WatchedViewMode.SHELF, WatchedGrouping.DIRECTOR, partlyExpandedDirectorGroups)
                 "listDirector" -> collectionState(WatchedViewMode.LIST, WatchedGrouping.DIRECTOR, directorGroups)
-                "listDate" -> collectionState(WatchedViewMode.LIST, WatchedGrouping.DATE_WATCHED, dateGroups)
+                "listRecent" -> collectionState(WatchedViewMode.LIST, WatchedGrouping.RECENT, recentGroups)
+                "listAlphabetical" ->
+                    collectionState(WatchedViewMode.LIST, WatchedGrouping.ALPHABETICAL, alphabeticalGroups)
                 "listDecade" -> collectionState(WatchedViewMode.LIST, WatchedGrouping.DECADE, decadeGroups)
-                SPANISH_LARGE -> collectionState(WatchedViewMode.SHELF, WatchedGrouping.DECADE, decadeGroups)
+                SPANISH_LARGE_DECADE ->
+                    collectionState(WatchedViewMode.SHELF, WatchedGrouping.DECADE, decadeGroups)
+                SPANISH_LARGE_DIRECTOR ->
+                    collectionState(WatchedViewMode.LIST, WatchedGrouping.DIRECTOR, partlyExpandedDirectorGroups)
                 "searchOpen" ->
                     collectionState(WatchedViewMode.SHELF, WatchedGrouping.GENRE, genreSearchGroups)
                         .copy(isSearchOpen = true, query = "dune")
                 "loading" -> WatchedMoviesUiState()
                 "empty" -> WatchedMoviesUiState(screenState = WatchedScreenState.Empty, hasMovies = false)
                 "noResults" ->
-                    collectionState(WatchedViewMode.SHELF, WatchedGrouping.DATE_WATCHED, emptyList())
+                    collectionState(WatchedViewMode.SHELF, WatchedGrouping.RECENT, emptyList())
                         .copy(screenState = WatchedScreenState.NoResults, isSearchOpen = true, query = "Unknown")
                 "error" -> WatchedMoviesUiState(screenState = WatchedScreenState.Error("Unavailable"))
                 else -> error("Unknown scenario")
@@ -88,7 +94,7 @@ class WatchedMoviesScreenScreenshotTest(
                         LocalDensity provides
                             Density(
                                 density = LocalDensity.current.density,
-                                fontScale = if (scenario == SPANISH_LARGE) LARGE_FONT_SCALE else 1f,
+                                fontScale = if (scenario.startsWith(SPANISH_LARGE)) LARGE_FONT_SCALE else 1f,
                             ),
                     ) {
                         WatchedMoviesScreen(state, {}, {}, { _, _ -> })
@@ -112,15 +118,18 @@ class WatchedMoviesScreenScreenshotTest(
     )
 
     companion object {
-        private const val SPANISH_LARGE = "spanishLargeDecade"
+        private const val SPANISH_LARGE = "spanishLarge"
+        private const val SPANISH_LARGE_DECADE = "spanishLargeDecade"
+        private const val SPANISH_LARGE_DIRECTOR = "spanishLargeDirector"
         private const val LARGE_FONT_SCALE = 2f
-        private val fargo = MovieUi(275, "Fargo", null, "March 2026", "1996", "Joel Coen, Ethan Coen")
+        private val fargo = MovieUi(275, "Fargo", null, "1996", "Joel Coen, Ethan Coen")
         private val noCountry =
-            MovieUi(6977, "No Country for Old Men", null, "March 2026", "2007", "Joel Coen, Ethan Coen")
-        private val dune = MovieUi(438631, "Dune", null, "February 2026", "2021", "Denis Villeneuve")
-        private val arrival = MovieUi(329865, "Arrival", null, "January 2026", "2016", "Denis Villeneuve")
-        private val sicario = MovieUi(273481, "Sicario", null, "January 2026", "2015", "Denis Villeneuve")
-        private val unknown = MovieUi(1, "The Long Journey", null, "March 2026", "2024", null)
+            MovieUi(6977, "No Country for Old Men", null, "2007", "Joel Coen, Ethan Coen")
+        private val dune = MovieUi(438631, "Dune", null, "2021", "Denis Villeneuve")
+        private val arrival = MovieUi(329865, "Arrival", null, "2016", "Denis Villeneuve")
+        private val sicario = MovieUi(273481, "Sicario", null, "2015", "Denis Villeneuve")
+        private val unknown = MovieUi(1, "The Long Journey", null, "2024", null)
+        private val twelveAngryMen = MovieUi(389, "12 Angry Men", null, "1957", "Sidney Lumet")
         private val directorGroups =
             listOf(
                 WatchedGroupUi(
@@ -128,15 +137,36 @@ class WatchedMoviesScreenScreenshotTest(
                     WatchedGroupLabel.Text("Denis Villeneuve"),
                     listOf(sicario, arrival, dune),
                     137427,
+                    isCollapsible = true,
+                    isExpanded = false,
                 ),
-                WatchedGroupUi("director:1223", WatchedGroupLabel.Text("Joel Coen"), listOf(fargo, noCountry), 1223),
-                WatchedGroupUi("director:unknown", WatchedGroupLabel.UnknownDirector, listOf(unknown)),
+                WatchedGroupUi(
+                    "director:1223",
+                    WatchedGroupLabel.Text("Joel Coen"),
+                    listOf(fargo, noCountry),
+                    1223,
+                    isCollapsible = true,
+                    isExpanded = false,
+                ),
+                WatchedGroupUi(
+                    "director:unknown",
+                    WatchedGroupLabel.UnknownDirector,
+                    listOf(unknown),
+                    isCollapsible = true,
+                    isExpanded = false,
+                ),
             )
+        private val partlyExpandedDirectorGroups =
+            directorGroups.mapIndexed { index, group -> group.copy(isExpanded = index == 0) }
         private const val TOTAL_MOVIES = 6
-        private val dateGroups =
+        private val recentGroups =
+            listOf(WatchedGroupUi("recent", null, listOf(fargo, noCountry, unknown, dune)))
+        private val alphabeticalGroups =
             listOf(
-                WatchedGroupUi("date:2026-03", WatchedGroupLabel.Text("March 2026"), listOf(fargo, noCountry, unknown)),
-                WatchedGroupUi("date:2026-02", WatchedGroupLabel.Text("February 2026"), listOf(dune)),
+                WatchedGroupUi("letter:A", WatchedGroupLabel.Text("A"), listOf(arrival)),
+                WatchedGroupUi("letter:D", WatchedGroupLabel.Text("D"), listOf(dune)),
+                WatchedGroupUi("letter:F", WatchedGroupLabel.Text("F"), listOf(fargo)),
+                WatchedGroupUi("letter:other", WatchedGroupLabel.OtherTitles, listOf(twelveAngryMen)),
             )
         private val genreSearchGroups =
             listOf(
@@ -158,9 +188,11 @@ class WatchedMoviesScreenScreenshotTest(
                 "content",
                 "shelfDirector",
                 "listDirector",
-                "listDate",
+                "listRecent",
+                "listAlphabetical",
                 "listDecade",
-                SPANISH_LARGE,
+                SPANISH_LARGE_DECADE,
+                SPANISH_LARGE_DIRECTOR,
                 "searchOpen",
                 "loading",
                 "empty",

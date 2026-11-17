@@ -31,8 +31,7 @@ class DefaultUserPreferencesRepository
             MutableStateFlow(readEnum(KEY_WATCHED_VIEW_MODE, WatchedViewMode.SHELF))
         override val watchedViewMode: Flow<WatchedViewMode> = _watchedViewMode.asStateFlow()
 
-        private val _watchedGrouping =
-            MutableStateFlow(readEnum(KEY_WATCHED_GROUPING, WatchedGrouping.DATE_WATCHED))
+        private val _watchedGrouping = MutableStateFlow(readWatchedGrouping())
         override val watchedGrouping: Flow<WatchedGrouping> = _watchedGrouping.asStateFlow()
 
         private val _directorShowPending =
@@ -88,6 +87,13 @@ class DefaultUserPreferencesRepository
                 ?: ThemeOption.SYSTEM
         }
 
+        private fun readWatchedGrouping(): WatchedGrouping =
+            if (secureKeyValueStore.readString(KEY_WATCHED_GROUPING) == LEGACY_DATE_WATCHED) {
+                WatchedGrouping.RECENT
+            } else {
+                readEnum(KEY_WATCHED_GROUPING, WatchedGrouping.RECENT)
+            }
+
         private inline fun <reified T : Enum<T>> readEnum(
             key: String,
             default: T,
@@ -104,5 +110,6 @@ class DefaultUserPreferencesRepository
             private const val KEY_WATCHED_VIEW_MODE = "watched_view_mode"
             private const val KEY_WATCHED_GROUPING = "watched_grouping"
             private const val KEY_DIRECTOR_SHOW_PENDING = "director_show_pending"
+            private const val LEGACY_DATE_WATCHED = "DATE_WATCHED"
         }
     }

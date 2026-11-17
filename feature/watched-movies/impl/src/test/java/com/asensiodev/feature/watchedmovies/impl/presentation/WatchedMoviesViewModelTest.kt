@@ -51,7 +51,7 @@ class WatchedMoviesViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         every { userPreferencesRepository.watchedViewMode } returns flowOf(WatchedViewMode.SHELF)
-        every { userPreferencesRepository.watchedGrouping } returns flowOf(WatchedGrouping.DATE_WATCHED)
+        every { userPreferencesRepository.watchedGrouping } returns flowOf(WatchedGrouping.RECENT)
         every { getWatchedMoviesUseCase() } returns flowOf(Result.success(emptyList()))
         viewModel =
             WatchedMoviesViewModel(
@@ -110,7 +110,7 @@ class WatchedMoviesViewModelTest {
         }
 
     @Test
-    fun `GIVEN movie with null watchedAt WHEN LoadMovies THEN groups under unknown date`() =
+    fun `GIVEN movie with null watchedAt WHEN LoadMovies THEN shows it in the recent section`() =
         runTest {
             val movie = buildMovie(id = 1).copy(watchedAt = null)
             every { getWatchedMoviesUseCase() } returns flowOf(Result.success(listOf(movie)))
@@ -126,11 +126,11 @@ class WatchedMoviesViewModelTest {
             advanceUntilIdle()
 
             viewModel.uiState.value.groups
-                .map { it.label } shouldBeEqualTo listOf(WatchedGroupLabel.UnknownDate)
+                .map { it.label to it.movies.map { movie -> movie.id } } shouldBeEqualTo listOf(null to listOf(1))
         }
 
     @Test
-    fun `GIVEN search movie with null watchedAt WHEN searching THEN groups under unknown date`() =
+    fun `GIVEN search movie with null watchedAt WHEN searching THEN shows it in the recent section`() =
         runTest {
             val movie = buildMovie(id = 1).copy(watchedAt = null)
             every { getWatchedMoviesUseCase() } returns flowOf(Result.success(listOf(movie)))
@@ -149,7 +149,7 @@ class WatchedMoviesViewModelTest {
             advanceUntilIdle()
 
             viewModel.uiState.value.groups
-                .map { it.label } shouldBeEqualTo listOf(WatchedGroupLabel.UnknownDate)
+                .map { it.label to it.movies.map { movie -> movie.id } } shouldBeEqualTo listOf(null to listOf(1))
         }
 
     @Test
@@ -344,7 +344,7 @@ class WatchedMoviesViewModelTest {
             val state = viewModel.uiState.value
             state.screenState shouldBeEqualTo WatchedScreenState.Content
             state.viewMode shouldBeEqualTo WatchedViewMode.SHELF
-            state.grouping shouldBeEqualTo WatchedGrouping.DATE_WATCHED
+            state.grouping shouldBeEqualTo WatchedGrouping.RECENT
         }
 
     @Test
@@ -587,6 +587,28 @@ class WatchedMoviesViewModelTest {
             state.isSearchOpen shouldBeEqualTo false
             state.query shouldBeEqualTo ""
             state.screenState shouldBeEqualTo WatchedScreenState.Empty
+        }
+
+    @Test
+    fun `GIVEN default grouping WHEN content loads and A-Z is selected THEN tracks recent and alphabetical`() =
+        runTest {
+            every { getWatchedMoviesUseCase() } returns flowOf(Result.success(listOf(villeneuveMovie(1))))
+            viewModel = createViewModel()
+            viewModel.process(WatchedMoviesIntent.LoadMovies)
+            advanceUntilIdle()
+
+            viewModel.process(WatchedMoviesIntent.ChangeGrouping(WatchedGrouping.ALPHABETICAL))
+            advanceUntilIdle()
+
+            verify(exactly = 1) {
+                observabilityTracker.trackAction(
+                    "watched_collection_viewed",
+                    mapOf("mode" to "shelf", "grouping" to "recent"),
+                )
+            }
+            verify(exactly = 1) {
+                observabilityTracker.trackAction("watched_grouping_changed", mapOf("grouping" to "alphabetical"))
+            }
         }
 
     private fun coenMovie(id: Int) =

@@ -112,7 +112,8 @@ internal fun WatchedViewModeToggle(
 private fun WatchedGrouping.label(): String =
     stringResource(
         when (this) {
-            WatchedGrouping.DATE_WATCHED -> SR.string.watched_group_date
+            WatchedGrouping.RECENT -> SR.string.watched_group_recent
+            WatchedGrouping.ALPHABETICAL -> SR.string.watched_group_alphabetical
             WatchedGrouping.DIRECTOR -> SR.string.watched_group_director
             WatchedGrouping.GENRE -> SR.string.watched_group_genre
             WatchedGrouping.DECADE -> SR.string.watched_group_decade

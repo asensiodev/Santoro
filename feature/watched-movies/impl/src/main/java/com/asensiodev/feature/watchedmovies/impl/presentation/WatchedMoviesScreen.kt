@@ -1,5 +1,6 @@
 package com.asensiodev.feature.watchedmovies.impl.presentation
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -18,6 +20,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,11 +32,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.Dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asensiodev.core.designsystem.PreviewContentFullSize
@@ -136,6 +144,7 @@ internal fun WatchedMoviesScreen(
                     gridState = gridState,
                     onMovieClick = onMovieClick,
                     onDirectorClick = onDirectorClick,
+                    onToggleGroup = { onProcess(WatchedMoviesIntent.ToggleGroup(it)) },
                 )
             }
 
@@ -164,6 +173,7 @@ internal fun WatchedMovieList(
     onMovieClick: (Int) -> Unit,
     onDirectorClick: (Int, String) -> Unit,
     modifier: Modifier = Modifier,
+    onToggleGroup: (String) -> Unit = {},
     gridState: LazyGridState = rememberLazyGridState(),
 ) {
     LazyVerticalGrid(
@@ -175,13 +185,23 @@ internal fun WatchedMovieList(
         modifier = modifier.fillMaxSize(),
     ) {
         groups.forEach { group ->
-            item(
-                key = group.key,
-                span = { GridItemSpan(maxLineSpan) },
-                contentType = CONTENT_TYPE_HEADER,
-            ) {
-                WatchedGroupHeading(group = group, onDirectorClick = onDirectorClick)
+            val label = group.label
+            if (label != null) {
+                item(
+                    key = group.key,
+                    span = { GridItemSpan(maxLineSpan) },
+                    contentType = CONTENT_TYPE_HEADER,
+                ) {
+                    WatchedGroupHeading(
+                        group = group,
+                        label = label,
+                        showsExpandControl = group.isCollapsible,
+                        onDirectorClick = onDirectorClick,
+                        onToggleGroup = onToggleGroup,
+                    )
+                }
             }
+            if (!group.isExpanded) return@forEach
             when (viewMode) {
                 WatchedViewMode.SHELF ->
                     items(
@@ -213,55 +233,163 @@ internal fun WatchedMovieList(
 @Composable
 private fun WatchedGroupHeading(
     group: WatchedGroupUi,
+    label: WatchedGroupLabel,
+    showsExpandControl: Boolean,
     onDirectorClick: (Int, String) -> Unit,
+    onToggleGroup: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val directorId = group.directorId
-    val title = group.label.asTitle()
-    val openDirectorLabel = stringResource(SR.string.watched_group_open_director)
+    val title = label.asTitle()
+    val isDirectorHeading = group.isCollapsible || directorId != null
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
+                .padding(top = Spacings.spacing4)
                 .then(
-                    if (directorId != null) {
+                    if (isDirectorHeading) {
                         Modifier
-                            .padding(top = Spacings.spacing4)
                             .heightIn(min = Size.size56)
                             .clip(MaterialTheme.shapes.medium)
                             .background(MaterialTheme.colorScheme.surfaceContainer)
-                            .clickable(
-                                onClickLabel = openDirectorLabel,
-                                role = Role.Button,
-                                onClick = { onDirectorClick(directorId, title) },
-                            ).padding(start = Spacings.spacing16, end = Spacings.spacing8)
                     } else {
-                        Modifier
-                            .heightIn(min = Size.size48)
-                            .padding(top = Spacings.spacing4)
+                        Modifier.heightIn(min = Size.size48)
                     },
                 ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (showsExpandControl) {
+            ExpandToggle(
+                title = title,
+                isExpanded = group.isExpanded,
+                onClick = { onToggleGroup(group.key) },
+            )
+        }
+        GroupTitle(
+            label = label,
+            title = title,
+            count = group.movies.size,
+            onClick = directorId?.let { id -> { onDirectorClick(id, title) } },
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .then(
+                        if (isDirectorHeading) {
+                            Modifier.heightIn(min = Size.size56)
+                        } else {
+                            Modifier
+                        },
+                    ),
+            startPadding =
+                when {
+                    showsExpandControl -> Size.size0
+                    isDirectorHeading -> Spacings.spacing16
+                    else -> Size.size0
+                },
+            endPadding = if (isDirectorHeading) Spacings.spacing8 else Size.size0,
+        )
+    }
+}
+
+@Composable
+private fun ExpandToggle(
+    title: String,
+    isExpanded: Boolean,
+    onClick: () -> Unit,
+) {
+    val action =
+        stringResource(
+            if (isExpanded) SR.string.watched_group_collapse else SR.string.watched_group_expand,
+            title,
+        )
+    val state =
+        stringResource(
+            if (isExpanded) SR.string.watched_group_expanded else SR.string.watched_group_collapsed,
+        )
+    val rotation by animateFloatAsState(
+        targetValue = if (isExpanded) EXPANDED_ROTATION else 0f,
+        label = "expandRotation",
+    )
+    IconButton(
+        onClick = onClick,
+        modifier =
+            Modifier.size(Size.size48).semantics {
+                contentDescription = action
+                stateDescription = state
+            },
+    ) {
+        Icon(
+            imageVector = AppIcons.ExpandMore,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.rotate(rotation),
+        )
+    }
+}
+
+@Composable
+private fun GroupTitle(
+    label: WatchedGroupLabel,
+    title: String,
+    count: Int,
+    onClick: (() -> Unit)?,
+    startPadding: Dp,
+    endPadding: Dp,
+    modifier: Modifier = Modifier,
+) {
+    val openDirectorLabel = stringResource(SR.string.watched_group_open_director)
+    val spokenTitle =
+        if (label == WatchedGroupLabel.OtherTitles) {
+            stringResource(SR.string.watched_group_other_titles_description)
+        } else {
+            null
+        }
+    Row(
+        modifier =
+            modifier
+                .then(
+                    if (onClick != null) {
+                        Modifier.clickable(
+                            onClickLabel = openDirectorLabel,
+                            role = Role.Button,
+                            onClick = onClick,
+                        )
+                    } else {
+                        Modifier
+                    },
+                ).padding(start = startPadding, end = endPadding),
         horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f, fill = false),
-        )
-        Text(
-            text =
-                pluralStringResource(
-                    SR.plurals.watched_group_movie_count,
-                    group.movies.size,
-                    group.movies.size,
-                ),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        if (directorId != null) {
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(Spacings.spacing8),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier =
+                    Modifier
+                        .weight(1f, fill = false)
+                        .then(
+                            if (spokenTitle != null) {
+                                Modifier.semantics { contentDescription = spokenTitle }
+                            } else {
+                                Modifier
+                            },
+                        ),
+            )
+            Text(
+                text = pluralStringResource(SR.plurals.watched_group_movie_count, count, count),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (onClick != null) {
             Icon(
                 imageVector = AppIcons.ChevronRight,
                 contentDescription = null,
@@ -284,7 +412,7 @@ private fun WatchedGroupLabel.asTitle(): String =
                 SR.string.watched_group_decade_label,
                 startYear,
             )
-        WatchedGroupLabel.UnknownDate -> stringResource(SR.string.unknown_value)
+        WatchedGroupLabel.OtherTitles -> stringResource(SR.string.watched_group_other_titles)
         WatchedGroupLabel.UnknownDirector ->
             stringResource(
                 SR.string.watched_group_unknown_director,
@@ -294,6 +422,7 @@ private fun WatchedGroupLabel.asTitle(): String =
     }
 
 private const val KEY_SEPARATOR = ":"
+private const val EXPANDED_ROTATION = 180f
 private const val NUMBER_OF_MOCKED_MOVIES = 6
 private const val POSTER_RATIO = 2f / 3f
 private const val CONTENT_TYPE_HEADER = "header"
@@ -310,14 +439,13 @@ private fun WatchedMoviesScreenPreview() {
                 id = index,
                 title = "Sample Movie $index",
                 posterPath = null,
-                watchedDate = "January 2024",
             )
         }
     val groups =
         listOf(
             WatchedGroupUi(
-                key = "date:January 2024",
-                label = WatchedGroupLabel.Text("January 2024"),
+                key = "recent",
+                label = null,
                 movies = sampleMovies,
             ),
         )

@@ -68,7 +68,7 @@ class DefaultUserPreferencesRepositoryTest {
         }
 
     @Test
-    fun `GIVEN missing or invalid collection preferences WHEN init THEN flows emit shelf and date watched`() =
+    fun `GIVEN missing or invalid collection preferences WHEN init THEN flows emit shelf and recent`() =
         runTest {
             every { secureKeyValueStore.readString(KEY_WATCHED_VIEW_MODE) } returns null
             every { secureKeyValueStore.readString(KEY_WATCHED_GROUPING) } returns "UNKNOWN"
@@ -76,7 +76,37 @@ class DefaultUserPreferencesRepositoryTest {
             repository = DefaultUserPreferencesRepository(secureKeyValueStore)
 
             repository.watchedViewMode.first() shouldBeEqualTo WatchedViewMode.SHELF
-            repository.watchedGrouping.first() shouldBeEqualTo WatchedGrouping.DATE_WATCHED
+            repository.watchedGrouping.first() shouldBeEqualTo WatchedGrouping.RECENT
+        }
+
+    @Test
+    fun `GIVEN no saved grouping WHEN init THEN grouping emits recent`() =
+        runTest {
+            every { secureKeyValueStore.readString(KEY_WATCHED_GROUPING) } returns null
+
+            repository = DefaultUserPreferencesRepository(secureKeyValueStore)
+
+            repository.watchedGrouping.first() shouldBeEqualTo WatchedGrouping.RECENT
+        }
+
+    @Test
+    fun `GIVEN saved date watched grouping from an earlier version WHEN init THEN grouping emits recent`() =
+        runTest {
+            every { secureKeyValueStore.readString(KEY_WATCHED_GROUPING) } returns "DATE_WATCHED"
+
+            repository = DefaultUserPreferencesRepository(secureKeyValueStore)
+
+            repository.watchedGrouping.first() shouldBeEqualTo WatchedGrouping.RECENT
+        }
+
+    @Test
+    fun `GIVEN saved alphabetical grouping WHEN init THEN grouping emits alphabetical`() =
+        runTest {
+            every { secureKeyValueStore.readString(KEY_WATCHED_GROUPING) } returns "ALPHABETICAL"
+
+            repository = DefaultUserPreferencesRepository(secureKeyValueStore)
+
+            repository.watchedGrouping.first() shouldBeEqualTo WatchedGrouping.ALPHABETICAL
         }
 
     @Test

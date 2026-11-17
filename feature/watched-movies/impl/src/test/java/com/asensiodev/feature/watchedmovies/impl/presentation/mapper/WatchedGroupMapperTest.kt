@@ -10,21 +10,87 @@ import org.junit.jupiter.api.Test
 
 class WatchedGroupMapperTest {
     @Test
-    fun `GIVEN movies watched in different months WHEN grouped by date watched THEN keeps watched order`() {
+    fun `GIVEN movies added in different months WHEN grouped by recent THEN shows one section without heading`() {
         val march = movie(1, "Dune", watchedAt = MARCH_2026)
         val earlyMarch = movie(2, "Arrival", watchedAt = MARCH_2026 - DAY)
         val january = movie(3, "Sicario", watchedAt = JANUARY_2026)
         val unknown = movie(4, "Incendies", watchedAt = null)
 
-        val groups = listOf(march, earlyMarch, january, unknown).toWatchedGroups(WatchedGrouping.DATE_WATCHED)
+        val groups = listOf(march, earlyMarch, january, unknown).toWatchedGroups(WatchedGrouping.RECENT)
+
+        groups.size shouldBeEqualTo 1
+        groups.single().label shouldBeEqualTo null
+        groups.single().movies.map { it.id } shouldBeEqualTo listOf(1, 2, 3, 4)
+    }
+
+    @Test
+    fun `GIVEN no movies WHEN grouped by recent THEN returns no groups`() {
+        emptyList<Movie>().toWatchedGroups(WatchedGrouping.RECENT) shouldBeEqualTo emptyList()
+    }
+
+    @Test
+    fun `GIVEN titles WHEN grouped alphabetically THEN letters ignore case and accents with other titles last`() {
+        val movies =
+            listOf(
+                movie(1, "the Godfather"),
+                movie(2, "Alien"),
+                movie(3, "Érase una vez en América"),
+                movie(4, "12 Angry Men"),
+                movie(5, "amélie"),
+                movie(6, "¡Átame!"),
+            )
+
+        val groups = movies.toWatchedGroups(WatchedGrouping.ALPHABETICAL)
 
         groups.map { it.label } shouldBeEqualTo
             listOf(
-                WatchedGroupLabel.Text(march.toUi().watchedDate.orEmpty()),
-                WatchedGroupLabel.Text(january.toUi().watchedDate.orEmpty()),
-                WatchedGroupLabel.UnknownDate,
+                WatchedGroupLabel.Text("A"),
+                WatchedGroupLabel.Text("E"),
+                WatchedGroupLabel.Text("T"),
+                WatchedGroupLabel.OtherTitles,
             )
-        groups.first().movies.map { it.id } shouldBeEqualTo listOf(1, 2)
+        groups.map { group -> group.movies.map { it.id }.toSet() } shouldBeEqualTo
+            listOf(setOf(2, 5), setOf(3), setOf(1), setOf(4, 6))
+    }
+
+    @Test
+    fun `GIVEN a title with a leading article WHEN grouped alphabetically THEN uses its first word`() {
+        val groups = listOf(movie(1, "The Matrix")).toWatchedGroups(WatchedGrouping.ALPHABETICAL)
+
+        groups.map { it.label } shouldBeEqualTo listOf(WatchedGroupLabel.Text("T"))
+    }
+
+    @Test
+    fun `GIVEN leading spaces and a blank title WHEN grouped alphabetically THEN trims and puts blank last`() {
+        val groups =
+            listOf(movie(1, "  Zodiac"), movie(2, " ")).toWatchedGroups(WatchedGrouping.ALPHABETICAL)
+
+        groups.map { it.label to it.movies.map { movie -> movie.id } } shouldBeEqualTo
+            listOf(WatchedGroupLabel.Text("Z") to listOf(1), WatchedGroupLabel.OtherTitles to listOf(2))
+    }
+
+    @Test
+    fun `GIVEN a letter WHEN grouped alphabetically THEN orders by plain title then release date`() {
+        val movies =
+            listOf(
+                movie(1, "Dune", releaseDate = "2021-09-15"),
+                movie(2, "drive", releaseDate = "2011-05-20"),
+                movie(3, "Dune", releaseDate = "1984-12-14"),
+                movie(4, "Días de fútbol", releaseDate = "2003-10-10"),
+            )
+
+        val groups = movies.toWatchedGroups(WatchedGrouping.ALPHABETICAL)
+
+        groups.single().movies.map { it.id } shouldBeEqualTo listOf(4, 2, 3, 1)
+    }
+
+    @Test
+    fun `GIVEN titles WHEN grouped alphabetically THEN group keys are unique`() {
+        val groups =
+            listOf(movie(1, "Alien"), movie(2, "Babel"), movie(3, "8½"))
+                .toWatchedGroups(WatchedGrouping.ALPHABETICAL)
+
+        groups.map { it.key }.distinct().size shouldBeEqualTo 3
     }
 
     @Test

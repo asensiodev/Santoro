@@ -18,4 +18,8 @@ internal sealed interface WatchedMoviesIntent {
     data class ChangeGrouping(
         val grouping: WatchedGrouping,
     ) : WatchedMoviesIntent
+
+    data class ToggleGroup(
+        val key: String,
+    ) : WatchedMoviesIntent
 }

@@ -4,9 +4,6 @@ import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.feature.watchedmovies.impl.presentation.model.MovieUi
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.Test
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class MovieUiMapperTest {
     @Test
@@ -34,7 +31,6 @@ class MovieUiMapperTest {
                 id = 1,
                 title = "Inception",
                 posterPath = "https://image.tmdb.org/t/p/w500/inception.jpg",
-                watchedDate = null,
                 releaseYear = "2010",
             )
 
@@ -87,14 +83,12 @@ class MovieUiMapperTest {
                     id = 1,
                     title = "Inception",
                     posterPath = "https://image.tmdb.org/t/p/w500/inception.jpg",
-                    watchedDate = null,
                     releaseYear = "2010",
                 ),
                 MovieUi(
                     id = 2,
                     title = "The Dark Knight",
                     posterPath = "https://image.tmdb.org/t/p/w500/dark_knight.jpg",
-                    watchedDate = null,
                     releaseYear = "2008",
                 ),
             )
@@ -102,43 +96,5 @@ class MovieUiMapperTest {
         val result = movies.toUiList()
 
         result shouldBeEqualTo expectedMoviesUi
-    }
-
-    @Test
-    fun `GIVEN a Movie with watchedAt WHEN toUi THEN returns expected MovieUi with formatted date`() {
-        val timestamp = 1704067200000L // Approx Jan 1 2024
-        val movie =
-            Movie(
-                id = 1,
-                title = "Inception",
-                posterPath = "/inception.jpg",
-                backdropPath = null,
-                overview = "Overview",
-                releaseDate = "2010-07-16",
-                popularity = 8.3,
-                voteAverage = 8.8,
-                voteCount = 32000,
-                genres = listOf(),
-                productionCountries = listOf(),
-                cast = emptyList(),
-                isWatched = true,
-                isInWatchlist = false,
-                watchedAt = timestamp,
-            )
-
-        val expectedDate = SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(Date(timestamp))
-
-        val expectedMovieUi =
-            MovieUi(
-                id = 1,
-                title = "Inception",
-                posterPath = "https://image.tmdb.org/t/p/w500/inception.jpg",
-                watchedDate = expectedDate,
-                releaseYear = "2010",
-            )
-
-        val result = movie.toUi()
-
-        result shouldBeEqualTo expectedMovieUi
     }
 }

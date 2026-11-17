@@ -2,9 +2,11 @@ package com.asensiodev.feature.watchedmovies.impl.presentation.model
 
 internal data class WatchedGroupUi(
     val key: String,
-    val label: WatchedGroupLabel,
+    val label: WatchedGroupLabel?,
     val movies: List<MovieUi>,
     val directorId: Int? = null,
+    val isCollapsible: Boolean = false,
+    val isExpanded: Boolean = true,
 )
 
 internal sealed interface WatchedGroupLabel {
@@ -16,7 +18,7 @@ internal sealed interface WatchedGroupLabel {
         val startYear: Int,
     ) : WatchedGroupLabel
 
-    data object UnknownDate : WatchedGroupLabel
+    data object OtherTitles : WatchedGroupLabel
 
     data object UnknownDirector : WatchedGroupLabel
 

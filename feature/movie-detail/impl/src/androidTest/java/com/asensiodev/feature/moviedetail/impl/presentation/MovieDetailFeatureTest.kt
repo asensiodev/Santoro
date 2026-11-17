@@ -150,7 +150,7 @@ private class FakeUserPreferencesRepository : UserPreferencesRepository {
     override val hasSeenDetailTooltip = MutableStateFlow(true)
     override val theme = MutableStateFlow(ThemeOption.SYSTEM)
     override val watchedViewMode = MutableStateFlow(WatchedViewMode.SHELF)
-    override val watchedGrouping = MutableStateFlow(WatchedGrouping.DATE_WATCHED)
+    override val watchedGrouping = MutableStateFlow(WatchedGrouping.RECENT)
     override val directorShowPending = MutableStateFlow(true)
 
     override suspend fun setHasSeenGuestOnboarding(hasSeen: Boolean) {
