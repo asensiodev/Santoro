@@ -43,3 +43,6 @@ docs/guides/GUIDE-ci-cd-release.md
 
 # Local agent tool config
 opencode.json
+
+# macOS Finder metadata
+.DS_Store
