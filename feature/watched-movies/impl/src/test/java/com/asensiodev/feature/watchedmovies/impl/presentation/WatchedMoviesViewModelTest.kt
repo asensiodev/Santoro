@@ -589,6 +589,28 @@ class WatchedMoviesViewModelTest {
             state.screenState shouldBeEqualTo WatchedScreenState.Empty
         }
 
+    @Test
+    fun `GIVEN default grouping WHEN content loads and A-Z is selected THEN tracks recent and alphabetical`() =
+        runTest {
+            every { getWatchedMoviesUseCase() } returns flowOf(Result.success(listOf(villeneuveMovie(1))))
+            viewModel = createViewModel()
+            viewModel.process(WatchedMoviesIntent.LoadMovies)
+            advanceUntilIdle()
+
+            viewModel.process(WatchedMoviesIntent.ChangeGrouping(WatchedGrouping.ALPHABETICAL))
+            advanceUntilIdle()
+
+            verify(exactly = 1) {
+                observabilityTracker.trackAction(
+                    "watched_collection_viewed",
+                    mapOf("mode" to "shelf", "grouping" to "recent"),
+                )
+            }
+            verify(exactly = 1) {
+                observabilityTracker.trackAction("watched_grouping_changed", mapOf("grouping" to "alphabetical"))
+            }
+        }
+
     private fun coenMovie(id: Int) =
         buildMovie(id, "Fargo").copy(
             directors = listOf(Director(JOEL_COEN_ID, "Joel Coen"), Director(ETHAN_COEN_ID, "Ethan Coen")),

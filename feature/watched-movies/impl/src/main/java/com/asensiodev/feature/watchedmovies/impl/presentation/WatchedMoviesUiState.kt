@@ -23,4 +23,5 @@ internal data class WatchedMoviesUiState(
     val isSearchOpen: Boolean = false,
     val totalMovies: Int = 0,
     val hasMovies: Boolean? = null,
+    val expandedGroupKeys: Set<String> = emptySet(),
 )

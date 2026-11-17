@@ -5,6 +5,8 @@ internal data class WatchedGroupUi(
     val label: WatchedGroupLabel?,
     val movies: List<MovieUi>,
     val directorId: Int? = null,
+    val isCollapsible: Boolean = false,
+    val isExpanded: Boolean = true,
 )
 
 internal sealed interface WatchedGroupLabel {

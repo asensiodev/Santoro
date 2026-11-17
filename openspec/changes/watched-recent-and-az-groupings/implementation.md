@@ -23,3 +23,21 @@
 
 - `./gradlew -PenableFirebase=false detekt ktlintCheck :architecture-tests:test :core:data:test :feature:watched-movies:impl:testDebugUnitTest` passed after shortening two test names over 120 characters.
 - Pending by design: Paparazzi baselines (the chip label changed and the date fixtures are replaced in 3.3) and connected tests (phases 3 and 4).
+
+## Phase 2 — Collapse state (2026-11-17)
+
+### 2.1 Director groups collapse in the ViewModel
+
+- Setup: added `WatchedGroupUi.isCollapsible`/`isExpanded` (defaults false/true), `WatchedMoviesUiState.expandedGroupKeys` and the `ToggleGroup(key)` intent handled as a no-op, so the tests compiled and failed on behavior.
+- Red: `./gradlew -PenableFirebase=false :feature:watched-movies:impl:testDebugUnitTest --tests '*WatchedMoviesViewModelTest*'` failed on six new cases: director groups (including Unknown director) start collapsed, `ToggleGroup` expands then collapses, a new director group starts collapsed, a search expands matches and clearing restores the expanded set, `CloseSearch` restores the previous state, and the set survives switching grouping away and back. `GIVEN groupings other than director WHEN loaded THEN groups are not collapsible and show movies` passed immediately (regression coverage).
+- Green: the mapper marks director groups and Unknown director as collapsible. The ViewModel keeps the query behind the shown groups (`latestQuery`) and publishes groups through `toVisibleGroups`: a collapsible group is expanded when its key is in `expandedGroupKeys` or a non-blank query is active. `ToggleGroup` adds or removes the key; the set is never changed by searching or regrouping. Three tests first compared maps with Kluent, which checks entry order; they now compare sets of `(key, expanded)` pairs. Module unit tests passed.
+- Detekt reported `LargeClass` (634/600) for `WatchedMoviesViewModelTest`; the seven collapse tests moved to `WatchedDirectorGroupsViewModelTest` with their own setup.
+
+### 2.2 Analytics values
+
+- `GIVEN default grouping WHEN content loads and A-Z is selected THEN tracks recent and alphabetical` passed immediately: the values come from the enum names changed in 1.1. Classified as regression coverage.
+
+### Phase checks
+
+- `./gradlew -PenableFirebase=false detekt ktlintCheck :architecture-tests:test :feature:watched-movies:impl:testDebugUnitTest` passed after `ktlintFormat` and one manual line wrap in the ViewModel.
+- The screen does not read `isExpanded` yet; collapsed headings are built in 3.2.

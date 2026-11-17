@@ -10,8 +10,8 @@
 
 ## 2. Collapse state (test first)
 
-- [ ] 2.1 Observe failing `WatchedMoviesViewModelTest` cases: director groups start collapsed and collapsible, `ToggleGroup` expands and collapses, a new director group starts collapsed, an active query expands matches without changing the expanded set, clearing the query restores it, and the set survives switching grouping away and back; then implement `expandedGroupKeys` and `ToggleGroup`.
-- [ ] 2.2 Observe a failing analytics case for the `recent` and `alphabetical` grouping values, then confirm the existing tracking reports them; record whether this was test-first or regression coverage.
+- [x] 2.1 Observe failing `WatchedMoviesViewModelTest` cases: director groups start collapsed and collapsible, `ToggleGroup` expands and collapses, a new director group starts collapsed, an active query expands matches without changing the expanded set, clearing the query restores it, and the set survives switching grouping away and back; then implement `expandedGroupKeys` and `ToggleGroup`.
+- [x] 2.2 Observe a failing analytics case for the `recent` and `alphabetical` grouping values, then confirm the existing tracking reports them; record whether this was test-first or regression coverage.
 
 ## 3. UI (test first)
 

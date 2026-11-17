@@ -82,10 +82,13 @@ private fun List<Movie>.groupByDirector(): List<WatchedGroupUi> {
                     label = WatchedGroupLabel.Text(pairs.first().first.name),
                     movies = pairs.map { it.second }.toSortedUi(),
                     directorId = id,
+                    isCollapsible = true,
                 )
             }.sortedByCountThenLabel()
     return directors +
-        unknown.toFallbackGroup(UNKNOWN_DIRECTOR_KEY, WatchedGroupLabel.UnknownDirector)
+        unknown
+            .toFallbackGroup(UNKNOWN_DIRECTOR_KEY, WatchedGroupLabel.UnknownDirector)
+            .map { it.copy(isCollapsible = true) }
 }
 
 private fun List<Movie>.groupByGenre(): List<WatchedGroupUi> {

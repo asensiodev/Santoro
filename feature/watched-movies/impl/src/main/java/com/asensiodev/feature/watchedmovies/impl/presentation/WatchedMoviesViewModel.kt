@@ -9,6 +9,7 @@ import com.asensiodev.core.domain.repository.UserPreferencesRepository
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.GetWatchedMoviesUseCase
 import com.asensiodev.feature.watchedmovies.impl.domain.usecase.SearchWatchedMoviesUseCase
 import com.asensiodev.feature.watchedmovies.impl.presentation.mapper.toWatchedGroups
+import com.asensiodev.feature.watchedmovies.impl.presentation.model.WatchedGroupUi
 import com.asensiodev.library.observability.api.NoOpObservabilityTracker
 import com.asensiodev.library.observability.api.ObservabilityTracker
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -50,6 +51,7 @@ internal class WatchedMoviesViewModel
         private var moviesJob: Job? = null
         private var latestMovies: List<Movie> = emptyList()
         private var latestCollection: List<Movie> = emptyList()
+        private var latestQuery = ""
         private var preferencesLoaded = false
         private var collectionViewTracked = false
 
@@ -66,6 +68,7 @@ internal class WatchedMoviesViewModel
                 is WatchedMoviesIntent.UpdateQuery -> updateQuery(intent.query)
                 is WatchedMoviesIntent.ChangeViewMode -> changeViewMode(intent.mode)
                 is WatchedMoviesIntent.ChangeGrouping -> changeGrouping(intent.grouping)
+                is WatchedMoviesIntent.ToggleGroup -> toggleGroup(intent.key)
             }
         }
 
@@ -101,7 +104,7 @@ internal class WatchedMoviesViewModel
                                 ) { collection, matches -> Triple(query, collection, matches) }
                             }
                         }.collect { (query, collection, matches) ->
-                            if (query == searchQuery.value) updateMovies(collection, matches)
+                            if (query == searchQuery.value) updateMovies(query, collection, matches)
                         }
                 }
         }
@@ -113,8 +116,9 @@ internal class WatchedMoviesViewModel
 
         private fun closeSearch() {
             latestMovies = latestCollection
+            latestQuery = ""
             _uiState.update { state ->
-                val groupedMovies = latestCollection.toWatchedGroups(state.grouping)
+                val groupedMovies = latestCollection.toVisibleGroups(state)
                 state.copy(
                     isSearchOpen = false,
                     query = "",
@@ -131,6 +135,7 @@ internal class WatchedMoviesViewModel
         }
 
         private fun updateMovies(
+            query: String,
             collectionResult: Result<List<Movie>>,
             matchesResult: Result<List<Movie>>,
         ) {
@@ -139,9 +144,10 @@ internal class WatchedMoviesViewModel
             val hasMovies = collection.isNotEmpty()
             latestCollection = collection
             latestMovies = if (hasMovies) matches else emptyList()
+            latestQuery = if (hasMovies) query else ""
             if (!hasMovies) searchQuery.value = ""
             _uiState.update { state ->
-                val groupedMovies = latestMovies.toWatchedGroups(state.grouping)
+                val groupedMovies = latestMovies.toVisibleGroups(state)
                 val screenState =
                     when {
                         groupedMovies.isNotEmpty() -> WatchedScreenState.Content
@@ -193,10 +199,10 @@ internal class WatchedMoviesViewModel
 
         private fun changeGrouping(grouping: WatchedGrouping) {
             if (_uiState.value.grouping == grouping) return
-            _uiState.update {
-                it.copy(
+            _uiState.update { state ->
+                state.copy(
                     grouping = grouping,
-                    groups = latestMovies.toWatchedGroups(grouping),
+                    groups = latestMovies.toVisibleGroups(state.copy(grouping = grouping)),
                 )
             }
             observabilityTracker.trackAction(
@@ -204,6 +210,32 @@ internal class WatchedMoviesViewModel
                 mapOf(GROUPING_PARAMETER to grouping.analyticsValue()),
             )
             persistPreference { userPreferencesRepository.setWatchedGrouping(grouping) }
+        }
+
+        private fun toggleGroup(key: String) {
+            _uiState.update { state ->
+                val expanded =
+                    if (key in state.expandedGroupKeys) {
+                        state.expandedGroupKeys - key
+                    } else {
+                        state.expandedGroupKeys + key
+                    }
+                state.copy(
+                    expandedGroupKeys = expanded,
+                    groups = latestMovies.toVisibleGroups(state.copy(expandedGroupKeys = expanded)),
+                )
+            }
+        }
+
+        private fun List<Movie>.toVisibleGroups(state: WatchedMoviesUiState): List<WatchedGroupUi> {
+            val expandAll = latestQuery.isNotBlank()
+            return toWatchedGroups(state.grouping).map { group ->
+                if (group.isCollapsible) {
+                    group.copy(isExpanded = expandAll || group.key in state.expandedGroupKeys)
+                } else {
+                    group
+                }
+            }
         }
 
         private fun trackCollectionViewed() {
