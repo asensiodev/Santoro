@@ -4,7 +4,7 @@
 
 | Field        | Value                          |
 |--------------|--------------------------------|
-| **Version**  | 2.26                           |
+| **Version**  | 2.27                           |
 | **Status**   | ✅ Current                     |
 | **Date**     | 2026-11-17                     |
 | **Author**   | @asensiodev                    |
@@ -416,7 +416,7 @@ Features approved for a future release. Each will get a FIP before implementatio
 | **Scope**   | `app` module — `AndroidManifest.xml`, `MainActivity`, `DeepLinkHandler` |
 | **Behaviour** | Tapping a `https://www.themoviedb.org/movie/{id}` link shows the Android disambiguation dialog. If the user picks Santoro, the app opens directly on Movie Detail for that movie. Handles both `http`/`https` and `www`/non-`www` hosts. Unauthenticated users see the login screen (deep link discarded for MVP) |
 | **Rationale** | Completes the viral loop started by FIP-002 (Share Movie): Share → Tap link → Open in Santoro. Standard approach used by Letterboxd, JustWatch |
-| **Notes** | Standard deep link (no `autoVerify` — we don't control `themoviedb.org`). `DeepLinkHandler` is a pure object, fully unit-tested |
+| **Notes** | Standard deep link (no `autoVerify` — we don't control `themoviedb.org`). `DeepLinkHandler` is a pure object, fully unit-tested. Since Android 12, unverified web links open in the browser by default; Santoro opens them only if the user enables its supported links in the app settings. Play Console and Analytics therefore list these four links as misconfigured deep links; this is expected and cannot be fixed without owning the domain (2026-11-17 report: no sessions in 30 days). See F-35 |
 
 ### F-24 — Closed Testing: Contrast & Tooltip Audit
 
@@ -523,12 +523,38 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 | Attribute | Detail |
 |---|---|
-| **Status** | 🟡 Planned for the release after 1.3.0 (1.3.0 shipped F-32 alone) — [OpenSpec change](../../openspec/changes/watched-recent-and-az-groupings/proposal.md) |
+| **Status** | ✅ Implemented, pending release (after 1.3.0) — [archived OpenSpec change](../../openspec/changes/archive/2026-11-17-watched-recent-and-az-groupings/proposal.md) |
 | **Scope** | Watched screen groupings |
 | **Behaviour** | Replace the Date watched grouping (by month) with **Recent**, the default: all watched movies without group headings, most recently added first. Add an **A–Z** grouping with letter headings (case- and accent-insensitive; numbers and symbols under "#"; leading articles are not skipped). A saved Date watched preference maps to Recent. In the **Director** grouping, each director heading gets a separate chevron that collapses or expands that director's movies; groups start collapsed so the screen reads as a list of directors, tapping the director name still opens the F-32 director collection, an active search expands groups with matches, and collapsed state is not persisted. Works in Shelf and List |
 | **Decision (2026-11-01)** | The app does not record or edit the date a movie was watched. Marking a movie as watched stays one tap; the stored timestamp only orders Recent and is never shown as a watch date. Statistics are timeless (F-33). Rationale: editable dates invite users to back-date their whole history, which is tedious and discouraging, while dates add little to a collection centred on directors, genres and decades |
-| **Boundaries** | No new view mode for collapsed groups and no collapsing in other groupings. No watch-date picker, "watched before" state, batch dating or monthly activity. A contacts-style alphabetical index (side scrubber) was considered and discarded for complexity |
+| **Boundaries** | No new view mode for collapsed groups and no collapsing in other groupings. No watch-date picker, "watched before" state, batch dating or monthly activity. A contacts-style alphabetical index (side scrubber) was left out for complexity; it is now the future idea F-36 |
 | **Rationale** | Users want to see their whole collection simply, either in the order they added movies or alphabetically, without misleading month headings |
+
+---
+
+### F-35 — Verified Share Links On A Santoro Domain
+
+| Attribute | Detail |
+|---|---|
+| **Status** | 💡 Idea — not planned |
+| **Scope** | Share text, a Santoro-owned web domain with `assetlinks.json`, `AndroidManifest.xml`, `DeepLinkHandler` |
+| **Behaviour** | Sharing a movie sends a link on a Santoro domain (for example `/movie/{id}`) instead of the TMDB URL. With Android App Links verification, the link opens Movie Detail directly for people who have Santoro, and a small web page (or a redirect to TMDB) for everyone else |
+| **Rationale** | F-23 links point to `themoviedb.org`, which Santoro cannot verify, so Android 12+ opens them in the browser and Play reports them as misconfigured. A verified domain completes the Share → Open in Santoro loop without manual settings |
+| **Notes** | Requires buying and hosting a domain and keeping the release signing certificate fingerprint in `assetlinks.json`. Keep the TMDB filter for links shared by other apps or remove it once the new links are in use |
+
+---
+
+### F-36 — Watched: Alphabetical Fast-Scroll Index
+
+| Attribute | Detail |
+|---|---|
+| **Status** | 💡 Idea — design before implementation |
+| **Scope** | Watched screen in the A–Z and Director groupings (Shelf and List) |
+| **Behaviour** | A vertical strip of letters on the right edge, like the contacts app. Dragging along it jumps the list to that letter; the letter under the finger is magnified and its neighbours slightly less (fish-eye), only while scrolling. A–Z jumps to the letter heading; Director jumps to the first director whose name starts with that letter |
+| **Rationale** | Large collections are long to scroll; letter jumping is a familiar, fast way to reach a movie or a director (requested by the product owner on 2026-11-17) |
+| **Design first** | Before any code, agree the visual and interaction design and prototype it: idle versus active look, magnification curve and animation, haptic feedback per letter, a floating letter bubble or not, letters without entries (dimmed or hidden), "#" position, behaviour while searching, TalkBack and keyboard access, large font and small screens, and gesture conflicts with the edge-swipe Back gesture |
+| **Open questions** | Director is ordered by movie count, not by name, so a letter index there needs an alphabetical Director order (an option or a new ordering) or a defined jump rule; collapsed director groups (F-34) make jumping cheaper but must be considered |
+| **Notes** | F-34 left the side index out for complexity; this entry supersedes that decision as a future enhancement |
 
 ---
 
@@ -573,3 +599,4 @@ Features approved for a future release. Each will get a FIP before implementatio
 | 2.24    | 2026-11-04 | Add collapsible director groups (collapsed by default, chevron separate from opening the director) to F-34. |
 | 2.25    | 2026-11-07 | F-32 implemented and its OpenSpec change archived after validation and review: list layout with Watched and In Watchlist labels, films left, and a separate Shorts section. |
 | 2.26    | 2026-11-17 | Plan F-34 as an OpenSpec change; it moves to the release after 1.3.0, which shipped F-32 alone. |
+| 2.27    | 2026-11-17 | F-34 implemented and its OpenSpec change archived after validation and review. Explain why Play lists the F-23 TMDB links as misconfigured deep links and add F-35 verified share links and F-36 alphabetical fast-scroll index as ideas. |

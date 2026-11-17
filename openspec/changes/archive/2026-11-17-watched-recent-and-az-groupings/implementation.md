@@ -76,3 +76,12 @@ New plain Compose tests live in `WatchedGroupHeadingsScreenTest` (androidTest) s
 - Connected on `emulator-5554` (Pixel_9a AVD, Android 17): `:feature:watched-movies:impl:connectedDebugAndroidTest` 48/48 (end of phase 3, no production change since) and `:app:connectedJourneyTestAndroidTest` 19/19.
 - Not run: the release startup check, which belongs to release-candidate distribution.
 - Smoke check: a debug build installed on the emulator showed A–Z with a real collection (41 movies, letter headings, posters). The emulator had lost network (wifi "!") until the user cold-booted it.
+
+### 4.3 Manual checks (2026-11-17)
+
+- Done by the product owner: upgrade with Date watched saved, Recent and A–Z with a real collection in Shelf and List, collapse and search in Director, Spanish, light and dark, TalkBack on headings and expand controls, and large font. No issues reported.
+
+### 4.4 Close (2026-11-17)
+
+- PRD F-34 marked implemented, pending release, with a link to the archived change; its side-index boundary now points to the new idea F-36. The same PRD update (2.27) records why Play lists the F-23 TMDB links as misconfigured and adds the ideas F-35 (verified share links) and F-36 (alphabetical fast-scroll index).
+- Delta specs synced to `openspec/specs/watched-collection` (Group the collection replaced, Collapse director groups added, Purpose updated to drop grouping by date watched), then the change was archived during the review of PR #8.

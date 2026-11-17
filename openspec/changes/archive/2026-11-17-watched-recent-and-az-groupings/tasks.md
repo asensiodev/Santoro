@@ -23,5 +23,5 @@
 
 - [x] 4.1 Update the watched collection journey: Director grouping starts collapsed, expand a director, open one of its movies, Back keeps it expanded, open the Director collection from the name, Back keeps the state; verify `:app:connectedJourneyTestAndroidTest` on `emulator-5554`.
 - [x] 4.2 Run affected tests, `verifyPaparazziDebug`, `:architecture-tests:test`, connected tests for watched-movies and the app journeys on `emulator-5554`, and the aggregate gate; record results in implementation.md.
-- [ ] 4.3 Manual checks: upgrade from 1.3.0 with Date watched saved, Recent and A–Z in Shelf and List with a real collection, collapse and search in Director, Spanish, light and dark, TalkBack on headings and expand controls, large font.
-- [ ] 4.4 Update the PRD F-34 status and the watched-collection spec Purpose (it still mentions grouping by date watched), report changed classes, and archive after human review.
+- [x] 4.3 Manual checks: upgrade from 1.3.0 with Date watched saved, Recent and A–Z in Shelf and List with a real collection, collapse and search in Director, Spanish, light and dark, TalkBack on headings and expand controls, large font.
+- [x] 4.4 Update the PRD F-34 status and the watched-collection spec Purpose (it still mentions grouping by date watched), report changed classes, and archive after human review.
