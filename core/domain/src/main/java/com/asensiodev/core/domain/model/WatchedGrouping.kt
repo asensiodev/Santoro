@@ -1,7 +1,8 @@
 package com.asensiodev.core.domain.model
 
 enum class WatchedGrouping {
-    DATE_WATCHED,
+    RECENT,
+    ALPHABETICAL,
     DIRECTOR,
     GENRE,
     DECADE,

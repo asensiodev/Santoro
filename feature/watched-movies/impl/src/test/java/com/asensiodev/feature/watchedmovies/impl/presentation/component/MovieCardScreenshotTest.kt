@@ -32,7 +32,6 @@ class MovieCardScreenshotTest {
                             id = 1,
                             title = "Sample Movie",
                             posterPath = null,
-                            watchedDate = "January 2024",
                         ),
                     onClick = {},
                     modifier =

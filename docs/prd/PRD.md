@@ -4,9 +4,9 @@
 
 | Field        | Value                          |
 |--------------|--------------------------------|
-| **Version**  | 2.25                           |
+| **Version**  | 2.26                           |
 | **Status**   | ✅ Current                     |
-| **Date**     | 2026-11-07                     |
+| **Date**     | 2026-11-17                     |
 | **Author**   | @asensiodev                    |
 | **Platform** | Android (Native)               |
 
@@ -523,7 +523,7 @@ Features approved for a future release. Each will get a FIP before implementatio
 
 | Attribute | Detail |
 |---|---|
-| **Status** | 📋 Planned for 1.3.0, together with F-32 — no plan yet |
+| **Status** | 🟡 Planned for the release after 1.3.0 (1.3.0 shipped F-32 alone) — [OpenSpec change](../../openspec/changes/watched-recent-and-az-groupings/proposal.md) |
 | **Scope** | Watched screen groupings |
 | **Behaviour** | Replace the Date watched grouping (by month) with **Recent**, the default: all watched movies without group headings, most recently added first. Add an **A–Z** grouping with letter headings (case- and accent-insensitive; numbers and symbols under "#"; leading articles are not skipped). A saved Date watched preference maps to Recent. In the **Director** grouping, each director heading gets a separate chevron that collapses or expands that director's movies; groups start collapsed so the screen reads as a list of directors, tapping the director name still opens the F-32 director collection, an active search expands groups with matches, and collapsed state is not persisted. Works in Shelf and List |
 | **Decision (2026-11-01)** | The app does not record or edit the date a movie was watched. Marking a movie as watched stays one tap; the stored timestamp only orders Recent and is never shown as a watch date. Statistics are timeless (F-33). Rationale: editable dates invite users to back-date their whole history, which is tedious and discouraging, while dates add little to a collection centred on directors, genres and decades |
@@ -572,3 +572,4 @@ Features approved for a future release. Each will get a FIP before implementatio
 | 2.23    | 2026-11-01 | Revise the F-32 plan against the implemented F-31 (dimmed unwatched posters); make F-33 statistics timeless without the streak; add F-34 Recent and A–Z groupings and record the decision not to track editable watch dates. |
 | 2.24    | 2026-11-04 | Add collapsible director groups (collapsed by default, chevron separate from opening the director) to F-34. |
 | 2.25    | 2026-11-07 | F-32 implemented and its OpenSpec change archived after validation and review: list layout with Watched and In Watchlist labels, films left, and a separate Shorts section. |
+| 2.26    | 2026-11-17 | Plan F-34 as an OpenSpec change; it moves to the release after 1.3.0, which shipped F-32 alone. |

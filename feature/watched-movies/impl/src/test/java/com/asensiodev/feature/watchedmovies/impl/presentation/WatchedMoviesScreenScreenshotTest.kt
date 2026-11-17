@@ -59,7 +59,7 @@ class WatchedMoviesScreenScreenshotTest(
                                 WatchedGroupUi(
                                     key = "date:2024",
                                     label = WatchedGroupLabel.Text("2024"),
-                                    movies = listOf(MovieUi(1, "The Long Journey", null, "Mar 15")),
+                                    movies = listOf(MovieUi(1, "The Long Journey", null)),
                                 ),
                             ),
                         hasMovies = true,
@@ -67,7 +67,7 @@ class WatchedMoviesScreenScreenshotTest(
                     )
                 "shelfDirector" -> collectionState(WatchedViewMode.SHELF, WatchedGrouping.DIRECTOR, directorGroups)
                 "listDirector" -> collectionState(WatchedViewMode.LIST, WatchedGrouping.DIRECTOR, directorGroups)
-                "listDate" -> collectionState(WatchedViewMode.LIST, WatchedGrouping.DATE_WATCHED, dateGroups)
+                "listDate" -> collectionState(WatchedViewMode.LIST, WatchedGrouping.RECENT, dateGroups)
                 "listDecade" -> collectionState(WatchedViewMode.LIST, WatchedGrouping.DECADE, decadeGroups)
                 SPANISH_LARGE -> collectionState(WatchedViewMode.SHELF, WatchedGrouping.DECADE, decadeGroups)
                 "searchOpen" ->
@@ -76,7 +76,7 @@ class WatchedMoviesScreenScreenshotTest(
                 "loading" -> WatchedMoviesUiState()
                 "empty" -> WatchedMoviesUiState(screenState = WatchedScreenState.Empty, hasMovies = false)
                 "noResults" ->
-                    collectionState(WatchedViewMode.SHELF, WatchedGrouping.DATE_WATCHED, emptyList())
+                    collectionState(WatchedViewMode.SHELF, WatchedGrouping.RECENT, emptyList())
                         .copy(screenState = WatchedScreenState.NoResults, isSearchOpen = true, query = "Unknown")
                 "error" -> WatchedMoviesUiState(screenState = WatchedScreenState.Error("Unavailable"))
                 else -> error("Unknown scenario")
@@ -114,13 +114,13 @@ class WatchedMoviesScreenScreenshotTest(
     companion object {
         private const val SPANISH_LARGE = "spanishLargeDecade"
         private const val LARGE_FONT_SCALE = 2f
-        private val fargo = MovieUi(275, "Fargo", null, "March 2026", "1996", "Joel Coen, Ethan Coen")
+        private val fargo = MovieUi(275, "Fargo", null, "1996", "Joel Coen, Ethan Coen")
         private val noCountry =
-            MovieUi(6977, "No Country for Old Men", null, "March 2026", "2007", "Joel Coen, Ethan Coen")
-        private val dune = MovieUi(438631, "Dune", null, "February 2026", "2021", "Denis Villeneuve")
-        private val arrival = MovieUi(329865, "Arrival", null, "January 2026", "2016", "Denis Villeneuve")
-        private val sicario = MovieUi(273481, "Sicario", null, "January 2026", "2015", "Denis Villeneuve")
-        private val unknown = MovieUi(1, "The Long Journey", null, "March 2026", "2024", null)
+            MovieUi(6977, "No Country for Old Men", null, "2007", "Joel Coen, Ethan Coen")
+        private val dune = MovieUi(438631, "Dune", null, "2021", "Denis Villeneuve")
+        private val arrival = MovieUi(329865, "Arrival", null, "2016", "Denis Villeneuve")
+        private val sicario = MovieUi(273481, "Sicario", null, "2015", "Denis Villeneuve")
+        private val unknown = MovieUi(1, "The Long Journey", null, "2024", null)
         private val directorGroups =
             listOf(
                 WatchedGroupUi(

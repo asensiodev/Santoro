@@ -210,7 +210,9 @@
     </plurals>
     <string name="watched_view_mode_shelf">Shelf</string>
     <string name="watched_view_mode_list">List</string>
-    <string name="watched_group_date">Date watched</string>
+    <string name="watched_group_recent">Recent</string>
+    <string name="watched_group_alphabetical">A–Z</string>
+    <string name="watched_group_other_titles" translatable="false">#</string>
     <string name="watched_group_director">Director</string>
     <string name="watched_group_genre">Genre</string>
     <string name="watched_group_decade">Decade</string>

@@ -2,32 +2,69 @@ package com.asensiodev.feature.watchedmovies.impl.presentation.mapper
 
 import com.asensiodev.core.domain.model.Movie
 import com.asensiodev.core.domain.model.WatchedGrouping
+import com.asensiodev.feature.watchedmovies.impl.presentation.model.MovieUi
 import com.asensiodev.feature.watchedmovies.impl.presentation.model.WatchedGroupLabel
 import com.asensiodev.feature.watchedmovies.impl.presentation.model.WatchedGroupUi
+import java.text.Collator
+import java.text.Normalizer
+import java.util.Locale
 
 internal fun List<Movie>.toWatchedGroups(grouping: WatchedGrouping): List<WatchedGroupUi> =
     when (grouping) {
-        WatchedGrouping.DATE_WATCHED -> groupByDateWatched()
+        WatchedGrouping.RECENT -> groupByRecent()
+        WatchedGrouping.ALPHABETICAL -> groupAlphabetically()
         WatchedGrouping.DIRECTOR -> groupByDirector()
         WatchedGrouping.GENRE -> groupByGenre()
         WatchedGrouping.DECADE -> groupByDecade()
     }
 
-private fun List<Movie>.groupByDateWatched(): List<WatchedGroupUi> =
-    map { it.toUi() }
-        .groupBy { it.watchedDate }
-        .map { (watchedDate, movies) ->
+private fun List<Movie>.groupByRecent(): List<WatchedGroupUi> =
+    if (isEmpty()) {
+        emptyList()
+    } else {
+        listOf(WatchedGroupUi(key = RECENT_KEY, label = null, movies = map { it.toUi() }))
+    }
+
+private fun List<Movie>.groupAlphabetically(): List<WatchedGroupUi> {
+    val byInitial = groupBy { it.titleInitial() }
+    val letters =
+        byInitial.entries
+            .mapNotNull { (initial, movies) -> initial?.let { it to movies } }
+            .sortedBy { it.first }
+            .map { (letter, movies) ->
+                WatchedGroupUi(
+                    key = "$ALPHABET_KEY$letter",
+                    label = WatchedGroupLabel.Text(letter.toString()),
+                    movies = movies.toAlphabeticalUi(),
+                )
+            }
+    val otherTitles = byInitial[null].orEmpty()
+    return if (otherTitles.isEmpty()) {
+        letters
+    } else {
+        letters +
             WatchedGroupUi(
-                key = "$DATE_KEY${watchedDate.orEmpty()}",
-                label =
-                    watchedDate?.let {
-                        WatchedGroupLabel.Text(
-                            it,
-                        )
-                    } ?: WatchedGroupLabel.UnknownDate,
-                movies = movies,
+                key = OTHER_TITLES_KEY,
+                label = WatchedGroupLabel.OtherTitles,
+                movies = otherTitles.toAlphabeticalUi(),
             )
-        }
+    }
+}
+
+private fun Movie.titleInitial(): Char? =
+    title
+        .trimStart()
+        .firstOrNull()
+        ?.let { Normalizer.normalize(it.toString(), Normalizer.Form.NFD).first().uppercaseChar() }
+        ?.takeIf { it in 'A'..'Z' }
+
+private fun List<Movie>.toAlphabeticalUi(): List<MovieUi> {
+    val collator = Collator.getInstance(Locale.ROOT).apply { strength = Collator.PRIMARY }
+    return sortedWith(
+        compareBy<Movie, String>(collator) { it.title.trim() }
+            .thenBy(nullsLast()) { it.sortableReleaseDate() },
+    ).map { it.toUi() }
+}
 
 private fun List<Movie>.groupByDirector(): List<WatchedGroupUi> {
     val (unknown, known) = partition { it.directors.isNullOrEmpty() }
@@ -113,7 +150,9 @@ private fun Movie.sortableReleaseDate(): String? = releaseDate?.takeIf { release
 
 private const val DECADE = 10
 private const val YEAR_LENGTH = 4
-private const val DATE_KEY = "date:"
+private const val RECENT_KEY = "recent"
+private const val ALPHABET_KEY = "letter:"
+private const val OTHER_TITLES_KEY = "letter:other"
 private const val DIRECTOR_KEY = "director:"
 private const val GENRE_KEY = "genre:"
 private const val DECADE_KEY = "decade:"

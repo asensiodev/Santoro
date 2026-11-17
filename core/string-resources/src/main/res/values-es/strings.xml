@@ -210,7 +210,8 @@
     </plurals>
     <string name="watched_view_mode_shelf">Estantería</string>
     <string name="watched_view_mode_list">Lista</string>
-    <string name="watched_group_date">Fecha</string>
+    <string name="watched_group_recent">Recientes</string>
+    <string name="watched_group_alphabetical">A–Z</string>
     <string name="watched_group_director">Director</string>
     <string name="watched_group_genre">Género</string>
     <string name="watched_group_decade">Década</string>

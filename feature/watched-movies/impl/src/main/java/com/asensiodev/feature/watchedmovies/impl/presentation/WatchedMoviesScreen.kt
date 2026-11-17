@@ -175,12 +175,19 @@ internal fun WatchedMovieList(
         modifier = modifier.fillMaxSize(),
     ) {
         groups.forEach { group ->
-            item(
-                key = group.key,
-                span = { GridItemSpan(maxLineSpan) },
-                contentType = CONTENT_TYPE_HEADER,
-            ) {
-                WatchedGroupHeading(group = group, onDirectorClick = onDirectorClick)
+            val label = group.label
+            if (label != null) {
+                item(
+                    key = group.key,
+                    span = { GridItemSpan(maxLineSpan) },
+                    contentType = CONTENT_TYPE_HEADER,
+                ) {
+                    WatchedGroupHeading(
+                        group = group,
+                        label = label,
+                        onDirectorClick = onDirectorClick,
+                    )
+                }
             }
             when (viewMode) {
                 WatchedViewMode.SHELF ->
@@ -213,11 +220,12 @@ internal fun WatchedMovieList(
 @Composable
 private fun WatchedGroupHeading(
     group: WatchedGroupUi,
+    label: WatchedGroupLabel,
     onDirectorClick: (Int, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val directorId = group.directorId
-    val title = group.label.asTitle()
+    val title = label.asTitle()
     val openDirectorLabel = stringResource(SR.string.watched_group_open_director)
     Row(
         modifier =
@@ -284,7 +292,7 @@ private fun WatchedGroupLabel.asTitle(): String =
                 SR.string.watched_group_decade_label,
                 startYear,
             )
-        WatchedGroupLabel.UnknownDate -> stringResource(SR.string.unknown_value)
+        WatchedGroupLabel.OtherTitles -> stringResource(SR.string.watched_group_other_titles)
         WatchedGroupLabel.UnknownDirector ->
             stringResource(
                 SR.string.watched_group_unknown_director,
@@ -310,14 +318,13 @@ private fun WatchedMoviesScreenPreview() {
                 id = index,
                 title = "Sample Movie $index",
                 posterPath = null,
-                watchedDate = "January 2024",
             )
         }
     val groups =
         listOf(
             WatchedGroupUi(
-                key = "date:January 2024",
-                label = WatchedGroupLabel.Text("January 2024"),
+                key = "recent",
+                label = null,
                 movies = sampleMovies,
             ),
         )

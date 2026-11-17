@@ -132,7 +132,6 @@ private fun WatchedMovieRowPreview() {
                     id = 1,
                     title = "Fargo",
                     posterPath = null,
-                    watchedDate = "March 2026",
                     releaseYear = "1996",
                     directors = "Joel Coen, Ethan Coen",
                 ),

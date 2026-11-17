@@ -64,7 +64,7 @@ class WatchedCollectionScreenTest {
     fun givenDateGrouping_whenDirectorChipIsSelected_thenRequestsDirectorGrouping() {
         setScreen(contentState())
 
-        composeRule.onNodeWithText(string(SR.string.watched_group_date)).assertIsSelected()
+        composeRule.onNodeWithText(string(SR.string.watched_group_recent)).assertIsSelected()
         composeRule.onNodeWithText(string(SR.string.watched_group_director)).performClick()
 
         composeRule.runOnIdle {
@@ -296,7 +296,7 @@ class WatchedCollectionScreenTest {
 
     private fun contentState(
         viewMode: WatchedViewMode = WatchedViewMode.SHELF,
-        grouping: WatchedGrouping = WatchedGrouping.DATE_WATCHED,
+        grouping: WatchedGrouping = WatchedGrouping.RECENT,
         groups: List<WatchedGroupUi> =
             listOf(
                 WatchedGroupUi(
@@ -333,7 +333,6 @@ class WatchedCollectionScreenTest {
                 id = FARGO_ID,
                 title = "Fargo",
                 posterPath = null,
-                watchedDate = "March 2026",
                 releaseYear = "1996",
                 directors = "Joel Coen, Ethan Coen",
             )
