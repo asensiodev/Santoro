@@ -62,3 +62,17 @@ New plain Compose tests live in `WatchedGroupHeadingsScreenTest` (androidTest) s
 - `WatchedMoviesScreenScreenshotTest`: `content` now renders Recent in Shelf; `listDate` replaced by `listRecent`; new `listAlphabetical` (A, D, F and "#") and `spanishLargeDirector` (List, partly expanded, Spanish, 2× font); `shelfDirector` is partly expanded and `listDirector` fully collapsed. Recorded with `./gradlew -PenableFirebase=false :feature:watched-movies:impl:recordPaparazziDebug --tests '*WatchedMoviesScreenScreenshotTest*'`; the two `listDate` baselines were deleted.
 - Inspection of the first recording showed the director name wrapping ("Denis / Villeneuve") with free space and misaligned chevrons: a weighted spacer shared the width with the title. Title and count now sit in their own weighted row and the chevron follows it. Re-recorded and inspected light and dark `shelfDirector`, `listDirector`, `listAlphabetical`, `listRecent`, `content`, `spanishLargeDirector` and `spanishLargeDecade`. Other collection baselines changed only in the chip row (Recent, A–Z).
 - `./gradlew -PenableFirebase=false verifyPaparazziDebug detekt ktlintCheck :architecture-tests:test :feature:watched-movies:impl:testDebugUnitTest :feature:watched-movies:impl:connectedDebugAndroidTest` passed (connected 48/48).
+
+## Phase 4 — Navigation and validation (2026-11-17)
+
+### 4.1 Watched collection journey
+
+- `MainActivityWatchedCollectionJourneyTest`: the existing journey now ends by checking that, back on Watched, the Director grouping is still selected with the director collapsed (its movie hidden). New `givenCollapsedDirector_whenExpandedAndScreensAreVisited_thenBackKeepsItExpanded`: Director grouping starts collapsed, the expand control shows the director's movie, opening it and going Back keeps the group expanded, opening the Director collection from the name and going Back keeps it expanded. Written after the screen behavior existed, so this is journey coverage rather than test-first.
+- `./gradlew -PenableFirebase=false :app:connectedJourneyTestAndroidTest` on `emulator-5554`: 19/19.
+
+### 4.2 Aggregate validation
+
+- `./gradlew -PenableFirebase=false test detekt ktlintCheck koverVerify assembleDebug assembleRelease verifyPaparazziDebug :architecture-tests:test` passed (only pre-existing deprecation and R8 rule warnings).
+- Connected on `emulator-5554` (Pixel_9a AVD, Android 17): `:feature:watched-movies:impl:connectedDebugAndroidTest` 48/48 (end of phase 3, no production change since) and `:app:connectedJourneyTestAndroidTest` 19/19.
+- Not run: the release startup check, which belongs to release-candidate distribution.
+- Smoke check: a debug build installed on the emulator showed A–Z with a real collection (41 movies, letter headings, posters). The emulator had lost network (wifi "!") until the user cold-booted it.

@@ -71,6 +71,45 @@ class MainActivityWatchedCollectionJourneyTest : BaseAppJourneyTest() {
             .onNodeWithContentDescription(
                 string(SR.string.watched_view_mode_list),
             ).assertIsSelected()
-        composeRule.onNodeWithText(AppJourneyTestData.watchedMovie.title).assertIsDisplayed()
+        composeRule
+            .onNode(hasText(AppJourneyTestData.DIRECTOR_NAME) and hasClickAction())
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(AppJourneyTestData.watchedMovie.title).assertDoesNotExist()
+    }
+
+    @Test
+    fun givenCollapsedDirector_whenExpandedAndScreensAreVisited_thenBackKeepsItExpanded() {
+        personRepository.crewMovies = emptyList()
+        authRepository.setUser(AppJourneyTestData.authenticatedUser)
+        launch()
+        composeRule.onNodeWithText(string(SR.string.watched_movies)).performClick()
+        composeRule
+            .onNodeWithContentDescription(
+                string(SR.string.watched_view_mode_list),
+            ).performClick()
+        composeRule.onNodeWithText(string(SR.string.watched_group_director)).performClick()
+        val watched = AppJourneyTestData.watchedMovie
+        composeRule.onNodeWithText(watched.title).assertDoesNotExist()
+
+        composeRule
+            .onNodeWithContentDescription(
+                formattedString(SR.string.watched_group_expand, AppJourneyTestData.DIRECTOR_NAME),
+            ).performClick()
+        composeRule.onNodeWithText(watched.title).assertIsDisplayed().performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            detailRepository.requestedMovieIds.contains(watched.id)
+        }
+        composeRule.onNodeWithContentDescription(string(SR.string.navigate_back)).performClick()
+        composeRule.onNodeWithText(watched.title).assertIsDisplayed()
+
+        composeRule
+            .onNode(hasText(AppJourneyTestData.DIRECTOR_NAME) and hasClickAction())
+            .performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            personRepository.requestedCreditIds.contains(AppJourneyTestData.DIRECTOR_ID)
+        }
+        composeRule.onNodeWithContentDescription(string(SR.string.navigate_back)).performClick()
+        composeRule.onNodeWithText(string(SR.string.watched_group_director)).assertIsSelected()
+        composeRule.onNodeWithText(watched.title).assertIsDisplayed()
     }
 }
