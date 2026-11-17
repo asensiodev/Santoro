@@ -146,7 +146,9 @@ internal class WatchedMoviesViewModel
             latestMovies = if (hasMovies) matches else emptyList()
             latestQuery = if (hasMovies) query else ""
             if (!hasMovies) searchQuery.value = ""
-            _uiState.update { state ->
+            _uiState.update { current ->
+                val expandedKeys = current.expandedGroupKeys.presentIn(collection)
+                val state = current.copy(expandedGroupKeys = expandedKeys)
                 val groupedMovies = latestMovies.toVisibleGroups(state)
                 val screenState =
                     when {
@@ -213,6 +215,7 @@ internal class WatchedMoviesViewModel
         }
 
         private fun toggleGroup(key: String) {
+            if (_uiState.value.groups.none { it.key == key && it.isCollapsible }) return
             _uiState.update { state ->
                 val expanded =
                     if (key in state.expandedGroupKeys) {
@@ -228,15 +231,27 @@ internal class WatchedMoviesViewModel
         }
 
         private fun List<Movie>.toVisibleGroups(state: WatchedMoviesUiState): List<WatchedGroupUi> {
-            val expandAll = latestQuery.isNotBlank()
+            val searching = latestQuery.isNotBlank()
             return toWatchedGroups(state.grouping).map { group ->
-                if (group.isCollapsible) {
-                    group.copy(isExpanded = expandAll || group.key in state.expandedGroupKeys)
-                } else {
-                    group
+                when {
+                    !group.isCollapsible -> group
+                    searching -> group.copy(isCollapsible = false, isExpanded = true)
+                    else -> group.copy(isExpanded = group.key in state.expandedGroupKeys)
                 }
             }
         }
+
+        private fun Set<String>.presentIn(collection: List<Movie>): Set<String> =
+            if (isEmpty()) {
+                this
+            } else {
+                val directorKeys =
+                    collection
+                        .toWatchedGroups(WatchedGrouping.DIRECTOR)
+                        .map { it.key }
+                        .toSet()
+                intersect(directorKeys)
+            }
 
         private fun trackCollectionViewed() {
             val state = _uiState.value

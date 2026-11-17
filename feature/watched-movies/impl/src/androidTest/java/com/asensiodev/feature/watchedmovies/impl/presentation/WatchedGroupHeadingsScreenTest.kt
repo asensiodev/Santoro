@@ -176,8 +176,8 @@ class WatchedGroupHeadingsScreenTest {
     }
 
     @Test
-    fun givenSearchQuery_whenDirectorGroupsAreShown_thenExpandControlIsHidden() {
-        setScreen(directorState(isExpanded = true, query = "far"))
+    fun givenSearchResults_whenDirectorGroupsAreNotCollapsible_thenExpandControlIsHidden() {
+        setScreen(directorState(isExpanded = true, isCollapsible = false, query = "far"))
 
         composeRule.onNodeWithText("Fargo").assertIsDisplayed()
         composeRule
@@ -205,6 +205,7 @@ class WatchedGroupHeadingsScreenTest {
 
     private fun directorState(
         isExpanded: Boolean,
+        isCollapsible: Boolean = true,
         query: String = "",
     ) = contentState(
         grouping = WatchedGrouping.DIRECTOR,
@@ -216,7 +217,7 @@ class WatchedGroupHeadingsScreenTest {
                     label = WatchedGroupLabel.Text(JOEL_COEN),
                     movies = listOf(fargo),
                     directorId = JOEL_COEN_ID,
-                    isCollapsible = true,
+                    isCollapsible = isCollapsible,
                     isExpanded = isExpanded,
                 ),
             ),

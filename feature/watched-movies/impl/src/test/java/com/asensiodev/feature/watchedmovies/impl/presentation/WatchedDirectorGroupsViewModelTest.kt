@@ -119,6 +119,45 @@ class WatchedDirectorGroupsViewModelTest {
         }
 
     @Test
+    fun `GIVEN search results WHEN the query is cleared THEN toggling waits for the full collection`() =
+        runTest {
+            every { searchWatchedMoviesUseCase("dune") } returns
+                flowOf(Result.success(listOf(villeneuveMovie(1, title = "Dune"))))
+            viewModel = loadedDirectorViewModel(villeneuveMovie(1, title = "Dune"), nolanMovie(2))
+            viewModel.process(WatchedMoviesIntent.OpenSearch)
+            viewModel.process(WatchedMoviesIntent.UpdateQuery("dune"))
+            advanceUntilIdle()
+            viewModel.uiState.value.groups
+                .map { it.isCollapsible } shouldBeEqualTo listOf(false)
+
+            viewModel.process(WatchedMoviesIntent.UpdateQuery(""))
+            viewModel.process(WatchedMoviesIntent.ToggleGroup(VILLENEUVE_KEY))
+            advanceUntilIdle()
+
+            viewModel.uiState.value.groups
+                .map { Triple(it.key, it.isCollapsible, it.isExpanded) }
+                .toSet() shouldBeEqualTo
+                setOf(Triple(VILLENEUVE_KEY, true, false), Triple(NOLAN_KEY, true, false))
+        }
+
+    @Test
+    fun `GIVEN expanded director WHEN it leaves the collection and returns THEN it starts collapsed`() =
+        runTest {
+            val watched = MutableStateFlow(Result.success(listOf(villeneuveMovie(1), nolanMovie(2))))
+            every { getWatchedMoviesUseCase() } returns watched
+            viewModel = loadedDirectorViewModel()
+            viewModel.process(WatchedMoviesIntent.ToggleGroup(NOLAN_KEY))
+            advanceUntilIdle()
+
+            watched.value = Result.success(listOf(villeneuveMovie(1)))
+            advanceUntilIdle()
+            watched.value = Result.success(listOf(villeneuveMovie(1), nolanMovie(2)))
+            advanceUntilIdle()
+
+            viewModel.expandedKeys() shouldBeEqualTo emptyList()
+        }
+
+    @Test
     fun `GIVEN search with matches WHEN CloseSearch THEN directors return to their previous state`() =
         runTest {
             every { searchWatchedMoviesUseCase("dune") } returns

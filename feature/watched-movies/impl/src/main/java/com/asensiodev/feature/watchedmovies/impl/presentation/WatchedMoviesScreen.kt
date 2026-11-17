@@ -141,7 +141,6 @@ internal fun WatchedMoviesScreen(
                 WatchedMovieList(
                     groups = uiState.groups,
                     viewMode = uiState.viewMode,
-                    showsExpandControls = uiState.query.isBlank(),
                     gridState = gridState,
                     onMovieClick = onMovieClick,
                     onDirectorClick = onDirectorClick,
@@ -174,7 +173,6 @@ internal fun WatchedMovieList(
     onMovieClick: (Int) -> Unit,
     onDirectorClick: (Int, String) -> Unit,
     modifier: Modifier = Modifier,
-    showsExpandControls: Boolean = true,
     onToggleGroup: (String) -> Unit = {},
     gridState: LazyGridState = rememberLazyGridState(),
 ) {
@@ -197,7 +195,7 @@ internal fun WatchedMovieList(
                     WatchedGroupHeading(
                         group = group,
                         label = label,
-                        showsExpandControl = showsExpandControls && group.isCollapsible,
+                        showsExpandControl = group.isCollapsible,
                         onDirectorClick = onDirectorClick,
                         onToggleGroup = onToggleGroup,
                     )
