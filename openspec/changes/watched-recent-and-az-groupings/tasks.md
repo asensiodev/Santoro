@@ -15,9 +15,9 @@
 
 ## 3. UI (test first)
 
-- [ ] 3.1 Observe failing `WatchedCollectionScreenTest` cases: Recent shows movies without headings in Shelf and List; A–Z shows letter headings and a "#" heading announced as numbers and symbols; chips appear in the order Recent, A–Z, Director, Genre, Decade; then build them with English and Spanish strings.
-- [ ] 3.2 Observe failing `WatchedCollectionScreenTest` cases for the director heading: a collapsed heading shows the count and no movies, the expand control is a 48dp button announcing the director and expanded/collapsed state, tapping it does not open the Director collection, tapping the name still does, Unknown director has the control but no director button, and no control is shown while searching or in other groupings; then build the heading with design-system tokens and previews.
-- [ ] 3.3 Record and inspect light and dark Paparazzi baselines for Recent (Shelf and List), A–Z, Director collapsed and partly expanded, and Spanish large font; delete baselines for the removed Date watched states; verify with `verifyPaparazziDebug`.
+- [x] 3.1 Observe failing `WatchedCollectionScreenTest` cases: Recent shows movies without headings in Shelf and List; A–Z shows letter headings and a "#" heading announced as numbers and symbols; chips appear in the order Recent, A–Z, Director, Genre, Decade; then build them with English and Spanish strings.
+- [x] 3.2 Observe failing `WatchedCollectionScreenTest` cases for the director heading: a collapsed heading shows the count and no movies, the expand control is a 48dp button announcing the director and expanded/collapsed state, tapping it does not open the Director collection, tapping the name still does, Unknown director has the control but no director button, and no control is shown while searching or in other groupings; then build the heading with design-system tokens and previews.
+- [x] 3.3 Record and inspect light and dark Paparazzi baselines for Recent (Shelf and List), A–Z, Director collapsed and partly expanded, and Spanish large font; delete baselines for the removed Date watched states; verify with `verifyPaparazziDebug`.
 
 ## 4. Navigation and validation
 

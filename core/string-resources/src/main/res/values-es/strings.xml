@@ -212,6 +212,7 @@
     <string name="watched_view_mode_list">Lista</string>
     <string name="watched_group_recent">Recientes</string>
     <string name="watched_group_alphabetical">A–Z</string>
+    <string name="watched_group_other_titles_description">Números y símbolos</string>
     <string name="watched_group_director">Director</string>
     <string name="watched_group_genre">Género</string>
     <string name="watched_group_decade">Década</string>
@@ -220,6 +221,10 @@
     <string name="watched_group_undated">Sin fecha</string>
     <string name="watched_group_decade_label" formatted="true">Años %1$d</string>
     <string name="watched_group_open_director">Ver colección del director</string>
+    <string name="watched_group_expand" formatted="true">Desplegar %1$s</string>
+    <string name="watched_group_collapse" formatted="true">Plegar %1$s</string>
+    <string name="watched_group_expanded">Desplegado</string>
+    <string name="watched_group_collapsed">Plegado</string>
     <string name="watched_search_close">Cerrar búsqueda</string>
     <plurals name="watched_group_movie_count">
         <item quantity="one">%d película</item>

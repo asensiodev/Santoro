@@ -41,3 +41,24 @@
 
 - `./gradlew -PenableFirebase=false detekt ktlintCheck :architecture-tests:test :feature:watched-movies:impl:testDebugUnitTest` passed after `ktlintFormat` and one manual line wrap in the ViewModel.
 - The screen does not read `isExpanded` yet; collapsed headings are built in 3.2.
+
+## Phase 3 — UI (2026-11-17)
+
+New plain Compose tests live in `WatchedGroupHeadingsScreenTest` (androidTest) so `WatchedCollectionScreenTest` stays small. Instrumented runs used `emulator-5554` only (Pixel_9a AVD, Android 17). The emulator first failed with `INSTALL_FAILED_INSUFFICIENT_STORAGE`; uninstalling the release build and the system updates of preinstalled Google apps freed 1.5 GB (environment issue, not a test result).
+
+### 3.1 Recent, A–Z and chips
+
+- Red: `./gradlew -PenableFirebase=false :feature:watched-movies:impl:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=…WatchedGroupHeadingsScreenTest` failed only on `givenAlphabeticalGrouping_whenShown_thenShowsLetterAndOtherTitlesHeadings` (no node announced "Numbers and symbols"). Recent without headings in Shelf and List and the chip order passed immediately: they were already delivered by 1.1 and 1.2 (regression coverage).
+- Green: the "#" heading title carries the content description `watched_group_other_titles_description` ("Numbers and symbols" / "Números y símbolos").
+
+### 3.2 Collapsible director heading
+
+- Red: the same command failed on four new cases: collapsed group shows the count without movies, expand control (content description, state description, 48dp, toggle intent without opening the director), expanded group shows the collapse control, and Unknown director has the control without a director button. Opening the director from the name, no control while searching and no control for Genre passed immediately (regression coverage).
+- Green: `WatchedGroupHeading` is now a row with an optional leading `ExpandToggle` (48dp `IconButton`, `AppIcons.ExpandMore` rotated 180° when expanded, "Expand/Collapse <name>" plus "Expanded/Collapsed" state description) and a `GroupTitle` that keeps the director button, count and trailing chevron. `WatchedMovieList` skips movies of collapsed groups and shows the control only while the query is blank. New strings in English and Spanish: `watched_group_expand`, `watched_group_collapse`, `watched_group_expanded`, `watched_group_collapsed`.
+- The first green run failed twice: the M3 `IconButton` node measured 40dp (the 48dp touch area sits outside the node), fixed with an explicit `Size.size48`; and `WatchedMoviesFeatureTest` still expected the "2 movies" text twice (header and monthly heading), now once because Recent has no heading. `:feature:watched-movies:impl:connectedDebugAndroidTest` then passed 48/48.
+
+### 3.3 Screenshots
+
+- `WatchedMoviesScreenScreenshotTest`: `content` now renders Recent in Shelf; `listDate` replaced by `listRecent`; new `listAlphabetical` (A, D, F and "#") and `spanishLargeDirector` (List, partly expanded, Spanish, 2× font); `shelfDirector` is partly expanded and `listDirector` fully collapsed. Recorded with `./gradlew -PenableFirebase=false :feature:watched-movies:impl:recordPaparazziDebug --tests '*WatchedMoviesScreenScreenshotTest*'`; the two `listDate` baselines were deleted.
+- Inspection of the first recording showed the director name wrapping ("Denis / Villeneuve") with free space and misaligned chevrons: a weighted spacer shared the width with the title. Title and count now sit in their own weighted row and the chevron follows it. Re-recorded and inspected light and dark `shelfDirector`, `listDirector`, `listAlphabetical`, `listRecent`, `content`, `spanishLargeDirector` and `spanishLargeDecade`. Other collection baselines changed only in the chip row (Recent, A–Z).
+- `./gradlew -PenableFirebase=false verifyPaparazziDebug detekt ktlintCheck :architecture-tests:test :feature:watched-movies:impl:testDebugUnitTest :feature:watched-movies:impl:connectedDebugAndroidTest` passed (connected 48/48).

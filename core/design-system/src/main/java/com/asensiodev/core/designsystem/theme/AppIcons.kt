@@ -24,6 +24,7 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.Help
 import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.PrivacyTip
@@ -56,6 +57,7 @@ object AppIcons {
     val Info = Icons.Filled.Info
     val ExitToApp = Icons.AutoMirrored.Rounded.ExitToApp
     val ChevronRight = Icons.AutoMirrored.Rounded.KeyboardArrowRight
+    val ExpandMore = Icons.Rounded.KeyboardArrowDown
     val GridView = Icons.Rounded.GridView
     val ViewList = Icons.AutoMirrored.Rounded.ViewList
     val ArrowBack = Icons.AutoMirrored.Rounded.ArrowBack

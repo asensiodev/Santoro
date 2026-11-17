@@ -71,7 +71,7 @@ class WatchedMoviesFeatureTest {
         val totalMovies =
             composeRule.activity.resources
                 .getQuantityString(SR.plurals.watched_group_movie_count, 2, 2)
-        composeRule.onAllNodesWithText(totalMovies).assertCountEquals(HEADER_AND_GROUP_COUNT)
+        composeRule.onAllNodesWithText(totalMovies).assertCountEquals(1)
         composeRule
             .onNodeWithText(composeRule.activity.getString(SR.string.watched_stat_total_label))
             .assertDoesNotExist()
@@ -172,5 +172,3 @@ private class FakeUserPreferencesRepository : UserPreferencesRepository {
         directorShowPending.value = show
     }
 }
-
-private const val HEADER_AND_GROUP_COUNT = 2
